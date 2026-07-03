@@ -1,424 +1,572 @@
-// // ============================================================
-// // 🔐 TO'LIQ YIG'ILGAN PROFESSIONAL AUTH SYSTEM
-// // ============================================================
+var AuthSystem = window.AuthSystem = (function () {
+    "use strict";
 
-// const AuthSystem = (function () {
-//   'use strict';
+    // const API_URL = "https://backend-api-production-87e9.up.railway.app";
+    const API_URL = "https://z3wax.pythonanywhere.com";
+    window.CRM_API_URL = API_URL;
 
-//   const USERS_KEY = 'crm_all_users';
-//   const CURRENT_USER_KEY = 'crm_current_user';
-//   const SESSION_KEY = 'crm_session_active';
+    const CURRENT_USER_KEY = "crm_current_user";
+    const SESSION_KEY = "crm_session_active";
+    const OLD_USER_KEY = "currentUser";
+    const OLD_SESSION_KEY = "isLoggedIn";
+    const ACCESS_TOKEN_KEY = "access_token";
+    const REFRESH_TOKEN_KEY = "refresh_token";
+    const AUTH_REDIRECT_KEY = "crm_auth_redirect";
+    const TOKEN_SKEW_MS = 30000;
+    const LOGIN_PAGE = "login.html";
+    const DASHBOARD_PAGE = "index.html";
 
-//   // ============================
-//   // 🔹 Barcha userlarni olish
-//   // ============================
-//   function getAllUsers() {
-//     try {
-//       const users = localStorage.getItem(USERS_KEY);
-//       return users ? JSON.parse(users) : [];
-//     } catch {
-//       return [];
-//     }
-//   }
+    let refreshPromise = null;
 
-//   // ============================
-//   // 🔹 Barcha userlarni saqlash
-//   // ============================
-//   function saveAllUsers(users) {
-//     localStorage.setItem(USERS_KEY, JSON.stringify(users));
-//   }
+    const crmApi = axios.create({
+        baseURL: API_URL
+    });
 
-//   // 🔐 Parolni xeshlash (oddiy)
-//   function hashPassword(password) {
-//     let hash = 0;
-//     for (let i = 0; i < password.length; i++) {
-//       hash = (hash << 5) - hash + password.charCodeAt(i);
-//       hash |= 0;
-//     }
-//     return hash.toString(36);
-//   }
+    window.crmApi = crmApi;
 
-//   // ============================
-//   // 🔹 RANDOM ID generator
-//   // ============================
-//   function generateUserId() {
-//     return 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-//   }
-
-//   // ============================================================
-//   // 🔥 RETURN OBJECT — TIZIMNING ASOSI
-//   // ============================================================
-//   return {
-
-//     // ============================
-//     // 🔹 Ro'yxatdan o'tkazish
-//     // ============================
-//     register: function (data) {
-//       const allUsers = getAllUsers();
-
-//       if (allUsers.find(u => u.email === data.email)) {
-//         return { success: false, message: "Bu email allaqachon ro'yxatdan o'tgan!" };
-//       }
-
-//       const newUser = {
-//         userId: generateUserId(),
-//         fullName: data.fullName,
-//         email: data.email,
-//         phone: data.phone,
-//         storeName: data.storeName,
-//         password: hashPassword(data.password),
-//         role: "Boshqaruv",
-//         createdAt: new Date().toISOString(),
-
-//         // 🔹 Dashboard uchun bo‘sh obyektlar
-//         products: [],
-//         categories: ['Electronics'],
-//         sales: [],
-//         debtors: [],
-//         paidDebtors: [],
-//         smsHistory: [],
-
-//         stats: {
-//           customers: 0,
-//           deals: 0,
-//           today: 0
-//         }
-//       };
-
-//       allUsers.push(newUser);
-//       saveAllUsers(allUsers);
-
-//       return { success: true, user: newUser };
-//     },
-
-//     // ============================
-//     // 🔹 Login
-//     // ============================
-//     login: function (emailOrPhone, password) {
-//       const users = getAllUsers();
-//       const hashed = hashPassword(password);
-
-//       const user = users.find(
-//         u =>
-//           (u.email === emailOrPhone || u.phone === emailOrPhone) &&
-//           u.password === hashed
-//       );
-
-//       if (!user) {
-//         return { success: false, message: "Email/Telefon yoki parol noto‘g‘ri!" };
-//       }
-
-//       localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-//       localStorage.setItem(SESSION_KEY, "true");
-
-//       return { success: true, user };
-//     },
-
-//     // ============================
-//     // 🔹 Hozirgi userni olish
-//     // ============================
-//     getCurrentUser: function () {
-//       try {
-//         const data = localStorage.getItem(CURRENT_USER_KEY);
-//         return data ? JSON.parse(data) : null;
-//       } catch {
-//         return null;
-//       }
-//     },
-
-//     // ============================================================
-//     // 🔥 MA'LUMOTLARNI YANGILAB SAQLAB BORUVCHI ASOSIY FUNKSIYA
-//     // ============================================================
-//     updateCurrentUserData: function (updates) {
-//       const currentUser = this.getCurrentUser();
-//       if (!currentUser) return false;
-
-//       const updatedUser = {
-//         ...currentUser,
-//         ...updates
-//       };
-
-//       // Session userni yangilash
-//       localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
-
-//       // Global userlar bazasini yangilash
-//       const allUsers = getAllUsers();
-//       const index = allUsers.findIndex(u => u.userId === currentUser.userId);
-
-//       if (index !== -1) {
-//         allUsers[index] = updatedUser;
-//         saveAllUsers(allUsers);
-//       }
-
-//       return true;
-//     },
-
-//     // ============================
-//     // 🔹 Sessiya tekshirish
-//     // ============================
-//     isSessionValid: function () {
-//       return (
-//         localStorage.getItem(SESSION_KEY) === "true" &&
-//         this.getCurrentUser() !== null
-//       );
-//     },
-
-//     // ============================
-//     // 🔹 Logout
-//     // ============================
-//     logout: function () {
-//       localStorage.removeItem(CURRENT_USER_KEY);
-//       localStorage.removeItem(SESSION_KEY);
-//       window.location.href = "login.html";
-//     },
-
-//     // ============================
-//     // 🔹 Dashboard sahifasini himoya qilish
-//     // ============================
-//     protectPage: function () {
-//       const page = window.location.pathname.toLowerCase();
-//       const publicPages = ["signup.html", "login.html", "landing.html"];
-
-//       const isPublic = publicPages.some(p => page.includes(p));
-
-//       if (!isPublic && !this.isSessionValid()) {
-//         window.location.href = "login.html";
-//         return false;
-//       }
-
-//       return true;
-//     }
-//   };
-// })();
-
-// console.log("🔥 AUTH SYSTEM TAYYOR — HAMMASI TO‘LIQ ISHLAYDI");
-// ============================================================
-// 🔐 PROFESSIONAL UNIFIED AUTH SYSTEM
-// ============================================================
-
-const AuthSystem = (function () {
-    'use strict';
-
-    // ============================
-    // 🔹 STORAGE KEYS (YAGONAlik uchun)
-    // ============================
-    const USERS_KEY = 'crm_all_users';
-    const CURRENT_USER_KEY = 'crm_current_user';
-    const SESSION_KEY = 'crm_session_active';
-
-    // ============================
-    // 🔹 PRIVATE FUNCTIONS
-    // ============================
-    
-    // Barcha userlarni olish
-    function getAllUsers() {
+    function safeJsonParse(value, fallback) {
         try {
-            const users = localStorage.getItem(USERS_KEY);
-            return users ? JSON.parse(users) : [];
+            return value ? JSON.parse(value) : fallback;
         } catch {
-            return [];
+            return fallback;
         }
     }
 
-    // Barcha userlarni saqlash
-    function saveAllUsers(users) {
-        localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    function getStoredValue(key) {
+        return localStorage.getItem(key) || sessionStorage.getItem(key);
     }
 
-    // Parolni xeshlash
-    function hashPassword(password) {
-        let hash = 0;
-        for (let i = 0; i < password.length; i++) {
-            hash = (hash << 5) - hash + password.charCodeAt(i);
-            hash |= 0;
+    function getStorageForExistingSession() {
+        if (
+            localStorage.getItem(ACCESS_TOKEN_KEY) ||
+            localStorage.getItem(REFRESH_TOKEN_KEY) ||
+            localStorage.getItem(SESSION_KEY) === "true" ||
+            localStorage.getItem(OLD_SESSION_KEY) === "true"
+        ) {
+            return localStorage;
         }
-        return hash.toString(36);
+
+        return sessionStorage;
     }
 
-    // Random ID generator
-    function generateUserId() {
-        return 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    function clearSessionOnly() {
+        [
+            CURRENT_USER_KEY,
+            SESSION_KEY,
+            OLD_USER_KEY,
+            OLD_SESSION_KEY,
+            ACCESS_TOKEN_KEY,
+            REFRESH_TOKEN_KEY,
+            AUTH_REDIRECT_KEY
+        ].forEach(key => {
+            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
+        });
+
+        delete crmApi.defaults.headers.common.Authorization;
     }
 
-    // ============================
-    // 🔹 PUBLIC API
-    // ============================
-    return {
+    function clearTokensOnly() {
+        [ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY].forEach(key => {
+            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
+        });
 
-        // ============================================================
-        // 📝 RO'YXATDAN O'TKAZISH
-        // ============================================================
-        register: function (data) {
-            const allUsers = getAllUsers();
+        // delete crmApi.defaults.headers.common.Authorization;
+    }
 
-            // Email orqali tekshirish
-            if (allUsers.find(u => u.email === data.email)) {
-                return { 
-                    success: false, 
-                    message: "Bu email allaqachon ro'yxatdan o'tgan!" 
-                };
-            }
+    function normalizeUser(user) {
+        user = user || {};
 
-            const newUser = {
-                userId: generateUserId(),
-                fullName: data.fullName,
-                email: data.email,
-                phone: data.phone,
-                storeName: data.storeName,
-                password: hashPassword(data.password),
-                role: "Boshqaruv",
-                createdAt: new Date().toISOString(),
+        return {
+            ...user,
+            fullName: user.full_name || user.fullName || "",
+            storeName: user.company_name || user.storeName || "",
+            userId: user.id || user.userId || null
+        };
+    }
 
-                // 🔹 Dashboard uchun bo'sh struktura
-                products: [],
-                categories: ['Electronics'],
-                sales: [],
-                debtors: [],
-                paidDebtors: [],
-                smsHistory: [],
+    function saveSession(user, remember) {
+        const storage = remember ? localStorage : sessionStorage;
+        const cleanUser = normalizeUser(user);
 
-                stats: {
-                    customers: 0,
-                    deals: 0,
-                    today: 0
-                }
-            };
+        storage.setItem(CURRENT_USER_KEY, JSON.stringify(cleanUser));
+        storage.setItem(SESSION_KEY, "true");
+        storage.setItem(OLD_USER_KEY, JSON.stringify(cleanUser));
+        storage.setItem(OLD_SESSION_KEY, "true");
+    }
 
-            allUsers.push(newUser);
-            saveAllUsers(allUsers);
+    function saveTokens(tokens, remember) {
+        const storage = remember ? localStorage : sessionStorage;
+        const accessToken = tokens && tokens.access_token;
+        const refreshToken = tokens && tokens.refresh_token;
 
-            console.log('✅ Yangi foydalanuvchi ro\'yxatdan o\'tdi:', newUser.email);
-            return { success: true, user: newUser };
-        },
+        if (!accessToken || !refreshToken) {
+            throw new Error("Token ma'lumotlari to'liq emas.");
+        }
 
-        // ============================================================
-        // 🔐 LOGIN
-        // ============================================================
-        login: function (emailOrPhone, password) {
-            const users = getAllUsers();
-            const hashed = hashPassword(password);
+        // clearTokensOnly();
 
-            const user = users.find(
-                u =>
-                    (u.email === emailOrPhone || u.phone === emailOrPhone) &&
-                    u.password === hashed
+        storage.setItem(ACCESS_TOKEN_KEY, accessToken);
+        storage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+        storage.setItem(SESSION_KEY, "true");
+        storage.setItem(OLD_SESSION_KEY, "true");
+
+        // setAuthorizationHeader(accessToken);
+    }
+
+    function setAuthorizationHeader(token) {
+        if (token) {
+            crmApi.defaults.headers.common.Authorization = `Bearer ${token}`;
+        } else {
+            delete crmApi.defaults.headers.common.Authorization;
+        }
+    }
+
+    function getAccessToken() {
+        return getStoredValue(ACCESS_TOKEN_KEY);
+    }
+
+    function getRefreshToken() {
+        return getStoredValue(REFRESH_TOKEN_KEY);
+    }
+
+    function decodeJwtPayload(token) {
+        if (!token || token.split(".").length < 2) return null;
+
+        try {
+            const base64 = token
+                .split(".")[1]
+                .replace(/-/g, "+")
+                .replace(/_/g, "/");
+            const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, "=");
+            const json = decodeURIComponent(
+                atob(padded)
+                    .split("")
+                    .map(char => "%" + ("00" + char.charCodeAt(0).toString(16)).slice(-2))
+                    .join("")
             );
 
-            if (!user) {
-                return { 
-                    success: false, 
-                    message: "Email/Telefon yoki parol noto'g'ri!" 
+            return JSON.parse(json);
+        } catch {
+            return null;
+        }
+    }
+
+    function getTokenExpiresAt(token) {
+        const payload = decodeJwtPayload(token);
+        return payload && payload.exp ? payload.exp * 1000 : null;
+    }
+
+    function isTokenFresh(token) {
+        const expiresAt = getTokenExpiresAt(token);
+
+        if (!token) return false;
+        if (!expiresAt) return true;
+
+        return Date.now() + TOKEN_SKEW_MS < expiresAt;
+    }
+
+    function isAuthEndpoint(url) {
+        return String(url || "").includes("/api/v1/auth/login") ||
+            String(url || "").includes("/api/v1/auth/register") ||
+            String(url || "").includes("/api/v1/auth/refresh") ||
+            String(url || "").includes("/api/v1/auth/logout");
+    }
+
+    function getErrorMessage(error, fallback) {
+        const detail = error && error.response && error.response.data && error.response.data.detail;
+
+        if (Array.isArray(detail) && detail.length) {
+            return detail.map(item => item.msg || item.message || String(item)).join("\n");
+        }
+
+        if (typeof detail === "string") {
+            return detail;
+        }
+
+        return fallback || "Server bilan bog'lanishda xatolik yuz berdi.";
+    }
+
+    function redirectTo(url) {
+        const currentPage = window.location.pathname.split("/").pop().toLowerCase();
+        const targetPage = String(url || "").split("/").pop().toLowerCase();
+
+        if (currentPage !== targetPage) {
+            window.location.href = url;
+        }
+    }
+
+    function isPublicPage() {
+        const page = window.location.pathname.toLowerCase();
+        const currentPage = page.split("/").pop();
+        const publicPages = [
+            "",
+            "/",
+            "w-page.html",
+            "signup.html",
+            "login.html",
+            "landing.html"
+        ];
+
+        return publicPages.includes(currentPage) || page.endsWith("/");
+    }
+
+    function rememberCurrentSession() {
+        return getStorageForExistingSession() === localStorage;
+    }
+
+    function logoutInternal(options) {
+        options = options || {};
+        const refreshToken = getRefreshToken();
+
+        if (refreshToken && options.callApi !== false) {
+            axios.post(`${API_URL}/api/v1/auth/logout`, {
+                refresh_token: refreshToken
+            }, {
+                headers: getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}
+            }).catch(() => { });
+        }
+
+        refreshPromise = null;
+        clearSessionOnly();
+
+        if (options.redirect !== false) {
+            redirectTo(options.redirectUrl || LOGIN_PAGE);
+        }
+    }
+
+    async function refreshAccessToken(options) {
+        options = options || {};
+
+        const currentAccessToken = getAccessToken();
+        if (!options.force && isTokenFresh(currentAccessToken)) {
+            setAuthorizationHeader(currentAccessToken);
+            return currentAccessToken;
+        }
+
+        const currentRefreshToken = getRefreshToken();
+        if (!currentRefreshToken) {
+            logoutInternal({ callApi: false, redirect: options.redirectOnFail !== false });
+            throw new Error("Refresh token topilmadi.");
+        }
+
+        if (refreshPromise) {
+            return refreshPromise;
+        }
+
+        refreshPromise = axios.post(`${API_URL}/api/v1/auth/refresh`, {
+            refresh_token: currentRefreshToken
+        }).then(response => {
+            const nextAccessToken = response.data && response.data.access_token;
+            const nextRefreshToken = response.data && response.data.refresh_token;
+
+            saveTokens({
+                access_token: nextAccessToken,
+                refresh_token: nextRefreshToken || currentRefreshToken
+            }, rememberCurrentSession());
+
+            return nextAccessToken;
+        }).catch(error => {
+            logoutInternal({ callApi: false, redirect: options.redirectOnFail !== false });
+            throw error;
+        }).finally(() => {
+            refreshPromise = null;
+        });
+
+        return refreshPromise;
+    }
+
+    async function fetchCurrentUser() {
+        const response = await crmApi.get("/api/v1/auth/me");
+        const user = response.data;
+
+        saveSession(user, rememberCurrentSession());
+        return user;
+    }
+
+    setAuthorizationHeader(getAccessToken());
+
+    crmApi.interceptors.request.use(async config => {
+        config.headers = config.headers || {};
+
+        if (config.data instanceof FormData) {
+            delete config.headers["Content-Type"];
+        } else if (!config.headers["Content-Type"]) {
+            config.headers["Content-Type"] = "application/json";
+        }
+
+        if (!isAuthEndpoint(config.url)) {
+            const token = await refreshAccessToken({ redirectOnFail: false });
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        return config;
+    });
+
+    crmApi.interceptors.response.use(
+        response => response,
+        async error => {
+            const originalRequest = error && error.config;
+
+            if (
+                error &&
+                error.response &&
+                error.response.status === 401 &&
+                originalRequest &&
+                !originalRequest._retry &&
+                !isAuthEndpoint(originalRequest.url)
+            ) {
+                originalRequest._retry = true;
+
+                try {
+                    const token = await refreshAccessToken({ force: true });
+                    originalRequest.headers = originalRequest.headers || {};
+                    originalRequest.headers.Authorization = `Bearer ${token}`;
+                    return crmApi(originalRequest);
+                } catch (refreshError) {
+                    return Promise.reject(refreshError);
+                }
+            }
+
+            return Promise.reject(error);
+        }
+    );
+
+    return {
+        register: async function (data) {
+            data = data || {};
+
+            try {
+                const response = await axios.post(`${API_URL}/api/v1/auth/register`, {
+                    full_name: String(data.fullName || "").trim(),
+                    email: String(data.email || "").trim().toLowerCase(),
+                    phone: String(data.phone || "").trim() || null,
+                    password: String(data.password || ""),
+                    company_name: String(data.storeName || "").trim() || null
+                });
+
+                return {
+                    success: true,
+                    code: "REGISTER_SUCCESS",
+                    message: "Ro'yxatdan o'tish muvaffaqiyatli yakunlandi!",
+                    data: response.data
+                };
+            } catch (error) {
+                console.error("Register error:", error);
+                return {
+                    success: false,
+                    code: "REGISTER_FAILED",
+                    message: getErrorMessage(error, "Ro'yxatdan o'tishda xatolik yuz berdi.")
                 };
             }
-
-            // Session o'rnatish
-            localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-            localStorage.setItem(SESSION_KEY, "true");
-
-            console.log('✅ Tizimga kirdi:', user.email);
-            return { success: true, user };
         },
 
-        // ============================================================
-        // 👤 HOZIRGI USERNI OLISH
-        // ============================================================
-        getCurrentUser: function () {
+        login: async function (emailOrPhoneOrData, passwordArg) {
+            let loginValue = "";
+            let password = "";
+            let remember = false;
+
+            if (typeof emailOrPhoneOrData === "object" && emailOrPhoneOrData !== null) {
+                loginValue = emailOrPhoneOrData.login || emailOrPhoneOrData.email || "";
+                password = emailOrPhoneOrData.password || "";
+                remember = emailOrPhoneOrData.remember !== false;
+            } else {
+                loginValue = emailOrPhoneOrData || "";
+                password = passwordArg || "";
+            }
+
             try {
-                const data = localStorage.getItem(CURRENT_USER_KEY);
-                return data ? JSON.parse(data) : null;
-            } catch {
-                return null;
+                const response = await axios.post(`${API_URL}/api/v1/auth/login`, {
+                    email: String(loginValue || "").trim().toLowerCase(),
+                    password: password
+                });
+
+                clearSessionOnly();
+                saveTokens(response.data, remember);
+
+                const backendUser = await fetchCurrentUser();
+
+                return {
+                    success: true,
+                    code: "LOGIN_SUCCESS",
+                    message: "Tizimga muvaffaqiyatli kirildi!",
+                    user: backendUser
+                };
+            } catch (error) {
+                console.error("Login error:", error);
+                clearTokensOnly();
+
+                return {
+                    success: false,
+                    code: "LOGIN_FAILED",
+                    message: getErrorMessage(error, "Email yoki parol noto'g'ri!")
+                };
             }
         },
 
-        // ============================================================
-        // 💾 MA'LUMOTLARNI YANGILASH (ASOSIY FUNKSIYA)
-        // ============================================================
-        updateCurrentUserData: function (updates) {
-            const currentUser = this.getCurrentUser();
-            if (!currentUser) {
-                console.error('❌ Joriy foydalanuvchi topilmadi');
+        ensureValidSession: async function () {
+            if (!getRefreshToken()) {
                 return false;
             }
 
-            // Deep merge - har bir maydon to'g'ri yangilanadi
-            const updatedUser = JSON.parse(JSON.stringify(currentUser));
+            try {
+                await refreshAccessToken({ redirectOnFail: false });
 
-            Object.keys(updates).forEach(key => {
-                if (Array.isArray(updates[key])) {
-                    // Massiv bo'lsa to'liq yangilanadi
-                    updatedUser[key] = [...updates[key]];
+                if (!this.getCurrentUser()) {
+                    await fetchCurrentUser();
                 }
-                else if (typeof updates[key] === "object" && updates[key] !== null) {
-                    // Obyekt bo'lsa merge qilinadi
-                    updatedUser[key] = {
-                        ...updatedUser[key],
-                        ...updates[key]
-                    };
-                }
-                else {
-                    updatedUser[key] = updates[key];
-                }
+
+                return true;
+            } catch {
+                return false;
+            }
+        },
+
+        getAccessToken: getAccessToken,
+
+        getRefreshToken: getRefreshToken,
+
+        getCurrentUser: function () {
+            const data = getStoredValue(CURRENT_USER_KEY) || getStoredValue(OLD_USER_KEY);
+            return safeJsonParse(data, null);
+        },
+
+        getCurrentUserFullData: function () {
+            return this.getCurrentUser();
+        },
+
+        updateCurrentUserData: function (updates) {
+            const currentUser = this.getCurrentUser();
+
+            if (!currentUser) {
+                return false;
+            }
+
+            const updatedUser = normalizeUser({
+                ...currentUser,
+                ...updates
             });
 
-            // 1. CURRENT USER ni yangilash
-            localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
+            if (updates.fullName) updatedUser.full_name = updates.fullName;
+            if (updates.storeName) updatedUser.company_name = updates.storeName;
 
-            // 2. GLOBAL USERS bazasini yangilash
-            const allUsers = getAllUsers();
-            const index = allUsers.findIndex(u => u.userId === currentUser.userId);
+            saveSession(updatedUser, rememberCurrentSession());
+            return true;
+        },
 
-            if (index !== -1) {
-                allUsers[index] = updatedUser;
-                saveAllUsers(allUsers);
-                console.log('✅ Ma\'lumotlar yangilandi:', currentUser.email);
+        changePassword: async function (oldPassword, newPassword) {
+            try {
+                await crmApi.post("/api/v1/auth/change-password", {
+                    old_password: oldPassword,
+                    new_password: newPassword
+                });
+
+                return {
+                    success: true,
+                    code: "PASSWORD_CHANGED",
+                    message: "Parol muvaffaqiyatli o'zgartirildi!"
+                };
+            } catch (error) {
+                console.error("Change password error:", error);
+                return {
+                    success: false,
+                    code: "PASSWORD_CHANGE_FAILED",
+                    message: getErrorMessage(error, "Parolni o'zgartirib bo'lmadi.")
+                };
             }
+        },
+
+        isSessionValid: function () {
+            return !!getRefreshToken();
+        },
+
+        isLoggedIn: function () {
+            return this.isSessionValid();
+        },
+
+        logout: function (options) {
+            logoutInternal(options);
+        },
+
+        protectPage: function () {
+            if (isPublicPage()) {
+                return true;
+            }
+
+            if (!this.isSessionValid()) {
+                sessionStorage.setItem(AUTH_REDIRECT_KEY, window.location.href);
+                redirectTo(LOGIN_PAGE);
+                return false;
+            }
+
+            this.ensureValidSession().then(isValid => {
+                if (!isValid) {
+                    sessionStorage.setItem(AUTH_REDIRECT_KEY, window.location.href);
+                    redirectTo(LOGIN_PAGE);
+                }
+            });
 
             return true;
         },
 
-        // ============================================================
-        // ✅ SESSIYA TEKSHIRISH
-        // ============================================================
-        isSessionValid: function () {
-            return (
-                localStorage.getItem(SESSION_KEY) === "true" &&
-                this.getCurrentUser() !== null
-            );
-        },
+        redirectIfLoggedIn: function (redirectUrl) {
+            redirectUrl = redirectUrl || DASHBOARD_PAGE;
 
-        // ============================================================
-        // 🚪 LOGOUT
-        // ============================================================
-        logout: function () {
-            const user = this.getCurrentUser();
-            if (user) {
-                console.log('👋 Tizimdan chiqdi:', user.email);
-            }
-            
-            localStorage.removeItem(CURRENT_USER_KEY);
-            localStorage.removeItem(SESSION_KEY);
-            window.location.href = "login.html";
-        },
+            const currentPage = window.location.pathname.split("/").pop().toLowerCase();
+            const targetPage = redirectUrl.split("/").pop().toLowerCase();
 
-        // ============================================================
-        // 🛡️ SAHIFANI HIMOYA QILISH
-        // ============================================================
-        protectPage: function () {
-            const page = window.location.pathname.toLowerCase();
-            const publicPages = ["signup.html", "login.html", "landing.html"];
-
-            const isPublic = publicPages.some(p => page.includes(p));
-
-            if (!isPublic && !this.isSessionValid()) {
-                console.log('⚠️ Ruxsatsiz kirish - login sahifasiga yo\'naltirish');
-                window.location.href = "login.html";
+            if (currentPage === targetPage) {
                 return false;
             }
 
+            if (this.isSessionValid()) {
+                if (isTokenFresh(getAccessToken())) {
+                    const savedRedirect = sessionStorage.getItem(AUTH_REDIRECT_KEY);
+                    sessionStorage.removeItem(AUTH_REDIRECT_KEY);
+                    redirectTo(savedRedirect || redirectUrl);
+                    return true;
+                }
+
+                this.ensureValidSession().then(isValid => {
+                    if (isValid) {
+                        const savedRedirect = sessionStorage.getItem(AUTH_REDIRECT_KEY);
+                        sessionStorage.removeItem(AUTH_REDIRECT_KEY);
+                        redirectTo(savedRedirect || redirectUrl);
+                    }
+                });
+            }
+
+            return false;
+        },
+
+        clearAllAuthData: function () {
+            clearSessionOnly();
             return true;
         }
     };
 })();
 
-console.log("🔥 AUTH SYSTEM TAYYOR - HAMMASI TO'LIQ ISHLAYDI");
+// ─────────────────────────────────────────────────────────────────────────────
+// 🌐 GLOBAL AUTH BRIDGE
+//
+// ROOT CAUSE: `getAuth()` faqat index.js IIFE ichida private funksiya sifatida
+// aniqlangan va hech qachon global scope ga chiqarilmagan.
+// signup.js, profile.js, dashboard.js va boshqa fayllar `getAuth()` yoki
+// `window.auth` ni global scope da kutadi — lekin ular yo'q edi.
+//
+// FIX: window.getAuth ni bu yerda bir marta aniqlaymiz — auth.js yuklangandan
+// keyin darhol mavjud bo'ladi. Bu barcha fayllar bilan backward compatible:
+//   ✅  getAuth()            → index.js ichida ishlaydi (o'z IIFE private nusxasi bor)
+//   ✅  window.getAuth()     → boshqa har qanday fayldan ishlaydi
+//   ✅  window.AuthSystem    → to'g'ridan-to'g'ri ham ishlaydi (o'zgarmagan)
+// ─────────────────────────────────────────────────────────────────────────────
+window.getAuth = function () {
+    return window.AuthSystem || null;
+};
+
+// NOTE: renderProfileData() va getWeeklyTrend() bu fayldan olib tashlandi.
+// renderProfileData() — normalizeApiAssetUrl() ga bog'liq, u faqat script.js da mavjud.
+// auth.js script.js dan oldin yuklanishi mumkin, shuning uchun ReferenceError berardi.
+// getWeeklyTrend() — script.js da window.crmApi bilan to'g'ri versiyasi bor.
+// Topbarni yangilash script.js dagi TopbarProfileManager orqali bajariladi.

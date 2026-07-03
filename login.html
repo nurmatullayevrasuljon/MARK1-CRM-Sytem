@@ -46,19 +46,19 @@
                 <p class="text-muted mb-4 l-text2">CRM platformasidagi hisobingizga kiring</p>
 
                 <div class="btn-group w-100 mb-4 switch-btns">
-                    <button id="emailTab" class="btn btn-light active">Elektron pochta</button>
-                    <button id="phoneTab" class="btn btn-light">Telefon</button>
+                    <button id="emailTab" type="button" class="btn btn-light active">Elektron pochta</button>
+                    <button id="phoneTab" type="button" class="btn btn-light">Telefon</button>
                 </div>
 
                 <form id="loginForm" novalidate>
                     <div class="form-group">
-                        <label id="loginLabel">E-pochta manzili</label>
+                        <label id="loginLabel" for="loginInput">E-pochta manzili</label>
                         <input id="loginInput" type="email" class="form-control rounded-pill"
                             placeholder="you@example.com" required>
                     </div>
 
                     <div class="form-group">
-                        <label>Parol</label>
+                        <label for="password">Parol</label>
                         <input id="password" type="password" class="form-control rounded-pill"
                             placeholder="Parolingizni kiriting" required minlength="6">
                     </div>
@@ -71,20 +71,21 @@
                         <a href="#" class="small">Parolni unutdingizmi?</a>
                     </div>
 
-                    <button id="loginBtn" class="btn btn-login w-100" disabled>
+                    <button id="loginBtn" type="submit" class="btn btn-login w-100" disabled>
                         Tizimga kirish
                     </button>
 
                     <div class="text-center mt-4 small">
                         Hisobingiz yo'qmi?
-                        <a href="signup.html" class="font-weight-bold">Bu yerda ro'yxatdan o'ting</a>
+                        <a href="signup.html" class="auth-link font-weight-bold">Bu yerda ro'yxatdan o'ting</a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    <script src="auth.js" defer></script> 
-    <script src="script.js" defer></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="auth.js" defer></script>
     <script src="index.js" defer></script>
 </body>
 

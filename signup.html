@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz">
 
 <head>
     <meta charset="UTF-8">
@@ -41,61 +41,60 @@
                     </div>
                 </div>
             </div>
+
             <div class="col-xl-5 form-box p-4">
                 <h3 class="l-text ml-3">Hisob yaratish</h3>
                 <span class="l-text2 ml-3">Bugun bizning CRM platformamizga qo'shiling</span>
-                <!-- Form starts -->
+
                 <form id="signupForm" novalidate>
                     <div class="row g-3">
+
                         <div class="col-12 my-3">
-                            <!-- <label class="form-label" for="firstName"></label> -->
                             <input id="firstName" name="firstName" class="form-control rounded-pill text-capitalize"
-                                required aria-required="true" placeholder="To'liq ism" />
-                            <div class="invalid-feedback">Please enter your first name.</div>
+                                required minlength="3" placeholder="To'liq ism" />
+                            <div class="invalid-feedback">Iltimos ismingizni kiriting.</div>
                         </div>
 
                         <div class="col-12 my-3">
-                            <!-- <label class="form-label" for="email"></label> -->
                             <input id="email" name="email" type="email" class="form-control rounded-pill" required
                                 placeholder="Elektron pochta" />
-                            <div class="invalid-feedback">Please enter a valid email.</div>
+                            <div class="invalid-feedback">Iltimos to'g'ri email kiriting.</div>
                         </div>
 
                         <div class="col-12 my-3">
-                            <!-- <label class="form-label" for="email"></label> -->
-                            <input id="tel" name="tel" type="tel" class="form-control rounded-pill" required
-                                placeholder="Tel raqam +998" maxlength="9" />
-                            <div class="invalid-feedback">Please enter a valid email.</div>
+                            <input id="phone" name="phone" type="tel" class="form-control rounded-pill" required
+                                placeholder="Tel raqam +998" maxlength="13" />
+                            <div class="invalid-feedback">Iltimos telefon raqam kiriting.</div>
                         </div>
 
                         <div class="col-12 my-3">
-                            <!-- <label class="form-label" for="email"></label> -->
-                            <input id="tel" name="tel" type="tel" class="form-control rounded-pill" required
-                                placeholder="Do'kon nomi" />
-                            <div class="invalid-feedback">Please enter a valid email.</div>
+                            <input id="storeName" name="storeName" class="form-control rounded-pill" required
+                                minlength="2" placeholder="Do'kon nomi" />
+                            <div class="invalid-feedback">Iltimos do'kon nomini kiriting.</div>
                         </div>
 
                         <div class="col-12 my-3">
-                            <!-- <label class="form-label" for="password"></label> -->
                             <input id="password" name="password" type="password" class="form-control rounded-pill"
-                                required minlength="6" placeholder="Password" aria-describedby="pwdHelp" />
-                            <div id="pwdHelp" class="form-text small-muted">At least 6 characters</div>
-                            <div class="invalid-feedback">Please provide a valid password (min 6 chars).</div>
+                                required minlength="6" placeholder="Password" />
+                            <div class="form-text small-muted">Kamida 6 ta belgi</div>
+                            <div class="invalid-feedback">Kamida 6 ta belgidan iborat parol kiriting.</div>
                         </div>
 
                         <div class="col-12 text-center">
-                            <input id="terms" type="checkbox" class="form-check-input me-2" />
-                            <label for="terms" class="small-muted mb-0">By creating an account, I agree to our <a
-                                    href="#">Terms of use</a> and <a href="#">Privacy Policy</a></label>
+                            <input id="terms" type="checkbox" class="form-check-input me-2" required />
+                            <label for="terms" class="small-muted mb-0">
+                                Hisob yaratish orqali men
+                                <a href="#" data-no-transition>Foydalanish shartlari</a> va
+                                <a href="#" data-no-transition>Maxfiylik siyosati</a>ga roziman
+                            </label>
                         </div>
 
                         <div class="col-12 mt-2">
-                            <!-- Primary CTA: disabled by default until checkbox + valid inputs -->
-                            <button id="createBtn" class="btn btn-primary-cta w-100" type="submit" disabled>Yangi hisob
-                                yaratish</button>
+                            <button id="createBtn" class="btn btn-primary-cta w-100" type="submit" disabled>
+                                Yangi hisob yaratish
+                            </button>
                         </div>
 
-                        <!-- divider -->
                         <div class="col-12">
                             <div class="divider">
                                 <div class="line"></div>
@@ -105,11 +104,11 @@
                         </div>
 
                         <div class="col-12">
-                            <!-- Google continue button (static visual) -->
-                            <button id="googleBtn" type="button" class="btn btn-google w-100 border  mb-3 gap-2">
+                            <button id="googleBtn" type="button" class="btn btn-google w-100 border mb-3 gap-2">
                                 <img src="img/flat-color-icons_google.png" alt="G" />
                                 <span class="small-muted">Continue with Google</span>
                             </button>
+                            <a href="login.html" class="auth-link">Hisobingiz bormi? Kirish</a>
                         </div>
 
                     </div>
@@ -117,10 +116,10 @@
             </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="auth.js"></script>
+    <script src="index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="auth.js" defer></script>
-<script src="index.js" defer></script>
-<script src="script.js" defer></script>
 
 </html>

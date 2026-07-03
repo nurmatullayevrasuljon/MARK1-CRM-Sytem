@@ -1,74 +1,43 @@
+const API_URL = "https://z3wax.pythonanywhere.com";
 // ============================================================
-// 🔐 AUTH CHECK - HAR SAHIFADA
-// ============================================================
-(function() {
-  const currentPage = window.location.pathname.toLowerCase();
-  const publicPages = ['signup.html', 'login.html', 'index.html'];
-  
-  const isPublicPage = publicPages.some(page => currentPage.includes(page));
-  
-  if (!isPublicPage && !AuthSystem.isSessionValid()) {
-    window.location.href = 'login.html';
-    return;
-  }
-})();
-
-// ============================================================
-// 📦 USER DATA LOADING
+// 📦 USER DATA LOADING (SODDALASHTIRILGAN)
 // ============================================================
 function loadUserData() {
-  const userData = AuthSystem.getCurrentUser();
-  if (!userData) {
-    AuthSystem.logout();
-    return;
+  const Auth = window.AuthSystem;
+
+  if (!Auth || typeof Auth.getCurrentUser !== "function") {
+    return false;
   }
 
-  // Ma'lumotlarni yuklash
-  products = userData.products || [];
-  categories = userData.categories || ['Electronics'];
-  sales = userData.sales || [];
-  debtors = userData.debtors || [];
-  paidDebtors = userData.paidDebtors || [];
-  smsHistory = userData.smsHistory || [];
-  
+  const userData =
+    typeof Auth.getCurrentUserFullData === "function"
+      ? Auth.getCurrentUserFullData()
+      : Auth.getCurrentUser();
+
+  if (!userData) {
+    return false;
+  }
+
+  products = chooseUserArray(userData.products, products, []);
+  categories = chooseUserArray(userData.categories, categories, ['Electronics']);
+  sales = chooseUserArray(userData.sales, sales, []);
+  debtors = chooseUserArray(userData.debtors, debtors, []);
+  paidDebtors = chooseUserArray(userData.paidDebtors, paidDebtors, []);
+  smsHistory = chooseUserArray(userData.smsHistory, smsHistory, []);
+
+  persistUserData({
+    products,
+    categories,
+    sales,
+    debtors,
+    paidDebtors,
+    smsHistory
+  });
+
   console.log('✅ User data loaded:', userData.email);
+  return true;
 }
 
-// ============================================================
-// 💾 SAVE FUNCTIONS - UPDATED
-// ============================================================
-function saveProducts() {
-  AuthSystem.updateCurrentUserData({ products });
-}
-
-function saveCategories() {
-  AuthSystem.updateCurrentUserData({ categories });
-}
-
-function saveSales() {
-  AuthSystem.updateCurrentUserData({ sales });
-}
-
-function saveDebtors() {
-  AuthSystem.updateCurrentUserData({ debtors, paidDebtors });
-}
-
-function saveSmsHistory() {
-  AuthSystem.updateCurrentUserData({ smsHistory });
-}
-
-// ============================================================
-// 🎯 INITIALIZATION
-// ============================================================
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('🎬 Dashboard initializing...');
-  
-  // 1. Ma'lumotlarni yuklash
-  loadUserData();
-  
-  // 2. Boshqa barcha funksiyalar...
-  // (Sizning eski kodingiz)
-});
 
 // KEYIN SIZNING BARCHA ESKI KODINGIZ...
 
@@ -92,14 +61,19 @@ items.forEach(el => observer.observe(el));
 /* ===============================================
    BUGUNGI DAROMAD COUNTER (dailySales ichida)
 =============================================== */
-function updateDailySalesPageCounter() {
+// function updateDailySalesPageCounter(){
+
+async function updateDailySalesPageCounter() {
   const counterEl = document.getElementById("dailySalesPageCounter");
   const changeEl = document.getElementById("dailySalesPageChange");
 
   if (!counterEl || !changeEl) return;
 
   const today = getToday();
-  const todayTotal = calculateTodayRevenue(today);
+  // const todayTotal = calculateTodayRevenue(today);
+  const stats = await getDailySalesStats();
+
+  const todayTotal = stats?.today_revenue || 0;
   const yesterdayTotal = Number(localStorage.getItem("yesterdaySalesTotal")) || 0;
 
   const lastShown = Number(counterEl.dataset.lastValue || 0);
@@ -116,7 +90,7 @@ function updateDailySalesPageCounter() {
   setTimeout(() => {
     counterEl.innerHTML = `${todayTotal.toLocaleString()} <small style="font-size:0.6em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
   }, 1200);
-  
+
   // REAL FOIZ HISOBLASH
   if (todayTotal === 0 && yesterdayTotal === 0) {
     changeEl.innerText = "Bugun savdo yo'q";
@@ -154,7 +128,7 @@ function updateTotalDebtCounter() {
   if (!counterEl) return;
 
   // Barcha qarzdorlarning umumiy qarzini hisoblash
-  const totalDebt = debtors.reduce((sum, d) => sum + d.amount, 0);
+  const totalDebt = debtors.reduce((sum, d) => sum + Number(d.amount || 0), 0);
   const debtorCount = debtors.length;
   const lastShown = Number(counterEl.dataset.lastValue || 0);
 
@@ -202,16 +176,29 @@ const sections = document.querySelectorAll(".section");
 const pageTitle = document.getElementById("pageTitle");
 
 function openPage(pageId, titleText) {
+  const targetSection = document.getElementById(pageId) || document.getElementById("dashboard");
+  if (!targetSection) return;
+
+  const safePageId = targetSection.id;
+  const activeNav = document.querySelector(`.nav-item[data-target="${safePageId}"]`);
+  const activeMobileNav = document.querySelector(`.mobile-bottom-nav button[data-target="${safePageId}"]`);
+  const safeTitle = titleText || activeNav?.innerText.trim() || activeMobileNav?.innerText.trim() || "Dashboard";
+
   navItems.forEach(n => n.classList.remove("active"));
-  document.querySelector(`.nav-item[data-target="${pageId}"]`)?.classList.add("active");
+  activeNav?.classList.add("active");
+
+  document.querySelectorAll(".mobile-bottom-nav button").forEach(n => n.classList.remove("active"));
+  activeMobileNav?.classList.add("active");
 
   sections.forEach(s => s.classList.remove("active"));
-  document.getElementById(pageId)?.classList.add("active");
+  targetSection.classList.add("active");
 
-  pageTitle.innerText = titleText;
+  if (pageTitle) {
+    pageTitle.innerText = safeTitle;
+  }
 
-  localStorage.setItem("activePage", pageId);
-  localStorage.setItem("activePageTitle", titleText);
+  localStorage.setItem("activePage", safePageId);
+  localStorage.setItem("activePageTitle", safeTitle);
 }
 
 navItems.forEach(item => {
@@ -223,14 +210,48 @@ navItems.forEach(item => {
 /* ===============================================
    SANA VA VAQT
 =============================================== */
+function toLocalDate(value = new Date()) {
+  if (value instanceof Date) {
+    return new Date(value.getTime());
+  }
+
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  return new Date(value);
+}
+
+function getDateKey(value = new Date()) {
+  const date = toLocalDate(value);
+  if (isNaN(date.getTime())) return "";
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getCurrentLocalDateTime() {
+  const date = new Date();
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+  const milliseconds = String(date.getMilliseconds()).padStart(3, "0");
+
+  return `${getDateKey(date)}T${hours}:${minutes}:${seconds}.${milliseconds}`;
+}
+
 function getToday() {
-  return new Date().toISOString().slice(0, 10);
+  return getDateKey(new Date());
 }
 
 function getYesterday() {
   const d = new Date();
   d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
+  return getDateKey(d);
 }
 
 function getCurrentTimestamp() {
@@ -238,29 +259,65 @@ function getCurrentTimestamp() {
 }
 
 function isToday(dateStr) {
-  const d = new Date(dateStr);
-  const t = new Date();
-  return (
-    d.getDate() === t.getDate() &&
-    d.getMonth() === t.getMonth() &&
-    d.getFullYear() === t.getFullYear()
-  );
+  return getDateKey(dateStr) === getToday();
 }
 
 /* ===============================================
    STORAGE
 =============================================== */
-let products = JSON.parse(localStorage.getItem("products")) || [];
-let categories = JSON.parse(localStorage.getItem("categories")) || ["Electronics"];
-let sales = JSON.parse(localStorage.getItem("sales")) || [];
-let debtors = JSON.parse(localStorage.getItem("crmDebtors")) || [];
-let paidDebtors = JSON.parse(localStorage.getItem("crmPaidDebtors")) || [];
-let smsHistory = JSON.parse(localStorage.getItem("smsHistory")) || [];
+function parseStoredArray(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    const parsed = value ? JSON.parse(value) : fallback;
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch (err) {
+    console.warn(`Saqlangan ${key} ma'lumoti o'qilmadi:`, err);
+    return fallback;
+  }
+}
+
+function chooseUserArray(userValue, legacyValue, fallback) {
+  if (Array.isArray(userValue) && userValue.length > 0) {
+    return [...userValue];
+  }
+
+  if (Array.isArray(legacyValue) && legacyValue.length > 0) {
+    return [...legacyValue];
+  }
+
+  if (Array.isArray(userValue)) {
+    return [...userValue];
+  }
+
+  return [...fallback];
+}
+
+function persistUserData(updates) {
+  const Auth = window.AuthSystem;
+
+  if (
+    Auth &&
+    typeof Auth.updateCurrentUserData === "function" &&
+    typeof Auth.isSessionValid === "function" &&
+    Auth.isSessionValid()
+  ) {
+    Auth.updateCurrentUserData(updates);
+  }
+}
+
+let products = parseStoredArray("products", []);
+let categories = parseStoredArray("categories", ["Electronics"]);
+let sales = parseStoredArray("sales", []);
+let debtors = parseStoredArray("crmDebtors", []);
+let paidDebtors = parseStoredArray("crmPaidDebtors", []);
+let smsHistory = parseStoredArray("smsHistory", []);
 let editingId = null;
 let currentFilter = 'all';
 let currentSmsDebtorId = null;
 let transactionFilter = "daily";
 let transactionSearchQuery = "";
+
+loadUserData();
 
 // Chart instances
 let chartInstances = {
@@ -268,25 +325,220 @@ let chartInstances = {
   daily: null
 };
 
+// function getApiBaseUrl() {
+//   // return window.CRM_API_URL || "https://backend-api-production-87e9.up.railway.app";
+//   return window.CRM_API_URL || "https://z3wax.pythonanywhere.com";
+// }
+function getApiBaseUrl() {
+    return window.crmApi.defaults.baseURL;
+}
+
+function getApiErrorMessage(error, fallback) {
+  const detail = error && error.response && error.response.data && error.response.data.detail;
+
+  if (Array.isArray(detail) && detail.length) {
+    return detail.map(item => item.msg || item.message || String(item)).join("\n");
+  }
+
+  if (typeof detail === "string") {
+    return detail;
+  }
+
+  return fallback || "Server bilan bog'lanishda xatolik yuz berdi.";
+}
+
+function normalizeApiAssetUrl(url) {
+  if (!url) return "img/product.jpg";
+  if (/^https?:\/\//i.test(url) || String(url).startsWith("data:")) return url;
+  return getApiBaseUrl().replace(/\/$/, "") + "/" + String(url).replace(/^\//, "");
+}
+
+function mapApiProduct(product) {
+  const existing = products.find(item => item.id === product.id) || {};
+  const quantity = Number(product.quantity) || 0;
+  const category = product.category || null;
+  const unit = product.unit === "kg" ? "kg" : "dona";
+
+  return {
+    id: product.id,
+    name: product.name || "",
+    categoryId: category ? category.id : null,
+    category: category ? category.name : "Kategoriyasiz",
+    image: normalizeApiAssetUrl(product.image_url),
+    imageUrl: normalizeApiAssetUrl(product.image_url),
+    costPrice: Number(product.cost_price) || 0,
+    price: Number(product.sell_price) || 0,
+    currency: "UZS",
+    stock: quantity,
+    initialStock: Math.max(Number(existing.initialStock) || 0, quantity),
+    unit,
+    isLowStock: !!product.is_low_stock,
+    createdAt: product.created_at || null
+  };
+}
+
+function mapApiSale(sale, item) {
+  const product = item.product || products.find(p => p.id === item.product_id) || null;
+  const category = product && product.category
+    ? (typeof product.category === "string" ? product.category : product.category.name)
+    : (product && product.categoryName) || "Kategoriyasiz";
+
+  return {
+    id: sale.id,
+    itemId: item.id,
+    sessionId: sale.notes || "api",
+    productId: item.product_id,
+    name: product ? product.name : "Mahsulot",
+    category,
+    qty: Number(item.quantity) || 0,
+    unit: product ? product.unit : "dona",
+    price: Number(item.unit_price) || 0,
+    total: Number(item.total_price) || Number(sale.total_amount) || 0,
+    currency: "UZS",
+    status: sale.status || "sold",
+    paymentType: sale.payment_type || "cash",
+    date: sale.sold_at || getCurrentLocalDateTime(),
+    timestamp: new Date(sale.sold_at || Date.now()).getTime()
+  };
+}
+
+// NOTE: mapDebtor() was an unused, duplicate mapper producing an incompatible
+// shape (fullName/debtAmount/remainingAmount/dueDate). It was only ever called
+// by the duplicate apiLoadDebtors() removed above. Removed as dead code; the
+// canonical mapper is mapApiDebtor() below (used by the real apiLoadDebtors()).
+
+/* ===============================================
+   ✅ TRANSACTIONS API → LOCAL ROW MAPPER
+   Backend /api/v1/transactions/ does NOT return the
+   old local `sales` shape ({id, customer, items, amount,
+   paymentType, date}). It returns its own transaction
+   object. This function normalizes ANY reasonable backend
+   shape into the row shape renderTransactions() draws
+   (name, category, qty, unit, price, currency, paymentType, date).
+   Field names are defensive (multiple fallbacks) because the
+   exact backend key names were not pinned down in the task.
+=============================================== */
+function mapTransaction(apiTransaction) {
+  if (!apiTransaction || typeof apiTransaction !== "object") {
+    return {
+      id: null,
+      name: "Noma'lum mahsulot",
+      category: "Kategoriyasiz",
+      qty: 0,
+      unit: "dona",
+      price: 0,
+      currency: "UZS",
+      paymentType: "cash",
+      date: getCurrentLocalDateTime()
+    };
+  }
+
+  const t = apiTransaction;
+
+  // product / item can come as nested object, flat fields, or first item of an items[] array
+  const firstItem = Array.isArray(t.items) && t.items.length ? t.items[0] : null;
+  const productObj = t.product || (firstItem && firstItem.product) || null;
+
+  const name =
+    t.product_name ||
+    t.productName ||
+    (productObj && productObj.name) ||
+    t.name ||
+    (firstItem && (firstItem.product_name || firstItem.name)) ||
+    "Mahsulot";
+
+  const category =
+    t.category_name ||
+    t.categoryName ||
+    (productObj && productObj.category &&
+      (typeof productObj.category === "string" ? productObj.category : productObj.category.name)) ||
+    t.category ||
+    "Kategoriyasiz";
+
+  const qty = Number(
+    t.quantity ?? t.qty ?? (firstItem && firstItem.quantity) ?? 0
+  ) || 0;
+
+  const unit =
+    t.unit ||
+    (productObj && productObj.unit) ||
+    (firstItem && firstItem.unit) ||
+    "dona";
+
+  const price = Number(
+    t.unit_price ?? t.price ?? (firstItem && firstItem.unit_price) ?? 0
+  ) || 0;
+
+  const total = Number(
+    t.total_price ?? t.total_amount ?? t.amount ?? price * qty
+  ) || 0;
+
+  const paymentType = t.payment_type || t.paymentType || "cash";
+
+  const date =
+    t.sold_at || t.created_at || t.date || t.timestamp || getCurrentLocalDateTime();
+
+  return {
+    id: t.id ?? null,
+    name,
+    category,
+    qty,
+    unit,
+    price,
+    total,
+    currency: t.currency || "UZS",
+    status: t.status || "sold",
+    paymentType,
+    date
+  };
+}
+
+function mapApiDebtor(debtor) {
+  return {
+    id: debtor.id,
+    name: debtor.full_name || "",
+    phone: debtor.phone || "",
+    amount: Number(debtor.remaining_amount ?? debtor.debt_amount) || 0,
+    originalAmount: Number(debtor.debt_amount) || 0,
+    paidAmount: Number(debtor.paid_amount) || 0,
+    debtDate: debtor.debt_date || debtor.created_at || getCurrentLocalDateTime(),
+    returnDate: debtor.due_date || getCurrentLocalDateTime(),
+    notes: debtor.notes || "",
+    status: debtor.status || "normal",
+    isActive: debtor.is_active !== false
+  };
+}
+
+function toApiDateTime(dateValue) {
+  if (!dateValue) return new Date().toISOString();
+  if (String(dateValue).includes("T")) return new Date(dateValue).toISOString();
+  return new Date(`${dateValue}T00:00:00`).toISOString();
+}
+
 function saveProducts() {
   localStorage.setItem("products", JSON.stringify(products));
+  persistUserData({ products });
 }
 
 function saveCategories() {
   localStorage.setItem("categories", JSON.stringify(categories));
+  persistUserData({ categories });
 }
 
 function saveSales() {
   localStorage.setItem("sales", JSON.stringify(sales));
+  persistUserData({ sales });
 }
 
 function saveDebtors() {
   localStorage.setItem('crmDebtors', JSON.stringify(debtors));
   localStorage.setItem('crmPaidDebtors', JSON.stringify(paidDebtors));
+  persistUserData({ debtors, paidDebtors });
 }
 
 function saveSmsHistory() {
   localStorage.setItem('smsHistory', JSON.stringify(smsHistory));
+  persistUserData({ smsHistory });
 }
 
 /* ===============================================
@@ -329,7 +581,7 @@ function checkAndResetDailyIfNeeded() {
     localStorage.setItem("yesterdaySalesTotal", todayTotal);
     localStorage.setItem("currentSalesDate", today);
 
-    const oldSales = sales.filter(s => s.date.slice(0, 10) !== today);
+    const oldSales = sales.filter(s => getDateKey(s.date) !== today);
     console.log(`Kun o'zgardi! Kechagi savdo: ${todayTotal} UZS`);
     console.log(`${oldSales.length} ta eski sotuv o'chirildi`);
 
@@ -344,7 +596,7 @@ function checkAndResetDailyIfNeeded() {
 =============================================== */
 function calculateTodayRevenue(date = getToday()) {
   return sales
-    .filter(s => s.status === "sold" && s.date.slice(0, 10) === date)
+    .filter(s => s.status === "sold" && getDateKey(s.date) === date)
     .reduce((sum, s) => sum + Number(s.total), 0);
 }
 
@@ -358,7 +610,7 @@ function getFirstSaleDate() {
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
-  return sortedSales[0].date.slice(0, 10);
+  return getDateKey(sortedSales[0].date);
 }
 
 function calculateMonthlyRevenue(date = getToday()) {
@@ -367,7 +619,7 @@ function calculateMonthlyRevenue(date = getToday()) {
   return sales
     .filter(s => {
       if (s.status !== "sold") return false;
-      const [sYear, sMonth] = s.date.slice(0, 10).split('-');
+      const [sYear, sMonth] = getDateKey(s.date).split('-');
       return sYear === year && sMonth === month;
     })
     .reduce((sum, s) => sum + Number(s.total), 0);
@@ -376,7 +628,7 @@ function calculateMonthlyRevenue(date = getToday()) {
 function getPreviousMonthRevenue() {
   const today = new Date();
   today.setMonth(today.getMonth() - 1);
-  const prevMonth = today.toISOString().slice(0, 10);
+  const prevMonth = getDateKey(today);
 
   return calculateMonthlyRevenue(prevMonth);
 }
@@ -487,10 +739,10 @@ function calculateWeeklyRevenue() {
   for (let i = 6; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().slice(0, 10);
+    const dateStr = getDateKey(date);
 
     const dayRevenue = sales
-      .filter(s => s.status === "sold" && s.date.slice(0, 10) === dateStr)
+      .filter(s => s.status === "sold" && getDateKey(s.date) === dateStr)
       .reduce((sum, s) => sum + Number(s.total), 0);
 
     weekData.push(dayRevenue);
@@ -585,7 +837,7 @@ function getSalesStatus(product) {
   sales.forEach(s => {
     if (s.productId === product.id && s.status === "sold") {
       const qty = Number(s.qty);
-      const date = new Date(s.date);
+      const date = toLocalDate(s.date);
 
       if (!isNaN(qty) && date >= sevenDaysAgo) {
         sold += qty;
@@ -618,22 +870,92 @@ const productCategory = document.getElementById("productCategory");
 function renderCategories(selected = null) {
   if (!productCategory) return;
 
-  productCategory.innerHTML = categories
-    .map(c => `<option value="${c}">${c}</option>`)
-    .join("");
+  if (globalCategories.length) {
+    productCategory.innerHTML = globalCategories
+      .map(c => `<option value="${c.id}">${c.name}</option>`)
+      .join("");
+  } else {
+    productCategory.innerHTML = categories
+      .map(c => `<option value="">${c}</option>`)
+      .join("");
+  }
 
-  if (selected) productCategory.value = selected;
+  if (selected !== null && selected !== undefined) {
+    const selectedCategory = globalCategories.find(c => c.id == selected || c.name === selected);
+    productCategory.value = selectedCategory ? String(selectedCategory.id) : String(selected);
+  }
 }
 
+// /* ===============================================
+//    MAHSULOTLAR - RENDER (data-label bilan)
+// =============================================== */
+// const productTable = document.getElementById("productTable");
+
+// function renderProducts(list = products) {
+//   if (!productTable) return;
+//   productTable.innerHTML = "";
+
+//   if (list.length === 0) {
+//     productTable.innerHTML = `
+//       <tr>
+//         <td colspan="7" class="text-center text-muted py-3">
+//           Mahsulotlar topilmadi
+//         </td>
+//       </tr>
+//     `;
+//     return;
+//   }
+
+//   list.forEach(p => {
+//     const stockUI = getStockUI(p);
+
+//     productTable.innerHTML += `
+//       <tr class="${stockUI.color === "danger" ? "table-danger" : ""}">
+//         <td data-label="Rasm">
+//           <img src="${p.image}" class="product-img">
+//         </td>
+//         <td data-label="Nomi">${p.name}</td>
+//         <td data-label="Kategoriya">${p.category}</td>
+//         <td data-label="Narx">${p.price.toLocaleString()} ${p.currency}</td>
+
+//         <!-- ZAXIRA DIZAYNI -->
+//         <td data-label="Zaxira">
+//           <div class="stock-cell">
+//             <div class="stock-text">
+//               ${p.stock} / ${p.initialStock} ${p.unit}
+//             </div>
+
+//             <div class="progress stock-progress">
+//               <div class="progress-bar bg-${stockUI.color}"
+//                    style="width:${stockUI.percent}%">
+//               </div>
+//             </div>
+//           </div>
+//         </td>
+
+//         <td data-label="Holat">${getSalesStatus(p)}</td>
+
+//         <td data-label="Harakatlar">
+//           <a href="#" onclick="editProduct(${p.id})">Edit</a>
+//           <a href="index.html" class="text-danger ml-2"
+//              onclick="deleteProduct(${p.id})">Delete</a>
+//         </td>
+//       </tr>
+//     `;
+//   });
+// }
 /* ===============================================
    MAHSULOTLAR - RENDER (data-label bilan)
 =============================================== */
+
 const productTable = document.getElementById("productTable");
 
 function renderProducts(list = products) {
   if (!productTable) return;
+
   productTable.innerHTML = "";
 
+  // Agar mahsulot bo‘lmasa
   if (list.length === 0) {
     productTable.innerHTML = `
       <tr>
@@ -642,48 +964,88 @@ function renderProducts(list = products) {
         </td>
       </tr>
     `;
+    if (typeof renderLowStockAlerts === "function") renderLowStockAlerts(products);
+    if (typeof updateInventoryBalanceUI === "function") updateInventoryBalanceUI();
     return;
   }
 
-  list.forEach(p => {
+  // Mahsulotlarni chiqarish
+  list.forEach((p) => {
     const stockUI = getStockUI(p);
 
     productTable.innerHTML += `
       <tr class="${stockUI.color === "danger" ? "table-danger" : ""}">
+        
+        <!-- Rasm -->
         <td data-label="Rasm">
           <img src="${p.image}" class="product-img">
         </td>
-        <td data-label="Nomi">${p.name}</td>
-        <td data-label="Kategoriya">${p.category}</td>
-        <td data-label="Narx">${p.price.toLocaleString()} ${p.currency}</td>
 
-        <!-- ZAXIRA DIZAYNI -->
+        <!-- Nomi -->
+        <td data-label="Nomi">${p.name}</td>
+
+        <!-- Kategoriya -->
+        <td data-label="Kategoriya">${p.category}</td>
+
+        <!-- Narx -->
+        <td data-label="Narx">
+          ${p.price.toLocaleString()} ${p.currency}
+        </td>
+
+        <!-- Zaxira -->
         <td data-label="Zaxira">
           <div class="stock-cell">
+
             <div class="stock-text">
               ${p.stock} / ${p.initialStock} ${p.unit}
             </div>
 
             <div class="progress stock-progress">
-              <div class="progress-bar bg-${stockUI.color}"
-                   style="width:${stockUI.percent}%">
+              <div 
+                class="progress-bar bg-${stockUI.color}"
+                style="width:${stockUI.percent}%">
               </div>
             </div>
+
           </div>
         </td>
 
-        <td data-label="Holat">${getSalesStatus(p)}</td>
+        <!-- Holat -->
+        <td data-label="Holat">
+          ${getSalesStatus(p)}
+        </td>
 
+        <!-- Harakatlar -->
         <td data-label="Harakatlar">
-          <a href="#" onclick="editProduct(${p.id})">Edit</a>
-          <a href="#" class="text-danger ml-2"
-             onclick="deleteProduct(${p.id})">Delete</a>
+
+          <!-- EDIT -->
+          <button 
+            class="btn btn-sm btn-edit"
+            onclick="editProduct(${p.id})">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+            </svg>
+
+          </button>
+
+          <!-- DELETE -->
+          <button 
+            class="btn btn-sm btn-danger ms-2"
+            onclick="deleteProduct(${p.id})">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+            </svg>
+
+          </button>
+
         </td>
       </tr>
     `;
   });
-}
 
+  if (typeof renderLowStockAlerts === "function") renderLowStockAlerts(products);
+  if (typeof updateInventoryBalanceUI === "function") updateInventoryBalanceUI();
+}
 
 // Zaxirani HIsoblash
 function getStockUI(product) {
@@ -691,7 +1053,7 @@ function getStockUI(product) {
   const current = Number(product.stock) || 0;
 
   const percent = initial > 0
-    ? Math.round((current / initial) * 100)
+    ? Math.min(100, Math.round((current / initial) * 100))
     : 0;
 
   if (current <= 0) {
@@ -749,44 +1111,70 @@ if (productForm) {
   productForm.addEventListener("submit", async e => {
     e.preventDefault();
 
-    let image = "";
-    if (productImage.files[0]) {
-      image = await imageToBase64(productImage.files[0]);
-    } else if (editingId) {
-      image = products.find(p => p.id === editingId)?.image || "";
-    }
-
     const stockValue = Number(productStock.value);
     const costPriceValue = Number(document.getElementById("productCostPrice").value);
     const salePriceValue = Number(productPrice.value);
+    const categoryId = Number(productCategory.value);
 
-    const data = {
-      id: editingId || Date.now(),
-      name: productName.value.trim(),
-      category: productCategory.value,
-      costPrice: costPriceValue,
-      price: salePriceValue,
-      currency: productCurrency.value,
-      stock: stockValue,
-      initialStock: editingId ? products.find(p => p.id === editingId)?.initialStock || stockValue : stockValue,
-      unit: productUnit.value,
-      image
-    };
-
-    if (editingId) {
-      const i = products.findIndex(p => p.id === editingId);
-      products[i] = data;
-      editingId = null;
-    } else {
-      products.push(data);
+    if (!productName.value.trim()) {
+      alert("Mahsulot nomini kiriting");
+      return;
     }
 
-    saveProducts();
-    renderProducts();
-    renderSaleProducts();
-    updateProfitUI();
-    $("#productModal").modal("hide");
-    productForm.reset();
+    if (stockValue < 0 || costPriceValue < 0 || salePriceValue < 0) {
+      alert("Narx va miqdor manfiy bo'lishi mumkin emas");
+      return;
+    }
+
+    if (!categoryId) {
+      alert("Kategoriya tanlang yoki yangi kategoriya qo'shing");
+      return;
+    }
+
+    try {
+      if (editingId) {
+        // Update product using JSON PUT
+        const updateData = {
+          name: productName.value.trim(),
+          category_id: categoryId,
+          cost_price: parseFloat(costPriceValue),
+          sell_price: parseFloat(salePriceValue),
+          quantity: parseFloat(stockValue),
+          unit: productUnit.value === "ta" ? "dona" : productUnit.value
+        };
+
+        await window.crmApi.put(`/api/v1/products/${editingId}`, updateData);
+        showSaleAlert("Mahsulot yangilandi!", "success");
+        editingId = null;
+      } else {
+        // Create product using FormData POST
+        const formData = new FormData();
+        formData.append("name", productName.value.trim());
+        formData.append("category_id", categoryId);
+        formData.append("cost_price", parseFloat(costPriceValue));
+        formData.append("sell_price", parseFloat(salePriceValue));
+        formData.append("quantity", parseFloat(stockValue));
+        formData.append("unit", productUnit.value === "ta" ? "dona" : productUnit.value);
+
+        if (productImage.files[0]) {
+          formData.append("image", productImage.files[0]);
+        }
+
+        await window.crmApi.post("/api/v1/products/", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        });
+        showSaleAlert("Mahsulot qo'shildi!", "success");
+      }
+
+      await apiLoadProducts();
+      $("#productModal").modal("hide");
+      productForm.reset();
+    } catch (error) {
+      console.error(error);
+      alert(getApiErrorMessage(error, "Mahsulotni saqlashda xatolik yuz berdi"));
+    }
   });
 }
 
@@ -800,18 +1188,22 @@ function editProduct(id) {
   productPrice.value = p.price;
   productCurrency.value = p.currency;
   productStock.value = p.stock;
-  productUnit.value = p.unit || "ta";
+  productUnit.value = p.unit === "dona" ? "ta" : p.unit;
 
-  renderCategories(p.category);
+  renderCategories(p.categoryId || p.category);
   $("#productModal").modal("show");
 }
 
-function deleteProduct(id) {
+async function deleteProduct(id) {
   if (!confirm("O'chirishni xohlaysizmi?")) return;
-  products = products.filter(p => p.id !== id);
-  saveProducts();
-  renderProducts();
-  renderSaleProducts();
+  try {
+    await window.crmApi.delete(`/api/v1/products/${id}`);
+    showSaleAlert("Mahsulot o'chirildi!", "success");
+    await apiLoadProducts();
+  } catch (error) {
+    console.error(error);
+    alert(getApiErrorMessage(error, "Mahsulotni o'chirishda xatolik yuz berdi"));
+  }
 }
 
 /* ===============================================
@@ -864,88 +1256,227 @@ const saveCategory = document.getElementById("saveCategory");
 const updateCategoryBtn = document.getElementById("updateCategory");
 const deleteCategoryBtn = document.getElementById("deleteCategory");
 
+let globalCategories = [];
+
+async function apiLoadProducts() {
+
+  try {
+
+    console.log(
+      "━━━━━━━━━━━━━━━━━━━━━━"
+    );
+
+    console.log(
+      "📦 PRODUCTS API"
+    );
+
+    const response =
+      await window.crmApi.get(
+        "/api/v1/products/"
+      );
+
+    console.log(
+      "✅ STATUS: SUCCESS"
+    );
+
+    console.log(
+      "📊 PRODUCTS COUNT:",
+      response.data.length
+    );
+
+    console.table(
+      response.data
+    );
+
+    products =
+      (response.data || [])
+        .map(mapApiProduct);
+
+    console.log(
+      "🔄 MAPPED PRODUCTS:"
+    );
+
+    console.table(
+      products
+    );
+
+    saveProducts();
+
+    renderProducts();
+
+    renderSaleProducts();
+
+    console.log(
+      "✅ PRODUCTS RENDERED"
+    );
+
+    console.log(
+      "━━━━━━━━━━━━━━━━━━━━━━"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "❌ PRODUCTS API ERROR"
+    );
+
+    console.error(
+      error
+    );
+
+    showSaleAlert(
+      getApiErrorMessage(
+        error,
+        "Mahsulotlarni yuklashda xatolik yuz berdi"
+      ),
+      "error"
+    );
+  }
+}
+
+async function apiLoadCategories() {
+  try {
+    const response = await window.crmApi.get("/api/v1/products/categories");
+    globalCategories = response.data;
+    categories = globalCategories.map(c => c.name);
+    saveCategories();
+    renderCategories();
+    renderCategoryList();
+    console.log("✅ Categories loaded from API:", globalCategories.length);
+  } catch (error) {
+    console.error("❌ Error loading categories from API:", error);
+  }
+}
+
 function renderCategoryList() {
   if (!categoryList) return;
 
-  categoryList.innerHTML = categories
-    .map(c => `<option value="${c}">${c}</option>`)
+  categoryList.innerHTML = globalCategories
+    .map(c => `<option value="${c.id}">${c.name}</option>`)
     .join("");
 
-  if (categories.length) {
-    categoryList.value = categories[0];
-    newCategory.value = categories[0];
+  if (globalCategories.length) {
+    categoryList.value = globalCategories[0].id;
+    newCategory.value = globalCategories[0].name;
   }
 }
 
 if (openCategoryModal) {
+  // openCategoryModal.addEventListener("click", () => {
+  //   newCategory.value = "";
+  //   renderCategoryList();
+  //   $("#categoryModal").modal("show");
+  // });
   openCategoryModal.addEventListener("click", () => {
+
     newCategory.value = "";
+
     renderCategoryList();
+
+    saveCategory.style.display = "inline-block";
+    updateCategoryBtn.style.display = "inline-block";
+
     $("#categoryModal").modal("show");
   });
 }
 
 if (categoryList) {
+  // categoryList.addEventListener("change", () => {
+  //   const found = globalCategories.find(c => c.id == categoryList.value);
+  //   if (found) {
+  //     newCategory.value = found.name;
+  //   }
+  // });
   categoryList.addEventListener("change", () => {
-    newCategory.value = categoryList.value;
+
+    const found = globalCategories.find(
+      c => c.id == categoryList.value
+    );
+
+    if (!found) return;
+
+    newCategory.value = found.name;
+
+    updateCategoryBtn.disabled = false;
   });
 }
 
 if (saveCategory) {
-  saveCategory.addEventListener("click", () => {
+  saveCategory.addEventListener("click", async () => {
     const value = newCategory.value.trim();
     if (!value) return alert("Kategoriya nomini kiriting");
-    if (categories.includes(value)) return alert("Bu kategoriya mavjud");
+    // if (categories.includes(value)) return alert("Bu kategoriya mavjud");
+    if (
+      globalCategories.some(
+        c => c.name.toLowerCase() === value.toLowerCase()
+      )
+    ) {
+      return alert("Bu kategoriya mavjud");
+    }
 
-    categories.push(value);
-    saveCategories();
-    renderCategories(value);
-    renderCategoryList();
-    newCategory.value = "";
-
-    $("#categoryModal").modal("hide");
+    try {
+      await window.crmApi.post("/api/v1/products/categories", {
+        name: value
+      });
+      showSaleAlert("Kategoriya qo'shildi!", "success");
+      await apiLoadCategories();
+      newCategory.value = "";
+      $("#categoryModal").modal("hide");
+    } catch (error) {
+      console.error(error);
+      alert("Kategoriya qo'shishda xatolik yuz berdi");
+    }
   });
 }
 
 if (updateCategoryBtn) {
-  updateCategoryBtn.addEventListener("click", () => {
-    const oldValue = categoryList.value;
-    const newValue = newCategory.value.trim();
+  updateCategoryBtn.addEventListener("click", async () => {
 
-    if (!newValue) return alert("Yangi nomni kiriting");
-    if (categories.includes(newValue)) return alert("Bu kategoriya mavjud");
+    const catId = categoryList.value;
+    const newName = newCategory.value.trim();
 
-    categories = categories.map(c => (c === oldValue ? newValue : c));
-    products.forEach(p => {
-      if (p.category === oldValue) p.category = newValue;
-    });
+    if (!catId) return alert("Tahrirlash uchun kategoriya tanlang");
+    if (!newName) return alert("Kategoriya nomini kiriting");
 
-    saveCategories();
-    saveProducts();
-    renderCategories(newValue);
-    renderProducts();
-    renderCategoryList();
+    const current = globalCategories.find(c => c.id == catId);
+    if (current && current.name === newName) return alert("Nom o'zgartirilmadi");
 
-    $("#categoryModal").modal("hide");
+    const duplicate = globalCategories.find(
+      c => c.name.toLowerCase() === newName.toLowerCase() && c.id != catId
+    );
+    if (duplicate) return alert("Bu nom boshqa kategoriyada mavjud");
+
+    try {
+      await window.crmApi.put(`/api/v1/products/categories/${catId}`, { name: newName });
+      showSaleAlert("Kategoriya tahrirlandi!", "success");
+      await apiLoadCategories();
+      $("#categoryModal").modal("hide");
+    } catch (error) {
+      console.error(error);
+      alert(getApiErrorMessage(error, "Kategoriyani tahrirlashda xatolik yuz berdi"));
+    }
   });
+
+  // updateCategoryBtn.style.display = "none";
 }
 
 if (deleteCategoryBtn) {
-  deleteCategoryBtn.addEventListener("click", () => {
-    const value = categoryList.value;
-    if (!value) return;
+  deleteCategoryBtn.addEventListener("click", async () => {
+    const catId = categoryList.value;
+    if (!catId) return;
 
-    const used = products.some(p => p.category === value);
-    if (used) return alert("Bu kategoriya mahsulotlarda ishlatilmoqda");
     if (!confirm("Kategoriyani o'chirmoqchimisiz?")) return;
 
-    categories = categories.filter(c => c !== value);
-    saveCategories();
-    renderCategories();
-    renderCategoryList();
-    newCategory.value = "";
-
-    $("#categoryModal").modal("hide");
+    try {
+      await window.crmApi.delete(`/api/v1/products/categories/${catId}`);
+      showSaleAlert("Kategoriya o'chirildi!", "success");
+      await apiLoadCategories();
+      newCategory.value = "";
+      $("#categoryModal").modal("hide");
+    } catch (error) {
+      console.error(error);
+      alert(getApiErrorMessage(error, "Kategoriyani o'chirishda xatolik yuz berdi"));
+    }
   });
 }
 
@@ -964,16 +1495,20 @@ const saleSearch = document.getElementById("saleSearch");
 const saleAlert = document.getElementById("saleAlert");
 
 // Session ID
-let currentSaleSessionId = localStorage.getItem("currentSaleSessionId") || Date.now();
+let currentSaleSessionId = localStorage.getItem("currentSaleSessionId");
+if (!currentSaleSessionId) {
+  currentSaleSessionId = String(Date.now());
+  localStorage.setItem("currentSaleSessionId", currentSaleSessionId);
+}
 
 // Bildirishnoma ko'rsatish funksiyasi
 function showSaleAlert(message, type = "success") {
   if (!saleAlert) return;
-  
+
   saleAlert.className = `sale-alert ${type}`;
   saleAlert.textContent = message;
   saleAlert.classList.remove("hidden");
-  
+
   setTimeout(() => {
     saleAlert.classList.add("hidden");
   }, 3000);
@@ -1034,7 +1569,76 @@ if (saleSearch) {
 /* ===============================================
    TO'LOV TURI
 =============================================== */
-function handleSale(paymentType) {
+/* ===============================================
+   ✅ TRANSACTIONS API (verified working endpoints)
+   GET /api/v1/transactions/        -> list
+   GET /api/v1/transactions/stats   -> stats
+   GET /api/v1/transactions/export  -> export
+=============================================== */
+async function getTransactions(params = {}) {
+  try {
+    const response = await window.crmApi.get("/api/v1/transactions/", { params });
+
+    // Backend may return a raw array OR a paginated object ({items}/{results}/{data})
+    const raw = response.data;
+    const items = Array.isArray(raw)
+      ? raw
+      : (raw.items || raw.results || raw.data || []);
+
+    return { items, total: raw.total ?? items.length };
+  } catch (error) {
+    console.error("❌ TRANSACTIONS API ERROR:", error);
+    return { items: [], total: 0 };
+  }
+}
+
+async function getTransactionsStats(params = {}) {
+  try {
+    const response = await window.crmApi.get("/api/v1/transactions/stats", { params });
+    return response.data;
+  } catch (error) {
+    console.error("❌ TRANSACTIONS STATS ERROR:", error);
+    return null;
+  }
+}
+
+async function loadAndRenderTransactions(period = transactionFilter) {
+  const data = await getTransactions({ period });
+  renderTransactions(data.items);
+}
+
+async function apiLoadSales() {
+  try {
+    // const response = await window.crmApi.get("/api/v1/sales/");
+    const response = await window.crmApi.get("/api/v1/sales/today");
+    const rawSales = response.data;
+
+    sales = [];
+    rawSales.forEach(sale => {
+      if (sale.items && Array.isArray(sale.items)) {
+        sale.items.forEach(item => {
+          sales.push(mapApiSale(sale, item));
+        });
+      }
+    });
+    saveSales();
+
+    renderSales();
+    // if (typeof renderTransactions === 'function') renderTransactions();
+    if (typeof updateDailySalesCounter === 'function') updateDailySalesCounter();
+    if (typeof updateDailySalesPageCounter === 'function') updateDailySalesPageCounter();
+    if (typeof updateTotalTransactions === 'function') updateTotalTransactions();
+    if (typeof updateMonthlyRevenueUI === 'function') updateMonthlyRevenueUI();
+    if (typeof updateProfitUI === 'function') updateProfitUI();
+    if (typeof updateCharts === 'function') updateCharts();
+
+    console.log("✅ Sales loaded from API:", sales.length);
+  } catch (error) {
+    console.error("❌ Error loading sales from API:", error);
+  }
+}
+
+async function handleSale(paymentType) {
   const product = products.find(p => p.id == saleProduct.value);
   if (!product) {
     showSaleAlert("❌ Mahsulot tanlanmagan!", "error");
@@ -1055,45 +1659,34 @@ function handleSale(paymentType) {
     return;
   }
 
-  const total = qty * product.price;
-  product.stock = parseFloat((product.stock - qty).toFixed(2));
+  try {
+    await window.crmApi.post("/api/v1/sales/", {
+      items: [
+        {
+          product_id: parseInt(product.id),
+          quantity: parseFloat(qty)
+        }
+      ],
+      payment_type: paymentType,
+      notes: currentSaleSessionId.toString()
+    });
 
-  sales.push({
-    id: Date.now(),
-    sessionId: currentSaleSessionId,
-    productId: product.id,
-    name: product.name,
-    category: product.category,
-    qty,
-    unit: product.unit,
-    price: product.price,
-    total,
-    currency: product.currency,
-    status: "sold",
-    paymentType,
-    date: new Date().toISOString(),
-    timestamp: getCurrentTimestamp()
-  });
+    showSaleAlert(`✅ ${product.name} sotildi!`, "success");
+    saleQty.value = "";
+    saleQty.focus();
 
-  saveSales();
-  saveProducts();
-  renderProducts();
-  renderSales();
-  
-  // Barcha bog'liq funksiyalarni chaqirish
-  if (typeof renderTransactions === 'function') renderTransactions();
-  if (typeof updateDailySalesCounter === 'function') updateDailySalesCounter();
-  if (typeof updateDailySalesPageCounter === 'function') updateDailySalesPageCounter();
-  if (typeof updateTotalTransactions === 'function') updateTotalTransactions();
-  if (typeof updateMonthlyRevenueUI === 'function') updateMonthlyRevenueUI();
-  if (typeof updateProfitUI === 'function') updateProfitUI();
-  if (typeof updateCharts === 'function') updateCharts();
+    // Reload products and sales from API
+    await apiLoadProducts();
+    await apiLoadSales();
 
-  saleQty.value = "";
-  saleQty.focus();
-
-  const paymentText = paymentType === "card" ? "💳 Karta" : "💵 Naqd";
-  showSaleAlert(`✅ ${product.name} sotildi! (${paymentText})`, "success");
+    // Update stats
+    if (typeof DashboardStatisticsManager !== 'undefined') {
+      DashboardStatisticsManager.init();
+    }
+  } catch (error) {
+    console.error(error);
+    showSaleAlert("❌ Sotuv amalga oshirilmadi!", "error");
+  }
 }
 
 const addSaleCash = document.getElementById("addSaleCash");
@@ -1119,7 +1712,7 @@ function renderSales() {
   let sum = 0;
 
   const todaySales = sales.filter(s =>
-    s.date.slice(0, 10) === today &&
+    getDateKey(s.date) === today &&
     s.status === "sold" &&
     s.sessionId == currentSaleSessionId
   );
@@ -1192,62 +1785,40 @@ function startNewSale() {
   showSaleAlert("🆕 Yangi sotuv boshlandi!", "success");
 }
 
-function cancelSale(id) {
+async function cancelSale(id) {
   if (!confirm("Bu sotuvni bekor qilmoqchimisiz?\nMahsulot stokga qaytariladi.")) return;
 
-  const sale = sales.find(s => s.id === id);
-  if (!sale) return;
+  try {
+    await window.crmApi.post(`/api/v1/sales/${id}/return`);
+    showSaleAlert("✅ Sotuv bekor qilindi!", "success");
+    await apiLoadProducts();
+    await apiLoadSales();
 
-  const product = products.find(p => p.id === sale.productId);
-  if (product) {
-    product.stock = parseFloat((product.stock + sale.qty).toFixed(2));
+    if (typeof DashboardStatisticsManager !== 'undefined') {
+      DashboardStatisticsManager.init();
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Sotuvni bekor qilishda xatolik yuz berdi");
   }
-
-  sales = sales.filter(s => s.id !== id);
-
-  saveSales();
-  saveProducts();
-  renderProducts();
-  renderSales();
-  
-  if (typeof renderTransactions === 'function') renderTransactions();
-  if (typeof updateDailySalesCounter === 'function') updateDailySalesCounter();
-  if (typeof updateDailySalesPageCounter === 'function') updateDailySalesPageCounter();
-  if (typeof updateTotalTransactions === 'function') updateTotalTransactions();
-  if (typeof updateMonthlyRevenueUI === 'function') updateMonthlyRevenueUI();
-  if (typeof updateProfitUI === 'function') updateProfitUI();
-  if (typeof updateCharts === 'function') updateCharts();
-
-  showSaleAlert("✅ Sotuv bekor qilindi!", "success");
 }
 
-function deleteSale(id) {
+async function deleteSale(id) {
   if (!confirm("Bu sotuvni butunlay o'chirmoqchimisiz?\nMahsulot stokga qaytariladi.")) return;
 
-  const sale = sales.find(s => s.id === id);
-  if (!sale) return;
+  try {
+    await window.crmApi.post(`/api/v1/sales/${id}/return`);
+    showSaleAlert("✅ Sotuv bekor qilindi!", "success");
+    await apiLoadProducts();
+    await apiLoadSales();
 
-  const product = products.find(p => p.id === sale.productId);
-  if (product) {
-    product.stock = parseFloat((product.stock + sale.qty).toFixed(2));
+    if (typeof DashboardStatisticsManager !== 'undefined') {
+      DashboardStatisticsManager.init();
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Sotuvni o'chirishda xatolik yuz berdi");
   }
-
-  sales = sales.filter(s => s.id !== id);
-
-  saveSales();
-  saveProducts();
-  renderProducts();
-  renderSales();
-  
-  if (typeof renderTransactions === 'function') renderTransactions();
-  if (typeof updateDailySalesCounter === 'function') updateDailySalesCounter();
-  if (typeof updateDailySalesPageCounter === 'function') updateDailySalesPageCounter();
-  if (typeof updateTotalTransactions === 'function') updateTotalTransactions();
-  if (typeof updateMonthlyRevenueUI === 'function') updateMonthlyRevenueUI();
-  if (typeof updateProfitUI === 'function') updateProfitUI();
-  if (typeof updateCharts === 'function') updateCharts();
-
-  showSaleAlert("✅ Sotuv o'chirildi!", "success");
 }
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /* ===============================================
@@ -1259,7 +1830,7 @@ function calculateMonthlyProfit(date = getToday()) {
 
   sales.forEach(sale => {
     if (sale.status === "sold") {
-      const [sYear, sMonth] = sale.date.slice(0, 10).split('-');
+      const [sYear, sMonth] = getDateKey(sale.date).split('-');
 
       if (sYear === year && sMonth === month) {
         const product = products.find(p => p.id === sale.productId);
@@ -1314,45 +1885,24 @@ function updateProfitUI() {
   }
 }
 
-function showNotification(message, type = "info") {
-  let notification = document.getElementById("notification");
-
-  if (!notification) {
-    notification = document.createElement("div");
-    notification.id = "notification";
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 15px 20px;
-      border-radius: 8px;
-      color: white;
-      font-weight: 500;
-      z-index: 9999;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      animation: slideIn 0.3s ease;
-    `;
-    document.body.appendChild(notification);
-  }
-
-  const colors = {
-    success: "#22c55e",
-    error: "#ef4444",
-    warning: "#f59e0b",
-    info: "#3b82f6"
-  };
-
-  notification.style.background = colors[type] || colors.info;
-  notification.innerText = message;
-  notification.style.display = "block";
-
-  setTimeout(() => {
-    notification.style.animation = "slideOut 0.3s ease";
-    setTimeout(() => {
-      notification.style.display = "none";
-    }, 300);
-  }, 3000);
+function calculateInventoryBalance() {
+  return products.reduce((sum, product) => {
+    const stock = Number(product.stock) || 0;
+    const unitCost = Number(product.costPrice || product.price) || 0;
+    return sum + stock * unitCost;
+  }, 0);
 }
+
+function updateInventoryBalanceUI() {
+  const counterEl = document.querySelector('.counter[data-key="inventoryBalance"]');
+  if (!counterEl) return;
+
+  const balance = Math.round(calculateInventoryBalance());
+  counterEl.dataset.lastValue = balance;
+  counterEl.innerHTML = `${balance.toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+}
+
+// showNotification — 3910-qatordagi unified versiyaga ko'chirildi (FIX 4)
 
 /* ===============================================
    TRANSACTIONS TABLE (Filter bilan)
@@ -1360,49 +1910,115 @@ function showNotification(message, type = "info") {
 /* ===============================================
    ✅ TRANSACTIONS TABLE (Minimalistik & Professional)
 =============================================== */
-function renderTransactions() {
+function renderTransactions(apiTransactions) {
   const tbody = document.getElementById("transactionsTableBody");
-  if (!tbody) return;
 
-  // ================================
-  // ✅ 1 OYDAN ESKI SAVDOLARNI TOZALASH
-  // ================================
-  const now = new Date();
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setDate(now.getDate() - 30);
+  const logHeader = () => {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("🛒 TRANSACTIONS UI");
+  };
 
-  const cleanedSales = sales.filter(s => new Date(s.date) >= oneMonthAgo);
-  if (cleanedSales.length !== sales.length) {
-    sales = cleanedSales;
-    saveSales();
+  if (!tbody) {
+    logHeader();
+    console.log("Rows rendered: 0");
+    console.log('❌ REASON: #transactionsTableBody element not found in DOM');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    return;
   }
 
-  const today = getToday();
+  // ================================
+  // ✅ DATA SOURCE
+  // - If apiTransactions array was passed in (from getTransactions()/the API),
+  //   map + use it directly.
+  // - Otherwise fall back to the legacy local `sales` array (old behavior),
+  //   so existing callers like renderTransactions() with no args keep working.
+  // ================================
+  const usingApiData = Array.isArray(apiTransactions);
   let filteredSales = [];
+  let reason = "";
 
-  if (transactionFilter === "daily") {
-    filteredSales = sales.filter(s => s.date.slice(0, 10) === today);
-  }
-  else if (transactionFilter === "weekly") {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    filteredSales = sales.filter(s => new Date(s.date) >= sevenDaysAgo);
-  }
-  else if (transactionFilter === "monthly") {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    filteredSales = sales.filter(s => new Date(s.date) >= thirtyDaysAgo);
-  }
+  if (usingApiData) {
+    filteredSales = apiTransactions.map(mapTransaction);
 
-  if (transactionSearchQuery) {
-    filteredSales = filteredSales.filter(s =>
-      s.name.toLowerCase().includes(transactionSearchQuery)
-    );
+    // ✅ Bekor qilingan / qaytarilgan sotuvlarni jurnaldan chiqarib tashlash
+    // (loyihaning boshqa joylarida ham ishlatiladigan status === "sold" qoidasi)
+    filteredSales = filteredSales.filter(s => s.status === "sold");
+
+    if (transactionSearchQuery) {
+      filteredSales = filteredSales.filter(s =>
+        (s.name || "").toLowerCase().includes(transactionSearchQuery)
+      );
+    }
+
+    if (apiTransactions.length === 0) {
+      reason = "API returned 0 items for the selected period/filter";
+    } else if (filteredSales.length === 0) {
+      reason = `Search query "${transactionSearchQuery}" matched 0 of ${apiTransactions.length} API items`;
+    }
+  } else {
+    // ================================
+    // ✅ 1 OYDAN ESKI SAVDOLARNI TOZALASH (legacy local-array path)
+    // ================================
+    const now = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setDate(now.getDate() - 30);
+
+    const cleanedSales = sales.filter(s => toLocalDate(s.date) >= oneMonthAgo);
+    if (cleanedSales.length !== sales.length) {
+      sales = cleanedSales;
+      saveSales();
+    }
+
+    const today = getToday();
+
+    if (transactionFilter === "daily") {
+      filteredSales = sales.filter(s => getDateKey(s.date) === today);
+    }
+    else if (transactionFilter === "weekly") {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      filteredSales = sales.filter(s => toLocalDate(s.date) >= sevenDaysAgo);
+    }
+    else if (transactionFilter === "monthly") {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      filteredSales = sales.filter(s => toLocalDate(s.date) >= thirtyDaysAgo);
+    }
+    else {
+      filteredSales = sales.slice();
+    }
+
+    // ✅ Bekor qilingan / qaytarilgan sotuvlarni jurnaldan chiqarib tashlash
+    // (loyihaning boshqa joylarida ham ishlatiladigan status === "sold" qoidasi)
+    filteredSales = filteredSales.filter(s => s.status === "sold");
+
+    if (sales.length === 0) {
+      reason = "Local `sales` array is empty (no data loaded yet)";
+    } else if (filteredSales.length === 0) {
+      reason = `No local sales match filter "${transactionFilter}"`;
+    }
+
+    if (transactionSearchQuery) {
+      const beforeSearch = filteredSales.length;
+      filteredSales = filteredSales.filter(s =>
+        (s.name || "").toLowerCase().includes(transactionSearchQuery)
+      );
+      if (beforeSearch > 0 && filteredSales.length === 0) {
+        reason = `Search query "${transactionSearchQuery}" matched 0 of ${beforeSearch} rows`;
+      }
+    }
   }
 
   tbody.innerHTML = "";
 
   const reversedSales = filteredSales.slice().reverse();
+
+  logHeader();
+  console.log("Rows rendered:", reversedSales.length);
+  if (reversedSales.length === 0) {
+    console.log("❌ REASON:", reason || "Unknown - filtered data set is empty");
+  }
+  console.log("━━━━━━━━━━━━━━━━━━━━━━");
 
   if (reversedSales.length === 0) {
     tbody.innerHTML = `
@@ -1418,7 +2034,7 @@ function renderTransactions() {
   }
 
   reversedSales.forEach((s, index) => {
-    const saleDate = new Date(s.date);
+    const saleDate = toLocalDate(s.date);
 
     const formattedDate = saleDate.toLocaleDateString('en-GB');
     const formattedTime = saleDate.toLocaleTimeString('en-GB', {
@@ -1482,31 +2098,36 @@ if (transactionSearchInput) {
 
 const transactionFilterSelect = document.getElementById("transactionFilter");
 if (transactionFilterSelect) {
-  transactionFilterSelect.addEventListener("change", (e) => {
+  transactionFilterSelect.addEventListener("change", async (e) => {
     transactionFilter = e.target.value;
-    renderTransactions();
+    await loadAndRenderTransactions(transactionFilter);
   });
 }
 // Exel eksport funksiyasi
 function exportTransactionsExcel() {
+  if (typeof XLSX === "undefined") {
+    alert("Excel eksport kutubxonasi yuklanmadi. Sahifani yangilab qayta urinib ko'ring.");
+    return;
+  }
+
   const today = getToday();
   let filteredSales = [];
   let fileName = "";
 
   if (transactionFilter === "daily") {
-    filteredSales = sales.filter(s => s.date.slice(0, 10) === today);
+    filteredSales = sales.filter(s => getDateKey(s.date) === today);
     fileName = `Kunlik_Savdo_${today}.xlsx`;
   }
   else if (transactionFilter === "weekly") {
     const d = new Date();
     d.setDate(d.getDate() - 7);
-    filteredSales = sales.filter(s => new Date(s.date) >= d);
+    filteredSales = sales.filter(s => toLocalDate(s.date) >= d);
     fileName = `Haftalik_Savdo_${today}.xlsx`;
   }
   else if (transactionFilter === "monthly") {
     const [y, m] = today.split("-");
     filteredSales = sales.filter(s => {
-      const [sy, sm] = s.date.slice(0, 10).split("-");
+      const [sy, sm] = getDateKey(s.date).split("-");
       return sy === y && sm === m;
     });
     fileName = `Oylik_Savdo_${y}-${m}.xlsx`;
@@ -1518,7 +2139,7 @@ function exportTransactionsExcel() {
   }
 
   const rows = filteredSales.map(s => {
-    const d = new Date(s.date);
+    const d = toLocalDate(s.date);
     return {
       Mahsulot: s.name,
       Miqdor: s.qty,
@@ -1540,6 +2161,11 @@ function exportTransactionsExcel() {
   XLSX.writeFile(workbook, fileName);
 }
 
+function calculateTotalRevenue() {
+  return sales
+    .filter(s => s.status === "sold")
+    .reduce((sum, s) => sum + Number(s.total || 0), 0);
+}
 
 function updateTotalTransactions() {
   const el = document.getElementById("totalTransactionsCounter");
@@ -1547,7 +2173,7 @@ function updateTotalTransactions() {
 
   const today = getToday();
   const todayTransactions = sales.filter(s =>
-    s.status === "sold" && s.date.slice(0, 10) === today
+    s.status === "sold" && getDateKey(s.date) === today
   ).length;
 
   const lastShown = Number(el.dataset.lastValue || 0);
@@ -1587,20 +2213,45 @@ document.querySelectorAll(".counter").forEach(counter => {
 /* ===============================================
    ✅ CHARTS (REAL DATA + AUTO UPDATE)
 =============================================== */
-function updateCharts() {
-  const weeklyData = calculateWeeklyRevenue();
-  const dailySales = calculateTodayRevenue();
+async function updateCharts() {
+  // if (typeof Chart === "undefined") {
+  //   return;
+  // }
 
-  const weekDays = [];
-  const today = new Date();
-  const dayNames = ["Yak", "Dush", "Sesh", "Char", "Pay", "Juma", "Shan"];
+  // const weeklyData = calculateWeeklyRevenue();
+  // const dailySales = calculateTodayRevenue();
 
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    weekDays.push(dayNames[date.getDay()]);
-  }
+  // const weekDays = [];
+  // const today = new Date();
+  // const dayNames = ["Yak", "Dush", "Sesh", "Char", "Pay", "Juma", "Shan"];
 
+  // for (let i = 6; i >= 0; i--) {
+  //   const date = new Date(today);
+  //   date.setDate(date.getDate() - i);
+  //   weekDays.push(dayNames[date.getDay()]);
+  // }
+  // const dailySales = calculateTodayRevenue();
+
+  // const dailyData = await getDailyRevenue();
+
+  // const dailySales = dailyData.daily_revenue;
+
+  const dailyData = await getDailyRevenue();
+  const dailySales = dailyData ? (dailyData.daily_revenue || 0) : 0;
+
+  const trendData =
+    await getWeeklyTrend();
+
+  const weekDays =
+    trendData.map(item => item.day);
+
+  const weeklyData =
+    trendData.map(item => item.amount);
+
+  // влыдл
+  console.log("weekDays:", weekDays);
+  console.log("weeklyData:", weeklyData);
+  // лылыд
   const weeklyChart = document.getElementById("weeklyChart");
   if (weeklyChart) {
     if (chartInstances.weekly) {
@@ -1726,7 +2377,7 @@ function calculateProfitPreview() {
 function getDaysOverdue(returnDate) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const dueDate = new Date(returnDate);
+  const dueDate = toLocalDate(returnDate);
   dueDate.setHours(0, 0, 0, 0);
   return Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24));
 }
@@ -1739,17 +2390,60 @@ function getStatus(returnDate) {
 }
 
 function formatDate(dateString) {
-  const date = new Date(dateString);
+  const date = toLocalDate(dateString);
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
   return `${day}.${month}.${year}`;
 }
 
+function normalizeDebtPhone(value) {
+  let phone = String(value || "").replace(/[^\d+]/g, "");
+
+  if (phone.startsWith("998")) {
+    phone = "+" + phone;
+  }
+
+  if (/^\d{9}$/.test(phone)) {
+    phone = "+998" + phone;
+  }
+
+  if (phone.startsWith("+998") && phone.length > 13) {
+    phone = phone.slice(0, 13);
+  }
+
+  return phone;
+}
+
+async function apiLoadDebtors() {
+  console.log("━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📋 LIST DEBTORS API");
+  console.log("📤 REQUEST: GET /api/v1/debtors/");
+
+  try {
+    const response = await window.crmApi.get("/api/v1/debtors/");
+
+    console.log("📥 RESPONSE:", response.status, response.data);
+
+    debtors = (response.data || []).map(mapApiDebtor).filter(d => d.isActive && d.amount > 0);
+    saveDebtors();
+    renderDebtors();
+    updateStatistics();
+    updateTotalDebtCounter();
+
+    console.log("✅ SUCCESS — Jami:", debtors.length, "ta qarzdor yuklandi");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+  } catch (error) {
+    console.error("❌ ERROR:", error?.response?.status, error?.response?.data || error.message);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    showNotification(getApiErrorMessage(error, "Qarzdorlarni yuklashda xatolik yuz berdi"), "error");
+  }
+}
+
 function openModal() {
   document.getElementById('debtorModal').classList.add('show');
   document.getElementById('debtorForm').reset();
-  document.getElementById('debtDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('debtDate').value = getToday();
 }
 
 function closeModal() {
@@ -1783,56 +2477,87 @@ function closeAdjustModal() {
   document.getElementById('adjustDebtModal').classList.remove('show');
 }
 
-function handleAdjustDebt(event) {
+async function handleAdjustDebt(event) {
   event.preventDefault();
 
-  const id = parseInt(document.getElementById('adjustDebtorId').value);
-  const type = document.getElementById('adjustType').value;
-  const amount = parseFloat(document.getElementById('adjustAmount').value);
+  const id = parseInt(document.getElementById("adjustDebtorId").value);
+  const type = document.getElementById("adjustType").value;
+  const amount = parseFloat(document.getElementById("adjustAmount").value);
 
   const debtor = debtors.find(d => d.id === id);
   if (!debtor) return;
 
-  if (type === 'add') {
-    debtor.amount += amount;
-    showSuccessMessage(`${debtor.name}ga ${amount.toLocaleString()} so'm qarz qo'shildi!`);
-  } else {
-    if (amount > debtor.amount) {
-      alert('To\'lanadigan summa qarzdan katta bo\'lishi mumkin emas!');
-      return;
-    }
-
-    const payment = {
-      debtorId: id,
-      debtorName: debtor.name,
-      amount: amount,
-      date: new Date().toISOString(),
-      previousDebt: debtor.amount
-    };
-
-    paidDebtors.push(payment);
-    debtor.amount -= amount;
-
-    if (debtor.amount === 0) {
-      debtors = debtors.filter(d => d.id !== id);
-      showSuccessMessage(`${debtor.name}ning qarzi to'liq to'landi!`);
-    } else {
-      showSuccessMessage(`${amount.toLocaleString()} so'm to'landi. Qoldiq: ${debtor.amount.toLocaleString()} so'm`);
-    }
+  if (isNaN(amount) || amount <= 0) {
+    alert("Summani to'g'ri kiriting!");
+    return;
   }
 
-  saveDebtors();
-  renderDebtors();
-  updateStatistics();
-  updateTotalDebtCounter();
-  closeAdjustModal();
+  try {
+    if (type === "add") {
+      // ✅ Yangi qarz yaratish — POST /api/v1/debtors/
+      console.log("━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("➕ ADD DEBT API");
+      console.log("📤 REQUEST: POST /api/v1/debtors/");
+      console.log("📦 PAYLOAD:", { full_name: debtor.name, debt_amount: amount });
+
+      const res = await window.crmApi.post("/api/v1/debtors/", {
+        full_name: debtor.name,
+        phone: debtor.phone,
+        debt_amount: amount,
+        debt_date: new Date().toISOString(),
+        due_date: toApiDateTime(debtor.returnDate),
+        notes: "Qo'shimcha qarz"
+      });
+
+      console.log("📥 RESPONSE:", res.status, res.data);
+      console.log("✅ SUCCESS");
+      console.log("━━━━━━━━━━━━━━━━━━━━━━");
+
+      showSuccessMessage(`${debtor.name}ga ${amount.toLocaleString()} so'm qarz qo'shildi!`);
+
+    } else {
+      // ✅ To'lov qabul qilish — POST /api/v1/debtors/{id}/pay
+      if (amount > debtor.amount) {
+        alert("To'lanadigan summa qarzdan katta bo'lishi mumkin emas!");
+        return;
+      }
+
+      console.log("━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("💰 ADD PAYMENT API");
+      console.log(`📤 REQUEST: POST /api/v1/debtors/${id}/pay`);
+      console.log("📦 PAYLOAD:", { amount });
+
+      const res = await window.crmApi.post(`/api/v1/debtors/${id}/pay`, { amount });
+
+      console.log("📥 RESPONSE:", res.status, res.data);
+      console.log("✅ SUCCESS");
+      console.log("━━━━━━━━━━━━━━━━━━━━━━");
+
+      paidDebtors.push({
+        debtorId: id,
+        debtorName: debtor.name,
+        amount: amount,
+        date: getCurrentLocalDateTime(),
+        previousDebt: debtor.amount
+      });
+
+      showSuccessMessage(`💰 ${amount.toLocaleString()} so'm to'lov qabul qilindi!`);
+    }
+
+    closeAdjustModal();
+    await apiLoadDebtors();
+  } catch (error) {
+    console.error("❌ ERROR:", error?.response?.status, error?.response?.data || error.message);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    alert(getApiErrorMessage(error, "Qarzni o'zgartirishda xatolik yuz berdi"));
+  }
 }
 
-function handleSubmit(event) {
+async function handleSubmit(event) {
   event.preventDefault();
 
   // ✅ DUPLICATE CHECK - Qarzdor allaqachon mavjudmi?
-  const phone = document.getElementById('debtorPhone').value.trim();
+  const phone = normalizeDebtPhone(document.getElementById('debtorPhone').value);
   const existingDebtor = debtors.find(d => d.phone === phone);
 
   if (existingDebtor) {
@@ -1841,7 +2566,6 @@ function handleSubmit(event) {
   }
 
   const newDebtor = {
-    id: Date.now(),
     name: document.getElementById('debtorName').value.trim(),
     phone: phone,
     amount: parseFloat(document.getElementById('debtAmount').value),
@@ -1850,13 +2574,33 @@ function handleSubmit(event) {
     notes: document.getElementById('debtNotes').value.trim() || ''
   };
 
-  debtors.push(newDebtor);
-  saveDebtors();
-  renderDebtors();
-  updateStatistics();
-  updateTotalDebtCounter();
-  closeModal();
-  showSuccessMessage(`✅ ${newDebtor.name} muvaffaqiyatli qo'shildi!`);
+  if (!newDebtor.name || !newDebtor.phone || !/^\+998\d{9}$/.test(newDebtor.phone)) {
+    alert("Qarzdor ismi va telefon raqamini to'g'ri kiriting!");
+    return;
+  }
+
+  if (isNaN(newDebtor.amount) || newDebtor.amount <= 0) {
+    alert("Qarz summasini to'g'ri kiriting!");
+    return;
+  }
+
+  try {
+    await window.crmApi.post("/api/v1/debtors/", {
+      full_name: newDebtor.name,
+      phone: newDebtor.phone,
+      debt_amount: newDebtor.amount,
+      debt_date: toApiDateTime(newDebtor.debtDate),
+      due_date: toApiDateTime(newDebtor.returnDate),
+      notes: newDebtor.notes
+    });
+
+    closeModal();
+    showSuccessMessage(`✅ ${newDebtor.name} muvaffaqiyatli qo'shildi!`);
+    await apiLoadDebtors();
+  } catch (error) {
+    console.error(error);
+    alert(getApiErrorMessage(error, "Qarzdorni qo'shishda xatolik yuz berdi"));
+  }
 }
 
 function contactDebtor(id) {
@@ -1864,16 +2608,151 @@ function contactDebtor(id) {
   if (debtor) window.open(`tel:${debtor.phone}`);
 }
 
-function deleteDebtor(id) {
+// async function deleteDebtor(id) {
+//   const debtor = debtors.find(d => d.id === id);
+//   if (debtor && confirm(`${debtor.name}ni o'chirish?`)) {
+//     try {
+//       await window.crmApi.delete(`/api/v1/debtors/${id}`);
+//       await apiLoadDebtors();
+//       showSuccessMessage('O\'chirildi!');
+//     } catch (error) {
+//       console.error(error);
+//       alert(getApiErrorMessage(error, "Qarzdorni o'chirishda xatolik yuz berdi"));
+//     }
+//   }
+// }
+async function deleteDebtor(id) {
   const debtor = debtors.find(d => d.id === id);
-  if (debtor && confirm(`${debtor.name}ni o'chirish?`)) {
-    debtors = debtors.filter(d => d.id !== id);
-    saveDebtors();
-    renderDebtors();
-    updateStatistics();
-    updateTotalDebtCounter();
-    showSuccessMessage('O\'chirildi!');
+  const name = debtor ? debtor.name : `#${id}`;
+
+  if (!confirm(`"${name}" ni qarzdorlar ro'yxatidan o'chirish?`)) return;
+
+  console.log("━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("🗑 DELETE DEBTOR API");
+  console.log(`📤 REQUEST: DELETE /api/v1/debtors/${id}`);
+
+  try {
+    const res = await window.crmApi.delete(`/api/v1/debtors/${id}`);
+
+    console.log("📥 RESPONSE:", res.status, res.data);
+    console.log("✅ SUCCESS");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+
+    showSuccessMessage(`🗑 ${name} muvaffaqiyatli o'chirildi!`);
+    await apiLoadDebtors();
+  } catch (err) {
+    console.error("❌ ERROR:", err?.response?.status, err?.response?.data || err.message);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    alert(getApiErrorMessage(err, "Qarzdorni o'chirishda xatolik yuz berdi"));
   }
+}
+
+// ✅ GET DEBTOR BY ID — to'liq professional versiya
+async function getDebtor(id) {
+  console.log("━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("👤 GET DEBTOR API");
+  console.log(`📤 REQUEST: GET /api/v1/debtors/${id}`);
+
+  try {
+    const res = await window.crmApi.get(`/api/v1/debtors/${id}`);
+
+    console.log("📥 RESPONSE:", res.status, res.data);
+    console.table([res.data]);
+    console.log("✅ SUCCESS");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+
+    return mapApiDebtor(res.data);
+  } catch (e) {
+    console.error("❌ ERROR:", e?.response?.status, e?.response?.data || e.message);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    showNotification(getApiErrorMessage(e, "Qarzdor ma'lumotlarini yuklashda xatolik"), "error");
+    return null;
+  }
+}
+
+// ✅ UPDATE DEBTOR — PUT /api/v1/debtors/{id}
+async function updateDebtor(id, data) {
+  console.log("━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("✏️ UPDATE DEBTOR API");
+  console.log(`📤 REQUEST: PUT /api/v1/debtors/${id}`);
+  console.log("📦 PAYLOAD:", data);
+
+  try {
+    const payload = {
+      full_name: data.name,
+      phone: data.phone,
+      debt_amount: data.originalAmount,
+      debt_date: toApiDateTime(data.debtDate),
+      due_date: toApiDateTime(data.returnDate),
+      notes: data.notes || ""
+    };
+
+    const res = await window.crmApi.put(`/api/v1/debtors/${id}`, payload);
+
+    console.log("📥 RESPONSE:", res.status, res.data);
+    console.log("✅ SUCCESS");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+
+    showSuccessMessage(`✅ ${data.name} ma'lumotlari yangilandi!`);
+    closeEditDebtorModal();
+    await apiLoadDebtors();
+  } catch (e) {
+    console.error("❌ ERROR:", e?.response?.status, e?.response?.data || e.message);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    alert(getApiErrorMessage(e, "Qarzdorni yangilashda xatolik yuz berdi"));
+  }
+}
+
+// ✅ EDIT DEBTOR MODAL — UI boshqaruvi
+function openEditDebtorModal(id) {
+  const debtor = debtors.find(d => d.id === id);
+  if (!debtor) {
+    showNotification("Qarzdor topilmadi", "error");
+    return;
+  }
+
+  // Modal maydonlarini to'ldirish
+  document.getElementById("editDebtorId").value = id;
+  document.getElementById("editDebtorName").value = debtor.name;
+  document.getElementById("editDebtorPhone").value = debtor.phone;
+  document.getElementById("editDebtAmount").value = debtor.originalAmount || debtor.amount;
+  document.getElementById("editDebtDate").value = debtor.debtDate
+    ? debtor.debtDate.split("T")[0]
+    : "";
+  document.getElementById("editReturnDate").value = debtor.returnDate
+    ? debtor.returnDate.split("T")[0]
+    : "";
+  document.getElementById("editDebtNotes").value = debtor.notes || "";
+
+  document.getElementById("editDebtorModal").classList.add("show");
+}
+
+function closeEditDebtorModal() {
+  document.getElementById("editDebtorModal").classList.remove("show");
+}
+
+async function handleEditDebtorSubmit(event) {
+  event.preventDefault();
+
+  const id = parseInt(document.getElementById("editDebtorId").value);
+  const name = document.getElementById("editDebtorName").value.trim();
+  const phone = normalizeDebtPhone(document.getElementById("editDebtorPhone").value);
+  const originalAmount = parseFloat(document.getElementById("editDebtAmount").value);
+  const debtDate = document.getElementById("editDebtDate").value;
+  const returnDate = document.getElementById("editReturnDate").value;
+  const notes = document.getElementById("editDebtNotes").value.trim();
+
+  if (!name || !phone || !/^\+998\d{9}$/.test(phone)) {
+    alert("Ism va telefon raqamni to'g'ri kiriting!");
+    return;
+  }
+
+  if (isNaN(originalAmount) || originalAmount <= 0) {
+    alert("Qarz summasini to'g'ri kiriting!");
+    return;
+  }
+
+  await updateDebtor(id, { name, phone, originalAmount, debtDate, returnDate, notes });
 }
 
 /* ===============================================
@@ -1913,32 +2792,54 @@ function closeSmsModal() {
   document.getElementById('smsModal').classList.remove('show');
 }
 
-function sendSms(event) {
+async function sendSms(event) {
   event.preventDefault();
 
   const debtor = debtors.find(d => d.id === currentSmsDebtorId);
   if (!debtor) return;
 
-  const smsData = {
-    id: Date.now(),
-    debtorId: debtor.id,
-    debtorName: debtor.name,
-    phone: debtor.phone,
-    message: document.getElementById('smsMessage').value,
-    date: new Date().toISOString(),
-    type: 'manual',
-    status: 'sent'
-  };
+  const message = document.getElementById("smsMessage").value;
 
-  smsHistory.push(smsData);
-  saveSmsHistory();
+  console.log("━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📱 SMS REMINDER API");
+  console.log(`📤 REQUEST: POST /api/v1/debtors/${debtor.id}/sms-reminder`);
+  console.log("📦 PAYLOAD:", { phone: debtor.phone, message });
 
-  localStorage.setItem(`last_sms_${debtor.id}`, new Date().toISOString().split('T')[0]);
+  try {
+    // ✅ FIXED: GET emas, POST — backend POST /api/v1/debtors/{id}/sms-reminder kutadi
+    const res = await window.crmApi.post(`/api/v1/debtors/${debtor.id}/sms-reminder`, {
+      message: message
+    });
 
-  renderSmsHistory();
-  renderDebtors();
-  closeSmsModal();
-  showSuccessMessage(`📱 SMS yuborildi: ${debtor.name}`);
+    console.log("📥 RESPONSE:", res.status, res.data);
+    console.log("✅ SUCCESS — SMS yuborildi");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+
+    const smsData = {
+      id: Date.now(),
+      debtorId: debtor.id,
+      debtorName: debtor.name,
+      phone: debtor.phone,
+      message: message,
+      date: getCurrentLocalDateTime(),
+      type: "manual",
+      status: "sent"
+    };
+
+    smsHistory.push(smsData);
+    saveSmsHistory();
+
+    localStorage.setItem(`last_sms_${debtor.id}`, getToday());
+
+    renderSmsHistory();
+    renderDebtors();
+    closeSmsModal();
+    showSuccessMessage(`📱 SMS yuborildi: ${debtor.name}`);
+  } catch (error) {
+    console.error("❌ ERROR:", error?.response?.status, error?.response?.data || error.message);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    alert(getApiErrorMessage(error, "SMS yuborishda xatolik yuz berdi"));
+  }
 }
 
 function sendAutoSms(debtor) {
@@ -1955,7 +2856,7 @@ function sendAutoSms(debtor) {
     debtorName: debtor.name,
     phone: debtor.phone,
     message: smsMessage,
-    date: new Date().toISOString(),
+    date: getCurrentLocalDateTime(),
     type: 'auto_reminder',
     status: 'sent'
   };
@@ -1963,7 +2864,7 @@ function sendAutoSms(debtor) {
   smsHistory.push(smsData);
   saveSmsHistory();
 
-  localStorage.setItem(`last_auto_sms_${debtor.id}`, new Date().toISOString().split('T')[0]);
+  localStorage.setItem(`last_auto_sms_${debtor.id}`, getToday());
 
   console.log('═══════════════════════════════════');
   console.log('📱 AVTOMATIK SMS YUBORILDI');
@@ -1994,7 +2895,7 @@ function sendOverdueSms(debtor, daysOverdue) {
     debtorName: debtor.name,
     phone: debtor.phone,
     message: smsMessage,
-    date: new Date().toISOString(),
+    date: getCurrentLocalDateTime(),
     type: 'overdue_reminder',
     status: 'sent',
     daysOverdue: daysOverdue
@@ -2003,7 +2904,7 @@ function sendOverdueSms(debtor, daysOverdue) {
   smsHistory.push(smsData);
   saveSmsHistory();
 
-  localStorage.setItem(`last_overdue_sms_${debtor.id}`, new Date().toISOString().split('T')[0]);
+  localStorage.setItem(`last_overdue_sms_${debtor.id}`, getToday());
 
   console.log('═══════════════════════════════════');
   console.log('🚨 KECHIKKAN ESLATMA SMS');
@@ -2040,7 +2941,7 @@ function renderSmsHistory() {
   const sortedHistory = [...smsHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   tbody.innerHTML = sortedHistory.map(sms => {
-    const date = new Date(sms.date);
+    const date = toLocalDate(sms.date);
     const formattedDate = date.toLocaleDateString('uz-UZ', { day: '2-digit', month: 'short' });
     const formattedTime = date.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
 
@@ -2116,7 +3017,7 @@ function viewSmsDetails(smsId) {
   const sms = smsHistory.find(s => s.id === smsId);
   if (!sms) return;
 
-  const date = new Date(sms.date);
+  const date = toLocalDate(sms.date);
   const formattedDate = date.toLocaleDateString('uz-UZ', {
     day: '2-digit',
     month: 'long',
@@ -2136,10 +3037,10 @@ function viewSmsDetails(smsId) {
 }
 
 function updateSmsStatistics() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getToday();
 
   const todaySms = smsHistory.filter(sms =>
-    sms.date.split('T')[0] === today
+    getDateKey(sms.date) === today
   ).length;
 
   const autoSms = smsHistory.filter(sms =>
@@ -2165,7 +3066,7 @@ function updateSmsStatistics() {
 function checkAndSendAutoSms() {
   const now = new Date();
   const currentHour = now.getHours();
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = getDateKey(now);
 
   // ✅ FAQAT 08:00 DA ISHLAYDI
   if (currentHour !== 8) {
@@ -2234,8 +3135,9 @@ function renderDebtors() {
   const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || "";
 
   let filtered = debtors.filter(d => {
-    const matchSearch = d.name.toLowerCase().includes(searchTerm) ||
-      d.phone.includes(searchTerm);
+    const matchSearch =
+      (d.name || "").toLowerCase().includes(searchTerm) ||
+      (d.phone || "").includes(searchTerm);
     if (currentFilter === 'all') return matchSearch;
     const status = getStatus(d.returnDate);
     return matchSearch && status.class === currentFilter;
@@ -2251,6 +3153,7 @@ function renderDebtors() {
         </td>
       </tr>
     `;
+    if (typeof renderOverdueCards === "function") renderOverdueCards();
     return;
   }
 
@@ -2262,7 +3165,7 @@ function renderDebtors() {
     let overdueText = daysOverdue > 0 ? `${daysOverdue} kun kechikdi` :
       daysOverdue === 0 ? 'Bugun' : `${Math.abs(daysOverdue)} kun qoldi`;
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = getToday();
     const lastAutoSms = localStorage.getItem(`last_auto_sms_${d.id}`);
     const lastOverdueSms = localStorage.getItem(`last_overdue_sms_${d.id}`);
     const lastManualSms = localStorage.getItem(`last_sms_${d.id}`);
@@ -2353,6 +3256,9 @@ function renderDebtors() {
             <button class="action-btn action-btn-reduce" onclick="openAdjustModal(${d.id}, 'reduce')" title="To'lov qabul qilish">
               <i class="bi bi-dash-circle-fill"></i>
             </button>
+            <button class="action-btn action-btn-edit" onclick="openEditDebtorModal(${d.id})" title="Tahrirlash" style="background:#f59e0b; color:#fff;">
+              <i class="bi bi-pencil-fill"></i>
+            </button>
             <button class="action-btn action-btn-delete" onclick="deleteDebtor(${d.id})" title="O'chirish">
               <i class="bi bi-trash-fill"></i>
             </button>
@@ -2361,7 +3267,9 @@ function renderDebtors() {
       </tr>
     `;
   }).join('');
-  
+
+  if (typeof renderOverdueCards === "function") renderOverdueCards();
+
 }
 
 function updateStatistics() {
@@ -2372,10 +3280,10 @@ function updateStatistics() {
     const status = getStatus(d.returnDate);
     if (status.class === 'overdue') {
       overdueCount++;
-      overdueAmount += d.amount;
+      overdueAmount += Number(d.amount || 0);
     } else if (status.class === 'upcoming') {
       upcomingCount++;
-      upcomingAmount += d.amount;
+      upcomingAmount += Number(d.amount || 0);
     }
   });
 
@@ -2383,7 +3291,7 @@ function updateStatistics() {
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
   const monthlyPayments = paidDebtors.filter(p => new Date(p.date) >= oneMonthAgo);
-  const monthlyTotal = monthlyPayments.reduce((sum, p) => sum + p.amount, 0);
+  const monthlyTotal = monthlyPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
   const uniqueDebtors = new Set(monthlyPayments.map(p => p.debtorName)).size;
 
   const overdueAmountEl = document.getElementById('overdueAmount');
@@ -2412,125 +3320,181 @@ function showSuccessMessage(message) {
   }, 3000);
 }
 
+// async function syncAllApiData() {
+//   if (!window.crmApi) return;
+
+//   try {
+//     await apiLoadCategories();
+//     await apiLoadProducts();
+//     await apiLoadSales();
+//     await apiLoadDebtors();
+//     await loadProfileSettings();
+
+//     if (typeof getDashboardStatistics === "function") {
+//       await getDashboardStatistics();
+//     }
+
+//     renderLowStockAlerts(products);
+//     renderOverdueCards();
+//   } catch (error) {
+//     console.error("API sync error:", error);
+//   }
+// }
+async function syncAllApiData() {
+
+  await apiLoadCategories();
+
+  await apiLoadProducts();
+
+  await apiLoadSales();
+
+  await apiLoadDebtors();
+
+  await loadAndRenderTransactions(transactionFilter);
+
+  const lowStockProducts =
+    await getLowStockAlerts();
+
+  renderLowStockAlerts(
+    lowStockProducts
+  );
+
+}
+
 /* ===============================================
    ✅ SAHIFA YUKLANGANDA (INITIALIZATION)
 =============================================== */
-document.addEventListener("DOMContentLoaded", () => {
-  const savedPage = localStorage.getItem("activePage") || "dashboard";
-  const savedTitle = localStorage.getItem("activePageTitle") || "Dashboard";
+document.addEventListener("DOMContentLoaded",
+  () => {
+    const savedPage = localStorage.getItem("activePage") || "dashboard";
+    const savedTitle = localStorage.getItem("activePageTitle") || "Dashboard";
 
-  openPage(savedPage, savedTitle);
+    openPage(savedPage, savedTitle);
 
-  if (checkAndResetDailyIfNeeded()) {
-    renderTransactions();
-  }
+    // if (checkAndResetDailyIfNeeded()) {
+    //   renderTransactions();
+    // }
 
-  renderCategories();
-  renderProducts();
-  renderSaleProducts();
-  renderSales();
-  renderTransactions();
-  updateDailySalesCounter();
-  updateDailySalesPageCounter();
-  updateTotalTransactions();
-  updateMonthlyRevenueUI();
-  updateProfitUI();
-  updateTotalDebtCounter();
-  updateCharts();
+    renderCategories();
+    renderProducts();
+    renderSaleProducts();
+    renderSales();
+    // renderTransactions();
+    updateDailySalesCounter();
+    updateDailySalesPageCounter();
+    updateTotalTransactions();
+    updateMonthlyRevenueUI();
+    updateProfitUI();
+    updateInventoryBalanceUI();
+    updateTotalDebtCounter();
+    updateCharts();
 
-  // SMS tizimi
-  renderSmsHistory();
-  renderDebtors();
-  updateStatistics();
+    // SMS tizimi
+    renderSmsHistory();
+    renderDebtors();
+    updateStatistics();
+    bindSystemSettings();
 
-  // ✅ Avtomatik SMS tizimini ishga tushirish (08:00 da)
-  startAutoSmsScheduler();
+    syncAllApiData();
 
-  // Har daqiqada kun o'zgarganini tekshirish
-  setInterval(() => {
-    if (checkAndResetDailyIfNeeded()) {
-      updateDailySalesCounter();
-      updateDailySalesPageCounter();
-      renderSales();
-      renderTransactions();
-      updateTotalTransactions();
-      updateMonthlyRevenueUI();
-      updateProfitUI();
-      updateCharts();
-    }
-  }, 60000);
+    // ✅ Avtomatik SMS tizimini ishga tushirish (08:00 da)
+    startAutoSmsScheduler();
 
-  // Event listeners
-  // const debtorForm = document.getElementById('debtorForm');
-  // if (debtorForm) {
-  //   debtorForm.addEventListener('submit', handleSubmit);
-  // }
-
-  const adjustForm = document.getElementById('adjustForm');
-  if (adjustForm) {
-    adjustForm.addEventListener('submit', handleAdjustDebt);
-  }
-
-  const smsForm = document.getElementById('smsForm');
-  if (smsForm) {
-    smsForm.addEventListener('submit', sendSms);
-  }
-
-  const smsMessage = document.getElementById('smsMessage');
-  if (smsMessage) {
-    smsMessage.addEventListener('input', function () {
-      const preview = document.getElementById('smsPreview');
-      if (preview) {
-        preview.textContent = this.value;
+    // Har daqiqada kun o'zgarganini tekshirish
+    setInterval(() => {
+      if (checkAndResetDailyIfNeeded()) {
+        updateDailySalesCounter();
+        updateDailySalesPageCounter();
+        renderSales();
+        // renderTransactions();
+        updateTotalTransactions();
+        updateMonthlyRevenueUI();
+        updateProfitUI();
+        updateInventoryBalanceUI();
+        updateCharts();
       }
-    });
-  }
+    }, 60000);
 
-  document.querySelectorAll('.filter-tabs button').forEach(button => {
-    button.addEventListener('click', function () {
-      document.querySelectorAll('.filter-tabs button').forEach(btn => btn.classList.remove('active'));
-      this.classList.add('active');
-      currentFilter = this.dataset.filter;
-      renderDebtors();
+    // Event listeners
+    // const debtorForm = document.getElementById('debtorForm');
+    // if (debtorForm) {
+    //   debtorForm.addEventListener('submit', handleSubmit);
+    // }
+
+    const adjustForm = document.getElementById('adjustDebtForm');
+    if (adjustForm && !adjustForm.hasAttribute('onsubmit')) {
+      adjustForm.addEventListener('submit', handleAdjustDebt);
+    }
+
+    const smsForm = document.getElementById('smsForm');
+    if (smsForm && !smsForm.hasAttribute('onsubmit')) {
+      smsForm.addEventListener('submit', sendSms);
+    }
+
+    const smsMessage = document.getElementById('smsMessage');
+    if (smsMessage) {
+      smsMessage.addEventListener('input', function () {
+        const preview = document.getElementById('smsPreview');
+        if (preview) {
+          preview.textContent = this.value;
+        }
+      });
+    }
+
+    document.querySelectorAll('.filter-tabs button').forEach(button => {
+      button.addEventListener('click', function () {
+        document.querySelectorAll('.filter-tabs button').forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+        currentFilter = this.dataset.filter;
+        renderDebtors();
+      });
     });
+
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        renderDebtors();
+      });
+    }
+
+    const debtorPhoneInput = document.getElementById('debtorPhone');
+    if (debtorPhoneInput) {
+      debtorPhoneInput.addEventListener('input', function () {
+        this.value = normalizeDebtPhone(this.value);
+      });
+    }
+
+    const debtorModal = document.getElementById('debtorModal');
+    if (debtorModal) {
+      debtorModal.addEventListener('click', function (e) {
+        if (e.target === this) closeModal();
+      });
+    }
+
+    const smsModal = document.getElementById('smsModal');
+    if (smsModal) {
+      smsModal.addEventListener('click', function (e) {
+        if (e.target === this) closeSmsModal();
+      });
+    }
+
+    const adjustDebtModal = document.getElementById('adjustDebtModal');
+    if (adjustDebtModal) {
+      adjustDebtModal.addEventListener('click', function (e) {
+        if (e.target === this) closeAdjustModal();
+      });
+    }
   });
-
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) {
-    searchInput.addEventListener('input', function () {
-      renderDebtors();
-    });
-  }
-
-  const debtorModal = document.getElementById('debtorModal');
-  if (debtorModal) {
-    debtorModal.addEventListener('click', function (e) {
-      if (e.target === this) closeModal();
-    });
-  }
-
-  const smsModal = document.getElementById('smsModal');
-  if (smsModal) {
-    smsModal.addEventListener('click', function (e) {
-      if (e.target === this) closeSmsModal();
-    });
-  }
-
-  const adjustDebtModal = document.getElementById('adjustDebtModal');
-  if (adjustDebtModal) {
-    adjustDebtModal.addEventListener('click', function (e) {
-      if (e.target === this) closeAdjustModal();
-    });
-  }
-});
-
+// ✅ FIX 5: Bu IIFE o'chirildi — DOMContentLoaded kutmay ishlardi (DOM tayyor bo'lmasdi)
+// va syncAllApiData() → loadAndRenderTransactions() bilan race condition yaratardi.
+// Transactions syncAllApiData() ichida to'g'ri yuklanadi.
 // Kam qolgan tavarlar 
 function getStockMeta(product) {
   const initial = Number(product.initialStock) || 0;
   const current = Number(product.stock) || 0;
 
   const percent = initial > 0
-    ? Math.round((current / initial) * 100)
+    ? Math.min(100, Math.round((current / initial) * 100))
     : 0;
 
   if (current <= 0) {
@@ -2685,7 +3649,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 //---------------------------------------- Admin Profile ----------------------------------------//
 // Tab Switching
-function switchTab(tabName) {
+function switchTab(tabName, tabEl) {
   // Hide all content
   document.querySelectorAll('.tab-content').forEach(content => {
     content.classList.add('hidden');
@@ -2697,10 +3661,20 @@ function switchTab(tabName) {
   });
 
   // Show selected content
-  document.getElementById(tabName + '-content').classList.remove('hidden');
+  const content = document.getElementById(tabName + '-content');
+  if (content) {
+    content.classList.remove('hidden');
+  }
 
   // Add active class to selected tab
-  event.target.classList.add('active');
+  const activeTab =
+    tabEl ||
+    (typeof event !== 'undefined' ? event.target : null) ||
+    Array.from(document.querySelectorAll('.tab')).find(tab =>
+      (tab.getAttribute('onclick') || '').includes(`'${tabName}'`)
+    );
+
+  activeTab?.classList.add('active');
 }
 
 // Form Validation
@@ -2757,26 +3731,172 @@ function validateForm() {
   return isValid;
 }
 
-// Save Changes
-function saveChanges() {
-  if (validateForm()) {
-    showNotification("O'zgarishlar muvaffaqiyatli saqlandi!", 'success');
-  } else {
-    showNotification("Qaytarib bo'lmaydigan xatolar!", 'error');
+function mapDepartmentToApi(value) {
+  const map = {
+    savdo: "Savdo",
+    it: "IT",
+    moliya: "Moliya",
+    marketing: "Marketing"
+  };
+  return map[String(value || "").toLowerCase()] || null;
+}
+
+function mapDepartmentFromApi(value) {
+  const map = {
+    Savdo: "savdo",
+    IT: "it",
+    Moliya: "moliya",
+    Marketing: "marketing"
+  };
+  return map[value] || "boshqaruv";
+}
+
+async function loadProfileSettings() {
+  if (!window.crmApi) return;
+
+  try {
+    const response = await window.crmApi.get("/api/v1/settings/profile");
+    const user = response.data;
+
+    const fullNameEl = document.getElementById("fullName");
+    const emailEl = document.getElementById("email");
+    const phoneEl = document.getElementById("phone");
+    const companyEl = document.getElementById("company");
+    const departmentEl = document.getElementById("department");
+
+    if (fullNameEl) fullNameEl.value = user.full_name || "";
+    if (emailEl) emailEl.value = user.email || "";
+    if (phoneEl) phoneEl.value = user.phone || "";
+    if (companyEl) companyEl.value = user.company_name || "";
+    if (departmentEl) departmentEl.value = mapDepartmentFromApi(user.department);
+
+    const settingToggles = document.querySelectorAll("#settings-content .toggle-switch input");
+    if (settingToggles[0]) settingToggles[0].checked = user.email_notifications !== false;
+    if (settingToggles[1]) settingToggles[1].checked = !!user.dark_mode;
+
+    if (window.AuthSystem && typeof window.AuthSystem.updateCurrentUserData === "function") {
+      window.AuthSystem.updateCurrentUserData(user);
+    }
+
+    window.dispatchEvent(new CustomEvent("profileUpdated", {
+      detail: {
+        fullName: user.full_name,
+        email: user.email,
+        phone: user.phone,
+        company: user.company_name,
+        department: user.department || user.role,
+        avatar: user.avatar_url
+      }
+    }));
+  } catch (error) {
+    console.error("Profile load error:", error);
   }
 }
 
-// Show Notification
+function bindSystemSettings() {
+  const settingToggles = document.querySelectorAll("#settings-content .toggle-switch input");
+  const emailToggle = settingToggles[0];
+  const darkToggle = settingToggles[1];
+
+  if (!emailToggle || !darkToggle || emailToggle.dataset.apiBound === "true") return;
+
+  emailToggle.dataset.apiBound = "true";
+  darkToggle.dataset.apiBound = "true";
+
+  async function saveSystemSettings() {
+    try {
+      await window.crmApi.put("/api/v1/settings/system", {
+        email_notifications: emailToggle.checked,
+        dark_mode: darkToggle.checked
+      });
+      showNotification("Sozlamalar saqlandi!", "success");
+    } catch (error) {
+      console.error(error);
+      showNotification(getApiErrorMessage(error, "Sozlamalarni saqlashda xatolik yuz berdi"), "error");
+      loadProfileSettings();
+    }
+  }
+
+  emailToggle.addEventListener("change", saveSystemSettings);
+  darkToggle.addEventListener("change", saveSystemSettings);
+}
+
+// Save Changes
+async function saveChanges() {
+  if (validateForm()) {
+    const data = {
+      fullName: document.getElementById("fullName").value.trim(),
+      email: document.getElementById("email").value.trim(),
+      phone: document.getElementById("phone").value.trim(),
+      company: document.getElementById("company").value.trim(),
+      department: document.getElementById("department").value
+    };
+
+    try {
+      const response = await window.crmApi.put("/api/v1/settings/profile", {
+        full_name: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        company_name: data.company,
+        department: mapDepartmentToApi(data.department)
+      });
+
+      const user = response.data;
+      localStorage.setItem("profile_data", JSON.stringify(data));
+
+      if (window.AuthSystem && typeof window.AuthSystem.updateCurrentUserData === "function") {
+        window.AuthSystem.updateCurrentUserData(user);
+      }
+
+      window.dispatchEvent(new CustomEvent("profileUpdated", {
+        detail: {
+          fullName: user.full_name || data.fullName,
+          email: user.email || data.email,
+          phone: user.phone || data.phone,
+          company: user.company_name || data.company,
+          department: user.department || data.department,
+          avatar: user.avatar_url || null
+        }
+      }));
+
+      showNotification("O'zgarishlar muvaffaqiyatli saqlandi!", "success");
+    } catch (error) {
+      console.error(error);
+      showNotification(getApiErrorMessage(error, "Profilni saqlashda xatolik yuz berdi"), "error");
+    }
+  } else {
+    showNotification("Qaytarib bo'lmaydigan xatolar!", "error");
+  }
+}
+
+// ✅ FIX 4: showNotification ikkinchi versiyasi (statik element) birinchisini
+// override qilib barcha sahifalarda null.className → TypeError crash berardi.
+// Yagona universal versiya: statik element bo'lsa ishlatadi, yo'qsa dinamik yaratadi.
 function showNotification(message, type) {
-  const notification = document.getElementById('notification');
-  const notificationText = document.getElementById('notificationText');
+  type = type || "info";
+  var notification = document.getElementById("notification");
+  var notificationText = document.getElementById("notificationText");
 
-  notification.className = 'notification show ' + type;
-  notificationText.textContent = message;
+  if (notification && notificationText) {
+    notification.className = "notification show " + type;
+    notificationText.textContent = message;
+    setTimeout(function() { notification.classList.remove("show"); }, 3000);
+    return;
+  }
 
-  setTimeout(() => {
-    notification.classList.remove('show');
-  }, 3000);
+  if (!notification) {
+    notification = document.createElement("div");
+    notification.id = "notification";
+    notification.style.cssText = "position:fixed;top:20px;right:20px;padding:15px 20px;" +
+      "border-radius:8px;color:white;font-weight:500;z-index:9999;" +
+      "box-shadow:0 4px 12px rgba(0,0,0,0.15);";
+    document.body.appendChild(notification);
+  }
+  var colors = {success:"#22c55e",error:"#ef4444",warning:"#f59e0b",info:"#3b82f6"};
+  notification.style.background = colors[type] || colors.info;
+  notification.innerText = message;
+  notification.style.display = "block";
+  setTimeout(function() { notification.style.display = "none"; }, 3000);
 }
 
 // Clear errors on input
@@ -2797,47 +3917,71 @@ const avatarFallback = document.getElementById("avatarFallback");
 
 // Fayl tanlashni ochish
 function triggerAvatarUpload() {
-  avatarInput.click();
+  if (avatarInput) {
+    avatarInput.click();
+  }
 }
 
 // Yuklash
-avatarInput.addEventListener("change", function () {
-  const file = this.files[0];
-  if (!file) return;
+if (avatarInput && avatarImg && avatarFallback) {
+  avatarInput.addEventListener("change", async function () {
+    const file = this.files[0];
+    if (!file) return;
 
-  // 🔒 Format tekshirish
-  const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
-  if (!allowedTypes.includes(file.type)) {
-    alert("Faqat JPG, PNG yoki GIF ruxsat etiladi!");
-    return;
-  }
+    // 🔒 Format tekshirish
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Faqat JPG, PNG yoki GIF ruxsat etiladi!");
+      return;
+    }
 
-  // 🔒 Hajm tekshirish (2MB)
-  if (file.size > 2 * 1024 * 1024) {
-    alert("Rasm hajmi 2MB dan oshmasligi kerak!");
-    return;
-  }
+    // 🔒 Hajm tekshirish (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Rasm hajmi 2MB dan oshmasligi kerak!");
+      return;
+    }
 
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const base64Image = e.target.result;
+    try {
+      const formData = new FormData();
+      formData.append("avatar", file);
 
-    // UI
-    avatarImg.src = base64Image;
-    avatarImg.classList.remove("d-none");
-    avatarFallback.style.display = "none";
+      const response = await window.crmApi.post("/api/v1/settings/profile/avatar", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
 
-    // 🔥 Saqlash (refresh yo‘qolmasin)
-    localStorage.setItem("profile_avatar", base64Image);
-  };
+      const avatarUrl = normalizeApiAssetUrl(response.data && response.data.avatar_url);
 
-  reader.readAsDataURL(file);
-});
+      // UI
+      avatarImg.src = avatarUrl;
+      avatarImg.classList.remove("d-none");
+      avatarFallback.style.display = "none";
+
+      localStorage.setItem("profile_avatar", avatarUrl);
+
+      if (window.AuthSystem && typeof window.AuthSystem.updateCurrentUserData === "function") {
+        window.AuthSystem.updateCurrentUserData(response.data);
+      }
+
+      window.dispatchEvent(
+        new CustomEvent("profileUpdated", {
+          detail: {
+            avatar: response.data.avatar_url
+          }
+        })
+      );
+
+      showNotification("Avatar muvaffaqiyatli yangilandi!", "success");
+    } catch (error) {
+      console.error(error);
+      alert(getApiErrorMessage(error, "Avatarni yuklashda xatolik yuz berdi"));
+    }
+  });
+}
 
 // Sahifa ochilganda avatarni yuklash
 (function loadAvatarOnStart() {
   const savedAvatar = localStorage.getItem("profile_avatar");
-  if (savedAvatar) {
+  if (savedAvatar && avatarImg && avatarFallback) {
     avatarImg.src = savedAvatar;
     avatarImg.classList.remove("d-none");
     avatarFallback.style.display = "none";
@@ -2859,17 +4003,17 @@ var NavigationManager = {
 
   // Navigatsiya metodi
   navigateTo: function (page) {
-    // METHOD 1: Multi-page application (klassik yo'l)
-    if (this.routes[page]) {
-      window.location.href = this.routes[page];
+    const sectionId = page === 'profile' ? 'settings' : page;
+    const section = document.getElementById(sectionId);
+
+    if (section && typeof openPage === "function") {
+      openPage(sectionId, this.getPageTitle(page));
+      return;
     }
 
-    // METHOD 2: Hash routing (agar SPA ishlatayotgan bo'lsangiz)
-    // window.location.hash = page;
-
-    // METHOD 3: Custom event (React/Vue/Angular uchun)
-    // var event = new CustomEvent('navigate', { detail: { page: page } });
-    // window.dispatchEvent(event);
+    if (this.routes[page]) {
+      window.location.href = this.routes[page].replace(/^\//, '');
+    }
 
     console.log('Navigating to:', page);
   },
@@ -2877,7 +4021,10 @@ var NavigationManager = {
   // Sahifa holatini o'zgartirish (SPA uchun)
   changePageState: function (page) {
     // Bu yerda sahifa content'ini o'zgartirishingiz mumkin
-    document.getElementById('pageTitle').textContent = this.getPageTitle(page);
+    var titleEl = document.getElementById('pageTitle');
+    if (titleEl) {
+      titleEl.textContent = this.getPageTitle(page);
+    }
 
     // Sahifa ko'rinishini o'zgartirish
     document.querySelectorAll('.section').forEach(function (section) {
@@ -2933,6 +4080,16 @@ var ProfileDropdownManager = {
     this.trigger = document.getElementById('profileTrigger');
     this.dropdown = document.getElementById('profileDropdown');
     this.overlay = document.getElementById('dropdownOverlay');
+
+    if (!this.trigger || !this.dropdown || !this.overlay) {
+      return;
+    }
+
+    if (this.trigger.dataset.dropdownBound === "true") {
+      return;
+    }
+
+    this.trigger.dataset.dropdownBound = "true";
 
     this.attachEventListeners();
   },
@@ -3075,149 +4232,265 @@ var StatisticsManager = {
   }
 };
 
-/**
- * Profile Data Manager
- * Profil ma'lumotlarini boshqarish va sinxronlash
- */
 var TopbarProfileManager = {
-  init: function () {
-    this.loadProfileData();
-    this.setupRealtimeSync();
-    this.listenForUpdates();
+
+  init: async function () {
+
+    console.log("🚀 Initializing Topbar Profile Manager")
+
+    await this.loadUserFromAPI()
+
+    this.listenForUpdates()
+
   },
 
-  // LocalStorage'dan ma'lumotlarni yuklash
-  loadProfileData: function () {
-    var savedData = localStorage.getItem('profile_data');
-    var savedAvatar = localStorage.getItem('profile_avatar');
+  // BACKENDDAN USER OLISH
+  loadUserFromAPI: async function () {
 
-    if (savedData) {
-      try {
-        var data = JSON.parse(savedData);
-        if (savedAvatar) {
-          data.avatar = savedAvatar;
-        }
-        this.updateAllUI(data);
-      } catch (e) {
-        console.error('Error loading profile:', e);
+    try {
+
+      const Auth = window.AuthSystem
+      const user =
+        Auth && typeof Auth.getCurrentUser === "function"
+          ? Auth.getCurrentUser()
+          : null
+
+      if (!user) {
+        console.log("❌ User topilmadi")
+        return
       }
+
+      console.log("✅ API USER:", user)
+
+      // BACKEND → FRONTEND MAPPING
+      const mappedData = {
+        fullName: user.full_name,
+        email: user.email,
+        phone: user.phone,
+        company: user.company_name,
+        department: this.mapRole(user.role),
+        avatar: user.avatar || user.avatar_url
+      };
+
+      this.updateAllUI(mappedData)
+
+    } catch (error) {
+
+      console.error(
+        "❌ Profile API Error:",
+        error
+      )
+
     }
+
   },
 
-  // Barcha UI elementlarni yangilash
+  // ROLE TRANSLATE
+  mapRole: function (role) {
+
+    const roleMap = {
+
+      admin: "Boshqaruv",
+      manager: "Manager",
+      seller: "Sotuvchi"
+
+    }
+
+    return roleMap[role] || role
+
+  },
+
+  // UI UPDATE
   updateAllUI: function (data) {
-    console.log('Updating all UI with data:', data);
 
-    // Ism familya
+    console.log(
+      "🎨 Updating UI:",
+      data
+    )
+
+    // FULL NAME
     if (data.fullName) {
-      document.getElementById('topbarName').textContent = data.fullName;
-      document.getElementById('dropdownName').textContent = data.fullName;
 
-      var initials = this.getInitials(data.fullName);
-      document.getElementById('topbarAvatarFallback').textContent = initials;
-      document.getElementById('dropdownAvatarFallback').textContent = initials;
+      this.setText(
+        'profileName',
+        data.fullName
+      )
+
+      this.setText(
+        'dropdownName',
+        data.fullName
+      )
+
+      const initials =
+        this.getInitials(data.fullName)
+
+      this.setText(
+        'topbarAvatarFallback',
+        initials
+      )
+
+      this.setText(
+        'dropdownAvatarFallback',
+        initials
+      )
+
     }
 
-    // Email
+    // EMAIL
     if (data.email) {
-      document.getElementById('dropdownEmail').textContent = data.email;
+
+      this.setText(
+        'dropdownEmail',
+        data.email
+      )
+
     }
 
-    // Telefon
+    // PHONE
     if (data.phone) {
-      document.getElementById('dropdownPhone').textContent = data.phone;
+
+      this.setText(
+        'dropdownPhone',
+        data.phone
+      )
+
     }
 
-    // Kompaniya/Do'kon
+    // COMPANY
     if (data.company) {
-      document.getElementById('topbarStore').textContent = data.company;
+
+      this.setText(
+        'profileEmail',
+        data.company
+      )
+
     }
 
-    // Department/Role
+    // ROLE
     if (data.department) {
-      document.getElementById('dropdownRole').textContent = data.department;
+
+      this.setText(
+        'dropdownRole',
+        data.department
+      )
+
     }
 
-    // Avatar
+    // AVATAR
     if (data.avatar) {
-      this.updateAvatar(data.avatar);
+
+      this.updateAvatar(data.avatar)
+
     }
+
   },
 
-  // Avatar'ni yangilash
-  updateAvatar: function (avatarBase64) {
-    var elements = [
+  // TEXT SETTER
+  setText: function (id, value) {
+
+    const el =
+      document.getElementById(id)
+
+    if (el) {
+
+      el.textContent = value
+
+    }
+
+  },
+
+  // AVATAR UPDATE
+  updateAvatar: function (avatarUrl) {
+
+    const elements = [
+
       {
-        img: document.getElementById('topbarAvatar'),
-        fallback: document.getElementById('topbarAvatarFallback')
+        img: document.getElementById("topbarAvatar"),
+        fallback: document.getElementById("topbarAvatarFallback")
       },
+
       {
-        img: document.getElementById('dropdownAvatar'),
-        fallback: document.getElementById('dropdownAvatarFallback')
+        img: document.getElementById("dropdownAvatar"),
+        fallback: document.getElementById("dropdownAvatarFallback")
       }
+
     ];
 
     elements.forEach(function (el) {
-      if (avatarBase64) {
-        el.img.src = avatarBase64;
-        el.img.classList.add('show');
-        el.fallback.style.display = 'none';
+
+      if (!el.img || !el.fallback) return;
+
+      if (avatarUrl) {
+
+        el.img.src = normalizeApiAssetUrl(avatarUrl);
+
+        el.img.classList.add("show");
+
+        el.fallback.style.display = "none";
+
       } else {
-        el.img.classList.remove('show');
-        el.fallback.style.display = 'flex';
+
+        el.img.classList.remove("show");
+
+        el.fallback.style.display = "flex";
+
       }
+
     });
+    // ✅ FIX 1: forEach dan keyin el mavjud emas (scope tugaydi).
+    // el.img.src = ... qatorlari ReferenceError berardi → avatar ko'rinmasdi.
+    console.log("━━━ Avatar updated:", normalizeApiAssetUrl(avatarUrl));
+
   },
 
-  // Initials olish
+  // INITIALS
   getInitials: function (name) {
-    if (!name) return 'AU';
-    var parts = name.trim().split(' ');
-    if (parts.length === 1) {
-      return parts[0].substring(0, 2).toUpperCase();
+
+    if (!name || typeof name !== "string") {
+      return "AU"
     }
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+
+    var parts = name.trim().split(" ")
+
+    if (parts.length === 1) {
+
+      return parts[0]
+        .substring(0, 2)
+        .toUpperCase()
+
+    }
+
+    return (
+      parts[0][0] +
+      parts[parts.length - 1][0]
+    ).toUpperCase()
+
   },
 
-  // Real-time sinxronizatsiya (input'larga listener)
-  setupRealtimeSync: function () {
-    var self = this;
-    var inputs = ['fullName', 'email', 'phone', 'company', 'department'];
-
-    inputs.forEach(function (inputId) {
-      var element = document.getElementById(inputId);
-      if (element) {
-        element.addEventListener('input', function () {
-          var data = {};
-          data[inputId] = this.value;
-          self.updateAllUI(data);
-        });
-      }
-    });
-  },
-
-  // ProfileUpdated eventini tinglash
+  // REALTIME UPDATE
   listenForUpdates: function () {
-    var self = this;
 
-    window.addEventListener('profileUpdated', function (e) {
-      console.log('Profile updated event received:', e.detail);
-      var avatar = localStorage.getItem('profile_avatar');
-      if (avatar) {
-        e.detail.avatar = avatar;
-      }
-      self.updateAllUI(e.detail);
-    });
+    const self = this
 
-    // Storage o'zgarishlarini tinglash
-    window.addEventListener('storage', function (e) {
-      if (e.key === 'profile_data' || e.key === 'profile_avatar') {
-        self.loadProfileData();
+    window.addEventListener(
+      'profileUpdated',
+
+      function (e) {
+
+        console.log(
+          "🔄 Profile Updated Event:",
+          e.detail
+        )
+
+        self.updateAllUI(e.detail)
+
       }
-    });
+
+    )
+
   }
-};
 
+}
 
 /**
  * Logout Manager
@@ -3226,6 +4499,11 @@ var TopbarProfileManager = {
 var LogoutManager = {
   init: function () {
     var logoutBtn = document.getElementById('logoutBtn');
+    if (!logoutBtn || logoutBtn.dataset.logoutBound === "true") {
+      return;
+    }
+
+    logoutBtn.dataset.logoutBound = "true";
 
     logoutBtn.addEventListener('click', function (e) {
       e.preventDefault();
@@ -3235,6 +4513,11 @@ var LogoutManager = {
 
   logout: function () {
     if (confirm('Haqiqatan ham tizimdan chiqmoqchimisiz?')) {
+      if (window.AuthSystem && typeof window.AuthSystem.logout === "function") {
+        window.AuthSystem.logout();
+        return;
+      }
+
       // Ma'lumotlarni tozalash
       this.clearUserData();
 
@@ -3247,16 +4530,21 @@ var LogoutManager = {
     // MUHIM: Faqat foydalanuvchi ma'lumotlarini tozalang
     // Tizim sozlamalarini saqlab qoling
     var keysToRemove = [
-      'profile_data',
-      'profile_avatar',
-      'auth_token',
-      'user_session',
-      'crm_today_actions',
-      'crm_last_update_date'
+      // 'profile_data',
+      // 'profile_avatar',
+      // 'auth_token',
+      // 'user_session',
+      // 'crm_current_user',
+      // 'crm_session_active',
+      // 'currentUser',
+      // 'isLoggedIn',
+      // 'crm_today_actions',
+      // 'crm_last_update_date'
     ];
 
     keysToRemove.forEach(function (key) {
       localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
     });
 
     // Yoki barcha ma'lumotlarni tozalash
@@ -3298,6 +4586,11 @@ function initializeApp() {
   // 5. Logout funksiyasini ulash
   LogoutManager.init();
 
+  // 6. Dashboard statistikalarini API orqali yuklash
+  if (typeof DashboardStatisticsManager !== 'undefined') {
+    DashboardStatisticsManager.init();
+  }
+
   console.log('Application initialized successfully!');
 }
 
@@ -3319,12 +4612,31 @@ if (document.readyState === 'loading') {
 window.CRMTopbar = {
   // Profilni yangilash
   updateProfile: function (data) {
-    TopbarProfileManager.updateUI(data);
+    data = data || {};
+
+    // TopbarProfileManager.updateAllUI({
+    //   fullName: data.full_name || data.fullName || "",
+    //   email: data.email || "",
+    //   phone: data.phone || "",
+    //   company: data.company_name || data.company || data.storeName || "",
+    //   department: data.department || data.role || "",
+    //   avatar: data.avatar_url || data.avatar || ""
+    // });
+    // ✅ FIX 2: data.profile.xxx → TypeError edi. Callerlar to'g'ridan-to'g'ri
+    // backend user objectini beradi ({full_name, email, ...}), data.profile yo'q.
+    TopbarProfileManager.updateAllUI({
+      fullName: data.full_name || data.fullName || "",
+      email: data.email || "",
+      phone: data.phone || "",
+      company: data.company_name || data.company || data.storeName || "",
+      department: data.department || data.role || "",
+      avatar: data.avatar_url || data.avatar || ""
+    });
   },
 
   // Bugungi harakatlarni oshirish
   incrementTodayActions: function () {
-    StatisticsManager.incrementToday();
+    StatisticsManager.incrementAction();
   },
 
   // Sahifaga o'tish
@@ -3339,9 +4651,10 @@ window.CRMTopbar = {
 
   // Statistikani yangilash
   updateStats: function (data) {
-    StatisticsManager.data = Object.assign(StatisticsManager.data, data);
-    StatisticsManager.saveToStorage();
-    StatisticsManager.updateUI();
+    var stats = localStorage.getItem('crm_statistics');
+    var current = stats ? JSON.parse(stats) : {};
+    localStorage.setItem('crm_statistics', JSON.stringify(Object.assign(current, data)));
+    StatisticsManager.loadStats();
   }
 };
 
@@ -3362,9 +4675,16 @@ window.CRMTopbar = {
 
 // profilga chiqarish
 function initProfile(user) {
-  document.getElementById("dropdownAvatarFallback").innerText = user.fullname;
-  document.getElementById("dropdownName").innerText = user.fullname;
-  document.getElementById("dropdownEmail").innerText = user.email;
+  if (!user) return;
+
+  const displayName = user.fullName || user.fullname || "";
+  const fallback = document.getElementById("dropdownAvatarFallback");
+  const name = document.getElementById("dropdownName");
+  const email = document.getElementById("dropdownEmail");
+
+  if (fallback) fallback.innerText = getInitials(displayName);
+  if (name) name.innerText = displayName;
+  if (email) email.innerText = user.email || "";
 }
 
 // MOBILE BOTTOM NAV CONTROL (WITH STATE SAVE)
@@ -3468,25 +4788,55 @@ document.querySelectorAll("table").forEach(table => {
 
 // Foydalanuvchi ma'lumotlarini olish
 function getUserData() {
-  const userData = localStorage.getItem('currentUser');
+  const Auth = window.AuthSystem;
+
+  if (Auth && typeof Auth.getCurrentUser === "function") {
+    return Auth.getCurrentUser();
+  }
+
+  const userData = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
   console.log('Dashboard - Getting user data:', userData);
-  return userData ? JSON.parse(userData) : null;
+
+  try {
+    return userData ? JSON.parse(userData) : null;
+  } catch (err) {
+    console.warn("Foydalanuvchi ma'lumoti o'qilmadi:", err);
+    return null;
+  }
 }
 
 // Foydalanuvchi ma'lumotlarini saqlash
 function saveUserData(userData) {
+  const Auth = window.AuthSystem;
+
+  if (Auth && typeof Auth.updateCurrentUserData === "function") {
+    Auth.updateCurrentUserData(userData);
+    return;
+  }
+
   localStorage.setItem('currentUser', JSON.stringify(userData));
   console.log('Dashboard - User data saved:', userData);
 }
 
 // Foydalanuvchini tekshirish
 function checkAuth() {
-  const isLoggedIn = localStorage.getItem('isLoggedIn');
+  const Auth = window.AuthSystem;
+
+  if (Auth && typeof Auth.isSessionValid === "function") {
+    if (!Auth.isSessionValid()) {
+      window.location.href = 'login.html';
+      return false;
+    }
+
+    return true;
+  }
+
+  const isLoggedIn = localStorage.getItem('isLoggedIn') || sessionStorage.getItem('isLoggedIn');
   console.log('Dashboard - Checking auth:', isLoggedIn);
-  
+
   if (!isLoggedIn) {
     console.log('Not logged in, redirecting...');
-    window.location.href = 'signup.html';
+    window.location.href = 'login.html';
     return false;
   }
   return true;
@@ -3495,9 +4845,16 @@ function checkAuth() {
 // Chiqish funksiyasi
 function logout() {
   console.log('Logging out...');
+  if (window.AuthSystem && typeof window.AuthSystem.logout === "function") {
+    window.AuthSystem.logout();
+    return;
+  }
+
   localStorage.removeItem('currentUser');
   localStorage.removeItem('isLoggedIn');
-  window.location.href = 'signup.html';
+  sessionStorage.removeItem('currentUser');
+  sessionStorage.removeItem('isLoggedIn');
+  window.location.href = 'login.html';
 }
 
 /* ========== PROFILE DISPLAY ========== */
@@ -3515,9 +4872,9 @@ function getInitials(fullName) {
 // Profil ma'lumotlarini yangilash
 function updateProfileDisplay() {
   console.log('Updating profile display...');
-  
+
   const userData = getUserData();
-  
+
   if (!userData) {
     console.error('Foydalanuvchi ma\'lumotlari topilmadi!');
     return;
@@ -3532,7 +4889,7 @@ function updateProfileDisplay() {
   const profileName = document.getElementById('profileName');
   const profileEmail = document.getElementById('profileEmail');
   const topbarAvatarFallback = document.getElementById('topbarAvatarFallback');
-  
+
   console.log('Topbar elements:', {
     profileName: profileName,
     profileEmail: profileEmail,
@@ -3599,17 +4956,19 @@ function updateProfileDisplay() {
     statToday: statToday
   });
 
+  const stats = userData.stats || { customers: 0, deals: 0, today: 0 };
+
   if (statCustomers) {
-    statCustomers.textContent = userData.stats.customers;
-    console.log('Set customers stat:', userData.stats.customers);
+    statCustomers.textContent = stats.customers || 0;
+    console.log('Set customers stat:', stats.customers || 0);
   }
   if (statDeals) {
-    statDeals.textContent = userData.stats.deals;
-    console.log('Set deals stat:', userData.stats.deals);
+    statDeals.textContent = stats.deals || 0;
+    console.log('Set deals stat:', stats.deals || 0);
   }
   if (statToday) {
-    statToday.textContent = userData.stats.today;
-    console.log('Set today stat:', userData.stats.today);
+    statToday.textContent = stats.today || 0;
+    console.log('Set today stat:', stats.today || 0);
   }
 
   console.log('Profile display updated successfully!');
@@ -3620,7 +4979,9 @@ function updateUserStats(type, value) {
   const userData = getUserData();
   if (!userData) return;
 
-  if (userData.stats.hasOwnProperty(type)) {
+  userData.stats = userData.stats || { customers: 0, deals: 0, today: 0 };
+
+  if (Object.prototype.hasOwnProperty.call(userData.stats, type)) {
     userData.stats[type] = value;
     saveUserData(userData);
     updateProfileDisplay();
@@ -3632,7 +4993,9 @@ function incrementStat(type) {
   const userData = getUserData();
   if (!userData) return;
 
-  if (userData.stats.hasOwnProperty(type)) {
+  userData.stats = userData.stats || { customers: 0, deals: 0, today: 0 };
+
+  if (Object.prototype.hasOwnProperty.call(userData.stats, type)) {
     userData.stats[type]++;
     saveUserData(userData);
     updateProfileDisplay();
@@ -3644,13 +5007,19 @@ function incrementStat(type) {
 function initProfileDropdown() {
   const profileTrigger = document.getElementById('profileTrigger');
   const profileDropdown = document.getElementById('profileDropdown');
-  
+
   console.log('Init profile dropdown:', {
     trigger: profileTrigger,
     dropdown: profileDropdown
   });
 
   if (profileTrigger && profileDropdown) {
+    if (profileTrigger.dataset.dropdownBound === "true") {
+      return;
+    }
+
+    profileTrigger.dataset.dropdownBound = "true";
+
     profileTrigger.addEventListener('click', (e) => {
       e.stopPropagation();
       profileDropdown.classList.toggle('active');
@@ -3671,8 +5040,9 @@ function initProfileDropdown() {
 function initLogout() {
   const logoutBtn = document.getElementById('logoutBtn');
   console.log('Init logout button:', logoutBtn);
-  
-  if (logoutBtn) {
+
+  if (logoutBtn && logoutBtn.dataset.logoutBound !== "true") {
+    logoutBtn.dataset.logoutBound = "true";
     logoutBtn.addEventListener('click', (e) => {
       e.preventDefault();
       if (confirm('Haqiqatan ham chiqmoqchimisiz?')) {
@@ -3686,20 +5056,22 @@ function initLogout() {
 
 function initDashboard() {
   console.log('=== Initializing Dashboard ===');
-  
+
   // Auth tekshirish
   if (!checkAuth()) {
     return;
   }
-  
-  // Profilni yangilash
-  updateProfileDisplay();
-  
+
+  // ✅ FIX 6: updateProfileDisplay() olib tashlandi — eski localStorage-based funksiya.
+  // initializeApp() → TopbarProfileManager.init() barcha profil UI ni boshqaradi.
+
   // Dropdown va logout
   initProfileDropdown();
   initLogout();
-  
-  console.log('=== Dashboard Initialized ===');
+
+  console.log("=== Dashboard Initialized ===");
+
+  getDashboardStatistics();
 }
 
 // Sahifa yuklanganda ishga tushirish
@@ -3715,3 +5087,1433 @@ window.incrementStat = incrementStat;
 window.getUserData = getUserData;
 window.saveUserData = saveUserData;
 window.logout = logout;
+
+async function changePassword(oldPassword, newPassword) {
+  const Auth = window.AuthSystem;
+
+  if (!Auth || typeof Auth.changePassword !== "function") {
+    return { success: false, message: "Auth tizimi topilmadi!" };
+  }
+
+  return Auth.changePassword(oldPassword, newPassword);
+}
+
+window.changePassword = changePassword;
+
+
+// Change Password
+// ============================================================
+// 🔐 SECURITY TAB - boshqa kodlarga tegmaydi, mustaqil ishlaydi
+// ============================================================
+(function () {
+  function initSecurityTab() {
+    var changeBtn = document.getElementById("changePasswordBtn");
+    var changeForm = document.getElementById("changePasswordForm");
+    var saveBtn = document.getElementById("saveNewPasswordBtn");
+    var cancelBtn = document.getElementById("cancelPasswordBtn");
+    var oldPassInput = document.getElementById("oldPasswordInput");
+    var newPassInput = document.getElementById("newPasswordInput");
+    var confirmPassInput = document.getElementById("confirmPasswordInput");
+    var msgEl = document.getElementById("passwordMessage");
+
+    if (!changeBtn || !changeForm) return;
+
+    function showMsg(text, ok) {
+      if (!msgEl) return;
+      msgEl.textContent = text;
+      msgEl.style.display = "block";
+      msgEl.style.color = ok ? "#16a34a" : "#dc2626";
+    }
+
+    function reset() {
+      changeForm.style.display = "none";
+      changeBtn.textContent = "Parolni yangilash";
+      if (oldPassInput) oldPassInput.value = "";
+      if (newPassInput) newPassInput.value = "";
+      if (confirmPassInput) confirmPassInput.value = "";
+      if (msgEl) { msgEl.style.display = "none"; msgEl.textContent = ""; }
+    }
+
+    changeBtn.addEventListener("click", function () {
+      if (changeForm.style.display !== "none") {
+        reset();
+      } else {
+        changeForm.style.display = "block";
+        changeBtn.textContent = "Yopish";
+      }
+    });
+
+    if (cancelBtn) cancelBtn.addEventListener("click", reset);
+
+    if (saveBtn) {
+      saveBtn.addEventListener("click", async function () {
+        if (msgEl) { msgEl.style.display = "none"; }
+
+        var oldPass = oldPassInput ? oldPassInput.value : "";
+        var newPass = newPassInput ? newPassInput.value : "";
+        var confirmPass = confirmPassInput ? confirmPassInput.value : "";
+
+        if (!oldPass) return showMsg("Eski parolni kiriting!", false);
+        if (newPass.length < 6) return showMsg("Yangi parol kamida 6 ta belgi bo'lishi kerak!", false);
+        if (newPass !== confirmPass) return showMsg("Parollar mos kelmadi!", false);
+
+        var Auth = window.AuthSystem;
+        if (!Auth || typeof Auth.changePassword !== "function") {
+          return showMsg("Auth tizimi topilmadi!", false);
+        }
+        console.log("━━━━━━━━━━━━━━━━━━");
+        console.log("🔐 CHANGE PASSWORD");
+        console.log("📤 REQUEST");
+        console.table({
+          old_password: oldPass,
+          new_password: newPass
+        });
+
+        var result = await Auth.changePassword(oldPass, newPass);
+
+        console.log("━━━━━━━━━━━━━━━━━━");
+
+        if (result.success) {
+
+          console.log("✅ STATUS : SUCCESS");
+          console.table(result);
+
+          alert("✅ Parol muvaffaqiyatli o'zgartirildi!");
+
+          showMsg("✅ Parol muvaffaqiyatli yangilandi!", true);
+
+          saveBtn.disabled = true;
+
+          setTimeout(function () {
+            reset();
+            saveBtn.disabled = false;
+          }, 2000);
+
+        } else {
+
+          console.log("❌ STATUS : ERROR");
+          console.table(result);
+
+          alert("❌ " + result.message);
+
+          showMsg(result.message || "Xatolik yuz berdi!", false);
+
+        }
+      });
+    }
+  }
+
+  document.addEventListener(
+    "DOMContentLoaded",
+
+    function () {
+
+      // ELEMENTLAR
+      const changeBtn =
+        document.getElementById(
+          "changePasswordBtn"
+        )
+
+      const form =
+        document.getElementById(
+          "changePasswordForm"
+        )
+
+      const saveBtn =
+        document.getElementById(
+          "saveNewPasswordBtn"
+        )
+
+      const cancelBtn =
+        document.getElementById(
+          "cancelPasswordBtn"
+        )
+
+      const message =
+        document.getElementById(
+          "passwordMessage"
+        )
+
+      // FORM OPEN
+      if (changeBtn) {
+
+        changeBtn.addEventListener(
+          "click",
+
+          function () {
+
+            form.style.display =
+              "block"
+
+          }
+
+        )
+
+      }
+
+      // CANCEL
+      if (cancelBtn) {
+
+        cancelBtn.addEventListener(
+          "click",
+
+          function () {
+
+            form.style.display =
+              "none"
+
+          }
+
+        )
+
+      }
+
+      // SAVE PASSWORD
+      if (saveBtn) {
+
+        saveBtn.addEventListener(
+          "click",
+
+          async function () {
+
+            // INPUTS
+            const oldPassword =
+              document.getElementById(
+                "oldPasswordInput"
+              ).value
+
+            const newPassword =
+              document.getElementById(
+                "newPasswordInput"
+              ).value
+
+            const confirmPassword =
+              document.getElementById(
+                "confirmPasswordInput"
+              ).value
+
+            // VALIDATION
+            if (
+              !oldPassword ||
+              !newPassword ||
+              !confirmPassword
+            ) {
+
+              showPasswordMessage(
+                "Barcha maydonlarni to'ldiring",
+                "red"
+              )
+
+              return
+
+            }
+
+            // PASSWORD CHECK
+            if (
+              newPassword !==
+              confirmPassword
+            ) {
+
+              showPasswordMessage(
+                "Yangi parollar mos emas",
+                "red"
+              )
+
+              return
+
+            }
+
+            // LENGTH CHECK
+            if (
+              newPassword.length < 6
+            ) {
+
+              showPasswordMessage(
+                "Parol kamida 6 ta belgi bo'lishi kerak",
+                "red"
+              )
+
+              return
+
+            }
+
+            // API REQUEST
+            const result =
+              await changePassword(
+                oldPassword,
+                newPassword
+              )
+
+            // SUCCESS
+            if (result.success) {
+
+              showPasswordMessage(
+                "Parol muvaffaqiyatli o'zgartirildi",
+                "green"
+              )
+
+              // CLEAR INPUTS
+              document.getElementById(
+                "oldPasswordInput"
+              ).value = ""
+
+              document.getElementById(
+                "newPasswordInput"
+              ).value = ""
+
+              document.getElementById(
+                "confirmPasswordInput"
+              ).value = ""
+
+            }
+
+            // ERROR
+            else {
+
+              showPasswordMessage(
+                result.message,
+                "red"
+              )
+
+            }
+
+          }
+
+        )
+
+      }
+
+      // MESSAGE FUNCTION
+      function showPasswordMessage(
+        text,
+        color
+      ) {
+
+        message.style.display =
+          "block"
+
+        message.textContent =
+          text
+
+        message.style.color =
+          color
+
+      }
+
+    }
+  )
+
+  // DOM tayyor bo'lganda ishga tushir
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initSecurityTab);
+  } else {
+    initSecurityTab();
+  }
+})();
+
+// Backend DASHBOARD API
+// DASHBOARD MANAGER
+var DashboardStatisticsManager = {
+
+  init: async function () {
+
+    console.log(
+      "🚀 DASHBOARD INIT"
+    )
+
+    // API LOAD
+    const data =
+      await getDashboardStatistics()
+
+    // AGAR DATA KELSA
+    if (data) {
+
+      this.updateDashboard(
+        data
+      )
+
+    }
+
+  },
+
+  // MONEY FORMAT
+  formatMoney: function (amount) {
+
+    if (!amount) {
+      return "0"
+    }
+
+    return Number(amount)
+      .toLocaleString(
+        "uz-UZ"
+      )
+
+  },
+
+  // DASHBOARD UPDATE
+  updateDashboard: function (data) {
+
+    console.log(
+      "🎨 DASHBOARD UI UPDATE"
+    )
+
+    console.log(data)
+
+    // 1. OYLIK TUSHUM
+    const revenueElement =
+      document.querySelector(
+        '[data-key="totalRevenue"]'
+      )
+
+    if (revenueElement) {
+
+      revenueElement.innerHTML =
+        `
+                ${this.formatMoney(
+          data.monthly_revenue
+        )}
+                <small>UZS</small>
+                `
+
+    }
+
+    // REVENUE CHANGE
+    const revenueChange =
+      document.getElementById(
+        "monthlyRevenueChange"
+      )
+
+    if (revenueChange) {
+
+      revenueChange.textContent =
+        `+${data.monthly_revenue_growth}% o'sish`
+
+    }
+
+    // 2. DAILY SALES
+    const dailySales =
+      document.getElementById(
+        "dailySalesCounter"
+      )
+
+    if (dailySales) {
+
+      dailySales.innerHTML =
+        `
+                ${this.formatMoney(
+          data.daily_sales
+        )}
+                <small>UZS</small>
+                `
+
+    }
+
+    // DAILY CHANGE
+    const dailyChange =
+      document.getElementById(
+        "dailySalesChange"
+      )
+
+    if (dailyChange) {
+
+      dailyChange.textContent =
+        `${data.daily_sales_change}% o'zgarish`
+
+    }
+
+    // 3. MONTHLY PROFIT
+    const profitElement =
+      document.querySelector(
+        '[data-key="totalProfit"]'
+      )
+
+    if (profitElement) {
+
+      profitElement.innerHTML =
+        `
+                ${this.formatMoney(
+          data.monthly_profit
+        )}
+                <small>UZS</small>
+                `
+
+    }
+
+    // 4. INVENTORY BALANCE
+    const inventoryElement =
+      document.querySelector(
+        '[data-key="inventoryBalance"]'
+      )
+
+    if (inventoryElement) {
+
+      inventoryElement.innerHTML =
+        `
+                ${this.formatMoney(
+          data.inventory_balance
+        )}
+                <small>UZS</small>
+                `
+
+    }
+
+  },
+
+  // OVERDUE UI
+  updateOverdueCards: function (
+    data
+  ) {
+
+    const container =
+      document.getElementById(
+        "overdueCards"
+      )
+
+    if (!container) return
+
+    container.innerHTML =
+      `
+            <div class="overdue-card">
+
+                <h4>
+                    ${data.overdue_count}
+                </h4>
+
+                <p>
+                    Muddati o'tgan to'lovlar
+                </p>
+
+                <strong>
+                    ${this.formatMoney(
+        data.overdue_payments
+      )} UZS
+                </strong>
+
+            </div>
+            `
+
+  },
+  // OVERDUE API uchun
+  renderOverdueCardsApi: function (
+    debtors
+  ) {
+
+    const container =
+      document.getElementById(
+        "overdueCards"
+      );
+
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    debtors.forEach(debtor => {
+
+      const urgencyClass =
+        debtor.overdueDays >= 7
+          ? "critical"
+          : debtor.overdueDays >= 3
+            ? "warning"
+            : "mild";
+
+      container.innerHTML += `
+      <div class="overdue-card-mini ${urgencyClass}">
+        <div class="overdue-mini-left">
+          <div class="overdue-mini-name">
+            ${debtor.name}
+          </div>
+
+          <div class="overdue-mini-amount">
+            ${debtor.amount.toLocaleString()} so'm
+          </div>
+        </div>
+
+        <div class="overdue-mini-right">
+          <div class="overdue-mini-days ${urgencyClass}">
+            ${debtor.overdueDays} kun
+          </div>
+        </div>
+      </div>
+    `;
+    });
+
+  },
+
+  // LOW STOCK UI
+  updateLowStock: function (
+    data
+  ) {
+
+    const container =
+      document.getElementById(
+        "lowStockContainer"
+      )
+
+    if (!container) return
+
+    container.innerHTML =
+      `
+            <div class="low-stock-item">
+
+                <strong>
+                    ${data.low_stock_count}
+                </strong>
+
+                <p>
+                    Kam qolgan mahsulotlar
+                </p>
+
+            </div>
+            `
+
+  }
+
+}
+
+// Backend DASHBOARD API 
+async function getDashboardStatistics() {
+  console.log("📊 Dashboard API START");
+  try {
+    const response = await window.crmApi.get("/api/v1/dashboard/stats");
+    console.log("🔥 DASHBOARD API ISHLADI");
+    console.log(response.data);
+
+    // UI UPDATE
+    DashboardStatisticsManager.updateDashboard(response.data);
+
+    return response.data;
+  } catch (error) {
+    console.error("❌ DASHBOARD API ERROR", error);
+    return null;
+  }
+}
+
+// Automatically bind to window
+window.getDashboardStatistics = getDashboardStatistics;
+
+// Backend API Weekly Chart
+// async function getWeeklyTrend() {
+
+//   // const token =
+//   //   localStorage.getItem("access_token");
+
+//   const token = AuthSystem.getAccessToken()
+
+//   if (!token) {
+
+//     console.error("❌ TOKEN TOPILMADI");
+
+//     return [];
+
+//   }
+
+//   try {
+
+//     const response =
+//       await axios.get(
+//         `${API_URL}/api/v1/dashboard/weekly-trend`,
+//         {
+//           headers: {
+//             Authorization: `Bearer ${token}`
+//           }
+//         }
+//       );
+
+//     console.log("📈 WEEKLY TREND");
+//     console.log(response.data);
+
+//     return response.data;
+
+//   } catch (error) {
+
+//     console.error(
+//       "❌ WEEKLY TREND ERROR"
+//     );
+
+//     console.error(error);
+
+//     return [];
+
+//   }
+// }
+
+async function getWeeklyTrend() {
+  try {
+    const response = await window.crmApi.get("/api/v1/dashboard/weekly-trend");
+    console.log("📈 WEEKLY TREND", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ WEEKLY TREND ERROR", error);
+    return [];
+  }
+}
+
+async function getDailyRevenue() {
+  try {
+    const response = await window.crmApi.get("/api/v1/dashboard/daily-revenue");
+    console.log("📊 DAILY REVENUE", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ DAILY REVENUE ERROR", error);
+    return null;
+  }
+}
+
+async function getLowStockAlerts() {
+  try {
+    const response = await window.crmApi.get("/api/v1/dashboard/low-stock-alerts");
+    console.log("⚠️ LOW STOCK", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ LOW STOCK ERROR", error);
+    return [];
+  }
+}
+
+// NOTE: a second, duplicate `async function getDailyRevenue()` used to be
+// defined here. It bypassed window.crmApi and called axios.get() directly
+// with a manually-read AuthSystem.getAccessToken() — no auto-refresh-on-401
+// logic, so an expired/near-expired token caused a hard 401 Unauthorized.
+// Because JS keeps only the LAST function declaration with a given name,
+// this broken duplicate was silently overriding the working getDailyRevenue()
+// defined above (which uses window.crmApi.get(), the same authenticated
+// client used everywhere else in the app, including its refresh interceptor).
+// Removed — the version above is now the only one, and it is used everywhere.
+
+// NOTE: a second, duplicate `async function getLowStockAlerts()` used to be
+// defined here, with the same bug as the old duplicate getDailyRevenue():
+// raw axios.get() + manually-read token, no refresh-on-401 handling, silently
+// overriding the working window.crmApi-based version defined above. Removed.
+
+// // Backend API Overdue Payments
+async function getOverduePayments() {
+  console.log("━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("⏰ OVERDUE PAYMENTS API");
+  console.log("📤 REQUEST: GET /api/v1/dashboard/overdue-payments");
+  console.log("🕒 Time:", new Date().toLocaleTimeString());
+
+  try {
+    // ✅ window.crmApi interceptor token ni avtomatik qo'shadi — qo'lda olish shart emas
+    const response = await window.crmApi.get("/api/v1/dashboard/overdue-payments");
+
+    console.log("✅ STATUS: SUCCESS");
+    console.log("🌐 HTTP:", response.status);
+    console.log("📊 RESPONSE:");
+    console.table(response.data);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+
+    return response.data;
+  } catch (error) {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    console.error("❌ STATUS: FAILED");
+    console.error("🌐 HTTP:", error?.response?.status);
+    console.error("📄 ERROR:", error?.response?.data || error.message);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    return [];
+  }
+}
+
+// // Backend API DailySalesStats
+async function getDailySalesStats() {
+  console.log("━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📊 DAILY SALES STATS API");
+  console.log("📤 REQUEST: GET /api/v1/daily-sales/stats");
+  console.log("🕒 Time:", new Date().toLocaleTimeString());
+
+  try {
+    // ✅ window.crmApi ishlatiladi — qo'lda token + Authorization header kerak emas
+    const response = await window.crmApi.get("/api/v1/daily-sales/stats");
+
+    console.log("✅ STATUS: SUCCESS");
+    console.log("🌐 HTTP:", response.status);
+    console.log("📊 RESPONSE:");
+    console.table(response.data);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+
+    return response.data;
+  } catch (error) {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    console.error("❌ STATUS: FAILED");
+    console.error("🌐 HTTP:", error?.response?.status);
+    console.error("📄 ERROR:", error?.response?.data || error.message);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    return null;
+  }
+}
+
+// // Backend API DAILY TRANSACTIONS 
+async function getDailyTransactions(period = "daily") {
+  console.log("━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("🛒 DAILY TRANSACTIONS API");
+  console.log(`📤 REQUEST: GET /api/v1/daily-sales/transactions?period=${period}`);
+  console.log("📅 PERIOD:", period.toUpperCase());
+  console.log("🕒 Time:", new Date().toLocaleTimeString());
+
+  try {
+    // ✅ window.crmApi interceptor token ni avtomatik qo'shadi
+    const response = await window.crmApi.get(
+      `/api/v1/daily-sales/transactions?period=${period}`
+    );
+
+    console.log("✅ STATUS: SUCCESS");
+    console.log("🌐 HTTP:", response.status);
+    console.log("📊 RESPONSE:");
+    console.table(response.data.items);
+    console.log("📊 TOTAL:", response.data.total);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+
+    return response.data;
+  } catch (error) {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    console.error("❌ STATUS: FAILED");
+    console.error("🌐 HTTP:", error?.response?.status);
+    console.error("📄 ERROR:", error?.response?.data || error.message);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    return { items: [] };
+  }
+}
+
+// NOTE: duplicate "transactionFilter" change listener removed from here.
+// It was attaching a SECOND change handler to the same <select>, calling
+// the old getDailyTransactions() (unverified /api/v1/daily-sales/transactions
+// endpoint) and racing against the listener defined earlier in this file
+// (which now calls the verified getTransactions() -> /api/v1/transactions/).
+// Two listeners on one element meant two renderTransactions() calls fired
+// per change event, and whichever resolved last silently won/overwrote the
+// other — this was the actual cause of the table going empty after the API
+// was wired in. getDailyTransactions() itself is left intact below in case
+// other code still depends on it.
+
+// // Backend API TransactionsExcel Export
+async function exportTransactionsExcel() {
+
+  try {
+
+    console.log("📥 EXPORT START");
+
+    const response =
+      await window.crmApi.get(
+        "/api/v1/daily-sales/export",
+        {
+          responseType: "blob"
+        }
+      );
+
+    const url =
+      window.URL.createObjectURL(
+        response.data
+      );
+
+    const a =
+      document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+      `transactions-${Date.now()}.csv`;
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+    window.URL.revokeObjectURL(url);
+
+    console.log(
+      "✅ EXPORT SUCCESS"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "❌ EXPORT ERROR"
+    );
+
+    console.error(error);
+
+  }
+
+}
+
+// NOTE: a second, fully identical `async function apiLoadCategories()` used
+// to be defined here (harmless duplicate — same logic as the one earlier in
+// this file). Removed as dead code to avoid the same "last declaration wins"
+// risk if one copy is ever edited without the other.
+
+async function createCategory(name) {
+
+  try {
+
+    const response =
+      await window.crmApi.post(
+        "/api/v1/products/categories",
+        {
+          name: name
+        }
+      );
+
+    console.log(
+      "✅ CATEGORY CREATED"
+    );
+
+    console.table(
+      response.data
+    );
+
+    await apiLoadCategories();
+
+    return response.data;
+
+  } catch (error) {
+
+    console.error(
+      "❌ CREATE CATEGORY ERROR"
+    );
+
+    console.log(
+      "STATUS:",
+      error.response?.status
+    );
+
+    console.log(
+      "DATA:",
+      error.response?.data
+    );
+
+  }
+}
+
+
+// // Backend API Delete Categories
+// async function deleteCategoryApi(
+//   categoryId
+// ) {
+
+//   try {
+
+//     const response =
+//       await window.crmApi.delete(
+//         `/api/v1/products/categories/${categoryId}`
+//       );
+
+//     console.log(
+//       "🗑 CATEGORY DELETED"
+//     );
+
+//     console.log(
+//       response.data
+//     );
+
+//     await apiLoadCategories();
+
+//   } catch (error) {
+
+//     console.error(
+//       "❌ DELETE ERROR"
+//     );
+
+//     console.error(error);
+
+//   }
+
+// }
+
+// document
+//   .getElementById(
+//     "deleteCategory"
+//   )
+//   .addEventListener(
+//     "click",
+//     async () => {
+
+//       const select =
+//         document.getElementById(
+//           "categoryList"
+//         );
+
+//       const categoryId =
+//         select.value;
+
+//       if (!categoryId)
+//         return;
+
+//       const confirmDelete =
+//         confirm(
+//           "Kategoriyani o'chirishni xohlaysizmi?"
+//         );
+
+//       if (
+//         !confirmDelete
+//       )
+//         return;
+
+//       await deleteCategoryApi(
+//         categoryId
+//       );
+
+//     }
+//   );
+
+// // Backend PRODUCT SEARCH API
+async function searchProductApi(keyword) {
+  try {
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("🔍 PRODUCT SEARCH API");
+    console.log("📝 QUERY:", keyword);
+
+    const response = await window.crmApi.get(
+      "/api/v1/sales/search-product",
+      {
+        params: { q: keyword }
+      }
+    );
+
+    console.log("✅ SEARCH SUCCESS");
+    console.log("📦 RESULT COUNT:", response.data.length);
+    console.table(response.data);
+
+    return response.data;
+
+  } catch (error) {
+
+    console.log("❌ SEARCH FAILED");
+
+    if (error.response) {
+      console.log(error.response.data);
+    }
+
+    return [];
+  }
+}
+
+// // Backend DEBTORS API
+async function getDebtorsStats() {
+  try {
+    const response = await window.crmApi.get("/api/v1/debtors/stats");
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("💰 DEBTORS STATS API");
+    console.log("✅ STATUS: SUCCESS");
+
+    console.table([response.data]);
+
+    console.log("💵 Monthly Collected:", response.data.monthly_collected);
+    console.log("⚠️ Overdue Count:", response.data.overdue_count);
+    console.log("💸 Overdue Total:", response.data.overdue_total);
+    console.log("📅 Upcoming Count:", response.data.upcoming_count);
+    console.log("💰 Upcoming Total:", response.data.upcoming_total);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+
+    return response.data;
+
+  } catch (error) {
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("💰 DEBTORS STATS API");
+    console.error("❌ ERROR:", error);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+
+    return null;
+  }
+}
+
+// // Backend DEBTORS List API
+
+// ================================
+// GET PROFILE
+// ================================
+async function apiGetProfile() {
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("👤 PROFILE API");
+  console.log("📤 REQUEST");
+  console.log("GET /api/v1/settings/profile");
+  console.log("🕒", new Date().toLocaleString());
+
+  try {
+    const response = await window.crmApi.get("/api/v1/settings/profile");
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("✅ STATUS : SUCCESS");
+    console.log("🌐 HTTP :", response.status);
+    console.log("📊 RESPONSE");
+    console.table([response.data]);
+
+    const profile = response.data;
+
+    console.log("👤 Full Name :", profile.full_name);
+    console.log("📧 Email     :", profile.email);
+    console.log("📱 Phone     :", profile.phone);
+    console.log("🏢 Company   :", profile.company_name);
+    console.log("🏷 Role      :", profile.role);
+    console.log("🏢 Department:", profile.department);
+    console.log("🌙 Dark Mode :", profile.dark_mode);
+    console.log("🔐 2FA       :", profile.two_factor_enabled);
+    console.log("📩 Email Not :", profile.email_notifications);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    // AuthSystem dagi userni yangilash
+    if (window.AuthSystem?.updateCurrentUserData) {
+      window.AuthSystem.updateCurrentUserData(profile);
+    }
+
+    // Topbarni yangilash
+    if (window.CRMTopbar?.updateProfile) {
+      window.CRMTopbar.updateProfile(profile);
+    }
+
+    return profile;
+
+  } catch (error) {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("❌ STATUS : ERROR");
+    console.log("🌐 HTTP :", error?.response?.status);
+    console.log("📊 RESPONSE :", error?.response?.data || error.message);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    throw error;
+  }
+}
+
+// // Backend SETTINGS PROFILE API
+async function apiLoadSettingsProfile() {
+
+  // console.clear();
+
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("⚙️ SETTINGS PROFILE API");
+  console.log("📤 REQUEST");
+  console.log("GET /api/v1/settings/profile");
+  console.log("🕒", new Date().toLocaleString());
+
+  try {
+
+    const response = await window.crmApi.get("/api/v1/settings/profile");
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("✅ STATUS : SUCCESS");
+    console.log("🌐 HTTP :", response.status);
+    console.log("📊 RESPONSE");
+
+    console.table([response.data]);
+
+    window.settingsProfile = response.data;
+
+    console.log("👤 Full Name :", response.data.full_name);
+    console.log("📧 Email     :", response.data.email);
+    console.log("📱 Phone     :", response.data.phone);
+    console.log("🏢 Company   :", response.data.company_name);
+    console.log("🏷 Role      :", response.data.role);
+    console.log("🏢 Department:", response.data.department);
+    console.log("🌙 Dark Mode :", response.data.dark_mode);
+    console.log("🔐 2FA       :", response.data.two_factor_enabled);
+    console.log("📩 Email Not :", response.data.email_notifications);
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    return response.data;
+
+  } catch (error) {
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("❌ STATUS : FAILED");
+
+    console.log("🌐 HTTP :", error.response?.status);
+
+    console.log("📄 RESPONSE");
+
+    console.table([
+      error.response?.data || {
+        message: error.message
+      }
+    ]);
+
+    console.error(error);
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    return null;
+  }
+}
+
+// // Backend UPDATE PROFILE API
+async function apiUpdateProfile(profileData) {
+
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("👤 UPDATE PROFILE API");
+  console.log("📤 REQUEST");
+  console.log("PUT /api/v1/settings/profile");
+  console.table([profileData]);
+
+  try {
+
+    const response = await window.crmApi.put(
+      "/api/v1/settings/profile",
+      profileData
+    );
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("✅ STATUS : SUCCESS");
+    console.log("🌐 HTTP :", response.status);
+    console.log("📊 RESPONSE");
+    console.table([response.data]);
+
+    // AuthSystem yangilash
+    if (window.AuthSystem?.updateCurrentUserData) {
+      window.AuthSystem.updateCurrentUserData(response.data);
+    }
+
+    if (window.TopbarProfileManager) {
+
+      window.TopbarProfileManager.updateAllUI({
+
+        fullName: response.data.full_name,
+        email: response.data.email,
+        phone: response.data.phone,
+        company: response.data.company_name,
+        department: response.data.role,
+        avatar: response.data.avatar_url
+
+      });
+
+    }
+
+    window.dispatchEvent(
+      new CustomEvent("profileUpdated", {
+        detail: {
+          avatar: response.data.avatar_url
+        }
+      })
+    );
+
+    // Topbar yangilash
+    if (window.CRMTopbar?.updateProfile) {
+      window.CRMTopbar.updateProfile(response.data);
+    }
+
+    console.log("✅ Profile muvaffaqiyatli yangilandi.");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    return response.data;
+
+  } catch (error) {
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("❌ STATUS : FAILED");
+    console.log("🌐 HTTP :", error?.response?.status);
+    console.log("📄 ERROR");
+    console.error(error?.response?.data || error.message);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    throw error;
+  }
+}
+
+// // Backend UPDATE AVATAR API
+async function apiUpdateAvatar(file) {
+  console.log("━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("🖼 UPDATE AVATAR");
+  console.log("📤 REQUEST");
+  console.log(file);
+
+  try {
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    const response = await window.crmApi.put(
+      "/api/v1/settings/profile/avatar",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      }
+    );
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("✅ STATUS : SUCCESS");
+    console.log("🌐 HTTP :", response.status);
+    console.table(response.data);
+
+    // UI ni yangilash
+    if (window.CRMTopbar) {
+      window.CRMTopbar.updateProfile(response.data);
+    }
+
+    return {
+      success: true,
+      data: response.data
+    };
+
+  } catch (error) {
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("❌ STATUS : ERROR");
+    console.log("🌐 HTTP :", error.response?.status);
+    console.log(error.response?.data || error);
+
+    return {
+      success: false,
+      message: getApiErrorMessage(error, "Avatar yangilanmadi")
+    };
+  }
+}
+
+// // Backend UPDATE SYSTEM SETTINGS API
+async function apiUpdateSystemSettings(data) {
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("⚙ UPDATE SYSTEM SETTINGS");
+  console.log("📤 REQUEST");
+  console.table([{
+    dark_mode: data.dark_mode,
+    email_notifications: data.email_notifications
+  }]);
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+  try {
+    const response = await window.crmApi.put("/api/v1/settings/system", {
+      dark_mode: data.dark_mode,
+      email_notifications: data.email_notifications
+    });
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("✅ STATUS : SUCCESS");
+    console.log("🌐 HTTP :", response.status);
+    console.log("📊 RESPONSE");
+    console.table([response.data]);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    return response.data;
+
+  } catch (error) {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("❌ STATUS : ERROR");
+    console.log("🌐 HTTP :", error?.response?.status);
+    console.log("📄 Response :", error?.response?.data || error.message);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    throw error;
+  }
+}
+
+// // Backend TOGGLE 2FA API
+async function apiToggle2FA(enabled) {
+
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("🔐 TOGGLE 2FA");
+  console.log("📤 REQUEST");
+  console.log("PUT /api/v1/settings/security/2fa");
+  console.table({
+    enabled: enabled
+  });
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+  try {
+
+    const response = await window.crmApi.put(
+      "/api/v1/settings/security/2fa",
+      null,
+      {
+        params: {
+          enabled: enabled
+        }
+      }
+    );
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("✅ STATUS : SUCCESS");
+    console.log("🌐 HTTP :", response.status);
+    console.table([response.data]);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    return response.data;
+
+  } catch (error) {
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("❌ STATUS : ERROR");
+    console.log("🌐 HTTP :", error.response?.status);
+    console.log("📄 Response :", error.response?.data);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    throw error;
+  }
+
+}
+// =========================================
+// GET PROFILE (NEW API)
+// =========================================
+
+async function apiGetProfileNew() {
+
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("👤 PROFILE API");
+  console.log("📤 REQUEST");
+  console.log("GET /api/v1/profile");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+  try {
+
+    const response = await window.crmApi.get("/api/v1/profile");
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("✅ STATUS : SUCCESS");
+    console.log("🌐 HTTP :", response.status);
+    console.log("📊 PROFILE");
+    console.table([response.data.profile]);
+
+    console.log("📈 STATS");
+    console.table([response.data.stats]);
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    return response.data;
+
+  } catch (error) {
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("❌ STATUS : ERROR");
+    console.log("🌐 HTTP :", error?.response?.status);
+    console.log("📄 RESPONSE :", error?.response?.data || error.message);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    throw error;
+
+  }
+
+}
+async function loadProfileNew() {
+
+  const data = await apiGetProfileNew();
+
+  if (!data) return null;
+
+  // Eski UI funksiyasidan foydalanamiz
+  if (typeof updateProfileDisplay === "function") {
+    updateProfileDisplay(data.profile);
+  }
+
+  // Agar Topbar Manager mavjud bo'lsa
+  if (window.TopbarProfileManager) {
+
+    // ✅ FIX 3a: response.data emas data.profile — apiGetProfileNew() {profile, stats} qaytaradi
+    window.TopbarProfileManager.updateAllUI({
+      fullName: data.profile.full_name || "",
+      email: data.profile.email || "",
+      phone: data.profile.phone || "",
+      company: data.profile.company_name || "",
+      department: data.profile.role || "",
+      avatar: data.profile.avatar_url || ""
+    });
+
+  }
+
+  return data;
+
+}
+
+window.loadProfileNew = loadProfileNew;
+// ✅ FIX 3b: Ikkinchi loadProfileNew() o'chirildi — birinchisini override qilar edi
+// va mavjud bo'lmagan updateProfileStats() → ReferenceError berardi.
