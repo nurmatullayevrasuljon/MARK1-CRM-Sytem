@@ -272,6 +272,7 @@
         }
 
         .mk-logo img {
+            width: 200px;
             height: 32px;
             display: block;
         }
@@ -363,6 +364,18 @@
             gap: 10px;
             margin-top: 14px;
             width: 100%;
+        }
+
+        @media (max-width:768px) {
+
+            #navbar>.mk-wrap>.mk-nav-links,
+            #navbar>.mk-wrap>.mk-nav-buttons {
+                display: none;
+            }
+
+            .mk-mobile-panel .mk-nav-links {
+                display: flex !important;
+            }
         }
 
         /* HERO */
