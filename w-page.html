@@ -271,10 +271,17 @@
             width: 100%;
         }
 
+        .mk-logo {
+            display: flex;
+            align-items: center;
+        }
+
         .mk-logo img {
-            width: 200px;
-            height: 32px;
             display: block;
+            height: 40px;
+            width: auto;
+            max-width: 220px;
+            object-fit: contain;
         }
 
         .mk-nav-links {
@@ -952,7 +959,10 @@
             color: var(--mk-muted-fg);
         }
 
-        /* PRICING */
+        /* ==========================
+   PRICING
+========================== */
+
         .mk-pricing-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -963,17 +973,30 @@
         .mk-price-card {
             position: relative;
             padding: 34px;
-            border-radius: var(--mk-radius);
+            border-radius: 18px;
             border: 1px solid var(--mk-border);
             background: #fff;
+            transition: all .35s ease;
+            overflow: visible;
         }
 
+        /* Default Highlight */
         .mk-price-card.mk-highlight {
             border: 2px solid rgba(59, 91, 219, .5);
-            box-shadow: 0 25px 50px -20px rgba(59, 91, 219, .3);
+            box-shadow: 0 25px 50px -20px rgba(59, 91, 219, .30);
             transform: scale(1.03);
+            z-index: 2;
         }
 
+        /* Hover */
+        .mk-price-card:hover {
+            transform: translateY(-10px) scale(1.03);
+            border: 2px solid rgba(59, 91, 219, .5);
+            box-shadow: 0 25px 50px rgba(59, 91, 219, .28);
+            z-index: 5;
+        }
+
+        /* Badge */
         .mk-price-badge {
             position: absolute;
             top: -16px;
@@ -981,16 +1004,44 @@
             transform: translateX(-50%);
             background: linear-gradient(90deg, var(--mk-primary), var(--mk-secondary));
             color: #fff;
-            padding: 5px 18px;
+            padding: 6px 18px;
             border-radius: 999px;
             font-size: .8rem;
             font-weight: 700;
+            white-space: nowrap;
+        }
+
+        /* Hover Badge */
+        .mk-price-card:not(.mk-highlight)::before {
+            content: "Tavsiya etiladi";
+            position: absolute;
+            top: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, var(--mk-primary), var(--mk-secondary));
+            color: #fff;
+            padding: 6px 18px;
+            border-radius: 999px;
+            font-size: .8rem;
+            font-weight: 700;
+            opacity: 0;
+            transition: .3s;
+            pointer-events: none;
+        }
+
+        .mk-price-card:hover::before {
+            opacity: 1;
         }
 
         .mk-price-card h3 {
             font-size: 1.4rem;
             font-weight: 700;
             margin: 0 0 8px;
+            transition: .3s;
+        }
+
+        .mk-price-card:hover h3 {
+            color: var(--mk-primary);
         }
 
         .mk-price-card .mk-desc {
@@ -1024,6 +1075,20 @@
         .mk-price-card .mk-btn {
             width: 100%;
             margin-bottom: 26px;
+            transition: .35s;
+        }
+
+        /* Secondary button hover */
+        .mk-price-card:hover .mk-btn-secondary {
+            background: linear-gradient(90deg, var(--mk-primary), var(--mk-secondary));
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 12px 25px rgba(59, 91, 219, .25);
+        }
+
+        /* Primary button hover */
+        .mk-price-card:hover .mk-btn-primary {
+            box-shadow: 0 12px 25px rgba(59, 91, 219, .30);
         }
 
         .mk-price-feature {
@@ -1032,11 +1097,17 @@
             gap: 10px;
             margin-bottom: 14px;
             font-size: .92rem;
+            transition: .3s;
         }
 
         .mk-price-feature i {
             color: var(--mk-primary);
             margin-top: 2px;
+            transition: .3s;
+        }
+
+        .mk-price-card:hover .mk-price-feature i {
+            transform: scale(1.15);
         }
 
         .mk-pricing-faq-link {
@@ -1048,6 +1119,21 @@
         .mk-pricing-faq-link a {
             color: var(--mk-primary);
             font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width:1024px) {
+
+            .mk-pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .mk-price-card,
+            .mk-price-card:hover,
+            .mk-price-card.mk-highlight {
+                transform: none;
+            }
+
         }
 
         /* FAQ */
