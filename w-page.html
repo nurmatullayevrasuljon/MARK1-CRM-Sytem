@@ -1385,7 +1385,7 @@
     <nav id="navbar">
         <div class="mk-wrap">
             <a href="#" class="mk-logo">
-                <img src="img/brand-l.png" alt="MARK1">
+                <img src="img/b logo.jpg" alt="MARK1">
             </a>
 
             <ul class="nav-links mk-nav-links">
@@ -1946,11 +1946,6 @@
         (function () {
             "use strict";
 
-            // Faqat shu sahifaga xos funksiyalar: rotating so'z, FAQ akkordeon,
-            // dashboard-showcase tablari va scroll-reveal. Hammasi "mk" prefiksi
-            // bilan — index.js yoki boshqa skriptlar bilan hech qanday umumiy
-            // nom yo'q.
-
             var footerYearEl = document.getElementById('mkFooterYear');
             if (footerYearEl) footerYearEl.textContent = new Date().getFullYear();
 
@@ -2053,8 +2048,6 @@
             }
 
             // --- Mobil panelni nav havolasi bosilganda yopish ---
-            // (index.js .nav-links a bosilganda scroll qiladi, lekin
-            // mobil panelni yopmaydi — shu yerda faqat SHUNI qo'shamiz,
             // index.js'ning o'z ishiga aralashmaymiz)
             var mkNavbar = document.getElementById('navbar');
             if (mkNavbar) {
@@ -2067,6 +2060,48 @@
                 });
             }
         })();
+        // Mobile Menu
+        const navbar = document.getElementById("navbar");
+        const mobileBtn = document.getElementById("mobileMenuBtn");
+
+        if (mobileBtn) {
+            mobileBtn.addEventListener("click", () => {
+                navbar.classList.toggle("mobile-open");
+            });
+        }
+
+        // Scroll to section
+        document.querySelectorAll("[data-target]").forEach(item => {
+            item.addEventListener("click", function () {
+                const target = document.getElementById(this.dataset.target);
+
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start"
+                    });
+
+                    // Mobile menyuni yopish
+                    navbar.classList.remove("mobile-open");
+                }
+            });
+        });
+        document.querySelectorAll("[data-target]").forEach(item => {
+            item.addEventListener("click", function () {
+                const target = document.getElementById(this.dataset.target);
+
+                if (!target) return;
+
+                const offset = 80;
+
+                window.scrollTo({
+                    top: target.offsetTop - offset,
+                    behavior: "smooth"
+                });
+
+                navbar.classList.remove("mobile-open");
+            });
+        });
     </script>
 
 </body>
