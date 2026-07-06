@@ -503,136 +503,136 @@
   // Faqat LANDING sahifasi uchun (#navbar bor, lekin dashboard emas)
   // ==========================================================
 
-  function initLandingPage() {
-    var navbar        = $("navbar");
-    var mobileMenuBtn = $("mobileMenuBtn");
-    if (!navbar) return;
+  // function initLandingPage() {
+  //   var navbar        = $("navbar");
+  //   var mobileMenuBtn = $("mobileMenuBtn");
+  //   if (!navbar) return;
 
-    // Navbar scroll
-    window.addEventListener("scroll", function () {
-      navbar.classList.toggle("scrolled", window.scrollY > 50);
-    }, { passive: true });
+  //   // Navbar scroll
+  //   window.addEventListener("scroll", function () {
+  //     navbar.classList.toggle("scrolled", window.scrollY > 50);
+  //   }, { passive: true });
 
-    // Mobile menu
-    if (mobileMenuBtn) {
-      mobileMenuBtn.addEventListener("click", function () {
-        var open = navbar.classList.toggle("mobile-open");
-        mobileMenuBtn.textContent = open ? "✕" : "☰";
-      });
-    }
+  //   // Mobile menu
+  //   if (mobileMenuBtn) {
+  //     mobileMenuBtn.addEventListener("click", function () {
+  //       var open = navbar.classList.toggle("mobile-open");
+  //       mobileMenuBtn.textContent = open ? "✕" : "☰";
+  //     });
+  //   }
 
-    // CTA tugmalari
-    ["startBtn", "trialBtn", "bottomStartBtn", "bottomTrialBtn"].forEach(function (id) {
-      var btn = $(id);
-      if (!btn || btn.dataset.ctaBound === "true") return;
-      btn.dataset.ctaBound = "true";
-      btn.addEventListener("click", function (e) {
-        e.preventDefault();
-        Transition.go(isLoggedIn() ? DASHBOARD_PAGE : SIGNUP_PAGE);
-      });
-    });
+  //   // CTA tugmalari
+  //   ["startBtn", "trialBtn", "bottomStartBtn", "bottomTrialBtn"].forEach(function (id) {
+  //     var btn = $(id);
+  //     if (!btn || btn.dataset.ctaBound === "true") return;
+  //     btn.dataset.ctaBound = "true";
+  //     btn.addEventListener("click", function (e) {
+  //       e.preventDefault();
+  //       Transition.go(isLoggedIn() ? DASHBOARD_PAGE : SIGNUP_PAGE);
+  //     });
+  //   });
 
-    // Smooth scroll (in-page anchor linklar)
-    var anchors = $qa('a[href^="#"]');
-    for (var ai = 0; ai < anchors.length; ai++) {
-      (function (a) {
-        a.addEventListener("click", function (e) {
-          var href = a.getAttribute("href");
-          if (!href || href.length < 2) return;
-          var target = $q(href);
-          if (!target) return;
-          e.preventDefault();
-          target.scrollIntoView({ behavior: "smooth", block: "start" });
-          if (mobileMenuBtn) {
-            navbar.classList.remove("mobile-open");
-            mobileMenuBtn.textContent = "☰";
-          }
-        });
-      }(anchors[ai]));
-    }
+  //   // Smooth scroll (in-page anchor linklar)
+  //   var anchors = $qa('a[href^="#"]');
+  //   for (var ai = 0; ai < anchors.length; ai++) {
+  //     (function (a) {
+  //       a.addEventListener("click", function (e) {
+  //         var href = a.getAttribute("href");
+  //         if (!href || href.length < 2) return;
+  //         var target = $q(href);
+  //         if (!target) return;
+  //         e.preventDefault();
+  //         target.scrollIntoView({ behavior: "smooth", block: "start" });
+  //         if (mobileMenuBtn) {
+  //           navbar.classList.remove("mobile-open");
+  //           mobileMenuBtn.textContent = "☰";
+  //         }
+  //       });
+  //     }(anchors[ai]));
+  //   }
 
-    // Mouse parallax
-    var mx = 0, my = 0, cx = 0, cy = 0;
-    document.addEventListener("mousemove", function (e) {
-      mx = (e.clientX - window.innerWidth  / 2) / 40;
-      my = (e.clientY - window.innerHeight / 2) / 40;
-    }, { passive: true });
+  //   // Mouse parallax
+  //   var mx = 0, my = 0, cx = 0, cy = 0;
+  //   document.addEventListener("mousemove", function (e) {
+  //     mx = (e.clientX - window.innerWidth  / 2) / 40;
+  //     my = (e.clientY - window.innerHeight / 2) / 40;
+  //   }, { passive: true });
 
-    (function tick() {
-      cx += (mx - cx) * 0.1;
-      cy += (my - cy) * 0.1;
-      var floaters = $qa(".floating-element");
-      for (var fi = 0; fi < floaters.length; fi++) {
-        var spd = (fi + 1) * 0.5;
-        floaters[fi].style.transform =
-          "translate(" + (cx * spd) + "px," + (cy * spd) + "px)";
-      }
-      requestAnimationFrame(tick);
-    }());
+  //   (function tick() {
+  //     cx += (mx - cx) * 0.1;
+  //     cy += (my - cy) * 0.1;
+  //     var floaters = $qa(".floating-element");
+  //     for (var fi = 0; fi < floaters.length; fi++) {
+  //       var spd = (fi + 1) * 0.5;
+  //       floaters[fi].style.transform =
+  //         "translate(" + (cx * spd) + "px," + (cy * spd) + "px)";
+  //     }
+  //     requestAnimationFrame(tick);
+  //   }());
 
-    // Scroll reveal
-    if ("IntersectionObserver" in window) {
-      var revEls = $qa(".block-text, .line-text");
-      if (revEls.length) {
-        var ro = new IntersectionObserver(function (entries) {
-          entries.forEach(function (en) {
-            if (!en.isIntersecting) return;
-            en.target.classList.add("block-text-show", "line-text-show");
-            ro.unobserve(en.target);
-          });
-        }, { threshold: 0.15, rootMargin: "0px 0px -60px 0px" });
-        revEls.forEach(function (el, i) {
-          el.classList.add("block-text-" + ((i % 4) + 1));
-          ro.observe(el);
-        });
-      }
+  //   // Scroll reveal
+  //   if ("IntersectionObserver" in window) {
+  //     var revEls = $qa(".block-text, .line-text");
+  //     if (revEls.length) {
+  //       var ro = new IntersectionObserver(function (entries) {
+  //         entries.forEach(function (en) {
+  //           if (!en.isIntersecting) return;
+  //           en.target.classList.add("block-text-show", "line-text-show");
+  //           ro.unobserve(en.target);
+  //         });
+  //       }, { threshold: 0.15, rootMargin: "0px 0px -60px 0px" });
+  //       revEls.forEach(function (el, i) {
+  //         el.classList.add("block-text-" + ((i % 4) + 1));
+  //         ro.observe(el);
+  //       });
+  //     }
 
-      var iconBoxes = $qa(".icon-box");
-      if (iconBoxes.length) {
-        var io = new IntersectionObserver(function (entries) {
-          entries.forEach(function (en) {
-            if (!en.isIntersecting) return;
-            en.target.classList.add("svg-icon", "icon-text", "icon-text2");
-            io.unobserve(en.target);
-          });
-        }, { threshold: 0.1 });
-        iconBoxes.forEach(function (el) { io.observe(el); });
-      }
-    }
+  //     var iconBoxes = $qa(".icon-box");
+  //     if (iconBoxes.length) {
+  //       var io = new IntersectionObserver(function (entries) {
+  //         entries.forEach(function (en) {
+  //           if (!en.isIntersecting) return;
+  //           en.target.classList.add("svg-icon", "icon-text", "icon-text2");
+  //           io.unobserve(en.target);
+  //         });
+  //       }, { threshold: 0.1 });
+  //       iconBoxes.forEach(function (el) { io.observe(el); });
+  //     }
+  //   }
 
-    // Active nav link tracking
-    var navLinks  = $qa(".nav-links a");
-    var navHeight = navbar.offsetHeight;
+  //   // Active nav link tracking
+  //   var navLinks  = $qa(".nav-links a");
+  //   var navHeight = navbar.offsetHeight;
 
-    navLinks.forEach(function (link) {
-      link.addEventListener("click", function () {
-        var tid = link.dataset && link.dataset.target;
-        if (!tid) return;
-        var el = $q("#" + tid);
-        if (!el) return;
-        var y = el.getBoundingClientRect().top + window.pageYOffset - navHeight - 10;
-        window.scrollTo({ top: y, behavior: "smooth" });
-        navLinks.forEach(function (l) { l.classList.remove("active"); });
-        link.classList.add("active");
-      });
-    });
+  //   navLinks.forEach(function (link) {
+  //     link.addEventListener("click", function () {
+  //       var tid = link.dataset && link.dataset.target;
+  //       if (!tid) return;
+  //       var el = $q("#" + tid);
+  //       if (!el) return;
+  //       var y = el.getBoundingClientRect().top + window.pageYOffset - navHeight - 10;
+  //       window.scrollTo({ top: y, behavior: "smooth" });
+  //       navLinks.forEach(function (l) { l.classList.remove("active"); });
+  //       link.classList.add("active");
+  //     });
+  //   });
 
-    var sections = $qa("section");
-    window.addEventListener("scroll", function () {
-      var current = "";
-      sections.forEach(function (s) {
-        if (window.scrollY >= s.offsetTop - navHeight - 20) {
-          current = s.getAttribute("id") || "";
-        }
-      });
-      navLinks.forEach(function (l) {
-        l.classList.toggle(
-          "active",
-          !!(l.dataset && l.dataset.target === current)
-        );
-      });
-    }, { passive: true });
-  }
+  //   var sections = $qa("section");
+  //   window.addEventListener("scroll", function () {
+  //     var current = "";
+  //     sections.forEach(function (s) {
+  //       if (window.scrollY >= s.offsetTop - navHeight - 20) {
+  //         current = s.getAttribute("id") || "";
+  //       }
+  //     });
+  //     navLinks.forEach(function (l) {
+  //       l.classList.toggle(
+  //         "active",
+  //         !!(l.dataset && l.dataset.target === current)
+  //       );
+  //     });
+  //   }, { passive: true });
+  // }
 
   // ==========================================================
   // DASHBOARD INIT
