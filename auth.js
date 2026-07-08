@@ -49,6 +49,43 @@ var AuthSystem = window.AuthSystem = (function () {
         return sessionStorage;
     }
 
+    // ✅ FIX: Akkauntlar orasida ma'lumot sizib chiqmasligi uchun —
+    // login/logout paytida barcha CRM ma'lumotlar keshini tozalaydigan funksiya.
+    // Faqat tizim sozlamalariga emas, foydalanuvchi ma'lumotlariga tegishli kalitlarni tozalaydi.
+    function clearAppDataCache() {
+        [
+            "products",
+            "categories",
+            "sales",
+            "crmDebtors",
+            "crmPaidDebtors",
+            "smsHistory",
+            "crm_statistics",
+            "currentSaleSessionId",
+            "currentSalesDate",
+            "yesterdaySalesTotal",
+            "profile_data",
+            "profile_avatar",
+            "activePage",
+            "activePageTitle",
+            "activeMobileSection"
+        ].forEach(key => {
+            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
+        });
+
+        // Har bir qarzdorga tegishli dinamik SMS kalitlarini ham tozalash
+        Object.keys(localStorage).forEach(key => {
+            if (
+                key.indexOf("last_sms_") === 0 ||
+                key.indexOf("last_auto_sms_") === 0 ||
+                key.indexOf("last_overdue_sms_") === 0
+            ) {
+                localStorage.removeItem(key);
+            }
+        });
+    }
+
     function clearSessionOnly() {
         [
             CURRENT_USER_KEY,
@@ -62,6 +99,9 @@ var AuthSystem = window.AuthSystem = (function () {
             localStorage.removeItem(key);
             sessionStorage.removeItem(key);
         });
+
+        // ✅ FIX: sessiya bilan birga foydalanuvchi ma'lumotlari keshini ham tozalash
+        clearAppDataCache();
 
         delete crmApi.defaults.headers.common.Authorization;
     }
@@ -549,24 +589,9 @@ var AuthSystem = window.AuthSystem = (function () {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 🌐 GLOBAL AUTH BRIDGE
-//
-// ROOT CAUSE: `getAuth()` faqat index.js IIFE ichida private funksiya sifatida
-// aniqlangan va hech qachon global scope ga chiqarilmagan.
-// signup.js, profile.js, dashboard.js va boshqa fayllar `getAuth()` yoki
-// `window.auth` ni global scope da kutadi — lekin ular yo'q edi.
-//
-// FIX: window.getAuth ni bu yerda bir marta aniqlaymiz — auth.js yuklangandan
-// keyin darhol mavjud bo'ladi. Bu barcha fayllar bilan backward compatible:
-//   ✅  getAuth()            → index.js ichida ishlaydi (o'z IIFE private nusxasi bor)
-//   ✅  window.getAuth()     → boshqa har qanday fayldan ishlaydi
-//   ✅  window.AuthSystem    → to'g'ridan-to'g'ri ham ishlaydi (o'zgarmagan)
+
 // ─────────────────────────────────────────────────────────────────────────────
 window.getAuth = function () {
     return window.AuthSystem || null;
 };
 
-// NOTE: renderProfileData() va getWeeklyTrend() bu fayldan olib tashlandi.
-// renderProfileData() — normalizeApiAssetUrl() ga bog'liq, u faqat script.js da mavjud.
-// auth.js script.js dan oldin yuklanishi mumkin, shuning uchun ReferenceError berardi.
-// getWeeklyTrend() — script.js da window.crmApi bilan to'g'ri versiyasi bor.
-// Topbarni yangilash script.js dagi TopbarProfileManager orqali bajariladi.
