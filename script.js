@@ -4152,6 +4152,7 @@ var ProfileDropdownManager = {
 var StatisticsManager = {
   init: function () {
     this.updateTodayDate();
+    this.loadStats();
     this.startRealTimeClock();
   },
 
@@ -4166,25 +4167,69 @@ var StatisticsManager = {
     var month = months[now.getMonth()];
 
     var todayLabel = dayName + ', ' + day + ' ' + month;
-    var el = document.getElementById('todayLabel');
-    if (el) el.textContent = todayLabel;
+    document.getElementById('todayLabel').textContent = todayLabel;
   },
 
-  // Real vaqt (har daqiqada yangilanadi)
+  // Real vaqt soat (har daqiqada yangilanadi)
   startRealTimeClock: function () {
     var self = this;
     this.updateTodayDate();
 
+    // Har daqiqada yangilanadi
     setInterval(function () {
       self.updateTodayDate();
+      self.checkNewDay();
     }, 60000);
   },
 
-  // ✅ Mijozlar/bitimlar demo-hisoblagichi (156/89) olib tashlandi.
-  // Tashqi chaqiruvlar (window.CRMTopbar) xatolik bermasligi uchun bo'sh qoldirilgan:
-  loadStats: function () {},
-  resetTodayActions: function () {},
-  incrementAction: function () {}
+  // Yangi kun boshlanganini tekshirish
+  checkNewDay: function () {
+    var today = new Date().toDateString();
+    var lastDate = localStorage.getItem('crm_last_date');
+
+    if (lastDate !== today) {
+      this.resetTodayActions();
+      localStorage.setItem('crm_last_date', today);
+    }
+  },
+
+  // Statistikani yuklash
+  loadStats: function () {
+    var stats = localStorage.getItem('crm_statistics');
+    if (stats) {
+      try {
+        var data = JSON.parse(stats);
+        document.getElementById('statCustomers').textContent = data.customers || 156;
+        document.getElementById('statDeals').textContent = data.deals || 89;
+        document.getElementById('statToday').textContent = data.todayActions || 0;
+      } catch (e) {
+        console.error('Error loading stats:', e);
+      }
+    } else {
+      this.resetTodayActions();
+    }
+  },
+
+  // Bugungi harakatlarni reset qilish
+  resetTodayActions: function () {
+    var stats = {
+      customers: 156,
+      deals: 89,
+      todayActions: 0
+    };
+    localStorage.setItem('crm_statistics', JSON.stringify(stats));
+    document.getElementById('statToday').textContent = '0';
+  },
+
+  // Harakatni oshirish
+  incrementAction: function () {
+    var stats = localStorage.getItem('crm_statistics');
+    var data = stats ? JSON.parse(stats) : { customers: 156, deals: 89, todayActions: 0 };
+
+    data.todayActions = (data.todayActions || 0) + 1;
+    localStorage.setItem('crm_statistics', JSON.stringify(data));
+    document.getElementById('statToday').textContent = data.todayActions;
+  }
 };
 
 var TopbarProfileManager = {
