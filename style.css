@@ -2580,18 +2580,6 @@ svg {
   gap: 16px;
 }
 
-.profile-dropdown-stats-single {
-  grid-template-columns: 1fr;
-}
-
-.stat-label-date {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1e293b;
-  text-transform: none;
-  letter-spacing: normal;
-}
-
 .profile-wrapper {
   position: relative;
 }
@@ -2755,6 +2743,18 @@ svg {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
+}
+
+.profile-dropdown-stats-single {
+  grid-template-columns: 1fr;
+}
+
+.stat-label-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .stat-item {
