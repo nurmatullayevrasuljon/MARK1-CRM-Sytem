@@ -271,19 +271,9 @@
             width: 100%;
         }
 
-        .mk-logo {
-            width: 160px;
-            height: 75px !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid;
-            overflow: hidden !important;
-        }
-
         .mk-logo img {
-            height: auto !important;
-            width: 100%;
+            height: 32px;
+            display: block;
         }
 
         .mk-nav-links {
@@ -373,18 +363,6 @@
             gap: 10px;
             margin-top: 14px;
             width: 100%;
-        }
-
-        @media (max-width:768px) {
-
-            #navbar>.mk-wrap>.mk-nav-links,
-            #navbar>.mk-wrap>.mk-nav-buttons {
-                display: none;
-            }
-
-            .mk-mobile-panel .mk-nav-links {
-                display: flex !important;
-            }
         }
 
         /* HERO */
@@ -961,10 +939,7 @@
             color: var(--mk-muted-fg);
         }
 
-        /* ==========================
-        PRICING
-        ========================== */
-
+        /* PRICING */
         .mk-pricing-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -975,30 +950,17 @@
         .mk-price-card {
             position: relative;
             padding: 34px;
-            border-radius: 18px;
+            border-radius: var(--mk-radius);
             border: 1px solid var(--mk-border);
             background: #fff;
-            transition: all .35s ease;
-            overflow: visible;
         }
 
-        /* Default Highlight */
         .mk-price-card.mk-highlight {
             border: 2px solid rgba(59, 91, 219, .5);
-            box-shadow: 0 25px 50px -20px rgba(59, 91, 219, .30);
+            box-shadow: 0 25px 50px -20px rgba(59, 91, 219, .3);
             transform: scale(1.03);
-            z-index: 2;
         }
 
-        /* Hover */
-        .mk-price-card:hover {
-            transform: translateY(-10px) scale(1.03);
-            border: 2px solid rgba(59, 91, 219, .5);
-            box-shadow: 0 25px 50px rgba(59, 91, 219, .28);
-            z-index: 5;
-        }
-
-        /* Badge */
         .mk-price-badge {
             position: absolute;
             top: -16px;
@@ -1006,44 +968,16 @@
             transform: translateX(-50%);
             background: linear-gradient(90deg, var(--mk-primary), var(--mk-secondary));
             color: #fff;
-            padding: 6px 18px;
+            padding: 5px 18px;
             border-radius: 999px;
             font-size: .8rem;
             font-weight: 700;
-            white-space: nowrap;
-        }
-
-        /* Hover Badge */
-        .mk-price-card:not(.mk-highlight)::before {
-            content: "Tavsiya etiladi";
-            position: absolute;
-            top: -16px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(90deg, var(--mk-primary), var(--mk-secondary));
-            color: #fff;
-            padding: 6px 18px;
-            border-radius: 999px;
-            font-size: .8rem;
-            font-weight: 700;
-            opacity: 0;
-            transition: .3s;
-            pointer-events: none;
-        }
-
-        .mk-price-card:hover::before {
-            opacity: 1;
         }
 
         .mk-price-card h3 {
             font-size: 1.4rem;
             font-weight: 700;
             margin: 0 0 8px;
-            transition: .3s;
-        }
-
-        .mk-price-card:hover h3 {
-            color: var(--mk-primary);
         }
 
         .mk-price-card .mk-desc {
@@ -1077,20 +1011,6 @@
         .mk-price-card .mk-btn {
             width: 100%;
             margin-bottom: 26px;
-            transition: .35s;
-        }
-
-        /* Secondary button hover */
-        .mk-price-card:hover .mk-btn-secondary {
-            background: linear-gradient(90deg, var(--mk-primary), var(--mk-secondary));
-            color: #fff;
-            border-color: transparent;
-            box-shadow: 0 12px 25px rgba(59, 91, 219, .25);
-        }
-
-        /* Primary button hover */
-        .mk-price-card:hover .mk-btn-primary {
-            box-shadow: 0 12px 25px rgba(59, 91, 219, .30);
         }
 
         .mk-price-feature {
@@ -1099,17 +1019,11 @@
             gap: 10px;
             margin-bottom: 14px;
             font-size: .92rem;
-            transition: .3s;
         }
 
         .mk-price-feature i {
             color: var(--mk-primary);
             margin-top: 2px;
-            transition: .3s;
-        }
-
-        .mk-price-card:hover .mk-price-feature i {
-            transform: scale(1.15);
         }
 
         .mk-pricing-faq-link {
@@ -1121,21 +1035,6 @@
         .mk-pricing-faq-link a {
             color: var(--mk-primary);
             font-weight: 600;
-        }
-
-        /* Responsive */
-        @media (max-width:1024px) {
-
-            .mk-pricing-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .mk-price-card,
-            .mk-price-card:hover,
-            .mk-price-card.mk-highlight {
-                transform: none;
-            }
-
         }
 
         /* FAQ */
@@ -2040,12 +1939,17 @@
         </div>
     </footer>
 
-    <script src="index.js" defer></script>
-    <script src="auth.js" defer></script>
+    <script src="index.js?v=1783512488" defer></script>
+    <script src="auth.js?v=1783512488" defer></script>
 
     <script defer>
         (function () {
             "use strict";
+
+            // Faqat shu sahifaga xos funksiyalar: rotating so'z, FAQ akkordeon,
+            // dashboard-showcase tablari va scroll-reveal. Hammasi "mk" prefiksi
+            // bilan — index.js yoki boshqa skriptlar bilan hech qanday umumiy
+            // nom yo'q.
 
             var footerYearEl = document.getElementById('mkFooterYear');
             if (footerYearEl) footerYearEl.textContent = new Date().getFullYear();
@@ -2056,7 +1960,7 @@
                 { text: "Kosmetika", color: "#3b5bdb" },
                 { text: "Oziq-ovqat", color: "#16a34a" },
                 { text: "Elektronika", color: "#2563eb" },
-                { text: "Telefon", color: "#db2777" },
+                { text: "Go'zallik saloni", color: "#db2777" },
                 { text: "Qurilish", color: "#ea580c" },
                 { text: "Kichik savdo", color: "#4f46e5" }
             ];
@@ -2149,6 +2053,8 @@
             }
 
             // --- Mobil panelni nav havolasi bosilganda yopish ---
+            // (index.js .nav-links a bosilganda scroll qiladi, lekin
+            // mobil panelni yopmaydi — shu yerda faqat SHUNI qo'shamiz,
             // index.js'ning o'z ishiga aralashmaymiz)
             var mkNavbar = document.getElementById('navbar');
             if (mkNavbar) {

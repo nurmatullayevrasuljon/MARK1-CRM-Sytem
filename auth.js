@@ -589,8 +589,6 @@ var AuthSystem = window.AuthSystem = (function () {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 🌐 GLOBAL AUTH BRIDGE
-
-// ─────────────────────────────────────────────────────────────────────────────
 window.getAuth = function () {
     return window.AuthSystem || null;
 };
