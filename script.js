@@ -317,6 +317,39 @@ let currentSmsDebtorId = null;
 let transactionFilter = "daily";
 let transactionSearchQuery = "";
 
+// OFFLINE DATA MODE START
+// Backend hali tiklanmagani uchun Products/Categories/Sales/Debtors bo'yicha
+// barcha yozish (create/update/delete) amallari to'g'ridan-to'g'ri
+// localStorage asosidagi local massivlar (products/categories/sales/debtors)
+// ustida bajariladi — window.crmApi orqali backendga chiqilmaydi.
+// Backend qaytganda OFFLINE_DATA_MODE ni false qiling yoki shu
+// "OFFLINE DATA MODE" bloklarini butunlay o'chiring — asl (real API) kod
+// hech qayerda o'chirilmagan, faqat vaqtincha chetlab o'tilmoqda.
+const OFFLINE_DATA_MODE = true;
+const OFFLINE_CATEGORIES_KEY = "crm_offline_categories";
+
+function offlineGenId() {
+  return Date.now() + Math.floor(Math.random() * 1000);
+}
+
+// globalCategories ({id, name}) har sahifa yuklanishida bo'shdan boshlanadi,
+// shuning uchun uni categories (nomlar ro'yxati) bilan birga alohida
+// localStorage kalitida saqlaymiz — id'lar tahrirlash/o'chirish orasida barqaror qolishi uchun.
+function loadOfflineCategories() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(OFFLINE_CATEGORIES_KEY) || "null");
+    if (Array.isArray(stored) && stored.length) return stored;
+  } catch { }
+  return categories.map(name => ({ id: offlineGenId(), name }));
+}
+
+function saveOfflineCategories() {
+  localStorage.setItem(OFFLINE_CATEGORIES_KEY, JSON.stringify(globalCategories));
+  categories = globalCategories.map(c => c.name);
+  saveCategories();
+}
+// OFFLINE DATA MODE END
+
 loadUserData();
 
 // Chart instances
@@ -1132,6 +1165,52 @@ if (productForm) {
     }
 
     try {
+      // OFFLINE DATA MODE START
+      if (OFFLINE_DATA_MODE) {
+        const categoryMeta = globalCategories.find(c => c.id == categoryId);
+        const unitValue = productUnit.value === "ta" ? "dona" : productUnit.value;
+
+        if (editingId) {
+          const existing = products.find(p => p.id === editingId);
+          if (existing) {
+            existing.name = productName.value.trim();
+            existing.categoryId = categoryId;
+            existing.category = categoryMeta ? categoryMeta.name : existing.category;
+            existing.costPrice = costPriceValue;
+            existing.price = salePriceValue;
+            existing.stock = stockValue;
+            existing.unit = unitValue;
+          }
+          showSaleAlert("Mahsulot yangilandi! (OFFLINE)", "success");
+          editingId = null;
+        } else {
+          products.push({
+            id: offlineGenId(),
+            name: productName.value.trim(),
+            categoryId: categoryId,
+            category: categoryMeta ? categoryMeta.name : "Kategoriyasiz",
+            image: null,
+            imageUrl: null,
+            costPrice: costPriceValue,
+            price: salePriceValue,
+            currency: "UZS",
+            stock: stockValue,
+            initialStock: stockValue,
+            unit: unitValue,
+            isLowStock: false,
+            createdAt: new Date().toISOString()
+          });
+          showSaleAlert("Mahsulot qo'shildi! (OFFLINE)", "success");
+        }
+
+        saveProducts();
+        await apiLoadProducts();
+        $("#productModal").modal("hide");
+        productForm.reset();
+        return;
+      }
+      // OFFLINE DATA MODE END
+
       if (editingId) {
         // Update product using JSON PUT
         const updateData = {
@@ -1196,6 +1275,17 @@ function editProduct(id) {
 
 async function deleteProduct(id) {
   if (!confirm("O'chirishni xohlaysizmi?")) return;
+
+  // OFFLINE DATA MODE START
+  if (OFFLINE_DATA_MODE) {
+    products = products.filter(p => p.id !== id);
+    saveProducts();
+    showSaleAlert("Mahsulot o'chirildi! (OFFLINE)", "success");
+    await apiLoadProducts();
+    return;
+  }
+  // OFFLINE DATA MODE END
+
   try {
     await window.crmApi.delete(`/api/v1/products/${id}`);
     showSaleAlert("Mahsulot o'chirildi!", "success");
@@ -1259,6 +1349,15 @@ const deleteCategoryBtn = document.getElementById("deleteCategory");
 let globalCategories = [];
 
 async function apiLoadProducts() {
+
+  // OFFLINE DATA MODE START
+  if (OFFLINE_DATA_MODE) {
+    renderProducts();
+    renderSaleProducts();
+    console.log("✅ Products loaded from OFFLINE storage:", products.length);
+    return;
+  }
+  // OFFLINE DATA MODE END
 
   try {
 
@@ -1335,6 +1434,16 @@ async function apiLoadProducts() {
 }
 
 async function apiLoadCategories() {
+  // OFFLINE DATA MODE START
+  if (OFFLINE_DATA_MODE) {
+    globalCategories = loadOfflineCategories();
+    saveOfflineCategories();
+    renderCategories();
+    renderCategoryList();
+    console.log("✅ Categories loaded from OFFLINE storage:", globalCategories.length);
+    return;
+  }
+  // OFFLINE DATA MODE END
   try {
     const response = await window.crmApi.get("/api/v1/products/categories");
     globalCategories = response.data;
@@ -1415,6 +1524,19 @@ if (saveCategory) {
     }
 
     try {
+      // OFFLINE DATA MODE START
+      if (OFFLINE_DATA_MODE) {
+        globalCategories.push({ id: offlineGenId(), name: value });
+        saveOfflineCategories();
+        showSaleAlert("Kategoriya qo'shildi! (OFFLINE)", "success");
+        renderCategories();
+        renderCategoryList();
+        newCategory.value = "";
+        $("#categoryModal").modal("hide");
+        return;
+      }
+      // OFFLINE DATA MODE END
+
       await window.crmApi.post("/api/v1/products/categories", {
         name: value
       });
@@ -1447,6 +1569,18 @@ if (updateCategoryBtn) {
     if (duplicate) return alert("Bu nom boshqa kategoriyada mavjud");
 
     try {
+      // OFFLINE DATA MODE START
+      if (OFFLINE_DATA_MODE) {
+        if (current) current.name = newName;
+        saveOfflineCategories();
+        showSaleAlert("Kategoriya tahrirlandi! (OFFLINE)", "success");
+        renderCategories();
+        renderCategoryList();
+        $("#categoryModal").modal("hide");
+        return;
+      }
+      // OFFLINE DATA MODE END
+
       await window.crmApi.put(`/api/v1/products/categories/${catId}`, { name: newName });
       showSaleAlert("Kategoriya tahrirlandi!", "success");
       await apiLoadCategories();
@@ -1468,6 +1602,19 @@ if (deleteCategoryBtn) {
     if (!confirm("Kategoriyani o'chirmoqchimisiz?")) return;
 
     try {
+      // OFFLINE DATA MODE START
+      if (OFFLINE_DATA_MODE) {
+        globalCategories = globalCategories.filter(c => c.id != catId);
+        saveOfflineCategories();
+        showSaleAlert("Kategoriya o'chirildi! (OFFLINE)", "success");
+        renderCategories();
+        renderCategoryList();
+        newCategory.value = "";
+        $("#categoryModal").modal("hide");
+        return;
+      }
+      // OFFLINE DATA MODE END
+
       await window.crmApi.delete(`/api/v1/products/categories/${catId}`);
       showSaleAlert("Kategoriya o'chirildi!", "success");
       await apiLoadCategories();
@@ -1608,6 +1755,19 @@ async function loadAndRenderTransactions(period = transactionFilter) {
 }
 
 async function apiLoadSales() {
+  // OFFLINE DATA MODE START
+  if (OFFLINE_DATA_MODE) {
+    renderSales();
+    if (typeof updateDailySalesCounter === 'function') updateDailySalesCounter();
+    if (typeof updateDailySalesPageCounter === 'function') updateDailySalesPageCounter();
+    if (typeof updateTotalTransactions === 'function') updateTotalTransactions();
+    if (typeof updateMonthlyRevenueUI === 'function') updateMonthlyRevenueUI();
+    if (typeof updateProfitUI === 'function') updateProfitUI();
+    if (typeof updateCharts === 'function') updateCharts();
+    console.log("✅ Sales loaded from OFFLINE storage:", sales.length);
+    return;
+  }
+  // OFFLINE DATA MODE END
   try {
     // const response = await window.crmApi.get("/api/v1/sales/");
     const response = await window.crmApi.get("/api/v1/sales/today");
@@ -1660,6 +1820,46 @@ async function handleSale(paymentType) {
   }
 
   try {
+    // OFFLINE DATA MODE START
+    if (OFFLINE_DATA_MODE) {
+      const total = product.price * qty;
+
+      sales.push({
+        id: offlineGenId(),
+        itemId: offlineGenId(),
+        sessionId: currentSaleSessionId.toString(),
+        productId: product.id,
+        name: product.name,
+        category: product.category,
+        qty: qty,
+        unit: product.unit,
+        price: product.price,
+        total: total,
+        currency: product.currency || "UZS",
+        status: "sold",
+        paymentType: paymentType,
+        date: getCurrentLocalDateTime(),
+        timestamp: Date.now()
+      });
+
+      product.stock -= qty;
+      saveProducts();
+      saveSales();
+
+      showSaleAlert(`✅ ${product.name} sotildi! (OFFLINE)`, "success");
+      saleQty.value = "";
+      saleQty.focus();
+
+      await apiLoadProducts();
+      await apiLoadSales();
+
+      if (typeof DashboardStatisticsManager !== 'undefined') {
+        DashboardStatisticsManager.init();
+      }
+      return;
+    }
+    // OFFLINE DATA MODE END
+
     await window.crmApi.post("/api/v1/sales/", {
       items: [
         {
@@ -1788,6 +1988,28 @@ function startNewSale() {
 async function cancelSale(id) {
   if (!confirm("Bu sotuvni bekor qilmoqchimisiz?\nMahsulot stokga qaytariladi.")) return;
 
+  // OFFLINE DATA MODE START
+  if (OFFLINE_DATA_MODE) {
+    const sale = sales.find(s => s.id === id);
+    if (sale && sale.status === "sold") {
+      const product = products.find(p => p.id === sale.productId);
+      if (product) product.stock += sale.qty;
+      sale.status = "returned";
+      saveProducts();
+      saveSales();
+    }
+
+    showSaleAlert("✅ Sotuv bekor qilindi! (OFFLINE)", "success");
+    await apiLoadProducts();
+    await apiLoadSales();
+
+    if (typeof DashboardStatisticsManager !== 'undefined') {
+      DashboardStatisticsManager.init();
+    }
+    return;
+  }
+  // OFFLINE DATA MODE END
+
   try {
     await window.crmApi.post(`/api/v1/sales/${id}/return`);
     showSaleAlert("✅ Sotuv bekor qilindi!", "success");
@@ -1805,6 +2027,28 @@ async function cancelSale(id) {
 
 async function deleteSale(id) {
   if (!confirm("Bu sotuvni butunlay o'chirmoqchimisiz?\nMahsulot stokga qaytariladi.")) return;
+
+  // OFFLINE DATA MODE START
+  if (OFFLINE_DATA_MODE) {
+    const sale = sales.find(s => s.id === id);
+    if (sale && sale.status === "sold") {
+      const product = products.find(p => p.id === sale.productId);
+      if (product) product.stock += sale.qty;
+      saveProducts();
+    }
+    sales = sales.filter(s => s.id !== id);
+    saveSales();
+
+    showSaleAlert("✅ Sotuv bekor qilindi! (OFFLINE)", "success");
+    await apiLoadProducts();
+    await apiLoadSales();
+
+    if (typeof DashboardStatisticsManager !== 'undefined') {
+      DashboardStatisticsManager.init();
+    }
+    return;
+  }
+  // OFFLINE DATA MODE END
 
   try {
     await window.crmApi.post(`/api/v1/sales/${id}/return`);
@@ -2420,6 +2664,19 @@ async function apiLoadDebtors() {
   console.log("📋 LIST DEBTORS API");
   console.log("📤 REQUEST: GET /api/v1/debtors/");
 
+  // OFFLINE DATA MODE START
+  if (OFFLINE_DATA_MODE) {
+    debtors = debtors.filter(d => d.isActive !== false && d.amount > 0);
+    saveDebtors();
+    renderDebtors();
+    updateStatistics();
+    updateTotalDebtCounter();
+    console.log("✅ Debtors loaded from OFFLINE storage:", debtors.length);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    return;
+  }
+  // OFFLINE DATA MODE END
+
   try {
     const response = await window.crmApi.get("/api/v1/debtors/");
 
@@ -2493,6 +2750,39 @@ async function handleAdjustDebt(event) {
   }
 
   try {
+    // OFFLINE DATA MODE START
+    if (OFFLINE_DATA_MODE) {
+      if (type === "add") {
+        debtor.amount += amount;
+        debtor.originalAmount = (debtor.originalAmount || debtor.amount) + amount;
+        showSuccessMessage(`${debtor.name}ga ${amount.toLocaleString()} so'm qarz qo'shildi! (OFFLINE)`);
+      } else {
+        if (amount > debtor.amount) {
+          alert("To'lanadigan summa qarzdan katta bo'lishi mumkin emas!");
+          return;
+        }
+
+        debtor.amount -= amount;
+        debtor.paidAmount = (debtor.paidAmount || 0) + amount;
+
+        paidDebtors.push({
+          debtorId: id,
+          debtorName: debtor.name,
+          amount: amount,
+          date: getCurrentLocalDateTime(),
+          previousDebt: debtor.amount + amount
+        });
+
+        showSuccessMessage(`💰 ${amount.toLocaleString()} so'm to'lov qabul qilindi! (OFFLINE)`);
+      }
+
+      saveDebtors();
+      closeAdjustModal();
+      await apiLoadDebtors();
+      return;
+    }
+    // OFFLINE DATA MODE END
+
     if (type === "add") {
       // ✅ Yangi qarz yaratish — POST /api/v1/debtors/
       console.log("━━━━━━━━━━━━━━━━━━━━━━");
@@ -2585,6 +2875,30 @@ async function handleSubmit(event) {
   }
 
   try {
+    // OFFLINE DATA MODE START
+    if (OFFLINE_DATA_MODE) {
+      debtors.push({
+        id: offlineGenId(),
+        name: newDebtor.name,
+        phone: newDebtor.phone,
+        amount: newDebtor.amount,
+        originalAmount: newDebtor.amount,
+        paidAmount: 0,
+        debtDate: newDebtor.debtDate,
+        returnDate: newDebtor.returnDate,
+        notes: newDebtor.notes,
+        status: "normal",
+        isActive: true
+      });
+      saveDebtors();
+
+      closeModal();
+      showSuccessMessage(`✅ ${newDebtor.name} muvaffaqiyatli qo'shildi! (OFFLINE)`);
+      await apiLoadDebtors();
+      return;
+    }
+    // OFFLINE DATA MODE END
+
     await window.crmApi.post("/api/v1/debtors/", {
       full_name: newDebtor.name,
       phone: newDebtor.phone,
@@ -2632,6 +2946,16 @@ async function deleteDebtor(id) {
   console.log(`📤 REQUEST: DELETE /api/v1/debtors/${id}`);
 
   try {
+    // OFFLINE DATA MODE START
+    if (OFFLINE_DATA_MODE) {
+      debtors = debtors.filter(d => d.id !== id);
+      saveDebtors();
+      showSuccessMessage(`🗑 ${name} muvaffaqiyatli o'chirildi! (OFFLINE)`);
+      await apiLoadDebtors();
+      return;
+    }
+    // OFFLINE DATA MODE END
+
     const res = await window.crmApi.delete(`/api/v1/debtors/${id}`);
 
     console.log("📥 RESPONSE:", res.status, res.data);
@@ -2678,6 +3002,28 @@ async function updateDebtor(id, data) {
   console.log("📦 PAYLOAD:", data);
 
   try {
+    // OFFLINE DATA MODE START
+    if (OFFLINE_DATA_MODE) {
+      const debtor = debtors.find(d => d.id === id);
+      if (debtor) {
+        const paid = (debtor.originalAmount || debtor.amount) - debtor.amount;
+        debtor.name = data.name;
+        debtor.phone = data.phone;
+        debtor.originalAmount = data.originalAmount;
+        debtor.amount = Math.max(data.originalAmount - paid, 0);
+        debtor.debtDate = data.debtDate;
+        debtor.returnDate = data.returnDate;
+        debtor.notes = data.notes || "";
+        saveDebtors();
+      }
+
+      showSuccessMessage(`✅ ${data.name} ma'lumotlari yangilandi! (OFFLINE)`);
+      closeEditDebtorModal();
+      await apiLoadDebtors();
+      return;
+    }
+    // OFFLINE DATA MODE END
+
     const payload = {
       full_name: data.name,
       phone: data.phone,
