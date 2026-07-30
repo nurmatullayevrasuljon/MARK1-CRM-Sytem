@@ -16,6 +16,31 @@ var AuthSystem = window.AuthSystem = (function () {
     const LOGIN_PAGE = "login.html";
     const DASHBOARD_PAGE = "index.html";
 
+    // OFFLINE AUTH MODE START
+    // Backend vaqtincha ishlamayotgani uchun login/register/logout/guard
+    // tizimini butunlay LocalStorage orqali ishlaydigan qilib turibmiz.
+    // Backend qayta ishga tushganda OFFLINE_MODE ni false qiling
+    // (yoki shu "OFFLINE AUTH MODE" bloklarini butunlay o'chirib tashlang) —
+    // asl (real API) kod hech qayerda o'chirilmagan, faqat vaqtincha chetlab o'tilmoqda.
+    const OFFLINE_MODE = true;
+    const OFFLINE_USERS_KEY = "crm_offline_users";
+
+    function base64UrlEncode(obj) {
+        const json = JSON.stringify(obj);
+        const b64 = btoa(unescape(encodeURIComponent(json)));
+        return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+
+    // Haqiqiy backend imzosi bo'lmagan, lekin auth.js ning mavjud
+    // decodeJwtPayload/isTokenFresh funksiyalari bilan to'liq mos keladigan
+    // demo JWT hosil qiladi (exp claim orqali muddati aniqlanadi).
+    function createOfflineJwt(payload) {
+        const header = base64UrlEncode({ alg: "OFFLINE", typ: "JWT" });
+        const body = base64UrlEncode(payload || {});
+        return `${header}.${body}.offline-signature`;
+    }
+    // OFFLINE AUTH MODE END
+
     let refreshPromise = null;
 
     const crmApi = axios.create({
@@ -260,7 +285,9 @@ var AuthSystem = window.AuthSystem = (function () {
         options = options || {};
         const refreshToken = getRefreshToken();
 
-        if (refreshToken && options.callApi !== false) {
+        // OFFLINE AUTH MODE START: backend ishlamagani uchun logout so'rovi yuborilmaydi
+        if (!OFFLINE_MODE && refreshToken && options.callApi !== false) {
+        // OFFLINE AUTH MODE END
             axios.post(`${API_URL}/api/v1/auth/logout`, {
                 refresh_token: refreshToken
             }, {
@@ -377,6 +404,41 @@ var AuthSystem = window.AuthSystem = (function () {
         register: async function (data) {
             data = data || {};
 
+            // OFFLINE AUTH MODE START
+            // Backend mavjud bo'lmagani uchun ro'yxatdan o'tishni to'liq
+            // localStorage ichida simulyatsiya qilamiz.
+            if (OFFLINE_MODE) {
+                try {
+                    const email = String(data.email || "").trim().toLowerCase();
+                    const offlineUser = {
+                        id: "offline-" + Date.now(),
+                        full_name: String(data.fullName || "").trim(),
+                        email: email,
+                        phone: String(data.phone || "").trim() || null,
+                        company_name: String(data.storeName || "").trim() || null
+                    };
+
+                    const users = safeJsonParse(localStorage.getItem(OFFLINE_USERS_KEY), {});
+                    users[email] = offlineUser;
+                    localStorage.setItem(OFFLINE_USERS_KEY, JSON.stringify(users));
+
+                    return {
+                        success: true,
+                        code: "REGISTER_SUCCESS",
+                        message: "Ro'yxatdan o'tish muvaffaqiyatli yakunlandi! (OFFLINE MODE)",
+                        data: offlineUser
+                    };
+                } catch (error) {
+                    console.error("Offline register error:", error);
+                    return {
+                        success: false,
+                        code: "REGISTER_FAILED",
+                        message: "Ro'yxatdan o'tishda xatolik yuz berdi (offline)."
+                    };
+                }
+            }
+            // OFFLINE AUTH MODE END
+
             try {
                 const response = await axios.post(`${API_URL}/api/v1/auth/register`, {
                     full_name: String(data.fullName || "").trim(),
@@ -415,6 +477,55 @@ var AuthSystem = window.AuthSystem = (function () {
                 loginValue = emailOrPhoneOrData || "";
                 password = passwordArg || "";
             }
+
+            // OFFLINE AUTH MODE START
+            // Backend mavjud bo'lmagani uchun login so'rovi yuborilmaydi:
+            // fake JWT token yaratib, demo current_user localStorage'ga yoziladi.
+            if (OFFLINE_MODE) {
+                try {
+                    const emailKey = String(loginValue || "").trim().toLowerCase();
+                    const users = safeJsonParse(localStorage.getItem(OFFLINE_USERS_KEY), {});
+                    const existingUser = users[emailKey];
+
+                    const demoUser = existingUser || {
+                        id: "offline-demo",
+                        full_name: "Demo foydalanuvchi",
+                        email: emailKey,
+                        phone: null,
+                        company_name: "Demo do'kon"
+                    };
+
+                    const nowSeconds = Math.floor(Date.now() / 1000);
+                    const fakeAccessToken = createOfflineJwt({
+                        sub: demoUser.email,
+                        exp: nowSeconds + 60 * 60 * 24 * 30 // 30 kun amal qiladi
+                    });
+                    const fakeRefreshToken = createOfflineJwt({
+                        sub: demoUser.email,
+                        type: "refresh",
+                        exp: nowSeconds + 60 * 60 * 24 * 60 // 60 kun amal qiladi
+                    });
+
+                    clearSessionOnly();
+                    saveTokens({ access_token: fakeAccessToken, refresh_token: fakeRefreshToken }, remember);
+                    saveSession(demoUser, remember);
+
+                    return {
+                        success: true,
+                        code: "LOGIN_SUCCESS",
+                        message: "Tizimga muvaffaqiyatli kirildi! (OFFLINE MODE)",
+                        user: normalizeUser(demoUser)
+                    };
+                } catch (error) {
+                    console.error("Offline login error:", error);
+                    return {
+                        success: false,
+                        code: "LOGIN_FAILED",
+                        message: "Email yoki parol noto'g'ri! (offline)"
+                    };
+                }
+            }
+            // OFFLINE AUTH MODE END
 
             try {
                 const response = await axios.post(`${API_URL}/api/v1/auth/login`, {
@@ -592,4 +703,3 @@ var AuthSystem = window.AuthSystem = (function () {
 window.getAuth = function () {
     return window.AuthSystem || null;
 };
-
