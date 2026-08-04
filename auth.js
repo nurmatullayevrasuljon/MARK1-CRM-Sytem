@@ -440,12 +440,20 @@ var AuthSystem = window.AuthSystem = (function () {
             // OFFLINE AUTH MODE END
 
             try {
-                const response = await axios.post(`${API_URL}/api/v1/auth/register`, {
-                    full_name: String(data.fullName || "").trim(),
-                    email: String(data.email || "").trim().toLowerCase(),
-                    phone: String(data.phone || "").trim() || null,
-                    password: String(data.password || ""),
-                    company_name: String(data.storeName || "").trim() || null
+                // const response = await axios.post(`${API_URL}/api/v1/auth/register`, {
+                //     full_name: String(data.fullName || "").trim(),
+                //     email: String(data.email || "").trim().toLowerCase(),
+                //     phone: String(data.phone || "").trim() || null,
+                //     password: String(data.password || ""),
+                //     company_name: String(data.storeName || "").trim() || null
+                // });
+                const response = await axios.post(`${API_URL}/api/auth/store/signup`, {
+                    ceo_name: String(data.fullName || "").trim(),
+                    ceo_phone: String(data.phone || "")
+                        .replace("+998", "")
+                        .replace(/\s/g, ""),
+                    store_name: String(data.storeName || "").trim(),
+                    password: String(data.password || "")
                 });
 
                 return {
