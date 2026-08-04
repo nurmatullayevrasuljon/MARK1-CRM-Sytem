@@ -2,7 +2,7 @@ var AuthSystem = window.AuthSystem = (function () {
     "use strict";
 
     // const API_URL = "https://backend-api-production-87e9.up.railway.app";
-    const API_URL = "https://z3wax.pythonanywhere.com";
+    const API_URL = "https://platform-levitate-fernlike.ngrok-free.dev";
     window.CRM_API_URL = API_URL;
 
     const CURRENT_USER_KEY = "crm_current_user";
