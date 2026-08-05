@@ -1,44 +1,50 @@
 var AuthSystem = window.AuthSystem = (function () {
     "use strict";
 
-    // ⚠️ VAQTINCHALIK: bu ngrok manzili har safar tunnel qayta ishga tushganda
-    // o'zgaradi. Backend doimiy serverga (Render/Railway/VPS) chiqarilgach,
-    // shu joyni doimiy manzil bilan almashtiring.
+    // const API_URL = "https://backend-api-production-87e9.up.railway.app";
     const API_URL = "https://platform-levitate-fernlike.ngrok-free.dev";
     window.CRM_API_URL = API_URL;
-
-    // ✅ YANGI: ngrok bepul tarifi brauzerdan kelgan so'rovlarga avval
-    // "warning" HTML sahifasini qaytaradi (CORS headersiz) — shu header
-    // bilan uni chetlab o'tamiz. Backend doimiy domenga ko'chirilgach,
-    // bu qatorni olib tashlash mumkin (zarari yo'q, shunchaki keraksiz bo'ladi).
-    const NGROK_BYPASS_HEADERS = { "ngrok-skip-browser-warning": "true" };
 
     const CURRENT_USER_KEY = "crm_current_user";
     const SESSION_KEY = "crm_session_active";
     const OLD_USER_KEY = "currentUser";
     const OLD_SESSION_KEY = "isLoggedIn";
     const ACCESS_TOKEN_KEY = "access_token";
-    // ✅ YANGI: refresh_token endi backend tomonidan httpOnly cookie orqali
-    // boshqariladi — JS unga umuman kira olmaydi. Bu kalit faqat eski
-    // funksiya signaturalarini buzmaslik uchun saqlanmoqda, hech qachon
-    // haqiqiy qiymat bilan to'ldirilmaydi.
     const REFRESH_TOKEN_KEY = "refresh_token";
-    // ✅ YANGI: hisob turi — "store" (do'kon egasi/CEO) yoki "user" (xodim).
-    // Refresh va profil endpointlari hisob turiga qarab tanlanadi.
-    const ACCOUNT_TYPE_KEY = "crm_account_type";
     const AUTH_REDIRECT_KEY = "crm_auth_redirect";
     const TOKEN_SKEW_MS = 30000;
     const LOGIN_PAGE = "login.html";
     const DASHBOARD_PAGE = "index.html";
 
+    // OFFLINE AUTH MODE START
+    // Backend vaqtincha ishlamayotgani uchun login/register/logout/guard
+    // tizimini butunlay LocalStorage orqali ishlaydigan qilib turibmiz.
+    // Backend qayta ishga tushganda OFFLINE_MODE ni false qiling
+    // (yoki shu "OFFLINE AUTH MODE" bloklarini butunlay o'chirib tashlang) —
+    // asl (real API) kod hech qayerda o'chirilmagan, faqat vaqtincha chetlab o'tilmoqda.
+    const OFFLINE_MODE = false;
+    const OFFLINE_USERS_KEY = "crm_offline_users";
+
+    function base64UrlEncode(obj) {
+        const json = JSON.stringify(obj);
+        const b64 = btoa(unescape(encodeURIComponent(json)));
+        return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+
+    // Haqiqiy backend imzosi bo'lmagan, lekin auth.js ning mavjud
+    // decodeJwtPayload/isTokenFresh funksiyalari bilan to'liq mos keladigan
+    // demo JWT hosil qiladi (exp claim orqali muddati aniqlanadi).
+    function createOfflineJwt(payload) {
+        const header = base64UrlEncode({ alg: "OFFLINE", typ: "JWT" });
+        const body = base64UrlEncode(payload || {});
+        return `${header}.${body}.offline-signature`;
+    }
+    // OFFLINE AUTH MODE END
+
     let refreshPromise = null;
 
-    // ✅ YANGI: withCredentials: true — httpOnly refreshToken cookie
-    // brauzer tomonidan yuborilishi/qabul qilinishi uchun SHART.
     const crmApi = axios.create({
-        baseURL: API_URL,
-        withCredentials: true,
-        headers: { ...NGROK_BYPASS_HEADERS }
+        baseURL: API_URL
     });
 
     window.crmApi = crmApi;
@@ -58,6 +64,7 @@ var AuthSystem = window.AuthSystem = (function () {
     function getStorageForExistingSession() {
         if (
             localStorage.getItem(ACCESS_TOKEN_KEY) ||
+            localStorage.getItem(REFRESH_TOKEN_KEY) ||
             localStorage.getItem(SESSION_KEY) === "true" ||
             localStorage.getItem(OLD_SESSION_KEY) === "true"
         ) {
@@ -67,8 +74,9 @@ var AuthSystem = window.AuthSystem = (function () {
         return sessionStorage;
     }
 
-    // ✅ FIX (o'zgarmadi): Akkauntlar orasida ma'lumot sizib chiqmasligi uchun —
+    // ✅ FIX: Akkauntlar orasida ma'lumot sizib chiqmasligi uchun —
     // login/logout paytida barcha CRM ma'lumotlar keshini tozalaydigan funksiya.
+    // Faqat tizim sozlamalariga emas, foydalanuvchi ma'lumotlariga tegishli kalitlarni tozalaydi.
     function clearAppDataCache() {
         [
             "products",
@@ -91,6 +99,7 @@ var AuthSystem = window.AuthSystem = (function () {
             sessionStorage.removeItem(key);
         });
 
+        // Har bir qarzdorga tegishli dinamik SMS kalitlarini ham tozalash
         Object.keys(localStorage).forEach(key => {
             if (
                 key.indexOf("last_sms_") === 0 ||
@@ -110,53 +119,41 @@ var AuthSystem = window.AuthSystem = (function () {
             OLD_SESSION_KEY,
             ACCESS_TOKEN_KEY,
             REFRESH_TOKEN_KEY,
-            ACCOUNT_TYPE_KEY,
             AUTH_REDIRECT_KEY
         ].forEach(key => {
             localStorage.removeItem(key);
             sessionStorage.removeItem(key);
         });
 
+        // ✅ FIX: sessiya bilan birga foydalanuvchi ma'lumotlari keshini ham tozalash
         clearAppDataCache();
 
         delete crmApi.defaults.headers.common.Authorization;
     }
 
     function clearTokensOnly() {
-        [ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, ACCOUNT_TYPE_KEY].forEach(key => {
+        [ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY].forEach(key => {
             localStorage.removeItem(key);
             sessionStorage.removeItem(key);
         });
+
+        // delete crmApi.defaults.headers.common.Authorization;
     }
 
-    // ✅ YANGI: backend maydon nomlari butunlay boshqacha —
-    // ceo_name/user_name, store_name, profile_picture.
-    // script.js hali ham .fullName / .storeName / .avatar kutadi —
-    // shuning uchun shu nomlarga map qilamiz, mavjud kodni buzmaslik uchun.
-    function normalizeUser(user, accountType) {
+    function normalizeUser(user) {
         user = user || {};
 
-        const cleaned = { ...user };
-        // Xavfsizlik: parol/OTP maydonlari hech qachon local keshda saqlanmasin
-        delete cleaned.password;
-        delete cleaned.otp;
-        delete cleaned.otp_expires_at;
-
         return {
-            ...cleaned,
-            fullName: user.ceo_name || user.user_name || user.fullName || "",
-            storeName: user.store_name || user.storeName || "",
-            userId: user._id || user.id || user.userId || null,
-            avatar: user.profile_picture || user.avatar || null,
-            phone: user.ceo_phone || user.user_phone || user.phone || "",
-            role: user.role || (accountType === "user" ? "" : "ceo"),
-            accountType: accountType || user.accountType || null
+            ...user,
+            fullName: user.full_name || user.fullName || "",
+            storeName: user.company_name || user.storeName || "",
+            userId: user.id || user.userId || null
         };
     }
 
-    function saveSession(user, remember, accountType) {
+    function saveSession(user, remember) {
         const storage = remember ? localStorage : sessionStorage;
-        const cleanUser = normalizeUser(user, accountType);
+        const cleanUser = normalizeUser(user);
 
         storage.setItem(CURRENT_USER_KEY, JSON.stringify(cleanUser));
         storage.setItem(SESSION_KEY, "true");
@@ -164,28 +161,23 @@ var AuthSystem = window.AuthSystem = (function () {
         storage.setItem(OLD_SESSION_KEY, "true");
     }
 
-    // ✅ YANGI: endi faqat access_token saqlanadi. refresh_token backendda
-    // httpOnly cookie sifatida turadi, JS uni o'qiy olmaydi va saqlamaydi.
     function saveTokens(tokens, remember) {
         const storage = remember ? localStorage : sessionStorage;
         const accessToken = tokens && tokens.access_token;
+        const refreshToken = tokens && tokens.refresh_token;
 
-        if (!accessToken) {
-            throw new Error("Access token topilmadi.");
+        if (!accessToken || !refreshToken) {
+            throw new Error("Token ma'lumotlari to'liq emas.");
         }
 
+        // clearTokensOnly();
+
         storage.setItem(ACCESS_TOKEN_KEY, accessToken);
+        storage.setItem(REFRESH_TOKEN_KEY, refreshToken);
         storage.setItem(SESSION_KEY, "true");
         storage.setItem(OLD_SESSION_KEY, "true");
-    }
 
-    function setAccountType(kind) {
-        const storage = rememberCurrentSession() ? localStorage : sessionStorage;
-        storage.setItem(ACCOUNT_TYPE_KEY, kind);
-    }
-
-    function getAccountType() {
-        return getStoredValue(ACCOUNT_TYPE_KEY) || null;
+        // setAuthorizationHeader(accessToken);
     }
 
     function setAuthorizationHeader(token) {
@@ -200,10 +192,8 @@ var AuthSystem = window.AuthSystem = (function () {
         return getStoredValue(ACCESS_TOKEN_KEY);
     }
 
-    // ⚠️ DEPRECATED: refresh_token endi JS uchun mavjud emas (httpOnly cookie).
-    // Funksiya faqat eski chaqiruvlar sinmasligi uchun qoldirilgan — doim null qaytaradi.
     function getRefreshToken() {
-        return null;
+        return getStoredValue(REFRESH_TOKEN_KEY);
     }
 
     function decodeJwtPayload(token) {
@@ -242,53 +232,25 @@ var AuthSystem = window.AuthSystem = (function () {
         return Date.now() + TOKEN_SKEW_MS < expiresAt;
     }
 
-    // ✅ YANGI: yangi backendda barcha auth endpointlar /api/auth/... prefiksida
     function isAuthEndpoint(url) {
-        return String(url || "").includes("/api/auth/");
+        return String(url || "").includes("/api/v1/auth/login") ||
+            String(url || "").includes("/api/v1/auth/register") ||
+            String(url || "").includes("/api/v1/auth/refresh") ||
+            String(url || "").includes("/api/v1/auth/logout");
     }
 
-    // ✅ YANGI: yangi backend xato formati { message: "..." },
-    // FastAPI'ning { detail: [...] } formati emas.
     function getErrorMessage(error, fallback) {
-        const data = error && error.response && error.response.data;
+        const detail = error && error.response && error.response.data && error.response.data.detail;
 
-        if (data && typeof data.message === "string" && data.message.trim()) {
-            return data.message;
-        }
-
-        // Eski format bilan mos kelib qolsa ham ishlashi uchun (xavfsizlik uchun qoldirildi)
-        const detail = data && data.detail;
         if (Array.isArray(detail) && detail.length) {
             return detail.map(item => item.msg || item.message || String(item)).join("\n");
         }
+
         if (typeof detail === "string") {
             return detail;
         }
 
         return fallback || "Server bilan bog'lanishda xatolik yuz berdi.";
-    }
-
-    // ✅ YANGI: "topilmadi" xabarini aniqlash — login()da do'kon/xodim
-    // hisoblari orasida avtomatik tanlash uchun ishlatiladi.
-    function isAccountNotFoundError(error) {
-        const message = getErrorMessage(error, "");
-        return typeof message === "string" && message.indexOf("topilmadi") !== -1;
-    }
-
-    // ✅ YANGI: backend ceo_phone/user_phone uchun aynan 9 xonali raqam kutadi
-    // (masalan "901234567"), "+998" yoki bo'sh joylarsiz.
-    function normalizePhone(raw) {
-        let digits = String(raw || "").replace(/\D/g, "");
-
-        if (digits.length > 9 && digits.indexOf("998") === 0) {
-            digits = digits.slice(3);
-        }
-
-        if (digits.length > 9) {
-            digits = digits.slice(-9);
-        }
-
-        return digits;
     }
 
     function redirectTo(url) {
@@ -319,13 +281,19 @@ var AuthSystem = window.AuthSystem = (function () {
         return getStorageForExistingSession() === localStorage;
     }
 
-    // ✅ YANGI: yangi backendda logout endpointi umuman yo'q (swaggerda ko'rsatilmagan).
-    // Shu sabab server tomonda hech narsa chaqirilmaydi — faqat local sessiya tozalanadi.
-    // ⚠️ DIQQAT: bu refreshToken cookie'sini serverda bekor qilmaydi (u hali ham
-    // 7 kun amal qiladi). Buni Jasurbekka aytib, /api/auth/*/logout endpointi
-    // qo'shishni so'rash tavsiya etiladi.
     function logoutInternal(options) {
         options = options || {};
+        const refreshToken = getRefreshToken();
+
+        // OFFLINE AUTH MODE START: backend ishlamagani uchun logout so'rovi yuborilmaydi
+        if (!OFFLINE_MODE && refreshToken && options.callApi !== false) {
+        // OFFLINE AUTH MODE END
+            axios.post(`${API_URL}/api/v1/auth/logout`, {
+                refresh_token: refreshToken
+            }, {
+                headers: getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}
+            }).catch(() => { });
+        }
 
         refreshPromise = null;
         clearSessionOnly();
@@ -335,17 +303,6 @@ var AuthSystem = window.AuthSystem = (function () {
         }
     }
 
-    function refreshEndpointFor(accountType) {
-        return accountType === "user" ? "/api/auth/user/refresh" : "/api/auth/store/refresh";
-    }
-
-    function profileEndpointFor(accountType) {
-        return accountType === "user" ? "/api/user/profile/get" : "/api/store/profile/get";
-    }
-
-    // ✅ YANGI: endi body yubormaymiz — refresh cookie orqali avtomatik ketadi.
-    // Hisob turi noma'lum bo'lsa (masalan localStorage tozalangan, lekin cookie
-    // hali ham amal qilayotgan holat), avval "store", so'ng "user" sifatida sinaymiz.
     async function refreshAccessToken(options) {
         options = options || {};
 
@@ -355,53 +312,44 @@ var AuthSystem = window.AuthSystem = (function () {
             return currentAccessToken;
         }
 
+        const currentRefreshToken = getRefreshToken();
+        if (!currentRefreshToken) {
+            logoutInternal({ callApi: false, redirect: options.redirectOnFail !== false });
+            throw new Error("Refresh token topilmadi.");
+        }
+
         if (refreshPromise) {
             return refreshPromise;
         }
 
-        const knownAccountType = getAccountType();
-        const candidates = knownAccountType ? [knownAccountType] : ["store", "user"];
+        refreshPromise = axios.post(`${API_URL}/api/v1/auth/refresh`, {
+            refresh_token: currentRefreshToken
+        }).then(response => {
+            const nextAccessToken = response.data && response.data.access_token;
+            const nextRefreshToken = response.data && response.data.refresh_token;
 
-        refreshPromise = (async () => {
-            let lastError = null;
+            saveTokens({
+                access_token: nextAccessToken,
+                refresh_token: nextRefreshToken || currentRefreshToken
+            }, rememberCurrentSession());
 
-            for (const kind of candidates) {
-                try {
-                    const response = await axios.post(
-                        `${API_URL}${refreshEndpointFor(kind)}`,
-                        {},
-                        { withCredentials: true, headers: NGROK_BYPASS_HEADERS }
-                    );
-
-                    const nextAccessToken = response.data && response.data.access_token;
-                    if (!nextAccessToken) throw new Error("access_token qaytmadi");
-
-                    setAccountType(kind);
-                    saveTokens({ access_token: nextAccessToken }, rememberCurrentSession());
-                    return nextAccessToken;
-                } catch (error) {
-                    lastError = error;
-                }
-            }
-
-            logoutInternal({ redirect: options.redirectOnFail !== false });
-            throw lastError || new Error("Sessiya muddati tugagan.");
-        })().finally(() => {
+            return nextAccessToken;
+        }).catch(error => {
+            logoutInternal({ callApi: false, redirect: options.redirectOnFail !== false });
+            throw error;
+        }).finally(() => {
             refreshPromise = null;
         });
 
         return refreshPromise;
     }
 
-    // ✅ YANGI: /api/v1/auth/me o'rniga hisob turiga qarab
-    // /api/store/profile/get YOKI /api/user/profile/get chaqiriladi.
-    async function fetchCurrentUser(accountType) {
-        const kind = accountType || getAccountType() || "store";
-        const response = await crmApi.get(profileEndpointFor(kind));
+    async function fetchCurrentUser() {
+        const response = await crmApi.get("/api/v1/auth/me");
         const user = response.data;
 
-        saveSession(user, rememberCurrentSession(), kind);
-        return normalizeUser(user, kind);
+        saveSession(user, rememberCurrentSession());
+        return user;
     }
 
     setAuthorizationHeader(getAccessToken());
@@ -452,197 +400,172 @@ var AuthSystem = window.AuthSystem = (function () {
         }
     );
 
-    // ✅ YANGI: signup yagona bosqichda emas — hisob yaratiladi, lekin
-    // tasdiqlanmaguncha (verify) kirish mumkin emas. "email" maydoni backendda
-    // umuman yo'q — signup.html'dagi email input hozircha e'tiborga olinmaydi
-    // (bu 2-3-bosqichda, signup.js/index.js integratsiyasida hal qilinadi).
-    async function registerFn(data) {
-        data = data || {};
+    return {
+        register: async function (data) {
+            data = data || {};
 
-        try {
-            const response = await axios.post(`${API_URL}/api/auth/store/signup`, {
-                ceo_name: String(data.fullName || "").trim(),
-                ceo_phone: normalizePhone(data.phone),
-                store_name: String(data.storeName || "").trim(),
-                password: String(data.password || "")
-            }, { headers: NGROK_BYPASS_HEADERS });
+            // OFFLINE AUTH MODE START
+            // Backend mavjud bo'lmagani uchun ro'yxatdan o'tishni to'liq
+            // localStorage ichida simulyatsiya qilamiz.
+            if (OFFLINE_MODE) {
+                try {
+                    const email = String(data.email || "").trim().toLowerCase();
+                    const offlineUser = {
+                        id: "offline-" + Date.now(),
+                        full_name: String(data.fullName || "").trim(),
+                        email: email,
+                        phone: String(data.phone || "").trim() || null,
+                        company_name: String(data.storeName || "").trim() || null
+                    };
 
-            return {
-                success: true,
-                code: "REGISTER_NEEDS_VERIFY",
-                message: response.data && response.data.message || "Hisob yaratildi, tasdiqlash kodi yuborildi.",
-                verifyData: response.data && response.data.verify_data || null
-            };
-        } catch (error) {
-            console.error("Register error:", error);
-            return {
-                success: false,
-                code: "REGISTER_FAILED",
-                message: getErrorMessage(error, "Ro'yxatdan o'tishda xatolik yuz berdi.")
-            };
-        }
-    }
+                    const users = safeJsonParse(localStorage.getItem(OFFLINE_USERS_KEY), {});
+                    users[email] = offlineUser;
+                    localStorage.setItem(OFFLINE_USERS_KEY, JSON.stringify(users));
 
-    // ✅ YANGI: signup'dan keyingi majburiy qadam. Muvaffaqiyatli bo'lsa
-    // access_token qaytadi va foydalanuvchi avtomatik tizimga kiradi.
-    async function verifyFn(data) {
-        data = data || {};
-        const phone = normalizePhone(data.phone || data.ceo_phone);
-        const remember = data.remember !== false;
+                    return {
+                        success: true,
+                        code: "REGISTER_SUCCESS",
+                        message: "Ro'yxatdan o'tish muvaffaqiyatli yakunlandi! (OFFLINE MODE)",
+                        data: offlineUser
+                    };
+                } catch (error) {
+                    console.error("Offline register error:", error);
+                    return {
+                        success: false,
+                        code: "REGISTER_FAILED",
+                        message: "Ro'yxatdan o'tishda xatolik yuz berdi (offline)."
+                    };
+                }
+            }
+            // OFFLINE AUTH MODE END
 
-        try {
-            const response = await axios.post(`${API_URL}/api/auth/store/verify`, {
-                ceo_phone: phone,
-                otp: String(data.otp || data.code || "").trim()
-            }, { withCredentials: true, headers: NGROK_BYPASS_HEADERS });
-
-            clearSessionOnly();
-            setAccountType("store");
-            saveTokens({ access_token: response.data && response.data.access_token }, remember);
-
-            const backendUser = await fetchCurrentUser("store");
-
-            return {
-                success: true,
-                code: "VERIFY_SUCCESS",
-                message: response.data && response.data.message || "Hisob tasdiqlandi!",
-                user: backendUser
-            };
-        } catch (error) {
-            console.error("Verify error:", error);
-            return {
-                success: false,
-                code: "VERIFY_FAILED",
-                message: getErrorMessage(error, "Kodni tasdiqlashda xatolik yuz berdi.")
-            };
-        }
-    }
-
-    async function trySignin(kind, phone, password) {
-        const endpoint = kind === "user" ? "/api/auth/user/signin" : "/api/auth/store/signin";
-        const payload = kind === "user"
-            ? { user_phone: phone, password }
-            : { ceo_phone: phone, password };
-
-        return axios.post(`${API_URL}${endpoint}`, payload, { withCredentials: true, headers: NGROK_BYPASS_HEADERS });
-    }
-
-    // ✅ YANGI: bitta login formasi ikki xil hisobga (do'kon egasi / xodim)
-    // xizmat qiladi — avval do'kon sifatida, "topilmadi" bo'lsa xodim sifatida sinaydi.
-    // Shu tufayli login.html'ga tegmasdan ham ishlaydi (email tab endi ishlatilmaydi,
-    // faqat telefon raqami kerak — bu 2-bosqichda index.js'da hal qilinadi).
-    async function loginFn(emailOrPhoneOrData, passwordArg) {
-        let loginValue = "";
-        let password = "";
-        let remember = false;
-
-        if (typeof emailOrPhoneOrData === "object" && emailOrPhoneOrData !== null) {
-            loginValue = emailOrPhoneOrData.login || emailOrPhoneOrData.phone || emailOrPhoneOrData.email || "";
-            password = emailOrPhoneOrData.password || "";
-            remember = emailOrPhoneOrData.remember !== false;
-        } else {
-            loginValue = emailOrPhoneOrData || "";
-            password = passwordArg || "";
-        }
-
-        const phone = normalizePhone(loginValue);
-        clearSessionOnly();
-
-        let lastError = null;
-
-        for (const kind of ["store", "user"]) {
             try {
-                const response = await trySignin(kind, phone, password);
+                // const response = await axios.post(`${API_URL}/api/v1/auth/register`, {
+                //     full_name: String(data.fullName || "").trim(),
+                //     email: String(data.email || "").trim().toLowerCase(),
+                //     phone: String(data.phone || "").trim() || null,
+                //     password: String(data.password || ""),
+                //     company_name: String(data.storeName || "").trim() || null
+                // });
+                const response = await axios.post(`${API_URL}/api/auth/store/signup`, {
+                    ceo_name: String(data.fullName || "").trim(),
+                    ceo_phone: String(data.phone || "")
+                        .replace("+998", "")
+                        .replace(/\s/g, ""),
+                    store_name: String(data.storeName || "").trim(),
+                    password: String(data.password || "")
+                });
 
-                setAccountType(kind);
-                saveTokens({ access_token: response.data && response.data.access_token }, remember);
+                return {
+                    success: true,
+                    code: "REGISTER_SUCCESS",
+                    message: "Ro'yxatdan o'tish muvaffaqiyatli yakunlandi!",
+                    data: response.data
+                };
+            } catch (error) {
+                console.error("Register error:", error);
+                return {
+                    success: false,
+                    code: "REGISTER_FAILED",
+                    message: getErrorMessage(error, "Ro'yxatdan o'tishda xatolik yuz berdi.")
+                };
+            }
+        },
 
-                const backendUser = await fetchCurrentUser(kind);
+        login: async function (emailOrPhoneOrData, passwordArg) {
+            let loginValue = "";
+            let password = "";
+            let remember = false;
+
+            if (typeof emailOrPhoneOrData === "object" && emailOrPhoneOrData !== null) {
+                loginValue = emailOrPhoneOrData.login || emailOrPhoneOrData.email || "";
+                password = emailOrPhoneOrData.password || "";
+                remember = emailOrPhoneOrData.remember !== false;
+            } else {
+                loginValue = emailOrPhoneOrData || "";
+                password = passwordArg || "";
+            }
+
+            // OFFLINE AUTH MODE START
+            // Backend mavjud bo'lmagani uchun login so'rovi yuborilmaydi:
+            // fake JWT token yaratib, demo current_user localStorage'ga yoziladi.
+            if (OFFLINE_MODE) {
+                try {
+                    const emailKey = String(loginValue || "").trim().toLowerCase();
+                    const users = safeJsonParse(localStorage.getItem(OFFLINE_USERS_KEY), {});
+                    const existingUser = users[emailKey];
+
+                    const demoUser = existingUser || {
+                        id: "offline-demo",
+                        full_name: "Demo foydalanuvchi",
+                        email: emailKey,
+                        phone: null,
+                        company_name: "Demo do'kon"
+                    };
+
+                    const nowSeconds = Math.floor(Date.now() / 1000);
+                    const fakeAccessToken = createOfflineJwt({
+                        sub: demoUser.email,
+                        exp: nowSeconds + 60 * 60 * 24 * 30 // 30 kun amal qiladi
+                    });
+                    const fakeRefreshToken = createOfflineJwt({
+                        sub: demoUser.email,
+                        type: "refresh",
+                        exp: nowSeconds + 60 * 60 * 24 * 60 // 60 kun amal qiladi
+                    });
+
+                    clearSessionOnly();
+                    saveTokens({ access_token: fakeAccessToken, refresh_token: fakeRefreshToken }, remember);
+                    saveSession(demoUser, remember);
+
+                    return {
+                        success: true,
+                        code: "LOGIN_SUCCESS",
+                        message: "Tizimga muvaffaqiyatli kirildi! (OFFLINE MODE)",
+                        user: normalizeUser(demoUser)
+                    };
+                } catch (error) {
+                    console.error("Offline login error:", error);
+                    return {
+                        success: false,
+                        code: "LOGIN_FAILED",
+                        message: "Email yoki parol noto'g'ri! (offline)"
+                    };
+                }
+            }
+            // OFFLINE AUTH MODE END
+
+            try {
+                const response = await axios.post(`${API_URL}/api/v1/auth/login`, {
+                    email: String(loginValue || "").trim().toLowerCase(),
+                    password: password
+                });
+
+                clearSessionOnly();
+                saveTokens(response.data, remember);
+
+                const backendUser = await fetchCurrentUser();
 
                 return {
                     success: true,
                     code: "LOGIN_SUCCESS",
-                    message: response.data && response.data.message || "Tizimga muvaffaqiyatli kirildi!",
+                    message: "Tizimga muvaffaqiyatli kirildi!",
                     user: backendUser
                 };
             } catch (error) {
-                lastError = error;
+                console.error("Login error:", error);
                 clearTokensOnly();
 
-                if (!isAccountNotFoundError(error)) {
-                    // Bu turdagi hisob topildi, lekin parol/boshqa xato bor —
-                    // ikkinchi turni sinashning ma'nosi yo'q.
-                    break;
-                }
-                // "topilmadi" bo'lsa, keyingi hisob turini sinaymiz.
+                return {
+                    success: false,
+                    code: "LOGIN_FAILED",
+                    message: getErrorMessage(error, "Email yoki parol noto'g'ri!")
+                };
             }
-        }
-
-        return {
-            success: false,
-            code: "LOGIN_FAILED",
-            message: getErrorMessage(lastError, "Telefon raqam yoki parol noto'g'ri!")
-        };
-    }
-
-    async function forgotPasswordFn(data) {
-        data = data || {};
-
-        try {
-            const response = await axios.post(`${API_URL}/api/auth/store/forgot-password`, {
-                ceo_phone: normalizePhone(data.phone || data.ceo_phone)
-            }, { headers: NGROK_BYPASS_HEADERS });
-
-            return {
-                success: true,
-                code: "FORGOT_PASSWORD_SUCCESS",
-                message: response.data && response.data.message || "Tasdiqlash kodi yuborildi.",
-                verifyData: response.data && response.data.verify_data || null
-            };
-        } catch (error) {
-            console.error("Forgot password error:", error);
-            return {
-                success: false,
-                code: "FORGOT_PASSWORD_FAILED",
-                message: getErrorMessage(error, "Kod yuborishda xatolik yuz berdi.")
-            };
-        }
-    }
-
-    async function resetPasswordFn(data) {
-        data = data || {};
-
-        try {
-            const response = await axios.post(`${API_URL}/api/auth/store/reset-password`, {
-                ceo_phone: normalizePhone(data.phone || data.ceo_phone),
-                otp: String(data.otp || data.code || "").trim(),
-                new_password: String(data.newPassword || data.new_password || "")
-            }, { headers: NGROK_BYPASS_HEADERS });
-
-            return {
-                success: true,
-                code: "RESET_PASSWORD_SUCCESS",
-                message: response.data && response.data.message || "Parol muvaffaqiyatli o'zgartirildi!"
-            };
-        } catch (error) {
-            console.error("Reset password error:", error);
-            return {
-                success: false,
-                code: "RESET_PASSWORD_FAILED",
-                message: getErrorMessage(error, "Parolni o'zgartirib bo'lmadi.")
-            };
-        }
-    }
-
-    return {
-        register: registerFn,
-        verify: verifyFn,
-        login: loginFn,
-        forgotPassword: forgotPasswordFn,
-        resetPassword: resetPasswordFn,
+        },
 
         ensureValidSession: async function () {
-            if (getStoredValue(SESSION_KEY) !== "true" && getStoredValue(OLD_SESSION_KEY) !== "true") {
+            if (!getRefreshToken()) {
                 return false;
             }
 
@@ -661,10 +584,7 @@ var AuthSystem = window.AuthSystem = (function () {
 
         getAccessToken: getAccessToken,
 
-        // ⚠️ DEPRECATED — doim null qaytaradi, refresh_token endi httpOnly cookie'da.
         getRefreshToken: getRefreshToken,
-
-        getAccountType: getAccountType,
 
         getCurrentUser: function () {
             const data = getStoredValue(CURRENT_USER_KEY) || getStoredValue(OLD_USER_KEY);
@@ -682,48 +602,42 @@ var AuthSystem = window.AuthSystem = (function () {
                 return false;
             }
 
-            const accountType = getAccountType();
             const updatedUser = normalizeUser({
                 ...currentUser,
                 ...updates
-            }, accountType);
+            });
 
-            if (updates.fullName) {
-                if (accountType === "user") {
-                    updatedUser.user_name = updates.fullName;
-                } else {
-                    updatedUser.ceo_name = updates.fullName;
-                }
-            }
-            if (updates.storeName && accountType !== "user") {
-                updatedUser.store_name = updates.storeName;
-            }
-            if (updates.avatar) {
-                updatedUser.profile_picture = updates.avatar;
-            }
+            if (updates.fullName) updatedUser.full_name = updates.fullName;
+            if (updates.storeName) updatedUser.company_name = updates.storeName;
 
-            saveSession(updatedUser, rememberCurrentSession(), accountType);
+            saveSession(updatedUser, rememberCurrentSession());
             return true;
         },
 
-        // ⚠️ Yangi backendda "parolni almashtirish" (tizimga kirgan holda) endpointi
-        // umuman yo'q — faqat OTP orqali forgotPassword/resetPassword bor.
-        // Bu funksiya endi shunchaki xato qaytaradi, chaqiruvchi joy (profile.js
-        // bosqichida) forgotPassword/resetPassword flowga o'tkaziladi.
-        changePassword: async function () {
-            console.warn("changePassword: yangi backendda bu endpoint yo'q. forgotPassword/resetPassword'dan foydalaning.");
-            return {
-                success: false,
-                code: "NOT_SUPPORTED",
-                message: "Parolni shu yerdan o'zgartirib bo'lmaydi. SMS kod orqali parolni tiklash funksiyasidan foydalaning."
-            };
+        changePassword: async function (oldPassword, newPassword) {
+            try {
+                await crmApi.post("/api/v1/auth/change-password", {
+                    old_password: oldPassword,
+                    new_password: newPassword
+                });
+
+                return {
+                    success: true,
+                    code: "PASSWORD_CHANGED",
+                    message: "Parol muvaffaqiyatli o'zgartirildi!"
+                };
+            } catch (error) {
+                console.error("Change password error:", error);
+                return {
+                    success: false,
+                    code: "PASSWORD_CHANGE_FAILED",
+                    message: getErrorMessage(error, "Parolni o'zgartirib bo'lmadi.")
+                };
+            }
         },
 
-        // ✅ YANGI: refresh_token o'qib bo'lmasligi sababli, sessiya bor-yo'qligi
-        // endi mahalliy "session active" flagi orqali tekshiriladi (optimistik),
-        // haqiqiy tasdiq esa ensureValidSession() orqali serverdan olinadi.
         isSessionValid: function () {
-            return getStoredValue(SESSION_KEY) === "true" || getStoredValue(OLD_SESSION_KEY) === "true";
+            return !!getRefreshToken();
         },
 
         isLoggedIn: function () {
@@ -796,4 +710,5 @@ var AuthSystem = window.AuthSystem = (function () {
 // 🌐 GLOBAL AUTH BRIDGE
 window.getAuth = function () {
     return window.AuthSystem || null;
-};
+};   
+ 
