@@ -6848,25 +6848,35 @@ async function apiGetProfileNew() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("👤 PROFILE API");
   console.log("📤 REQUEST");
-  console.log("GET /api/v1/profile");
+  console.log("GET /store/profile/get");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   try {
 
-    const response = await window.crmApi.get("/api/v1/profile");
+    const response = await window.crmApi.get("/store/profile/get");
 
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log("✅ STATUS : SUCCESS");
     console.log("🌐 HTTP :", response.status);
     console.log("📊 PROFILE");
-    console.table([response.data.profile]);
+    console.table([response.data]);
 
-    console.log("📈 STATS");
+    console.log("📈 STATS: Hozircha backend qaytarmaydi");
     console.table([response.data.stats]);
 
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-    return response.data;
+    return {
+    profile: {
+        full_name: response.data.ceo_name,
+        phone: response.data.ceo_phone,
+        company_name: response.data.store_name,
+        avatar_url: response.data.profile_picture || "",
+        email: "",
+        role: ""
+    },
+    stats: {}
+};
 
   } catch (error) {
 
