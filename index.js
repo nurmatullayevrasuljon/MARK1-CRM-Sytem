@@ -329,25 +329,50 @@
           return;
         }
 
-        // Yangi user muvaffaqiyatli yaratildi: endi avtomatik login.
-        if (!Auth || typeof Auth.login !== "function") {
+        // ✅ YANGI: yangi backendda signup darhol login qilmaydi — SMS orqali
+        // yuborilgan kodni tasdiqlash (verify) shart bo'ladi. signup.html'da
+        // hali alohida OTP input maydoni yo'q, shu sabab uni HTML/CSS'ga
+        // tegmasdan window.prompt() orqali so'raymiz.
+        if (!Auth || typeof Auth.verify !== "function") {
           alert("Hisob yaratildi. Endi login sahifasidan kiring.");
           Transition.go(LOGIN_PAGE, true);
           return;
         }
 
-        var loginResult = await Auth.login({
-          login: userData.email,
-          password: userData.password,
-          remember: true
-        });
+        createBtn.textContent = "Kod yuborildi...";
 
-        if (loginResult && loginResult.success) {
-          Transition.go(DASHBOARD_PAGE, true);
-          return;
+        var verified = false;
+        var attemptsLeft = 3;
+
+        while (!verified && attemptsLeft > 0) {
+          var otp = window.prompt(
+            "Telefoningizga (" + userData.phone + ") yuborilgan tasdiqlash kodini kiriting:"
+          );
+
+          if (otp === null) {
+            // Foydalanuvchi bekor qildi — hisob yaratilgan, lekin tasdiqlanmagan holda qoladi.
+            alert("Hisob yaratildi, lekin hali tasdiqlanmagan. Login sahifasida qayta urinib ko'rishingiz mumkin.");
+            Transition.go(LOGIN_PAGE, true);
+            return;
+          }
+
+          var verifyResult = await Auth.verify({
+            phone: userData.phone,
+            otp: otp,
+            remember: true
+          });
+
+          if (verifyResult && verifyResult.success) {
+            verified = true;
+            Transition.go(DASHBOARD_PAGE, true);
+            return;
+          }
+
+          attemptsLeft--;
+          alert((verifyResult && verifyResult.message) || "Kod noto'g'ri.");
         }
 
-        alert("Hisob yaratildi. Endi login sahifasidan kiring.");
+        alert("Urinishlar tugadi. Iltimos, login sahifasidan qayta urinib ko'ring.");
         Transition.go(LOGIN_PAGE, true);
       } catch (err) {
         console.error(err);
@@ -387,7 +412,9 @@
     var phoneTabEl = $("phoneTab");
     var labelEl = $("loginLabel");
 
-    var loginType = "email";
+    // ✅ YANGI: yangi backendda email orqali kirish umuman yo'q — faqat
+    // telefon raqam bilan (do'kon egasi yoki xodim). Standart holat "phone".
+    var loginType = "phone";
 
     function checkForm() {
       var loginValid = false;
@@ -434,6 +461,14 @@
 
         checkForm();
       });
+
+      // ✅ YANGI: sahifa ochilganda "Telefon" tab avtomatik faol bo'lsin
+      // (email endi backendda ishlamaydi).
+      phoneTabEl.classList.add("active");
+      emailTabEl.classList.remove("active");
+      labelEl.textContent = "Telefon raqam";
+      loginInput.type = "tel";
+      loginInput.placeholder = "+998901234567";
     }
 
     loginInput.addEventListener("input", function () {
@@ -453,8 +488,9 @@
 
       if (loginBtn.disabled) return;
 
-      if (loginType === "phone") {
-        alert("Backend API login uchun email qabul qiladi. Iltimos, email orqali kiring.");
+      // ✅ YANGI (eskisining teskarisi): endi EMAIL emas, TELEFON qabul qilinadi.
+      if (loginType === "email") {
+        alert("Yangi tizimda kirish faqat telefon raqam orqali. Iltimos, \"Telefon\" bo'limiga o'ting.");
         resetLoginButton();
         return;
       }
@@ -482,7 +518,7 @@
           return;
         }
 
-        alert((result && result.message) || "Email/telefon yoki parol noto'g'ri.");
+        alert((result && result.message) || "Telefon raqam yoki parol noto'g'ri.");
         resetLoginButton();
       } catch (err) {
         console.error(err);
