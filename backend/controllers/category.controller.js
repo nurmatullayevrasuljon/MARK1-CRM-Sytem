@@ -4,7 +4,7 @@ const Category = require("../models/category.model");
 exports.createCategory = async (req, res) => {
   try {
     const category = await Category.create({
-      store_id: req.user.id,
+      store_id: req.user.store_id,
       category_name: req.body.category_name,
     });
     return res
@@ -55,7 +55,7 @@ exports.deleteCategory = async (req, res) => {
 exports.getCategory = async (req, res) => {
   try {
     const categoires = await Category.find({
-      store_id: new mongoose.Types.ObjectId(req.user.id),
+      store_id: req.user.store_id,
     });
 
     return res.status(200).json(categoires);

@@ -15,7 +15,7 @@ router.use("/auth", authRoutes);
 router.use("/store", authMiddleware, checkRole(["ceo"]), storeRoutes);
 router.use("/user", authMiddleware, userRoutes);
 router.use("/file", authMiddleware, checkRole(["ceo"]), fileRoutes);
-router.use("/category", authMiddleware, checkRole(["ceo"]), categoryRoutes);
+router.use("/category", authMiddleware, categoryRoutes);
 router.use("/product", authMiddleware, productRoutes);
 
 module.exports = router;

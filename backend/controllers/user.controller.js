@@ -11,7 +11,7 @@ exports.createUser = async (req, res) => {
     const { id } = req.user;
     const { user_name, user_phone, password, role, profile_picture } = req.body;
     const existingUser = await User.findOne({
-      store_id: new mongoose.Types.ObjectId(id),
+      store_id: id,
       user_phone,
     });
     if (existingUser) {
@@ -35,7 +35,7 @@ exports.createUser = async (req, res) => {
     });
   } catch (err) {
     console.log(err.message);
-    return res.status(500).json({ message:err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -46,7 +46,7 @@ exports.updateUser = async (req, res) => {
     const { user_name, user_phone, password, role, profile_picture } = req.body;
 
     const existingUser = await User.findOne({
-      store_id: new mongoose.Types.ObjectId(id),
+      store_id: id,
       user_phone,
     });
 
@@ -76,7 +76,7 @@ exports.updateUser = async (req, res) => {
     });
   } catch (err) {
     console.log(err.message);
-    return res.status(500).json({ message:err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -93,7 +93,7 @@ exports.deleteUser = async (req, res) => {
     });
   } catch (err) {
     console.log(err.message);
-    return res.status(500).json({ message:err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -101,12 +101,12 @@ exports.getAllUsers = async (req, res) => {
   try {
     const { id } = req.user;
     const users = await User.find({
-      store_id: new mongoose.Types.ObjectId(id),
+      store_id: id,
     });
     return res.status(200).json(users);
   } catch (err) {
     console.log(err.message);
-    return res.status(500).json({ message:err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -117,7 +117,7 @@ exports.getUserById = async (req, res) => {
     return res.status(200).json(user);
   } catch (err) {
     console.log(err.message);
-    return res.status(500).json({ message:err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -126,13 +126,13 @@ exports.getUserByPhone = async (req, res) => {
     const { id } = req.user;
     const { user_phone } = req.query;
     const user = await User.findOne({
-      store_id: new mongoose.Types.ObjectId(id),
+      store_id: id,
       user_phone,
     });
     return res.status(200).json(user);
   } catch (err) {
     console.log(err.message);
-    return res.status(500).json({ message:err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -157,14 +157,12 @@ exports.signinUser = async (req, res) => {
       id: user._id,
       store_id: user.store_id,
       role: user.role,
-      is_store_itself: false,
     });
 
     const accessToken = generateAccessToken({
       id: user._id,
       store_id: user.store_id,
       role: user.role,
-      is_store_itself: false,
     });
 
     res.cookie("refreshToken", refreshToken, {
@@ -181,7 +179,7 @@ exports.signinUser = async (req, res) => {
     });
   } catch (err) {
     console.log(err.message);
-    return res.status(500).json({ message:err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -194,7 +192,7 @@ exports.getProfile = async (req, res) => {
     return res.status(200).json(user);
   } catch (err) {
     console.log(err.message);
-    return res.status(500).json({ message:err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -224,12 +222,11 @@ exports.refreshUser = async (req, res) => {
       id: user._id,
       store_id: user.store_id,
       role: user.role,
-      is_store_itself: false,
     });
 
     return res.status(200).json({ access_token: newAccessToken });
   } catch (err) {
     console.log(err.message);
-    return res.status(500).json({ message:err.message });
+    return res.status(500).json({ message: err.message });
   }
 };

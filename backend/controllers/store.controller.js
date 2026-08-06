@@ -80,13 +80,13 @@ exports.verify = async (req, res) => {
 
     const refreshToken = generateRefreshToken({
       id: store._id,
-      is_store_itself: true,
+      store_id: store._id,
       role: "ceo",
     });
 
     const accessToken = generateAccessToken({
       id: store._id,
-      is_store_itself: true,
+      store_id: store._id,
       role: "ceo",
     });
 
@@ -127,13 +127,13 @@ exports.signin = async (req, res) => {
 
     const refreshToken = generateRefreshToken({
       id: store._id,
-      is_store_itself: true,
+      store_id: store._id,
       role: "ceo",
     });
 
     const accessToken = generateAccessToken({
       id: store._id,
-      is_store_itself: true,
+      store_id: store._id,
       role: "ceo",
     });
 
@@ -179,7 +179,7 @@ exports.refresh = async (req, res) => {
 
     const newAccessToken = generateAccessToken({
       id: store._id,
-      is_store_itself: true,
+      store_id: store._id,
       role: "ceo",
     });
 
@@ -194,7 +194,7 @@ exports.updateProfile = async (req, res) => {
   try {
     const { profile_picture, store_name, ceo_name } = req.body;
     const store = await Store.findByIdAndUpdate(
-      req.user.id,
+      req.user.store_id,
       { profile_picture, store_name, ceo_name },
       { new: true },
     ).select("-password");
@@ -212,7 +212,7 @@ exports.updateProfile = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
-    const store = await Store.findById(req.user.id);
+    const store = await Store.findById(req.user.store_id);
     if (!store) {
       return res.status(400).json({ message: "Do'kon topilmadi" });
     }

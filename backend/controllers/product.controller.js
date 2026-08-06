@@ -12,7 +12,7 @@ exports.createProduct = async (req, res) => {
       });
     }
 
-    req.body.store_id = req.user.id;
+    req.body.store_id = req.user.store_id;
 
     const product = await Product.create(req.body);
 
@@ -32,6 +32,7 @@ exports.updateProduct = async (req, res) => {
     const existingProduct = await Product.findOne({
       product_barcode,
       _id: { $ne: product_id },
+      store_id: req.user.store_id,
     });
 
     if (existingProduct) {
@@ -40,11 +41,24 @@ exports.updateProduct = async (req, res) => {
       });
     }
 
-    req.body.store_id = req.user.id;
+    req.body.store_id = req.user.store_id;
 
-    const product = await Product.findByIdAndUpdate(product_id, req.body, {
-      new: true,
-    });
+    const product = await Product.findOneAndUpdate(
+      {
+        _id: product_id,
+        store_id: req.user.store_id,
+      },
+      req.body,
+      {
+        new: true,
+      },
+    );
+
+    if (!product) {
+      return res.status(400).json({
+        message: "Tovar topilmadi",
+      });
+    }
 
     return res
       .status(200)
@@ -87,7 +101,7 @@ exports.getProducts = async (req, res) => {
     // sort_order: ascending, descending
 
     const filter = {
-      store_id: new mongoose.Types.ObjectId(req.user.id),
+      store_id: req.user.store_id,
     };
 
     if (product_name) {

@@ -5,11 +5,12 @@ const {
   getCategory,
   deleteCategory,
 } = require("../controllers/category.controller");
+const { checkRole } = require("../middlewares/role.middleware");
 const router = express.Router();
 
-router.post("/create", createCategory);
-router.put("/update", updateCategory); // ?category_id=ObjectId
+router.post("/create", checkRole(["ceo", "admin"]), createCategory);
+router.put("/update", checkRole(["ceo", "admin"]), updateCategory); // ?category_id=ObjectId
 router.get("/get/all", getCategory);
-router.delete("/delete", deleteCategory); // ?category_id=ObjectId
+router.delete("/delete", checkRole(["ceo", "admin"]), deleteCategory); // ?category_id=ObjectId
 
 module.exports = router;

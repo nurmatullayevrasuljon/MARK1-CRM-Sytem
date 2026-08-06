@@ -210,6 +210,206 @@ module.exports = {
     },
 
     /* ===========================
+             CATEGORY
+    ============================ */
+
+    Category: {
+      type: "object",
+      properties: {
+        _id: {
+          type: "string",
+          example: "68922f5e7d82d8c2d5e4c123",
+        },
+        store_id: {
+          type: "string",
+          example: "68922f5e7d82d8c2d5e4c111",
+        },
+        category_name: {
+          type: "string",
+          example: "Ichimliklar",
+        },
+        createdAt: {
+          type: "string",
+          format: "date-time",
+          example: "2026-08-06T12:00:00.000Z",
+        },
+        updatedAt: {
+          type: "string",
+          format: "date-time",
+          example: "2026-08-06T12:00:00.000Z",
+        },
+      },
+    },
+
+    CreateCategory: {
+      type: "object",
+      required: ["category_name"],
+      properties: {
+        category_name: {
+          type: "string",
+          example: "Ichimliklar",
+        },
+      },
+    },
+
+    UpdateCategory: {
+      type: "object",
+      required: ["category_name"],
+      properties: {
+        category_name: {
+          type: "string",
+          example: "Gazli ichimliklar",
+        },
+      },
+    },
+
+    /* ===========================
+             PRODUCT
+    ============================ */
+
+    Product: {
+      type: "object",
+      properties: {
+        _id: {
+          type: "string",
+          example: "68922f5e7d82d8c2d5e4c123",
+        },
+        store_id: {
+          type: "string",
+          example: "68922f5e7d82d8c2d5e4c111",
+        },
+        product_name: {
+          type: "string",
+          example: "Coca Cola 1.5L",
+        },
+        product_barcode: {
+          type: "string",
+          example: "1234567890123",
+        },
+        category_id: {
+          type: "string",
+          example: "68922f5e7d82d8c2d5e4c222",
+        },
+        purchase_price: {
+          type: "number",
+          example: 12000,
+        },
+        selling_price: {
+          type: "number",
+          example: 15000,
+        },
+        quantity: {
+          type: "number",
+          example: 35,
+        },
+        minimum_quantity: {
+          type: "number",
+          example: 5,
+        },
+        images: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+          example: [
+            "https://example.com/image1.jpg",
+            "https://example.com/image2.jpg",
+          ],
+        },
+        createdAt: {
+          type: "string",
+          format: "date-time",
+        },
+        updatedAt: {
+          type: "string",
+          format: "date-time",
+        },
+      },
+    },
+
+    CreateProduct: {
+      type: "object",
+      required: ["product_name", "product_barcode", "category_id"],
+      properties: {
+        product_name: {
+          type: "string",
+          example: "Coca Cola 1.5L",
+        },
+        product_barcode: {
+          type: "string",
+          example: "1234567890123",
+        },
+        category_id: {
+          type: "string",
+          example: "68922f5e7d82d8c2d5e4c222",
+        },
+        purchase_price: {
+          type: "number",
+          example: 12000,
+        },
+        selling_price: {
+          type: "number",
+          example: 15000,
+        },
+        quantity: {
+          type: "number",
+          example: 20,
+        },
+        minimum_quantity: {
+          type: "number",
+          example: 5,
+        },
+        images: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+          example: ["https://example.com/image1.jpg"],
+        },
+      },
+    },
+
+    UpdateProduct: {
+      type: "object",
+      properties: {
+        product_name: {
+          type: "string",
+          example: "Coca Cola 2L",
+        },
+        product_barcode: {
+          type: "string",
+          example: "1234567890123",
+        },
+        category_id: {
+          type: "string",
+          example: "68922f5e7d82d8c2d5e4c222",
+        },
+        purchase_price: {
+          type: "number",
+          example: 13000,
+        },
+        selling_price: {
+          type: "number",
+          example: 17000,
+        },
+        quantity: {
+          type: "number",
+          example: 25,
+        },
+        minimum_quantity: {
+          type: "number",
+          example: 5,
+        },
+        images: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+      },
+    },
+
+    /* ===========================
              STORE
     ============================ */
 
