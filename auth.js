@@ -519,14 +519,21 @@ var AuthSystem = window.AuthSystem = (function () {
     }
 
     async function trySignin(kind, phone, password) {
-        const endpoint = kind === "user" ? "/api/auth/user/signin" : "/api/auth/store/signin";
-        const payload = kind === "user"
-            ? { user_phone: phone, password }
-            : { ceo_phone: phone, password };
+        const endpoint =
+            kind === "user"
+                ? "/auth/user/signin"
+                : "/auth/store/signin";
 
-        return axios.post(`${API_URL}${endpoint}`, payload, { withCredentials: true, headers: NGROK_BYPASS_HEADERS });
+        const payload =
+            kind === "user"
+                ? { user_phone: phone, password }
+                : { ceo_phone: phone, password };
+
+        return axios.post(`${API_URL}${endpoint}`, payload, {
+            withCredentials: true,
+            headers: NGROK_BYPASS_HEADERS,
+        });
     }
-
     // ✅ YANGI: bitta login formasi ikki xil hisobga (do'kon egasi / xodim)
     // xizmat qiladi — avval do'kon sifatida, "topilmadi" bo'lsa xodim sifatida sinaydi.
     // Shu tufayli login.html'ga tegmasdan ham ishlaydi (email tab endi ishlatilmaydi,
