@@ -4,7 +4,7 @@ var AuthSystem = window.AuthSystem = (function () {
     // ⚠️ VAQTINCHALIK: bu ngrok manzili har safar tunnel qayta ishga tushganda
     // o'zgaradi. Backend doimiy serverga (Render/Railway/VPS) chiqarilgach,
     // shu joyni doimiy manzil bilan almashtiring.
-    const API_URL = "https://mark1-crm-sytem.onrender.com";
+    const API_URL = "https://mark1-crm-sytem.onrender.com/api";
     window.CRM_API_URL = API_URL;
 
     // ✅ YANGI: ngrok bepul tarifi brauzerdan kelgan so'rovlarga avval
