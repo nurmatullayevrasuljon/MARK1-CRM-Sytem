@@ -519,7 +519,7 @@ var AuthSystem = window.AuthSystem = (function () {
     }
 
     async function trySignin(kind, phone, password) {
-        const endpoint = kind === "user" ? "/api/auth/user/signin" : "/auth/store/signin";
+        const endpoint = kind === "user" ? "/api/auth/user/signin" : "/api/auth/store/signin";
         const payload = kind === "user"
             ? { user_phone: phone, password }
             : { ceo_phone: phone, password };
