@@ -1,4 +1,4 @@
-const API_URL = "https://z3wax.pythonanywhere.com";
+const API_URL = "https://mark1-crm-sytem.onrender.com";
 // ============================================================
 // 📦 USER DATA LOADING (SODDALASHTIRILGAN)
 // ============================================================
