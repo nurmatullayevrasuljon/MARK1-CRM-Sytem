@@ -1,113 +1,221 @@
 // ============================================================
-// 🔐 YAGONA AUTH + API CLIENT
+// 🔐 AUTH SYSTEM + YAGONA API CLIENT — MARK1 CRM
 // Backend: https://mark1-crm-sytem.onrender.com
+// Swagger: https://mark1-crm-sytem.onrender.com/api-docs/
+//
+// TASDIQLANGAN endpointlar (skrinshot orqali, 2026-08-08):
+//   POST /auth/store/signup
+//   POST /auth/store/verify
+//   POST /auth/store/signin
+//   POST /auth/store/refresh
+//   POST /auth/store/forgot-password
+//   POST /auth/store/reset-password
+//   POST /auth/user/signin
+//   POST /auth/user/refresh
+//
+// TASDIQLANMAGAN (Swagger'da "Try it out" orqali request/response
+// sxemasini ochib ko'rish va tasdiqlash SHART):
+//   - Har bir endpointning body maydon nomlari (full_name/fullName va h.k.)
+//   - GET /user/profile/get (yoki ekvivalenti) — hozircha placeholder
+//
 // Butun loyihada FAQAT shu window.crmApi ishlatiladi.
+// Refresh token backendda httpOnly cookie sifatida saqlanadi deb
+// FARAZ QILINMOQDA (withCredentials:true) — frontend uni HECH QACHON
+// localStorage/sessionStorage'da saqlamaydi.
 // ============================================================
 (function (global) {
   "use strict";
 
-  const BASE_URL = "https://mark1-crm-sytem.onrender.com";
+  // ---------- 1) YAGONA MANBA: BASE URL ----------
+  const API_ROOT = "https://mark1-crm-sytem.onrender.com";
+  const API_URL = API_ROOT + "/api"; // ⚠️ TASDIQLASH KERAK: backend prefiksi haqiqatan "/api" ekanini
+                                      // Swagger sahifasining "Servers" bo'limidan tekshiring.
+
   const ACCESS_KEY = "crm_access_token";
-  const REFRESH_KEY = "crm_refresh_token";
+  const ROLE_KEY = "crm_role";        // "store" | "user" — refresh qaysi endpointga borishini aniqlaydi
   const USER_KEY = "crm_current_user";
 
+  // ---------- 2) STORAGE HELPERLARI ----------
   function store(remember) { return remember ? localStorage : sessionStorage; }
   function otherStore(remember) { return remember ? sessionStorage : localStorage; }
 
   function getAccessToken() {
-    return localStorage.getItem(ACCESS_KEY) || sessionStorage.getItem(ACCESS_KEY);
+    return localStorage.getItem(ACCESS_KEY) || sessionStorage.getItem(ACCESS_KEY) || null;
   }
-  function getRefreshToken() {
-    return localStorage.getItem(REFRESH_KEY) || sessionStorage.getItem(REFRESH_KEY);
+  function getRole() {
+    return localStorage.getItem(ROLE_KEY) || sessionStorage.getItem(ROLE_KEY) || null;
   }
   function isRemembered() {
     return !!localStorage.getItem(ACCESS_KEY);
   }
-  function setTokens(access, refresh, remember) {
-    store(remember).setItem(ACCESS_KEY, access || "");
-    if (refresh) store(remember).setItem(REFRESH_KEY, refresh);
-    otherStore(remember).removeItem(ACCESS_KEY);
-    otherStore(remember).removeItem(REFRESH_KEY);
+  function setSession(accessToken, role, user, remember) {
+    const s = store(remember);
+    const other = otherStore(remember);
+
+    s.setItem(ACCESS_KEY, accessToken || "");
+    s.setItem(ROLE_KEY, role || "");
+    s.setItem(USER_KEY, JSON.stringify(user || null));
+
+    other.removeItem(ACCESS_KEY);
+    other.removeItem(ROLE_KEY);
+    other.removeItem(USER_KEY);
   }
-  function clearTokens() {
+  function clearSession() {
     [localStorage, sessionStorage].forEach(s => {
       s.removeItem(ACCESS_KEY);
-      s.removeItem(REFRESH_KEY);
+      s.removeItem(ROLE_KEY);
       s.removeItem(USER_KEY);
+      // ❗ REFRESH TOKEN HECH QACHON BU YERDA SAQLANMAGAN — o'chirishga hojat yo'q,
+      // u httpOnly cookie, faqat backend uni logout endpointida o'chira oladi.
     });
   }
   function getCurrentUserRaw() {
     const raw = localStorage.getItem(USER_KEY) || sessionStorage.getItem(USER_KEY);
     try { return raw ? JSON.parse(raw) : null; } catch { return null; }
   }
-  function setCurrentUser(user, remember) {
-    store(remember).setItem(USER_KEY, JSON.stringify(user || null));
-    otherStore(remember).removeItem(USER_KEY);
-  }
-  function getErrMsg(error, fallback) {
-    const detail = error?.response?.data?.detail;
-    if (Array.isArray(detail)) return detail.map(d => d.msg || d.message || String(d)).join("\n");
-    if (typeof detail === "string") return detail;
-    return fallback || "Server bilan bog'lanishda xatolik yuz berdi.";
+
+  // Backend qaysi maydon nomida access token qaytarishi noma'lum bo'lgan
+  // holatlar uchun himoyalangan (defensive) ekstraktor.
+  function extractAccessToken(data) {
+    if (!data) return null;
+    const token =
+      data.access_token || data.accessToken || data.token ||
+      (data.data && (data.data.access_token || data.data.accessToken || data.data.token));
+
+    if (!token) {
+      console.warn(
+        "⚠️ AUTH: javobda access token topilmadi. Backend response shaklini tekshiring:",
+        data
+      );
+    }
+    return token || null;
   }
 
-  // ---------- YAGONA API CLIENT ----------
-  const crmApi = axios.create({ baseURL: BASE_URL });
+  // Xatoni ANIQ diagnostika bilan qaytaruvchi helper — "register failed"
+  // kabi umumiy xabar HECH QACHON qaytarilmaydi.
+  function describeError(error, context) {
+    const status = error?.response?.status ?? "NO_STATUS";
+    const url = (error?.config?.baseURL || "") + (error?.config?.url || "");
+    const data = error?.response?.data;
+    const backendMessage =
+      (data && (data.detail || data.message || data.error)) || null;
 
+    console.error(`❌ [${context}] So'rov muvaffaqiyatsiz`, {
+      status,
+      url,
+      responseData: data,
+      backendMessage,
+      rawError: error
+    });
+
+    let userMessage;
+    if (Array.isArray(data?.detail)) {
+      userMessage = data.detail.map(d => d.msg || d.message || String(d)).join("\n");
+    } else {
+      userMessage = backendMessage || `Server xatosi (status: ${status}). Konsolni tekshiring.`;
+    }
+
+    return {
+      success: false,
+      status,
+      url,
+      responseData: data,
+      backendMessage,
+      message: userMessage
+    };
+  }
+
+  // ---------- 3) YAGONA API CLIENT ----------
+  const crmApi = axios.create({
+    baseURL: API_URL,
+    withCredentials: true // refresh token cookie backendga avtomatik boradi
+  });
+
+  // Har bir requestga Access Token qo'shiladi (agar mavjud bo'lsa)
   crmApi.interceptors.request.use(config => {
     const token = getAccessToken();
-    if (token) config.headers.Authorization = "Bearer " + token;
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = "Bearer " + token;
+    }
     return config;
   });
 
+  // 401 -> refresh -> qayta urinish (faqat AUTH bo'lmagan requestlar uchun)
   let isRefreshing = false;
-  let queue = [];
+  let waitQueue = [];
+
+  function isAuthEndpoint(url) {
+    return typeof url === "string" && url.indexOf("/auth/") !== -1;
+  }
+
+  async function performRefresh() {
+    const role = getRole();
+
+    if (!role) {
+      throw new Error("Refresh uchun rol (store/user) aniqlanmadi — foydalanuvchi tizimga kirmagan.");
+    }
+
+    const path = role === "user" ? "/auth/user/refresh" : "/auth/store/refresh";
+
+    // ❗ Refresh so'rovi crmApi orqali yuboriladi, lekin url "/auth/" ni
+    // o'z ichiga olgani uchun response interceptor uni qayta refresh
+    // qilishga URINMAYDI (pastdagi shart tekshiruvi bilan himoyalangan) —
+    // shu tarzda cheksiz tsikl (infinite loop) oldini olinadi.
+    const res = await crmApi.post(path, {}, { withCredentials: true });
+    const newAccess = extractAccessToken(res.data);
+
+    if (!newAccess) {
+      throw new Error("Refresh javobida access token topilmadi.");
+    }
+
+    setSession(newAccess, role, getCurrentUserRaw(), isRemembered());
+    return newAccess;
+  }
 
   crmApi.interceptors.response.use(
     res => res,
     async error => {
       const original = error.config;
       const status = error.response && error.response.status;
+      const url = (original && original.url) || "";
 
-      if (status !== 401 || original._retried || !original) {
+      // Auth endpointlarning o'zidan kelgan 401/boshqa xatolarga
+      // refresh interceptor ASLO aralashmaydi (login/signup sahifasida
+      // token yo'qligi sababli loop bo'lmasligi shu yerda kafolatlanadi).
+      if (!original || status !== 401 || original._retried || isAuthEndpoint(url)) {
         return Promise.reject(error);
       }
 
-      const refreshToken = getRefreshToken();
-      if (!refreshToken) {
-        AuthSystem.logout();
+      // Umuman tizimga kirilmagan bo'lsa (token yo'q) — refresh urinishning
+      // mantiqiy asosi yo'q, shunchaki xatoni qaytaramiz.
+      if (!getAccessToken()) {
         return Promise.reject(error);
       }
+
+      original._retried = true;
 
       if (isRefreshing) {
-        return new Promise((resolve, reject) => queue.push({ resolve, reject }))
-          .then(token => {
-            original._retried = true;
-            original.headers.Authorization = "Bearer " + token;
-            return crmApi(original);
-          });
+        return new Promise((resolve, reject) => {
+          waitQueue.push({ resolve, reject });
+        }).then(newToken => {
+          original.headers.Authorization = "Bearer " + newToken;
+          return crmApi(original);
+        });
       }
 
       isRefreshing = true;
-      original._retried = true;
 
       try {
-        // ⚠️ ANIQLASH KERAK: aniq refresh endpoint nomini backend jamoasidan tasdiqlang
-        const resp = await axios.post(BASE_URL + "/api/v1/auth/refresh", {
-          refresh_token: refreshToken
-        });
-        const newAccess = resp.data.access_token;
-        const newRefresh = resp.data.refresh_token || refreshToken;
+        const newToken = await performRefresh();
+        waitQueue.forEach(p => p.resolve(newToken));
+        waitQueue = [];
 
-        setTokens(newAccess, newRefresh, isRemembered());
-        queue.forEach(p => p.resolve(newAccess));
-        queue = [];
-
-        original.headers.Authorization = "Bearer " + newAccess;
+        original.headers.Authorization = "Bearer " + newToken;
         return crmApi(original);
       } catch (refreshErr) {
-        queue.forEach(p => p.reject(refreshErr));
-        queue = [];
+        waitQueue.forEach(p => p.reject(refreshErr));
+        waitQueue = [];
         AuthSystem.logout();
         return Promise.reject(refreshErr);
       } finally {
@@ -118,78 +226,203 @@
 
   global.crmApi = crmApi;
 
-  // ---------- AUTH SYSTEM ----------
+  // ---------- 4) AUTH SYSTEM ----------
   const AuthSystem = {
-    // ⚠️ /api/v1/auth/register, /verify, /login yo'llarini backend bilan tasdiqlang
+
+    // POST /auth/store/signup
+    // ⚠️ TASDIQLASH KERAK: body maydon nomlari. Hozir eng ehtimolli
+    // FastAPI konvensiyasi (snake_case) bilan yozilgan.
     register: async function (data) {
       try {
-        const res = await crmApi.post("/api/v1/auth/register", {
+        const res = await crmApi.post("/auth/store/signup", {
           full_name: data.fullName,
           phone: data.phone,
-          company_name: data.storeName,
+          store_name: data.storeName,
           password: data.password
         });
-        return { success: true, code: "REGISTER_SUCCESS", data: res.data,
-          message: "Tasdiqlash kodi telefon raqamingizga yuborildi." };
+        return {
+          success: true,
+          status: res.status,
+          url: res.config.baseURL + res.config.url,
+          data: res.data,
+          message: "Tasdiqlash kodi telefon raqamingizga yuborildi."
+        };
       } catch (error) {
-        return { success: false, message: getErrMsg(error, "Ro'yxatdan o'tishda xatolik yuz berdi.") };
+        return describeError(error, "register /auth/store/signup");
       }
     },
 
+    // POST /auth/store/verify
+    // ⚠️ TASDIQLASH KERAK: OTP maydon nomi ("code" mi, "otp" mi)
     verify: async function ({ phone, otp, remember }) {
       try {
-        const res = await crmApi.post("/api/v1/auth/verify", { phone, code: otp });
-        setTokens(res.data.access_token, res.data.refresh_token, remember);
-        setCurrentUser(res.data.user, remember);
-        return { success: true, user: res.data.user };
+        const res = await crmApi.post("/auth/store/verify", {
+          phone,
+          code: otp
+        });
+
+        const token = extractAccessToken(res.data);
+        const user = res.data.user || res.data.data || null;
+
+        if (token) setSession(token, "store", user, remember);
+
+        return { success: true, status: res.status, data: res.data, user };
       } catch (error) {
-        return { success: false, message: getErrMsg(error, "Kod noto'g'ri yoki muddati o'tgan.") };
+        return describeError(error, "verify /auth/store/verify");
       }
     },
 
-    login: async function ({ login, password, remember }) {
+    // POST /auth/store/signin — do'kon egasi (CEO/admin) kirishi
+    loginStore: async function ({ login, password, remember }) {
       try {
-        const res = await crmApi.post("/api/v1/auth/login", { phone: login, password });
-        setTokens(res.data.access_token, res.data.refresh_token, remember);
-        setCurrentUser(res.data.user, remember);
-        return { success: true, user: res.data.user };
+        const res = await crmApi.post("/auth/store/signin", {
+          phone: login,
+          password
+        });
+
+        const token = extractAccessToken(res.data);
+        const user = res.data.user || res.data.data || null;
+
+        if (!token) {
+          return describeError(
+            { response: { status: res.status, data: res.data } },
+            "loginStore /auth/store/signin (token topilmadi)"
+          );
+        }
+
+        setSession(token, "store", user, remember);
+        return { success: true, status: res.status, data: res.data, user };
       } catch (error) {
-        return { success: false, message: getErrMsg(error, "Telefon raqam yoki parol noto'g'ri!") };
+        return describeError(error, "loginStore /auth/store/signin");
       }
     },
 
+    // POST /auth/user/signin — xodim (employee) kirishi
+    loginUser: async function ({ login, password, remember }) {
+      try {
+        const res = await crmApi.post("/auth/user/signin", {
+          phone: login,
+          password
+        });
+
+        const token = extractAccessToken(res.data);
+        const user = res.data.user || res.data.data || null;
+
+        if (!token) {
+          return describeError(
+            { response: { status: res.status, data: res.data } },
+            "loginUser /auth/user/signin (token topilmadi)"
+          );
+        }
+
+        setSession(token, "user", user, remember);
+        return { success: true, status: res.status, data: res.data, user };
+      } catch (error) {
+        return describeError(error, "loginUser /auth/user/signin");
+      }
+    },
+
+    // Eski kod bilan moslik uchun: role bo'yicha avtomatik tanlaydi.
+    // Agar login sahifasida "store" yoki "user" ekanligi aniq bo'lsa,
+    // to'g'ridan-to'g'ri loginStore/loginUser ishlatilishi tavsiya etiladi.
+    login: async function (params) {
+      return this.loginStore(params);
+    },
+
+    // POST /auth/store/forgot-password
+    forgotPassword: async function (phone) {
+      try {
+        const res = await crmApi.post("/auth/store/forgot-password", { phone });
+        return { success: true, status: res.status, data: res.data };
+      } catch (error) {
+        return describeError(error, "forgotPassword /auth/store/forgot-password");
+      }
+    },
+
+    // POST /auth/store/reset-password
+    resetPassword: async function ({ phone, code, newPassword }) {
+      try {
+        const res = await crmApi.post("/auth/store/reset-password", {
+          phone,
+          code,
+          new_password: newPassword
+        });
+        return { success: true, status: res.status, data: res.data };
+      } catch (error) {
+        return describeError(error, "resetPassword /auth/store/reset-password");
+      }
+    },
+
+    // Parol o'zgartirish endpointi skrinshotda ko'rinmadi.
+    // ⚠️ TASDIQLASH KERAK: Swagger'da "Settings"/"Security" bo'limini tekshiring.
     changePassword: async function (oldPassword, newPassword) {
       try {
-        await crmApi.post("/api/v1/auth/change-password", {
-          old_password: oldPassword, new_password: newPassword
+        const res = await crmApi.post("/api/v1/settings/security/change-password", {
+          old_password: oldPassword,
+          new_password: newPassword
         });
-        return { success: true, message: "Parol muvaffaqiyatli o'zgartirildi!" };
+        return { success: true, status: res.status, data: res.data };
       } catch (error) {
-        return { success: false, message: getErrMsg(error, "Parolni o'zgartirishda xatolik.") };
+        return describeError(error, "changePassword (endpoint tasdiqlanmagan)");
       }
+    },
+
+    // GET /store/profile/get — TASDIQLANGAN (birinchi taskda siz berdingiz)
+    getStoreProfile: async function () {
+      try {
+        const res = await crmApi.get("/store/profile/get");
+        return { success: true, status: res.status, data: res.data };
+      } catch (error) {
+        return describeError(error, "getStoreProfile /store/profile/get");
+      }
+    },
+
+    // ⚠️ TASDIQLANMAGAN — Swagger'da "User Profile" bo'limi ko'rinmadi.
+    // Real yo'l aniqlangach shu funksiya ichidagi path'ni yangilang.
+    getUserProfile: async function () {
+      console.warn(
+        "⚠️ getUserProfile(): endpoint hali Swagger orqali tasdiqlanmagan. " +
+        "Joriy taxmin: GET /user/profile/get — buni backend jamoasi bilan tekshiring."
+      );
+      try {
+        const res = await crmApi.get("/user/profile/get");
+        return { success: true, status: res.status, data: res.data };
+      } catch (error) {
+        return describeError(error, "getUserProfile /user/profile/get (TASDIQLANMAGAN)");
+      }
+    },
+
+    // Rolga qarab to'g'ri profilni tanlaydi
+    getProfile: async function () {
+      const role = getRole();
+      return role === "user" ? this.getUserProfile() : this.getStoreProfile();
     },
 
     getCurrentUser: function () { return getCurrentUserRaw(); },
     getAccessToken: getAccessToken,
+    getRole: getRole,
 
-    // ✅ Endi bu FAQAT user profil keshini yangilaydi (ism/telefon/rasm).
-    // products/sales/debtors kabi CRM data endi bu yerda umuman saqlanmaydi —
-    // ular FAQAT backendda, script.js to'g'ridan-to'g'ri crmApi orqali oladi.
+    // Faqat lokal keshni (ism/telefon/rasm) yangilaydi.
+    // CRM datasi (products/sales/debtors) BU YERDA SAQLANMAYDI.
     updateCurrentUserData: function (partial) {
       const merged = Object.assign({}, getCurrentUserRaw() || {}, partial);
-      setCurrentUser(merged, isRemembered());
+      const remember = isRemembered();
+      const s = store(remember);
+      s.setItem(USER_KEY, JSON.stringify(merged));
       return true;
     },
 
     isSessionValid: function () {
-      return !!getAccessToken() && !!getCurrentUserRaw();
+      return !!getAccessToken() && !!getRole();
     },
 
     logout: function () {
-      clearTokens();
+      clearSession();
       const page = window.location.pathname.split("/").pop().toLowerCase();
       const publicPages = ["", "index.html", "signup.html", "login.html", "landing.html"];
-      if (!publicPages.includes(page)) window.location.href = "login.html";
+      if (!publicPages.includes(page)) {
+        window.location.href = "login.html";
+      }
     },
 
     protectPage: function () {
@@ -207,11 +440,14 @@
       const current = window.location.pathname.split("/").pop().toLowerCase();
       const target = redirectUrl.split("/").pop().toLowerCase();
       if (current === target) return false;
-      if (this.isSessionValid()) { window.location.href = redirectUrl; return true; }
+      if (this.isSessionValid()) {
+        window.location.href = redirectUrl;
+        return true;
+      }
       return false;
     }
   };
 
   global.AuthSystem = AuthSystem;
-  console.log("🔥 AUTH SYSTEM (JWT, backend-only) tayyor");
+  console.log("🔥 AUTH SYSTEM tayyor. baseURL =", API_URL);
 })(window);

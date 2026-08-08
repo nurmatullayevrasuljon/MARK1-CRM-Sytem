@@ -1940,7 +1940,8 @@
     </footer>
 
     <script src="index.js?v=1783512488" defer></script>
-    <script src="auth.js?v=1783512488" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="auth.js"></script>
 
     <script defer>
         (function () {
@@ -1956,13 +1957,13 @@
 
             // --- Hero rotating word (vertikal almashinuvchi matn) ---
             var MK_INDUSTRIES = [
-                { text: "Kiyim-kechak", color: "#7c3aed" },
-                { text: "Kosmetika", color: "#3b5bdb" },
-                { text: "Oziq-ovqat", color: "#16a34a" },
-                { text: "Elektronika", color: "#2563eb" },
-                { text: "Go'zallik saloni", color: "#db2777" },
-                { text: "Qurilish", color: "#ea580c" },
-                { text: "Kichik savdo", color: "#4f46e5" }
+                {text: "Kiyim-kechak", color: "#7c3aed"},
+                {text: "Kosmetika", color: "#3b5bdb"},
+                {text: "Oziq-ovqat", color: "#16a34a"},
+                {text: "Elektronika", color: "#2563eb"},
+                {text: "Go'zallik saloni", color: "#db2777"},
+                {text: "Qurilish", color: "#ea580c"},
+                {text: "Kichik savdo", color: "#4f46e5"}
             ];
             var mkIndustryIdx = 0;
             var mkRotatingWordEl = document.getElementById('mkRotatingWord');
@@ -1975,7 +1976,7 @@
                     mkRotatingWordEl.style.color = MK_INDUSTRIES[mkIndustryIdx].color;
                     mkRotatingWordEl.classList.remove('mk-word-out');
                     mkRotatingWordEl.classList.add('mk-word-in');
-                    setTimeout(function () { mkRotatingWordEl.classList.remove('mk-word-in'); }, 450);
+                    setTimeout(function () {mkRotatingWordEl.classList.remove('mk-word-in');}, 450);
                 }, 380);
             }
             if (mkRotatingWordEl) setInterval(mkRotateWord, 2800);
@@ -1985,20 +1986,20 @@
                 btn.addEventListener('click', function () {
                     var item = btn.closest('.mk-faq-item');
                     var wasOpen = item.classList.contains('mk-open');
-                    document.querySelectorAll('.mk-faq-item').forEach(function (el) { el.classList.remove('mk-open'); });
+                    document.querySelectorAll('.mk-faq-item').forEach(function (el) {el.classList.remove('mk-open');});
                     if (!wasOpen) item.classList.add('mk-open');
                 });
             });
 
             // --- Dashboard showcase tablari ---
             var MK_DASH_PAGES = [
-                { name: 'Savdolar', icon: '📊', from: '#3b82f6', to: '#2563eb' },
-                { name: 'Ombor', icon: '📦', from: '#a855f7', to: '#9333ea' },
-                { name: 'Mahsulotlar', icon: '🛍️', from: '#ec4899', to: '#db2777' },
-                { name: 'Qarzdorlar', icon: '👥', from: '#f97316', to: '#ea580c' },
-                { name: 'Tahlil', icon: '📈', from: '#22c55e', to: '#16a34a' },
-                { name: 'Hisobotlar', icon: '📋', from: '#6366f1', to: '#4f46e5' },
-                { name: 'Sozlamalar', icon: '⚙️', from: '#6b7280', to: '#4b5563' }
+                {name: 'Savdolar', icon: '📊', from: '#3b82f6', to: '#2563eb'},
+                {name: 'Ombor', icon: '📦', from: '#a855f7', to: '#9333ea'},
+                {name: 'Mahsulotlar', icon: '🛍️', from: '#ec4899', to: '#db2777'},
+                {name: 'Qarzdorlar', icon: '👥', from: '#f97316', to: '#ea580c'},
+                {name: 'Tahlil', icon: '📈', from: '#22c55e', to: '#16a34a'},
+                {name: 'Hisobotlar', icon: '📋', from: '#6366f1', to: '#4f46e5'},
+                {name: 'Sozlamalar', icon: '⚙️', from: '#6b7280', to: '#4b5563'}
             ];
             var mkDashTitle = document.getElementById('mkDashTitle');
             var mkDashMetrics = document.getElementById('mkDashMetrics');
@@ -2029,7 +2030,7 @@
             }
             mkDashTabs.forEach(function (tab) {
                 tab.addEventListener('click', function () {
-                    mkDashTabs.forEach(function (t) { t.classList.remove('mk-active'); });
+                    mkDashTabs.forEach(function (t) {t.classList.remove('mk-active');});
                     tab.classList.add('mk-active');
                     mkRenderDash(parseInt(tab.dataset.mktab, 10));
                 });
@@ -2046,10 +2047,10 @@
                             obs.unobserve(entry.target);
                         }
                     });
-                }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
-                mkRevealEls.forEach(function (el) { mkRevealObserver.observe(el); });
+                }, {threshold: 0.15, rootMargin: '0px 0px -40px 0px'});
+                mkRevealEls.forEach(function (el) {mkRevealObserver.observe(el);});
             } else {
-                mkRevealEls.forEach(function (el) { el.classList.add('mk-in'); });
+                mkRevealEls.forEach(function (el) {el.classList.add('mk-in');});
             }
 
             // --- Mobil panelni nav havolasi bosilganda yopish ---
