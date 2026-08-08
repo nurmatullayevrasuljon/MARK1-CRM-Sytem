@@ -2,41 +2,41 @@ const API_URL = "https://mark1-crm-sytem.onrender.com/api";
 // ============================================================
 // 📦 USER DATA LOADING (SODDALASHTIRILGAN)
 // ============================================================
-function loadUserData() {
-  const Auth = window.AuthSystem;
+// function loadUserData() {
+//   const Auth = window.AuthSystem;
 
-  if (!Auth || typeof Auth.getCurrentUser !== "function") {
-    return false;
-  }
+//   if (!Auth || typeof Auth.getCurrentUser !== "function") {
+//     return false;
+//   }
 
-  const userData =
-    typeof Auth.getCurrentUserFullData === "function"
-      ? Auth.getCurrentUserFullData()
-      : Auth.getCurrentUser();
+//   const userData =
+//     typeof Auth.getCurrentUserFullData === "function"
+//       ? Auth.getCurrentUserFullData()
+//       : Auth.getCurrentUser();
 
-  if (!userData) {
-    return false;
-  }
+//   if (!userData) {
+//     return false;
+//   }
 
-  products = chooseUserArray(userData.products, products, []);
-  categories = chooseUserArray(userData.categories, categories, ['Electronics']);
-  sales = chooseUserArray(userData.sales, sales, []);
-  debtors = chooseUserArray(userData.debtors, debtors, []);
-  paidDebtors = chooseUserArray(userData.paidDebtors, paidDebtors, []);
-  smsHistory = chooseUserArray(userData.smsHistory, smsHistory, []);
+//   products = chooseUserArray(userData.products, products, []);
+//   categories = chooseUserArray(userData.categories, categories, ['Electronics']);
+//   sales = chooseUserArray(userData.sales, sales, []);
+//   debtors = chooseUserArray(userData.debtors, debtors, []);
+//   paidDebtors = chooseUserArray(userData.paidDebtors, paidDebtors, []);
+//   smsHistory = chooseUserArray(userData.smsHistory, smsHistory, []);
 
-  persistUserData({
-    products,
-    categories,
-    sales,
-    debtors,
-    paidDebtors,
-    smsHistory
-  });
+//   persistUserData({
+//     products,
+//     categories,
+//     sales,
+//     debtors,
+//     paidDebtors,
+//     smsHistory
+//   });
 
-  console.log('✅ User data loaded:', userData.email);
-  return true;
-}
+//   console.log('✅ User data loaded:', userData.email);
+//   return true;
+// }
 
 
 // KEYIN SIZNING BARCHA ESKI KODINGIZ...
@@ -325,7 +325,19 @@ let transactionSearchQuery = "";
 // Backend qaytganda OFFLINE_DATA_MODE ni false qiling yoki shu
 // "OFFLINE DATA MODE" bloklarini butunlay o'chiring — asl (real API) kod
 // hech qayerda o'chirilmagan, faqat vaqtincha chetlab o'tilmoqda.
-const OFFLINE_DATA_MODE = true;
+// const OFFLINE_DATA_MODE = true;
+let OFFLINE_DATA_MODE = false;
+
+async function detectBackendAvailability() {
+  try {
+    await window.crmApi.get("/api/v1/settings/profile", { timeout: 5000 });
+    OFFLINE_DATA_MODE = false;
+    console.log("✅ Backend mavjud — ONLINE rejim");
+  } catch (err) {
+    OFFLINE_DATA_MODE = true;
+    console.warn("⚠️ Backend javob bermadi — OFFLINE rejimga o'tildi:", err.message);
+  }
+}
 const OFFLINE_CATEGORIES_KEY = "crm_offline_categories";
 
 function offlineGenId() {
@@ -350,7 +362,7 @@ function saveOfflineCategories() {
 }
 // OFFLINE DATA MODE END
 
-loadUserData();
+// loadUserData();
 
 // Chart instances
 let chartInstances = {
@@ -3696,24 +3708,15 @@ function showSuccessMessage(message) {
 //   }
 // }
 async function syncAllApiData() {
-
+  await detectBackendAvailability();
   await apiLoadCategories();
-
   await apiLoadProducts();
-
   await apiLoadSales();
-
   await apiLoadDebtors();
-
+  await loadProfile();
   await loadAndRenderTransactions(transactionFilter);
-
-  const lowStockProducts =
-    await getLowStockAlerts();
-
-  renderLowStockAlerts(
-    lowStockProducts
-  );
-
+  const lowStockProducts = await getLowStockAlerts();
+  renderLowStockAlerts(lowStockProducts);
 }
 
 /* ===============================================
@@ -4106,45 +4109,74 @@ function mapDepartmentFromApi(value) {
   return map[value] || "boshqaruv";
 }
 
-async function loadProfileSettings() {
-  if (!window.crmApi) return;
+// async function loadProfileSettings() {
+//   if (!window.crmApi) return;
 
+//   try {
+//     const response = await window.crmApi.get("/api/v1/settings/profile");
+//     const user = response.data;
+
+//     const fullNameEl = document.getElementById("fullName");
+//     const emailEl = document.getElementById("email");
+//     const phoneEl = document.getElementById("phone");
+//     const companyEl = document.getElementById("company");
+//     const departmentEl = document.getElementById("department");
+
+//     if (fullNameEl) fullNameEl.value = user.full_name || "";
+//     if (emailEl) emailEl.value = user.email || "";
+//     if (phoneEl) phoneEl.value = user.phone || "";
+//     if (companyEl) companyEl.value = user.company_name || "";
+//     if (departmentEl) departmentEl.value = mapDepartmentFromApi(user.department);
+
+//     const settingToggles = document.querySelectorAll("#settings-content .toggle-switch input");
+//     if (settingToggles[0]) settingToggles[0].checked = user.email_notifications !== false;
+//     if (settingToggles[1]) settingToggles[1].checked = !!user.dark_mode;
+
+//     if (window.AuthSystem && typeof window.AuthSystem.updateCurrentUserData === "function") {
+//       window.AuthSystem.updateCurrentUserData(user);
+//     }
+
+//     window.dispatchEvent(new CustomEvent("profileUpdated", {
+//       detail: {
+//         fullName: user.full_name,
+//         email: user.email,
+//         phone: user.phone,
+//         company: user.company_name,
+//         department: user.department || user.role,
+//         avatar: user.avatar_url
+//       }
+//     }));
+//   } catch (error) {
+//     console.error("Profile load error:", error);
+//   }
+// }
+async function loadProfile() {
   try {
-    const response = await window.crmApi.get("/api/v1/settings/profile");
-    const user = response.data;
+    const res = await window.crmApi.get("/store/profile/get");
+    const p = res.data;
 
-    const fullNameEl = document.getElementById("fullName");
-    const emailEl = document.getElementById("email");
-    const phoneEl = document.getElementById("phone");
-    const companyEl = document.getElementById("company");
-    const departmentEl = document.getElementById("department");
+    const mapped = {
+      fullName: p.ceo_name || "",
+      phone: p.ceo_phone || "",
+      company: p.store_name || "",
+      avatarUrl: p.profile_picture || ""
+    };
 
-    if (fullNameEl) fullNameEl.value = user.full_name || "";
-    if (emailEl) emailEl.value = user.email || "";
-    if (phoneEl) phoneEl.value = user.phone || "";
-    if (companyEl) companyEl.value = user.company_name || "";
-    if (departmentEl) departmentEl.value = mapDepartmentFromApi(user.department);
-
-    const settingToggles = document.querySelectorAll("#settings-content .toggle-switch input");
-    if (settingToggles[0]) settingToggles[0].checked = user.email_notifications !== false;
-    if (settingToggles[1]) settingToggles[1].checked = !!user.dark_mode;
-
-    if (window.AuthSystem && typeof window.AuthSystem.updateCurrentUserData === "function") {
-      window.AuthSystem.updateCurrentUserData(user);
+    if (window.CRMTopbar) {
+      window.CRMTopbar.updateProfile({
+        full_name: mapped.fullName,
+        phone: mapped.phone,
+        company_name: mapped.company,
+        avatar_url: mapped.avatarUrl
+      });
     }
 
-    window.dispatchEvent(new CustomEvent("profileUpdated", {
-      detail: {
-        fullName: user.full_name,
-        email: user.email,
-        phone: user.phone,
-        company: user.company_name,
-        department: user.department || user.role,
-        avatar: user.avatar_url
-      }
-    }));
+    if (window.AuthSystem) window.AuthSystem.updateCurrentUserData(mapped);
+
+    return mapped;
   } catch (error) {
-    console.error("Profile load error:", error);
+    console.error("❌ Profil yuklashda xatolik:", error);
+    return null;
   }
 }
 
