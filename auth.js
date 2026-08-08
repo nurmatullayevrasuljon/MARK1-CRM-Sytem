@@ -232,14 +232,42 @@
     // POST /auth/store/signup
     // ⚠️ TASDIQLASH KERAK: body maydon nomlari. Hozir eng ehtimolli
     // FastAPI konvensiyasi (snake_case) bilan yozilgan.
+    // POST /auth/store/signup
     register: async function (data) {
     try {
+        // Frontenddan +998901234567 kabi format kelsa,
+        // backendga +998 qismini olib tashlab yuboramiz.
+        let ceoPhone = String(data.phone || "").replace(/\D/g, "");
+
+        // 998901234567 -> 901234567
+        if (ceoPhone.startsWith("998")) {
+        ceoPhone = ceoPhone.slice(3);
+        }
+
+        // 0901234567 -> 901234567
+        if (ceoPhone.startsWith("0")) {
+        ceoPhone = ceoPhone.slice(1);
+        }
+
+        console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        console.log("📤 SIGNUP REQUEST");
+        console.log("🌐 POST /auth/store/signup");
+        console.log("📱 Original phone:", data.phone);
+        console.log("📱 Backend phone:", ceoPhone);
+        console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
         const res = await crmApi.post("/auth/store/signup", {
         ceo_name: data.fullName,
-        ceo_phone: data.phone,
+        ceo_phone: ceoPhone,
         store_name: data.storeName,
         password: data.password
         });
+
+        console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        console.log("✅ SIGNUP SUCCESS");
+        console.log("HTTP:", res.status);
+        console.log("Response:", res.data);
+        console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         return {
         success: true,
@@ -248,6 +276,7 @@
         data: res.data,
         message: res.data?.message || "Hisob yaratildi."
         };
+
     } catch (error) {
         return describeError(error, "register /auth/store/signup");
     }
