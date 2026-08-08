@@ -233,23 +233,24 @@
     // ⚠️ TASDIQLASH KERAK: body maydon nomlari. Hozir eng ehtimolli
     // FastAPI konvensiyasi (snake_case) bilan yozilgan.
     register: async function (data) {
-      try {
+    try {
         const res = await crmApi.post("/auth/store/signup", {
-          full_name: data.fullName,
-          phone: data.phone,
-          store_name: data.storeName,
-          password: data.password
+        ceo_name: data.fullName,
+        ceo_phone: data.phone,
+        store_name: data.storeName,
+        password: data.password
         });
+
         return {
-          success: true,
-          status: res.status,
-          url: res.config.baseURL + res.config.url,
-          data: res.data,
-          message: "Tasdiqlash kodi telefon raqamingizga yuborildi."
+        success: true,
+        status: res.status,
+        url: res.config.baseURL + res.config.url,
+        data: res.data,
+        message: res.data?.message || "Hisob yaratildi."
         };
-      } catch (error) {
+    } catch (error) {
         return describeError(error, "register /auth/store/signup");
-      }
+    }
     },
 
     // POST /auth/store/verify
