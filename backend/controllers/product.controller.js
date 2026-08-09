@@ -4,7 +4,10 @@ const Product = require("../models/product.model");
 exports.createProduct = async (req, res) => {
   try {
     const { product_barcode } = req.body;
-    const existingProduct = await Product.findOne({ product_barcode });
+    const existingProduct = await Product.findOne({
+      product_barcode,
+      store_id: req.user.store_id,
+    });
 
     if (existingProduct) {
       return res.status(400).json({
@@ -73,7 +76,10 @@ exports.deleteProduct = async (req, res) => {
   try {
     const { product_id } = req.query;
 
-    const product = await Product.findByIdAndDelete(product_id);
+    const product = await Product.findOneAndDelete({
+      _id: product_id,
+      store_id: req.user.store_id,
+    });
 
     if (!product) {
       return res.status(400).json({

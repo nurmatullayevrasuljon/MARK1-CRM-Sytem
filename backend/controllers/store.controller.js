@@ -18,6 +18,12 @@ exports.signup = async (req, res) => {
       });
     }
 
+    if (password.length < 6) {
+      return res.status(400).json({
+        message: "Parol kamida 6 xonali bo'lishi kerak",
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const { otp, otp_expires_at } = generateOtp();
 
@@ -92,9 +98,8 @@ exports.verify = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/api/auth/store/refresh",
     });
@@ -140,7 +145,7 @@ exports.signin = async (req, res) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/api/auth/store/refresh",
     });

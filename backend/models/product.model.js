@@ -11,7 +11,6 @@ const ProductSchema = new mongoose.Schema(
     product_barcode: {
       type: String,
       required: [true, "Tovar kodini kiriting"],
-      unique: true,
     },
     category_id: {
       type: mongoose.Types.ObjectId,
