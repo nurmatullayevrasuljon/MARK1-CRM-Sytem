@@ -679,17 +679,24 @@
 
     var Auth = getAuth();
 
-    if (!Auth || typeof Auth.getCurrentUser !== "function") {
-      Transition.go(LOGIN_PAGE, true);
-      return;
-    }
-
-    var user = Auth.getCurrentUser();
-
-    if (!user) {
-      Transition.go(LOGIN_PAGE, true);
-      return;
-    }
+    // ❗ MUHIM TUZATISH: ILGARI shu yerda "agar Auth.getCurrentUser() null
+    // bo'lsa — login.html'ga qaytar" degan tekshiruv bor edi. Lekin
+    // verify/signin backend javobida "user" obyekti UMUMAN qaytmaydi
+    // (faqat { message, access_token }) — shuning uchun login/verify'dan
+    // DARHOL keyin getCurrentUser() har doim null bo'ladi, garchi
+    // foydalanuvchi haqiqatan ham tizimga kirgan (token bor) bo'lsa ham.
+    // Natijada: index.html ochiladi -> initDashboard() "user yo'q" deb
+    // login.html'ga qaytaradi -> login.html "token bor" deb yana
+    // index.html'ga qaytaradi -> CHEKSIZ SIKL (redirect loop).
+    //
+    // TO'G'RI TEKSHIRUV — sessiya (token+role) haqiqiy autentifikatsiya
+    // belgisi, "user" obyekti esa faqat UI'ni to'ldirish uchun (u
+    // script.js'dagi loadProfile() orqali GET /store/profile/get'dan
+    // ALOHIDA yuklanadi). Shu sabab bu yerda faqat null-safe qilib
+    // qo'yamiz, redirect qilmaymiz.
+    var user = (Auth && typeof Auth.getCurrentUser === "function")
+      ? (Auth.getCurrentUser() || {})
+      : {};
 
     setText($("profileName"), user.fullName || "");
     setText($("profileEmail"), user.email || "");
