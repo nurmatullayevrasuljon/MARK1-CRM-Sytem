@@ -74,6 +74,18 @@
     try { return raw ? JSON.parse(raw) : null; } catch { return null; }
   }
 
+  // Telefon raqamni backend kutgan formatga keltiradi: "+998901234567" /
+  // "998901234567" / "0901234567" / "901234567" -> "901234567".
+  // register() ichida xuddi shu mantiq allaqachon inline yozilgan (u yerga
+  // tegilmadi — signup ishlab turibdi). Bu funksiya faqat verify/signin
+  // uchun ISHLATILADI, chunki ular oldin buni umuman qilmagan edi.
+  function normalizePhone(value) {
+    let p = String(value || "").replace(/\D/g, "");
+    if (p.startsWith("998")) p = p.slice(3);
+    if (p.startsWith("0")) p = p.slice(1);
+    return p;
+  }
+
   // Backend qaysi maydon nomida access token qaytarishi noma'lum bo'lgan
   // holatlar uchun himoyalangan (defensive) ekstraktor.
   function extractAccessToken(data) {
@@ -283,12 +295,20 @@
     },
 
     // POST /auth/store/verify
-    // ⚠️ TASDIQLASH KERAK: OTP maydon nomi ("code" mi, "otp" mi)
+    // ✅ TASDIQLANGAN (backend jamoasi tomonidan berilgan aniq shakl):
+    //    { "ceo_phone": "901234567", "otp": "12345" }
+    // ❌ ILGARI: { phone, code } yuborilardi — bu backend uchun ikkalasi
+    //    ham noto'g'ri nom edi (backend faqat "ceo_phone" va "otp" ni
+    //    o'qiydi). Shu sabab verify HAR DOIM "Kod mos emas" yoki
+    //    "Telefon raqam bo'yicha do'kon topilmadi" bilan tugar edi —
+    //    aslida foydalanuvchi kiritgan kod to'g'ri bo'lsa ham.
     verify: async function ({ phone, otp, remember }) {
       try {
+        const ceoPhone = normalizePhone(phone);
+
         const res = await crmApi.post("/auth/store/verify", {
-          phone,
-          code: otp
+          ceo_phone: ceoPhone,
+          otp: otp
         });
 
         const token = extractAccessToken(res.data);
@@ -303,10 +323,19 @@
     },
 
     // POST /auth/store/signin — do'kon egasi (CEO/admin) kirishi
+    // ❌ ILGARI: { phone: login, password } yuborilardi. Backend
+    //    controller aynan "ceo_phone" ni o'qiydi ("phone" emas). Mongoose
+    //    "undefined" qiymatli kalitni so'rovdan olib tashlaydi, shu sabab
+    //    Store.findOne({ ceo_phone: undefined }) aslida
+    //    Store.findOne({}) ga aylanib, bazadagi BIRINCHI do'konni
+    //    qaytarardi — noto'g'ri/nomuvofiq hisobga kirish yoki "Parol mos
+    //    emas" xatosi shundan kelib chiqqan.
     loginStore: async function ({ login, password, remember }) {
       try {
+        const ceoPhone = normalizePhone(login);
+
         const res = await crmApi.post("/auth/store/signin", {
-          phone: login,
+          ceo_phone: ceoPhone,
           password
         });
 
@@ -328,10 +357,15 @@
     },
 
     // POST /auth/user/signin — xodim (employee) kirishi
+    // ❌ ILGARI: { phone: login, password } yuborilardi. Backend
+    //    controller "user_phone" ni o'qiydi ("phone" emas) — xuddi
+    //    loginStore'dagi bilan bir xil sabab bilan buzilgan edi.
     loginUser: async function ({ login, password, remember }) {
       try {
+        const userPhone = normalizePhone(login);
+
         const res = await crmApi.post("/auth/user/signin", {
-          phone: login,
+          user_phone: userPhone,
           password
         });
 
@@ -360,9 +394,13 @@
     },
 
     // POST /auth/store/forgot-password
+    // ❗ TUZATISH: backend controller "ceo_phone" ni o'qiydi ("phone" emas)
+    // — verify/signin'dagi bilan bir xil xato shu yerda ham bor edi.
     forgotPassword: async function (phone) {
       try {
-        const res = await crmApi.post("/auth/store/forgot-password", { phone });
+        const res = await crmApi.post("/auth/store/forgot-password", {
+          ceo_phone: normalizePhone(phone)
+        });
         return { success: true, status: res.status, data: res.data };
       } catch (error) {
         return describeError(error, "forgotPassword /auth/store/forgot-password");
@@ -370,11 +408,13 @@
     },
 
     // POST /auth/store/reset-password
+    // ❗ TUZATISH: backend controller { otp, ceo_phone, new_password } ni
+    // o'qiydi. Ilgari { phone, code, new_password } yuborilardi.
     resetPassword: async function ({ phone, code, newPassword }) {
       try {
         const res = await crmApi.post("/auth/store/reset-password", {
-          phone,
-          code,
+          ceo_phone: normalizePhone(phone),
+          otp: code,
           new_password: newPassword
         });
         return { success: true, status: res.status, data: res.data };
@@ -446,10 +486,22 @@
       return !!getAccessToken() && !!getRole();
     },
 
+    // ❗ MUHIM TUZATISH: "index.html" ILGARI publicPages ro'yxatida edi.
+    // Lekin bu loyihada index.html — LANDING EMAS, balki DASHBOARD'ning
+    // o'zi (masalaning tavsifida ham shunday: "index.html/dashboard").
+    // index.html'ni public deb belgilash 2 ta oqibatga olib kelgan edi:
+    //   1) protectPage(): sessiyasiz foydalanuvchi ham index.html'ni
+    //      ochib qola olardi (himoyalanmagan bo'lib qolgan) — data
+    //      yuklanmagani uchun "bo'sh"/singan dashboard ko'rinardi.
+    //   2) logout(): index.html sahifasida logout bosilganda login.html'ga
+    //      REDIRECT QILINMAS edi — sessiya tozalangan, lekin foydalanuvchi
+    //      hamon "dashboard"da qolib ketardi.
+    // "" (bo'sh path, ya'ni sayt ildizi "/") ham index.html bilan bir xil
+    // sahifa bo'lgani uchun endi PUBLIC emas, DASHBOARD deb hisoblanadi.
     logout: function () {
       clearSession();
       const page = window.location.pathname.split("/").pop().toLowerCase();
-      const publicPages = ["", "index.html", "signup.html", "login.html", "landing.html"];
+      const publicPages = ["signup.html", "login.html", "landing.html"];
       if (!publicPages.includes(page)) {
         window.location.href = "login.html";
       }
@@ -457,7 +509,7 @@
 
     protectPage: function () {
       const page = window.location.pathname.split("/").pop().toLowerCase();
-      const publicPages = ["", "index.html", "signup.html", "login.html", "landing.html"];
+      const publicPages = ["signup.html", "login.html", "landing.html"];
       if (!publicPages.includes(page) && !this.isSessionValid()) {
         window.location.href = "login.html";
         return false;
@@ -465,8 +517,14 @@
       return true;
     },
 
+    // ❗ TUZATISH: standart qiymat "dashboard.html" edi — loyihada bunday
+    // fayl UMUMAN MAVJUD EMAS (haqiqiy dashboard fayli — index.html).
+    // index.js har doim aniq "index.html" ni argument sifatida uzatadi,
+    // shu sabab bu standart qiymat amalda hozircha ishlatilmayapti, lekin
+    // kelajakda argumentsiz chaqirilsa noto'g'ri (mavjud bo'lmagan) sahifaga
+    // yo'naltirib qo'ymasligi uchun to'g'irlandi.
     redirectIfLoggedIn: function (redirectUrl) {
-      redirectUrl = redirectUrl || "dashboard.html";
+      redirectUrl = redirectUrl || "index.html";
       const current = window.location.pathname.split("/").pop().toLowerCase();
       const target = redirectUrl.split("/").pop().toLowerCase();
       if (current === target) return false;
