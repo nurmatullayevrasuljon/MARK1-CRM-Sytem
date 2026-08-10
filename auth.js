@@ -449,6 +449,19 @@
         return describeError(error, "getCategories /category");
       }
     },
+    createCategory: async function (data) {
+      try {
+        const res = await crmApi.post("/category/create", data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        return describeError(error, "createCategory /category/create");
+      }
+    },
     createUser: async function (data) {
       try {
         const res = await crmApi.post("/user/create", data);
