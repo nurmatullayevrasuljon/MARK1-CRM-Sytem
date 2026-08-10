@@ -6893,9 +6893,6 @@ async function apiGetProfileNew() {
     console.log("📊 PROFILE");
     console.table([response.data]);
 
-    console.log("📈 STATS: Hozircha backend qaytarmaydi");
-    console.table([response.data.stats]);
-
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     return {
