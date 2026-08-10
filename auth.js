@@ -357,9 +357,6 @@
     },
 
     // POST /auth/user/signin — xodim (employee) kirishi
-    // ❌ ILGARI: { phone: login, password } yuborilardi. Backend
-    //    controller "user_phone" ni o'qiydi ("phone" emas) — xuddi
-    //    loginStore'dagi bilan bir xil sabab bilan buzilgan edi.
     loginUser: async function ({ login, password, remember }) {
       try {
         const userPhone = normalizePhone(login);
@@ -447,8 +444,24 @@
       }
     },
 
+    updateStoreProfile: async function (data) {
+      try {
+        const res = await crmApi.post("/store/profile/update", data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        return describeError(
+          error,
+          "updateStoreProfile /store/profile/update"
+        );
+      }
+    },
+
     // ⚠️ TASDIQLANMAGAN — Swagger'da "User Profile" bo'limi ko'rinmadi.
-    // Real yo'l aniqlangach shu funksiya ichidagi path'ni yangilang.
     getUserProfile: async function () {
       console.warn(
         "⚠️ getUserProfile(): endpoint hali Swagger orqali tasdiqlanmagan. " +
@@ -486,18 +499,6 @@
       return !!getAccessToken() && !!getRole();
     },
 
-    // ❗ MUHIM TUZATISH: "index.html" ILGARI publicPages ro'yxatida edi.
-    // Lekin bu loyihada index.html — LANDING EMAS, balki DASHBOARD'ning
-    // o'zi (masalaning tavsifida ham shunday: "index.html/dashboard").
-    // index.html'ni public deb belgilash 2 ta oqibatga olib kelgan edi:
-    //   1) protectPage(): sessiyasiz foydalanuvchi ham index.html'ni
-    //      ochib qola olardi (himoyalanmagan bo'lib qolgan) — data
-    //      yuklanmagani uchun "bo'sh"/singan dashboard ko'rinardi.
-    //   2) logout(): index.html sahifasida logout bosilganda login.html'ga
-    //      REDIRECT QILINMAS edi — sessiya tozalangan, lekin foydalanuvchi
-    //      hamon "dashboard"da qolib ketardi.
-    // "" (bo'sh path, ya'ni sayt ildizi "/") ham index.html bilan bir xil
-    // sahifa bo'lgani uchun endi PUBLIC emas, DASHBOARD deb hisoblanadi.
     logout: function () {
       clearSession();
       const page = window.location.pathname.split("/").pop().toLowerCase();
@@ -517,12 +518,6 @@
       return true;
     },
 
-    // ❗ TUZATISH: standart qiymat "dashboard.html" edi — loyihada bunday
-    // fayl UMUMAN MAVJUD EMAS (haqiqiy dashboard fayli — index.html).
-    // index.js har doim aniq "index.html" ni argument sifatida uzatadi,
-    // shu sabab bu standart qiymat amalda hozircha ishlatilmayapti, lekin
-    // kelajakda argumentsiz chaqirilsa noto'g'ri (mavjud bo'lmagan) sahifaga
-    // yo'naltirib qo'ymasligi uchun to'g'irlandi.
     redirectIfLoggedIn: function (redirectUrl) {
       redirectUrl = redirectUrl || "index.html";
       const current = window.location.pathname.split("/").pop().toLowerCase();
