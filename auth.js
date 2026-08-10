@@ -436,6 +436,19 @@
         return describeError(error, "getStoreProfile /store/profile/get");
       }
     },
+    createUser: async function (data) {
+      try {
+        const res = await crmApi.post("/user/create", data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        return describeError(error, "createUser /user/create");
+      }
+    },
     updateStoreProfile: async function (data) {
       try {
         const res = await crmApi.post("/store/profile/update", data);
