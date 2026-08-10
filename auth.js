@@ -465,6 +465,19 @@
         );
       }
     },
+    createProduct: async function (data) {
+      try {
+        const res = await crmApi.post("/product/create", data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        return describeError(error, "createProduct /product/create");
+      }
+    },
 
     // ⚠️ TASDIQLANMAGAN — Swagger'da "User Profile" bo'limi ko'rinmadi.
     getUserProfile: async function () {
