@@ -4219,56 +4219,40 @@ async function saveChanges() {
       department: document.getElementById("department").value
     };
 
-  try {
-    const result = await AuthSystem.updateStoreProfile({
-      ceo_name: data.fullName,
-      ceo_phone: data.phone,
-      store_name: data.company
-    });
+    try {
+      const response = await window.crmApi.put("/api/v1/settings/profile", {
+        full_name: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        company_name: data.company,
+        department: mapDepartmentToApi(data.department)
+      });
 
-    if (!result.success) {
-      throw new Error(result.backendMessage || result.message || "Profilni saqlashda xatolik");
-    }
+      const user = response.data;
+      localStorage.setItem("profile_data", JSON.stringify(data));
 
-    // Backend qaytargan yangi profil
-    const profile = result.data?.data;
-
-    if (profile) {
-      const mapped = {
-        fullName: profile.ceo_name || "",
-        phone: profile.ceo_phone || "",
-        company: profile.store_name || "",
-        avatarUrl: profile.profile_picture || ""
-      };
-
-      // Lokal user ma'lumotini yangilash
-      if (
-        window.AuthSystem &&
-        typeof window.AuthSystem.updateCurrentUserData === "function"
-      ) {
-        window.AuthSystem.updateCurrentUserData(mapped);
+      if (window.AuthSystem && typeof window.AuthSystem.updateCurrentUserData === "function") {
+        window.AuthSystem.updateCurrentUserData(user);
       }
 
-      // Topbarni yangilash
-      if (window.CRMTopbar) {
-        window.CRMTopbar.updateProfile({
-          full_name: mapped.fullName,
-          phone: mapped.phone,
-          company_name: mapped.company,
-          avatar_url: mapped.avatarUrl
-        });
-      }
+      window.dispatchEvent(new CustomEvent("profileUpdated", {
+        detail: {
+          fullName: user.full_name || data.fullName,
+          email: user.email || data.email,
+          phone: user.phone || data.phone,
+          company: user.company_name || data.company,
+          department: user.department || data.department,
+          avatar: user.avatar_url || null
+        }
+      }));
+
+      showNotification("O'zgarishlar muvaffaqiyatli saqlandi!", "success");
+    } catch (error) {
+      console.error(error);
+      showNotification(getApiErrorMessage(error, "Profilni saqlashda xatolik yuz berdi"), "error");
     }
-
-    showNotification("O'zgarishlar muvaffaqiyatli saqlandi!", "success");
-
-  } catch (error) {
-    console.error("❌ Profilni saqlash xatosi:", error);
-
-    showNotification(
-      error?.message || "Profilni saqlashda xatolik yuz berdi",
-      "error"
-    );
+  } else {
+    showNotification("Qaytarib bo'lmaydigan xatolar!", "error");
   }
 }
 

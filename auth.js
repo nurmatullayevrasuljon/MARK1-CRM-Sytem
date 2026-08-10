@@ -357,6 +357,9 @@
     },
 
     // POST /auth/user/signin — xodim (employee) kirishi
+    // ❌ ILGARI: { phone: login, password } yuborilardi. Backend
+    //    controller "user_phone" ni o'qiydi ("phone" emas) — xuddi
+    //    loginStore'dagi bilan bir xil sabab bilan buzilgan edi.
     loginUser: async function ({ login, password, remember }) {
       try {
         const userPhone = normalizePhone(login);
@@ -444,22 +447,6 @@
       }
     },
 
-    updateStoreProfile: async function (data) {
-      try {
-        const res = await crmApi.post("/store/profile/update", data);
-
-        return {
-          success: true,
-          status: res.status,
-          data: res.data
-        };
-      } catch (error) {
-        return describeError(
-          error,
-          "updateStoreProfile /store/profile/update"
-        );
-      }
-    },
 
     // ⚠️ TASDIQLANMAGAN — Swagger'da "User Profile" bo'limi ko'rinmadi.
     getUserProfile: async function () {
