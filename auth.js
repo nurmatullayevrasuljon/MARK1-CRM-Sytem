@@ -446,7 +446,22 @@
         return describeError(error, "getStoreProfile /store/profile/get");
       }
     },
+    updateStoreProfile: async function (data) {
+      try {
+        const res = await crmApi.post("/store/profile/update", data);
 
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        return describeError(
+          error,
+          "updateStoreProfile /store/profile/update"
+        );
+      }
+    },
 
     // ⚠️ TASDIQLANMAGAN — Swagger'da "User Profile" bo'limi ko'rinmadi.
     getUserProfile: async function () {
