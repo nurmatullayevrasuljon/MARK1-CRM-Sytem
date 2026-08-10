@@ -1,28 +1,3 @@
-// ============================================================
-// 🔐 AUTH SYSTEM + YAGONA API CLIENT — MARK1 CRM
-// Backend: https://mark1-crm-sytem.onrender.com
-// Swagger: https://mark1-crm-sytem.onrender.com/api-docs/
-//
-// TASDIQLANGAN endpointlar (skrinshot orqali, 2026-08-08):
-//   POST /auth/store/signup
-//   POST /auth/store/verify
-//   POST /auth/store/signin
-//   POST /auth/store/refresh
-//   POST /auth/store/forgot-password
-//   POST /auth/store/reset-password
-//   POST /auth/user/signin
-//   POST /auth/user/refresh
-//
-// TASDIQLANMAGAN (Swagger'da "Try it out" orqali request/response
-// sxemasini ochib ko'rish va tasdiqlash SHART):
-//   - Har bir endpointning body maydon nomlari (full_name/fullName va h.k.)
-//   - GET /user/profile/get (yoki ekvivalenti) — hozircha placeholder
-//
-// Butun loyihada FAQAT shu window.crmApi ishlatiladi.
-// Refresh token backendda httpOnly cookie sifatida saqlanadi deb
-// FARAZ QILINMOQDA (withCredentials:true) — frontend uni HECH QACHON
-// localStorage/sessionStorage'da saqlamaydi.
-// ============================================================
 (function (global) {
   "use strict";
 
@@ -304,19 +279,34 @@
     //    aslida foydalanuvchi kiritgan kod to'g'ri bo'lsa ham.
     verify: async function ({ phone, otp, remember }) {
       try {
-        const ceoPhone = normalizePhone(phone);
-
         const res = await crmApi.post("/auth/store/verify", {
-          ceo_phone: ceoPhone,
+          ceo_phone: phone.replace(/^\+998/, ""),
           otp: otp
         });
 
         const token = extractAccessToken(res.data);
-        const user = res.data.user || res.data.data || null;
 
-        if (token) setSession(token, "store", user, remember);
+        if (!token) {
+          return describeError(
+            {
+              response: {
+                status: res.status,
+                data: res.data
+              }
+            },
+            "verify /auth/store/verify (token topilmadi)"
+          );
+        }
 
-        return { success: true, status: res.status, data: res.data, user };
+        setSession(token, "store", null, remember);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data,
+          message: res.data?.message || "Hisob tasdiqlandi"
+        };
+
       } catch (error) {
         return describeError(error, "verify /auth/store/verify");
       }
