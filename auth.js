@@ -462,9 +462,17 @@
         return describeError(error, "createCategory /category/create");
       }
     },
-    updateCategory: async function (data) {
+    updateCategory: async function (categoryId, data) {
       try {
-        const res = await crmApi.put("/category/update", data);
+        const res = await crmApi.put(
+          "/category/update",
+          data,
+          {
+            params: {
+              category_id: categoryId
+            }
+          }
+        );
 
         return {
           success: true,
@@ -472,7 +480,10 @@
           data: res.data
         };
       } catch (error) {
-        return describeError(error, "updateCategory /category/update");
+        return describeError(
+          error,
+          "updateCategory /category/update"
+        );
       }
     },
     createUser: async function (data) {
