@@ -486,6 +486,26 @@
         );
       }
     },
+    deleteCategory: async function (categoryId) {
+      try {
+        const res = await crmApi.delete("/category/delete", {
+          params: {
+            category_id: categoryId
+          }
+        });
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        return describeError(
+          error,
+          "deleteCategory /category/delete"
+        );
+      }
+    },
     createUser: async function (data) {
       try {
         const res = await crmApi.post("/user/create", data);
