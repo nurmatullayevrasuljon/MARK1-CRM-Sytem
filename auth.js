@@ -545,6 +545,45 @@
         return describeError(error, "createUser /user/create");
       }
     },
+    updateProduct: async function (productId, data) {
+      console.log("========== UPDATE PRODUCT ==========");
+
+      try {
+        const res = await crmApi.put(
+          `/product/update?product_id=${encodeURIComponent(productId)}`,
+          {
+            product_name: data.product_name,
+            product_barcode: data.product_barcode,
+            category_id: data.category_id,
+            purchase_price: data.purchase_price,
+            selling_price: data.selling_price,
+            quantity: data.quantity,
+            minimum_quantity: data.minimum_quantity,
+            images: data.images || []
+          }
+        );
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("MESSAGE:", res.data?.message);
+        console.log("PRODUCT:", res.data?.product);
+
+        return {
+          success: true,
+          status: res.status,
+          url: res.config.baseURL + res.config.url,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "updateProduct /product/update");
+
+        console.error("❌ UPDATE PRODUCT — XATO");
+        console.error("STATUS:", result.status);
+        console.error("ERROR:", result.backendMessage || result.responseData);
+
+        return result;
+      }
+    },
     updateStoreProfile: async function (data) {
       try {
         const res = await crmApi.post("/store/profile/update", data);
