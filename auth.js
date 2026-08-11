@@ -506,6 +506,32 @@
         );
       }
     },
+    getCategories: async function () {
+      console.log("========== GET CATEGORIES ==========");
+
+      try {
+        const res = await crmApi.get("/category");
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("CATEGORIES:", res.data);
+        console.table(res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "getCategories /category");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error("❌ GET CATEGORIES — XATO:", result.backendMessage || result.responseData);
+
+        return result;
+      }
+    },
     createUser: async function (data) {
       try {
         const res = await crmApi.post("/user/create", data);
