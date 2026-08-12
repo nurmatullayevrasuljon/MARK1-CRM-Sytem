@@ -545,6 +545,37 @@
         return describeError(error, "createUser /user/create");
       }
     },
+    updateUser: async function (data) {
+      console.log("========== UPDATE USER ==========");
+
+      try {
+        const res = await crmApi.put("/user/update", data);
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("MESSAGE:", res.data?.message);
+        console.log("USER:", res.data?.user);
+        console.log("FULL RESULT:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+
+      } catch (error) {
+        const result = describeError(error, "updateUser /user/update");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ UPDATE USER — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     updateProduct: async function (productId, data) {
       console.log("========== UPDATE PRODUCT ==========");
 
