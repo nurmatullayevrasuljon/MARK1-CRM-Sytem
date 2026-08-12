@@ -584,6 +584,42 @@
         return result;
       }
     },
+    getProducts: async function () {
+      console.log("========== GET PRODUCTS ==========");
+
+      try {
+        const res = await crmApi.get("/product");
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("PRODUCTS:", res.data);
+
+        const products = Array.isArray(res.data)
+          ? res.data
+          : res.data?.products || [];
+
+        console.table(products);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data,
+          products
+        };
+
+      } catch (error) {
+        const result = describeError(error, "getProducts /product");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ GET PRODUCTS — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     updateStoreProfile: async function (data) {
       try {
         const res = await crmApi.post("/store/profile/update", data);
