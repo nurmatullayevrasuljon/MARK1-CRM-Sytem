@@ -577,6 +577,38 @@
         return result;
       }
     },
+    cancelSale: async function (saleId) {
+      console.log("========== CANCEL SALE ==========");
+
+      try {
+        const res = await crmApi.delete("/sale/cancel", {
+          data: {
+            sale_id: saleId
+          }
+        });
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "cancelSale /sale/cancel");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ CANCEL SALE — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     updateUser: async function (data) {
       console.log("========== UPDATE USER ==========");
 
