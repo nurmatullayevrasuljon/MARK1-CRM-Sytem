@@ -1,28 +1,3 @@
-// ============================================================
-// 🔐 AUTH SYSTEM + YAGONA API CLIENT — MARK1 CRM
-// Backend: https://mark1-crm-sytem.onrender.com
-// Swagger: https://mark1-crm-sytem.onrender.com/api-docs/
-//
-// TASDIQLANGAN endpointlar (skrinshot orqali, 2026-08-08):
-//   POST /auth/store/signup
-//   POST /auth/store/verify
-//   POST /auth/store/signin
-//   POST /auth/store/refresh
-//   POST /auth/store/forgot-password
-//   POST /auth/store/reset-password
-//   POST /auth/user/signin
-//   POST /auth/user/refresh
-//
-// TASDIQLANMAGAN (Swagger'da "Try it out" orqali request/response
-// sxemasini ochib ko'rish va tasdiqlash SHART):
-//   - Har bir endpointning body maydon nomlari (full_name/fullName va h.k.)
-//   - GET /user/profile/get (yoki ekvivalenti) — hozircha placeholder
-//
-// Butun loyihada FAQAT shu window.crmApi ishlatiladi.
-// Refresh token backendda httpOnly cookie sifatida saqlanadi deb
-// FARAZ QILINMOQDA (withCredentials:true) — frontend uni HECH QACHON
-// localStorage/sessionStorage'da saqlamaydi.
-// ============================================================
 (function (global) {
   "use strict";
 
@@ -304,19 +279,34 @@
     //    aslida foydalanuvchi kiritgan kod to'g'ri bo'lsa ham.
     verify: async function ({ phone, otp, remember }) {
       try {
-        const ceoPhone = normalizePhone(phone);
-
         const res = await crmApi.post("/auth/store/verify", {
-          ceo_phone: ceoPhone,
+          ceo_phone: phone.replace(/^\+998/, ""),
           otp: otp
         });
 
         const token = extractAccessToken(res.data);
-        const user = res.data.user || res.data.data || null;
 
-        if (token) setSession(token, "store", user, remember);
+        if (!token) {
+          return describeError(
+            {
+              response: {
+                status: res.status,
+                data: res.data
+              }
+            },
+            "verify /auth/store/verify (token topilmadi)"
+          );
+        }
 
-        return { success: true, status: res.status, data: res.data, user };
+        setSession(token, "store", null, remember);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data,
+          message: res.data?.message || "Hisob tasdiqlandi"
+        };
+
       } catch (error) {
         return describeError(error, "verify /auth/store/verify");
       }
@@ -446,9 +436,252 @@
         return describeError(error, "getStoreProfile /store/profile/get");
       }
     },
+    getCategories: async function () {
+      try {
+        const res = await crmApi.get("/category");
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        return describeError(error, "getCategories /category");
+      }
+    },
+    createCategory: async function (data) {
+      try {
+        const res = await crmApi.post("/category/create", data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        return describeError(error, "createCategory /category/create");
+      }
+    },
+    updateCategory: async function (categoryId, data) {
+      try {
+        const res = await crmApi.put(
+          "/category/update",
+          data,
+          {
+            params: {
+              category_id: categoryId
+            }
+          }
+        );
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        return describeError(
+          error,
+          "updateCategory /category/update"
+        );
+      }
+    },
+    deleteCategory: async function (categoryId) {
+      try {
+        const res = await crmApi.delete("/category/delete", {
+          params: {
+            category_id: categoryId
+          }
+        });
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        return describeError(
+          error,
+          "deleteCategory /category/delete"
+        );
+      }
+    },
+    getCategories: async function () {
+      console.log("========== GET CATEGORIES ==========");
+
+      try {
+        const res = await crmApi.get("/category");
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("CATEGORIES:", res.data);
+        console.table(res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "getCategories /category");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error("❌ GET CATEGORIES — XATO:", result.backendMessage || result.responseData);
+
+        return result;
+      }
+    },
+    createUser: async function (data) {
+      try {
+        const res = await crmApi.post("/user/create", data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        return describeError(error, "createUser /user/create");
+      }
+    },
+    updateUser: async function (data) {
+      console.log("========== UPDATE USER ==========");
+
+      try {
+        const res = await crmApi.put("/user/update", data);
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("MESSAGE:", res.data?.message);
+        console.log("USER:", res.data?.user);
+        console.log("FULL RESULT:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+
+      } catch (error) {
+        const result = describeError(error, "updateUser /user/update");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ UPDATE USER — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
+    updateProduct: async function (productId, data) {
+      console.log("========== UPDATE PRODUCT ==========");
+
+      try {
+        const res = await crmApi.put(
+          `/product/update?product_id=${encodeURIComponent(productId)}`,
+          {
+            product_name: data.product_name,
+            product_barcode: data.product_barcode,
+            category_id: data.category_id,
+            purchase_price: data.purchase_price,
+            selling_price: data.selling_price,
+            quantity: data.quantity,
+            minimum_quantity: data.minimum_quantity,
+            images: data.images || []
+          }
+        );
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("MESSAGE:", res.data?.message);
+        console.log("PRODUCT:", res.data?.product);
+
+        return {
+          success: true,
+          status: res.status,
+          url: res.config.baseURL + res.config.url,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "updateProduct /product/update");
+
+        console.error("❌ UPDATE PRODUCT — XATO");
+        console.error("STATUS:", result.status);
+        console.error("ERROR:", result.backendMessage || result.responseData);
+
+        return result;
+      }
+    },
+    getProducts: async function () {
+      console.log("========== GET PRODUCTS ==========");
+
+      try {
+        const res = await crmApi.get("/product");
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("PRODUCTS:", res.data);
+
+        const products = Array.isArray(res.data)
+          ? res.data
+          : res.data?.products || [];
+
+        console.table(products);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data,
+          products
+        };
+
+      } catch (error) {
+        const result = describeError(error, "getProducts /product");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ GET PRODUCTS — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
+    updateStoreProfile: async function (data) {
+      try {
+        const res = await crmApi.post("/store/profile/update", data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        return describeError(
+          error,
+          "updateStoreProfile /store/profile/update"
+        );
+      }
+    },
+    createProduct: async function (data) {
+      try {
+        const res = await crmApi.post("/product/create", data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        return describeError(error, "createProduct /product/create");
+      }
+    },
 
     // ⚠️ TASDIQLANMAGAN — Swagger'da "User Profile" bo'limi ko'rinmadi.
-    // Real yo'l aniqlangach shu funksiya ichidagi path'ni yangilang.
     getUserProfile: async function () {
       console.warn(
         "⚠️ getUserProfile(): endpoint hali Swagger orqali tasdiqlanmagan. " +
@@ -486,18 +719,6 @@
       return !!getAccessToken() && !!getRole();
     },
 
-    // ❗ MUHIM TUZATISH: "index.html" ILGARI publicPages ro'yxatida edi.
-    // Lekin bu loyihada index.html — LANDING EMAS, balki DASHBOARD'ning
-    // o'zi (masalaning tavsifida ham shunday: "index.html/dashboard").
-    // index.html'ni public deb belgilash 2 ta oqibatga olib kelgan edi:
-    //   1) protectPage(): sessiyasiz foydalanuvchi ham index.html'ni
-    //      ochib qola olardi (himoyalanmagan bo'lib qolgan) — data
-    //      yuklanmagani uchun "bo'sh"/singan dashboard ko'rinardi.
-    //   2) logout(): index.html sahifasida logout bosilganda login.html'ga
-    //      REDIRECT QILINMAS edi — sessiya tozalangan, lekin foydalanuvchi
-    //      hamon "dashboard"da qolib ketardi.
-    // "" (bo'sh path, ya'ni sayt ildizi "/") ham index.html bilan bir xil
-    // sahifa bo'lgani uchun endi PUBLIC emas, DASHBOARD deb hisoblanadi.
     logout: function () {
       clearSession();
       const page = window.location.pathname.split("/").pop().toLowerCase();
@@ -517,12 +738,6 @@
       return true;
     },
 
-    // ❗ TUZATISH: standart qiymat "dashboard.html" edi — loyihada bunday
-    // fayl UMUMAN MAVJUD EMAS (haqiqiy dashboard fayli — index.html).
-    // index.js har doim aniq "index.html" ni argument sifatida uzatadi,
-    // shu sabab bu standart qiymat amalda hozircha ishlatilmayapti, lekin
-    // kelajakda argumentsiz chaqirilsa noto'g'ri (mavjud bo'lmagan) sahifaga
-    // yo'naltirib qo'ymasligi uchun to'g'irlandi.
     redirectIfLoggedIn: function (redirectUrl) {
       redirectUrl = redirectUrl || "index.html";
       const current = window.location.pathname.split("/").pop().toLowerCase();
