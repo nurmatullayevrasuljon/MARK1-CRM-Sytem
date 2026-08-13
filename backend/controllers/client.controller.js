@@ -139,14 +139,35 @@ exports.deleteClient = async (req, res) => {
 exports.getClients = async (req, res) => {
   try {
     const { store_id } = req.user;
+    const { client_id, client_name, client_phone } = req.query;
 
-    const clients = await Client.find({ store_id }).sort({
+    const filter = {
+      store_id,
+    };
+
+    if (client_id) {
+      filter._id = client_id;
+    }
+
+    if (client_name) {
+      filter.client_name = {
+        $regex: client_name,
+        $options: "i",
+      };
+    }
+
+    if (client_phone) {
+      filter.client_phone = client_phone;
+    }
+
+    const clients = await Client.find(filter).sort({
       createdAt: -1,
     });
 
     return res.status(200).json(clients);
   } catch (err) {
     console.log(err.message);
+
     return res.status(500).json({
       message: err.message,
     });

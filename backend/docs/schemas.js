@@ -628,5 +628,222 @@ module.exports = {
         },
       },
     },
+    /* ===========================
+             CLIENT
+    ============================ */
+
+    Client: {
+      type: "object",
+      properties: {
+        _id: {
+          type: "string",
+          example: "68922f5e7d82d8c2d5e4c123",
+        },
+        store_id: {
+          type: "string",
+          example: "68922f5e7d82d8c2d5e4c111",
+        },
+        client_name: {
+          type: "string",
+          example: "Aziz Karimov",
+        },
+        client_phone: {
+          type: "string",
+          nullable: true,
+          example: "901234567",
+        },
+        createdAt: {
+          type: "string",
+          format: "date-time",
+        },
+        updatedAt: {
+          type: "string",
+          format: "date-time",
+        },
+      },
+    },
+
+    ClientInput: {
+      type: "object",
+      required: ["client_name"],
+      properties: {
+        client_name: {
+          type: "string",
+          example: "Aziz Karimov",
+        },
+        client_phone: {
+          type: "string",
+          pattern: "^\\d{9}$",
+          example: "901234567",
+        },
+      },
+    },
+
+    /* ===========================
+              SALE
+    ============================ */
+
+    SaleProductInput: {
+      type: "object",
+      required: ["product_id", "purchase_price", "selling_price", "quantity"],
+      properties: {
+        product_id: {
+          type: "string",
+          example: "68922f5e7d82d8c2d5e4c123",
+        },
+        purchase_price: {
+          type: "number",
+          example: 15000,
+        },
+        selling_price: {
+          type: "number",
+          example: 20000,
+        },
+        quantity: {
+          type: "number",
+          example: 2,
+        },
+      },
+    },
+
+    SaleProduct: {
+      type: "object",
+      properties: {
+        product_id: {
+          type: "string",
+          example: "68922f5e7d82d8c2d5e4c123",
+        },
+        purchase_price: {
+          type: "number",
+          example: 15000,
+        },
+        selling_price: {
+          type: "number",
+          example: 20000,
+        },
+        quantity: {
+          type: "number",
+          example: 2,
+        },
+      },
+    },
+
+    Payment: {
+      type: "object",
+      properties: {
+        amount: {
+          type: "number",
+          example: 10000,
+        },
+        paid_at: {
+          type: "string",
+          format: "date-time",
+        },
+      },
+    },
+
+    CreateSaleInput: {
+      type: "object",
+      required: ["products"],
+      properties: {
+        products: {
+          type: "array",
+          items: {
+            $ref: "#/components/schemas/SaleProductInput",
+          },
+        },
+        total_paid: {
+          type: "number",
+          default: 0,
+          example: 10000,
+        },
+        client_id: {
+          type: "string",
+          nullable: true,
+          example: "68922f5e7d82d8c2d5e4c123",
+        },
+        note: {
+          type: "string",
+          nullable: true,
+          example: "Chegirma bilan sotildi",
+        },
+      },
+    },
+
+    AddPaymentInput: {
+      type: "object",
+      required: ["amount"],
+      properties: {
+        amount: {
+          type: "number",
+          example: 5000,
+        },
+      },
+    },
+
+    Sale: {
+      type: "object",
+      properties: {
+        _id: {
+          type: "string",
+          example: "68922f5e7d82d8c2d5e4c999",
+        },
+        store_id: {
+          type: "string",
+          example: "68922f5e7d82d8c2d5e4c111",
+        },
+        client_id: {
+          type: "string",
+          nullable: true,
+          example: "68922f5e7d82d8c2d5e4c123",
+        },
+        products: {
+          type: "array",
+          items: {
+            $ref: "#/components/schemas/SaleProduct",
+          },
+        },
+        note: {
+          type: "string",
+          nullable: true,
+          example: "Chegirma bilan sotildi",
+        },
+        status: {
+          type: "string",
+          enum: ["active", "cancelled", "returned"],
+          example: "active",
+        },
+        total_purchase: {
+          type: "number",
+          example: 30000,
+        },
+        total_price: {
+          type: "number",
+          example: 40000,
+        },
+        total_paid: {
+          type: "number",
+          example: 10000,
+        },
+        total_remaining: {
+          type: "number",
+          example: 30000,
+        },
+        payments: {
+          type: "array",
+          items: {
+            $ref: "#/components/schemas/Payment",
+          },
+        },
+        createdAt: {
+          type: "string",
+          format: "date-time",
+        },
+        updatedAt: {
+          type: "string",
+          format: "date-time",
+        },
+      },
+    },
   },
 };

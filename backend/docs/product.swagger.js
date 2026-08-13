@@ -112,7 +112,7 @@
 
 /**
  * @swagger
- * /product:
+ * /product/get:
  *   get:
  *     summary: Get products
  *     tags: [Product]

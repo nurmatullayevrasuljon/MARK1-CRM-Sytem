@@ -21,6 +21,12 @@ exports.createUser = async (req, res) => {
     }
     // const hashedPassword = await bcrypt.hash(password, 10);
 
+    if (password.length < 6) {
+      return res.status(400).json({
+        message: "Parol kamida 6 xonali bo'lishi kerak",
+      });
+    }
+
     const newUser = await User.create({
       store_id: id,
       user_name,
@@ -48,6 +54,7 @@ exports.updateUser = async (req, res) => {
     const existingUser = await User.findOne({
       store_id: id,
       user_phone,
+      _id: { $ne: user_id },
     });
 
     if (existingUser) {
@@ -57,6 +64,12 @@ exports.updateUser = async (req, res) => {
     }
 
     // const hashedPassword = await bcrypt.hash(password, 10);
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        message: "Parol kamida 6 xonali bo'lishi kerak",
+      });
+    }
 
     const editingUser = await User.findByIdAndUpdate(user_id, {
       user_name,

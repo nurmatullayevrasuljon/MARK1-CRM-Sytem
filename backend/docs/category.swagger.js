@@ -110,7 +110,7 @@
 
 /**
  * @swagger
- * /category:
+ * /category/get/all:
  *   get:
  *     summary: Get all categories
  *     tags: [Category]

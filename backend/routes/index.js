@@ -10,6 +10,7 @@ const fileRoutes = require("./file.routes");
 const categoryRoutes = require("./category.routes");
 const productRoutes = require("./product.routes");
 const clientRoutes = require("./client.routes");
+const saleRoutes = require("./sale.routes");
 const { checkRole } = require("../middlewares/role.middleware");
 
 router.use("/auth", authRoutes);
@@ -19,5 +20,6 @@ router.use("/file", authMiddleware, checkRole(["ceo"]), fileRoutes);
 router.use("/category", authMiddleware, categoryRoutes);
 router.use("/product", authMiddleware, productRoutes);
 router.use("/client", authMiddleware, clientRoutes);
+router.use("/sale", authMiddleware, saleRoutes);
 
 module.exports = router;

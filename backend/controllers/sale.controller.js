@@ -269,3 +269,81 @@ exports.addPayment = async (req, res) => {
     });
   }
 };
+
+exports.getSales = async (req, res) => {
+  try {
+    const { store_id } = req.user;
+
+    const {
+      client_id,
+      product_id,
+      status = "active",
+      start_date,
+      end_date,
+      sort_type,
+      sort_order = "descending",
+    } = req.query;
+
+    const filter = {
+      store_id,
+      status,
+    };
+
+    if (client_id) {
+      filter.client_id = client_id;
+    }
+
+    if (product_id) {
+      filter["products.product_id"] = product_id;
+    }
+
+    // Date filter
+    if (start_date || end_date) {
+      filter.createdAt = {};
+
+      if (start_date) {
+        const [day, month, year] = start_date.split(".");
+
+        const startDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+
+        filter.createdAt.$gte = startDate;
+      }
+
+      if (end_date) {
+        const [day, month, year] = end_date.split(".");
+
+        const endDate = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+        filter.createdAt.$lte = endDate;
+      }
+    }
+
+    const sort = {};
+
+    const allowedSortTypes = [
+      "total_purchase",
+      "total_price",
+      "total_paid",
+      "total_remaining",
+    ];
+
+    if (sort_type && allowedSortTypes.includes(sort_type)) {
+      sort[sort_type] = sort_order === "ascending" ? 1 : -1;
+    } else {
+      sort.createdAt = -1;
+    }
+
+    const sales = await Sale.find(filter)
+      .populate("client_id")
+      .populate("products.product_id")
+      .sort(sort);
+
+    return res.status(200).json(sales);
+  } catch (err) {
+    console.log(err.message);
+
+    return res.status(500).json({
+      message: err.message,
+    });
+  }
+};
