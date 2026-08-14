@@ -645,6 +645,45 @@
         return result;
       }
     },
+    addSalePayment: async function (saleId, amount) {
+      console.log("========== ADD SALE PAYMENT ==========");
+      console.log("SALE ID:", saleId);
+      console.log("AMOUNT:", amount);
+
+      try {
+        const res = await crmApi.post(
+          `/sale/payment/add?sale_id=${encodeURIComponent(saleId)}`,
+          {
+            amount: amount
+          }
+        );
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(
+          error,
+          "addSalePayment /sale/payment/add"
+        );
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+
+        console.error(
+          "❌ ADD SALE PAYMENT — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     updateUser: async function (data) {
       console.log("========== UPDATE USER ==========");
 
