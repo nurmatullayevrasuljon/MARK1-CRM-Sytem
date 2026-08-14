@@ -610,6 +610,41 @@
         return result;
       }
     },
+    returnSale: async function (saleId) {
+      console.log("========== RETURN SALE ==========");
+      console.log("SALE ID:", saleId);
+
+      try {
+        const res = await crmApi.put("/sale/return", null, {
+          params: {
+            sale_id: saleId
+          }
+        });
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+
+      } catch (error) {
+        const result = describeError(error, "returnSale /sale/return");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+
+        console.error(
+          "❌ RETURN SALE — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     updateUser: async function (data) {
       console.log("========== UPDATE USER ==========");
 
