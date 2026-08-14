@@ -1,4 +1,4 @@
-const API_URL = "https://mark1-crm-sytem.onrender.com/api";
+const API_URL = "https://mark1-crm-sytem.onrender.com";
 // ============================================================
 // 📦 USER DATA LOADING (SODDALASHTIRILGAN)
 // ============================================================
