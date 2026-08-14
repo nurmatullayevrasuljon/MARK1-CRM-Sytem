@@ -6148,34 +6148,21 @@ async function getWeeklyTrend() {
 }
 
 async function getDailyRevenue() {
+  // OFFLINE DATA MODE START
+  if (OFFLINE_DATA_MODE) {
+    const data = { daily_revenue: calculateTodayRevenue() };
+    console.log("📊 DAILY REVENUE (OFFLINE)", data);
+    return data;ldlsjd
+  }
+  // OFFLINE DATA MODE END
+
   try {
-    const response = await window.crmApi.get(
-      "/api/v1/dashboard/daily-revenue"
-    );
-
-    console.log("📊 DAILY REVENUE API RESPONSE:", response.data);
-
-    const data = response.data;
-
-    return {
-      daily_revenue:
-        Number(
-          data?.daily_revenue ??
-          data?.today_revenue ??
-          data?.total_revenue ??
-          data?.amount ??
-          0
-        )
-    };
-
+    const response = await window.crmApi.get("/api/v1/dashboard/daily-revenue");
+    console.log("📊 DAILY REVENUE", response.data);
+    return response.data;
   } catch (error) {
-    console.error("❌ DAILY REVENUE ERROR:", error);
-    console.error("STATUS:", error.response?.status);
-    console.error("DATA:", error.response?.data);
-
-    return {
-      daily_revenue: 0
-    };
+    console.error("❌ DAILY REVENUE ERROR", error);
+    return null;
   }
 }
 
