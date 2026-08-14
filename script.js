@@ -6117,32 +6117,51 @@ window.getDashboardStatistics = getDashboardStatistics;
 // }
 
 async function getWeeklyTrend() {
+  // OFFLINE DATA MODE START
+  if (OFFLINE_DATA_MODE) {
+    const dayNames = ["Yak", "Dush", "Sesh", "Char", "Pay", "Juma", "Shan"];
+    const trend = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+
+      trend.push({
+        day: dayNames[date.getDay()],
+        amount: calculateTodayRevenue(getDateKey(date))
+      });
+    }
+
+    console.log("📈 WEEKLY TREND (OFFLINE)", trend);
+    return trend;
+  }
+  // OFFLINE DATA MODE END
+
   try {
     const response = await window.crmApi.get("/v1/dashboard/weekly-trend");
-
-    console.log("📈 WEEKLY TREND:", response.data);
-
-    return Array.isArray(response.data)
-      ? response.data
-      : [];
+    console.log("📈 WEEKLY TREND", response.data);
+    return response.data;
   } catch (error) {
-    console.error("❌ WEEKLY TREND ERROR:", error.response?.status);
-    console.error("❌ WEEKLY TREND DATA:", error.response?.data);
+    console.error("❌ WEEKLY TREND ERROR", error);
     return [];
   }
 }
 
 async function getDailyRevenue() {
+  // OFFLINE DATA MODE START
+  if (OFFLINE_DATA_MODE) {
+    const data = { daily_revenue: calculateTodayRevenue() };
+    console.log("📊 DAILY REVENUE (OFFLINE)", data);
+    return data;ldlsjd
+  }
+  // OFFLINE DATA MODE END
+
   try {
     const response = await window.crmApi.get("/v1/dashboard/daily-revenue");
-
-    console.log("📊 DAILY REVENUE:", response.data);
-
+    console.log("📊 DAILY REVENUE", response.data);
     return response.data;
   } catch (error) {
-    console.error("❌ DAILY REVENUE ERROR:", error.response?.status);
-    console.error("❌ DAILY REVENUE DATA:", error.response?.data);
-
+    console.error("❌ DAILY REVENUE ERROR", error);
     return null;
   }
 }
