@@ -602,7 +602,7 @@
         console.log("SUCCESS:", false);
         console.log("STATUS:", result.status);
         console.error(
-          "❌ CANCEL SALE — XATO:",
+          "❌ CANCEL SALE da — XATO:",
           result.backendMessage || result.responseData
         );
 
