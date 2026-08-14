@@ -6139,10 +6139,28 @@ async function getWeeklyTrend() {
 
   try {
     const response = await window.crmApi.get("/v1/dashboard/weekly-trend");
-    console.log("📈 WEEKLY TREND", response.data);
-    return response.data;
+
+    console.log("📈 WEEKLY TREND API RESPONSE:", response.data);
+
+    // Backend array qaytarsa
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+
+    // Backend object ichida trend qaytarsa
+    if (Array.isArray(response.data?.trend)) {
+      return response.data.trend;
+    }
+
+    if (Array.isArray(response.data?.data)) {
+      return response.data.data;
+    }
+
+    console.warn("⚠️ WEEKLY TREND format kutilganidek emas:", response.data);
+
+    return [];
   } catch (error) {
-    console.error("❌ WEEKLY TREND ERROR", error);
+    console.error("❌ WEEKLY TREND ERROR:", error.response?.data || error);
     return [];
   }
 }
@@ -6150,18 +6168,49 @@ async function getWeeklyTrend() {
 async function getDailyRevenue() {
   // OFFLINE DATA MODE START
   if (OFFLINE_DATA_MODE) {
-    const data = { daily_revenue: calculateTodayRevenue() };
+    const data = {
+      daily_revenue: calculateTodayRevenue()
+    };
+
     console.log("📊 DAILY REVENUE (OFFLINE)", data);
-    return data;ldlsjd
+
+    return data;
   }
   // OFFLINE DATA MODE END
 
   try {
     const response = await window.crmApi.get("/v1/dashboard/daily-revenue");
-    console.log("📊 DAILY REVENUE", response.data);
-    return response.data;
+
+    console.log("📊 DAILY REVENUE API RESPONSE:", response.data);
+
+    // Backend to'g'ridan-to'g'ri:
+    // { daily_revenue: 50000 }
+    if (
+      response.data &&
+      typeof response.data.daily_revenue !== "undefined"
+    ) {
+      return response.data;
+    }
+
+    // Agar backend { data: { daily_revenue: ... } } qaytarsa
+    if (
+      response.data?.data &&
+      typeof response.data.data.daily_revenue !== "undefined"
+    ) {
+      return response.data.data;
+    }
+
+    console.warn("⚠️ DAILY REVENUE format kutilganidek emas:", response.data);
+
+    return {
+      daily_revenue: 0
+    };
   } catch (error) {
-    console.error("❌ DAILY REVENUE ERROR", error);
+    console.error(
+      "❌ DAILY REVENUE ERROR:",
+      error.response?.data || error
+    );
+
     return null;
   }
 }
