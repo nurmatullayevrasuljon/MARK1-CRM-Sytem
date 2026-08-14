@@ -684,45 +684,7 @@
         return result;
       }
     },
-    getSales: async function (params = {}) {
-      console.log("========== GET SALES ==========");
-
-      try {
-        const res = await crmApi.get("/sale/get", {
-          params: {
-            client_id: params.client_id || undefined,
-            product_id: params.product_id || undefined,
-            status: params.status || "active",
-            start_date: params.start_date || undefined,
-            end_date: params.end_date || undefined,
-            sort_type: params.sort_type || undefined,
-            sort_order: params.sort_order || "descending"
-          }
-        });
-
-        console.log("SUCCESS:", true);
-        console.log("STATUS:", res.status);
-        console.log("SALES:", res.data);
-
-        return {
-          success: true,
-          status: res.status,
-          data: res.data
-        };
-
-      } catch (error) {
-        const result = describeError(error, "getSales /sale/get");
-
-        console.log("SUCCESS:", false);
-        console.log("STATUS:", result.status);
-        console.error(
-          "❌ GET SALES — XATO:",
-          result.backendMessage || result.responseData
-        );
-
-        return result;
-      }
-    },
+    
     updateUser: async function (data) {
       console.log("========== UPDATE USER ==========");
 
