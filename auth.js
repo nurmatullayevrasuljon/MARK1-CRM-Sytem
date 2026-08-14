@@ -579,10 +579,11 @@
     },
     cancelSale: async function (saleId) {
       console.log("========== CANCEL SALE ==========");
+      console.log("SALE ID:", saleId);
 
       try {
         const res = await crmApi.delete("/sale/cancel", {
-          data: {
+          params: {
             sale_id: saleId
           }
         });
@@ -602,7 +603,7 @@
         console.log("SUCCESS:", false);
         console.log("STATUS:", result.status);
         console.error(
-          "❌ CANCEL SALE da — XATO:",
+          "❌ CANCEL SALE — XATO:",
           result.backendMessage || result.responseData
         );
 
