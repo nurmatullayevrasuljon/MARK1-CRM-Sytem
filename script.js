@@ -2349,9 +2349,36 @@ function updateProfitUI() {
 function calculateInventoryBalance() {
   return products.reduce((sum, product) => {
     const stock = Number(product.stock) || 0;
-    const unitCost = Number(product.costPrice || product.price) || 0;
-    return sum + stock * unitCost;
+    const costPrice = Number(product.costPrice);
+
+    if (!Number.isFinite(costPrice) || costPrice < 0) {
+      return sum;
+    }
+
+    return sum + (stock * costPrice);
   }, 0);
+}
+
+function updateInventoryBalanceUI() {
+  const counterEl = document.querySelector(
+    '.counter[data-key="inventoryBalance"]'
+  );
+
+  if (!counterEl) return;
+
+  const balance = Math.round(calculateInventoryBalance());
+
+  counterEl.dataset.lastValue = balance;
+
+  counterEl.innerHTML = `
+    ${balance.toLocaleString("uz-UZ")}
+    <small style="
+      font-size:0.55em;
+      color:#94a3b8;
+      font-weight:400;
+      margin-left:4px
+    ">UZS</small>
+  `;
 }
 
 function updateInventoryBalanceUI() {
