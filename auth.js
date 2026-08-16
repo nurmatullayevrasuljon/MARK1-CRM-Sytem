@@ -759,11 +759,18 @@
       console.log("CLIENT ID:", clientId);
 
       try {
-        const res = await crmApi.put("/client/update", {
-          client_id: clientId,
-          client_name: clientData.client_name,
-          client_phone: clientData.client_phone
-        });
+        const res = await crmApi.put(
+          "/client/update",
+          {
+            client_name: clientData.client_name,
+            client_phone: clientData.client_phone
+          },
+          {
+            params: {
+              client_id: clientId
+            }
+          }
+        );
 
         console.log("SUCCESS:", true);
         console.log("STATUS:", res.status);
@@ -775,10 +782,14 @@
           data: res.data
         };
       } catch (error) {
-        const result = describeError(error, "updateClient /client/update");
+        const result = describeError(
+          error,
+          "updateClient /client/update"
+        );
 
         console.log("SUCCESS:", false);
         console.log("STATUS:", result.status);
+
         console.error(
           "❌ UPDATE CLIENT — XATO:",
           result.backendMessage || result.responseData
