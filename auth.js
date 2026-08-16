@@ -870,6 +870,34 @@
         return result;
       }
     },
+    getStatistics: async function () {
+      console.log("========== GET STATISTICS ==========");
+
+      try {
+        const res = await crmApi.get("/statistics");
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "getStatistics /statistics");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ GET STATISTICS — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     getDebts: async function () {
       console.log("========== GET DEBTS ==========");
 
