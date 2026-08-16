@@ -798,6 +798,43 @@
         return result;
       }
     },
+    deleteClient: async function (clientId) {
+      console.log("========== DELETE CLIENT ==========");
+      console.log("CLIENT ID:", clientId);
+
+      try {
+        const res = await crmApi.delete("/client/delete", {
+          params: {
+            client_id: clientId
+          }
+        });
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(
+          error,
+          "deleteClient /client/delete"
+        );
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+
+        console.error(
+          "❌ DELETE CLIENT — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     updateUser: async function (data) {
       console.log("========== UPDATE USER ==========");
 
