@@ -723,6 +723,37 @@
         return result;
       }
     },
+    createClient: async function (clientData) {
+      console.log("========== CREATE CLIENT ==========");
+
+      try {
+        const res = await crmApi.post("/client/create", {
+          client_name: clientData.client_name,
+          client_phone: clientData.client_phone
+        });
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "createClient /client/create");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ CREATE CLIENT — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     updateUser: async function (data) {
       console.log("========== UPDATE USER ==========");
 
