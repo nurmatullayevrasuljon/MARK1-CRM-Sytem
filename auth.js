@@ -754,6 +754,39 @@
         return result;
       }
     },
+    updateClient: async function (clientId, clientData) {
+      console.log("========== UPDATE CLIENT ==========");
+      console.log("CLIENT ID:", clientId);
+
+      try {
+        const res = await crmApi.put("/client/update", {
+          client_id: clientId,
+          client_name: clientData.client_name,
+          client_phone: clientData.client_phone
+        });
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "updateClient /client/update");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ UPDATE CLIENT — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     updateUser: async function (data) {
       console.log("========== UPDATE USER ==========");
 
