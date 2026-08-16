@@ -835,6 +835,41 @@
         return result;
       }
     },
+    getClients: async function (params = {}) {
+      console.log("========== GET CLIENTS ==========");
+      console.log("PARAMS:", params);
+
+      try {
+        const res = await crmApi.get("/client/get", {
+          params: {
+            client_id: params.client_id || undefined,
+            client_name: params.client_name || undefined,
+            client_phone: params.client_phone || undefined
+          }
+        });
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("CLIENTS:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "getClients /client/get");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ GET CLIENTS — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     updateUser: async function (data) {
       console.log("========== UPDATE USER ==========");
 
