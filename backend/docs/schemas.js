@@ -264,6 +264,163 @@ module.exports = {
     },
 
     /* ===========================
+             STATISTICS
+    ============================ */
+
+
+    Statistics: {
+      type: "object",
+      properties: {
+        monthly_revenue: {
+          type: "number",
+          example: 15000000,
+        },
+        monthly_revenue_growth: {
+          type: "number",
+          example: 12.5,
+        },
+        daily_sales: {
+          type: "number",
+          example: 850000,
+        },
+        daily_sales_change: {
+          type: "number",
+          example: -5.3,
+        },
+        monthly_profit: {
+          type: "number",
+          example: 3200000,
+        },
+        inventory_balance: {
+          type: "number",
+          example: 45000000,
+        },
+        overdue_payments: {
+          type: "number",
+          example: 1200000,
+        },
+        overdue_count: {
+          type: "number",
+          example: 7,
+        },
+        low_stock_count: {
+          type: "number",
+          example: 4,
+        },
+      },
+    },
+
+    DailyRevenue: {
+      type: "object",
+      properties: {
+        daily_revenue: {
+          type: "number",
+          example: 850000,
+        },
+      },
+    },
+
+    WeeklyTrend: {
+      type: "object",
+      properties: {
+        monday: {
+          type: "number",
+          example: 500000,
+        },
+        tuesday: {
+          type: "number",
+          example: 620000,
+        },
+        wednesday: {
+          type: "number",
+          example: 480000,
+        },
+        thursday: {
+          type: "number",
+          example: 710000,
+        },
+        friday: {
+          type: "number",
+          example: 890000,
+        },
+        saturday: {
+          type: "number",
+          example: 1020000,
+        },
+        sunday: {
+          type: "number",
+          example: 300000,
+        },
+      },
+    },
+
+    /* ===========================
+             DEBT
+    ============================ */
+
+    Debt: {
+      type: "object",
+      properties: {
+        _id: {
+          type: "string",
+          example: "64f1a2b3c4d5e6f7a8b9c0d1",
+        },
+        store_id: {
+          type: "string",
+          example: "64f1a2b3c4d5e6f7a8b9c0d2",
+        },
+        client_id: {
+          type: "object",
+          example: {
+            _id: "64f1a2b3c4d5e6f7a8b9c0d3",
+            full_name: "Ali Valiyev",
+            phone_number: "+998901234567",
+          },
+        },
+        products: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              product_id: {
+                type: "object",
+                example: {
+                  _id: "64f1a2b3c4d5e6f7a8b9c0d4",
+                  name: "Coca Cola 1.5L",
+                },
+              },
+              quantity: {
+                type: "number",
+                example: 5,
+              },
+              price: {
+                type: "number",
+                example: 15000,
+              },
+            },
+          },
+        },
+        total_price: {
+          type: "number",
+          example: 150000,
+        },
+        total_paid: {
+          type: "number",
+          example: 50000,
+        },
+        total_remaining: {
+          type: "number",
+          example: 100000,
+        },
+        createdAt: {
+          type: "string",
+          format: "date-time",
+          example: "2025-01-15T10:30:00.000Z",
+        },
+      },
+    },
+
+    /* ===========================
              PRODUCT
     ============================ */
 
@@ -405,6 +562,16 @@ module.exports = {
           items: {
             type: "string",
           },
+        },
+      },
+    },
+
+    AddStock: {
+      type: "object",
+      properties: {
+        adding_quantity: {
+          type: "number",
+          example: 25,
         },
       },
     },

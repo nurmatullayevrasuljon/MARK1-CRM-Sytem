@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Sale = require("../models/sale.model");
 const Product = require("../models/product.model");
+const parseDate = require("../utils/date.util");
 
 exports.createSale = async (req, res) => {
   const session = await mongoose.startSession();
@@ -13,6 +14,7 @@ exports.createSale = async (req, res) => {
       total_paid = 0,
       client_id = null,
       note = null,
+      due_date = null,
     } = req.body;
     const { store_id } = req.user;
 
@@ -61,6 +63,7 @@ exports.createSale = async (req, res) => {
       total_price,
       total_paid,
       total_remaining,
+      due_date,
       payments:
         total_paid > 0
           ? [
@@ -299,23 +302,33 @@ exports.getSales = async (req, res) => {
 
     // Date filter
     if (start_date || end_date) {
-      filter.createdAt = {};
+      const createdAt = {};
 
       if (start_date) {
-        const [day, month, year] = start_date.split(".");
+        const startDate = parseDate(start_date, false);
 
-        const startDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+        if (!startDate) {
+          return res.status(400).json({
+            message: "start_date DD-MM-YYYY formatida bo'lishi kerak",
+          });
+        }
 
-        filter.createdAt.$gte = startDate;
+        createdAt.$gte = startDate;
       }
 
       if (end_date) {
-        const [day, month, year] = end_date.split(".");
+        const endDate = parseDate(end_date, true);
 
-        const endDate = new Date(year, month - 1, day, 23, 59, 59, 999);
+        if (!endDate) {
+          return res.status(400).json({
+            message: "end_date DD-MM-YYYY formatida bo'lishi kerak",
+          });
+        }
 
-        filter.createdAt.$lte = endDate;
+        createdAt.$lte = endDate;
       }
+
+      filter.createdAt = createdAt;
     }
 
     const sort = {};

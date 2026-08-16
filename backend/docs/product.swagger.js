@@ -79,6 +79,47 @@
  */
 
 /**
+/**
+ * @swagger
+ * /product/add:
+ *   put:
+ *     summary: Increase amount of product
+ *     tags: [Product]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: product_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: 68922f5e7d82d8c2d5e4c123
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AddStock'
+ *     responses:
+ *       200:
+ *         description: Product amount increased successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Tovar miqdori muvaffaqiyatli oshirildi
+ *                 product:
+ *                   $ref: '#/components/schemas/Product'
+ *       400:
+ *         description: Qo'shilayotgan miqdor 0 dan katta bo'lishi kerak
+ *       500:
+ *         description: Server error
+ */
+
+/**
  * @swagger
  * /product/delete:
  *   delete:

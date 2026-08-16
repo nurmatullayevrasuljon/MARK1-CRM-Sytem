@@ -11,6 +11,8 @@ const categoryRoutes = require("./category.routes");
 const productRoutes = require("./product.routes");
 const clientRoutes = require("./client.routes");
 const saleRoutes = require("./sale.routes");
+const debtRoutes = require("./debt.routes");
+const statisticsRoutes = require("./statistics.route");
 const { checkRole } = require("../middlewares/role.middleware");
 
 router.use("/auth", authRoutes);
@@ -21,5 +23,12 @@ router.use("/category", authMiddleware, categoryRoutes);
 router.use("/product", authMiddleware, productRoutes);
 router.use("/client", authMiddleware, clientRoutes);
 router.use("/sale", authMiddleware, saleRoutes);
+router.use("/debt", authMiddleware, debtRoutes);
+router.use(
+  "/statistics",
+  authMiddleware,
+  checkRole(["ceo", "admin"]),
+  statisticsRoutes,
+);
 
 module.exports = router;

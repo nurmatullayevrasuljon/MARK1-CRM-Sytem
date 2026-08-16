@@ -32,6 +32,10 @@ const SaleSchema = new mongoose.Schema(
     total_price: { type: Number, required: true },
     total_paid: { type: Number, default: 0 },
     total_remaining: { type: Number, required: true, default: 0 },
+    due_date: {
+      type: Date,
+      default: null,
+    },
     payments: {
       type: [
         {

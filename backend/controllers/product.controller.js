@@ -72,6 +72,35 @@ exports.updateProduct = async (req, res) => {
   }
 };
 
+exports.addStock = async (req, res) => {
+  try {
+    const { product_id } = req.query;
+    const { adding_quantity } = req.body;
+    if (adding_quantity <= 0) {
+      return res.status(400).json({
+        message: "Qo'shilayotgan miqdor 0 dan katta bo'lishi kerak",
+      });
+    }
+    const product = await Product.findOneAndUpdate(
+      { _id: product_id, store_id: req.user.store_id },
+      { $inc: { quantity: adding_quantity } },
+      { new: true },
+    );
+    if (!product) {
+      return res.status(400).json({
+        message: "Tovar topilmadi",
+      });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Tovar miqdori muvaffaqiyatli oshirildi", product });
+  } catch (err) {
+    console.log(err.message);
+    return res.status(500).json({ message: err.message });
+  }
+};
+
 exports.deleteProduct = async (req, res) => {
   try {
     const { product_id } = req.query;
