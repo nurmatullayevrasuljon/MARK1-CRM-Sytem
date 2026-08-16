@@ -545,6 +545,184 @@
         return describeError(error, "createUser /user/create");
       }
     },
+    createSale: async function (data) {
+      console.log("========== CREATE SALE ==========");
+
+      try {
+        const res = await crmApi.post("/sale/create", data);
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("MESSAGE:", res.data?.message);
+        console.log("SALE:", res.data?.sale);
+        console.log("FULL RESULT:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+
+      } catch (error) {
+        const result = describeError(error, "createSale /sale/create");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+
+        console.error(
+          "❌ POST /sale/create — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
+    cancelSale: async function (saleId) {
+      console.log("========== CANCEL SALE ==========");
+      console.log("SALE ID:", saleId);
+
+      try {
+        const res = await crmApi.delete("/sale/cancel", {
+          params: {
+            sale_id: saleId
+          }
+        });
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "cancelSale /sale/cancel");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ CANCEL SALE — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
+    returnSale: async function (saleId) {
+      console.log("========== RETURN SALE ==========");
+      console.log("SALE ID:", saleId);
+
+      try {
+        const res = await crmApi.put("/sale/return", null, {
+          params: {
+            sale_id: saleId
+          }
+        });
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+
+      } catch (error) {
+        const result = describeError(error, "returnSale /sale/return");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+
+        console.error(
+          "❌ RETURN SALE — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
+    addSalePayment: async function (saleId, amount) {
+      console.log("========== ADD SALE PAYMENT ==========");
+      console.log("SALE ID:", saleId);
+      console.log("AMOUNT:", amount);
+
+      try {
+        const res = await crmApi.post(
+          `/sale/payment/add?sale_id=${encodeURIComponent(saleId)}`,
+          {
+            amount: amount
+          }
+        );
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(
+          error,
+          "addSalePayment /sale/payment/add"
+        );
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+
+        console.error(
+          "❌ ADD SALE PAYMENT — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
+    getSales: async function (params = {}) {
+      console.log("========== GET SALES ==========");
+
+      try {
+        const res = await crmApi.get("/sale/get", {
+          params: {
+            client_id: params.client_id || undefined,
+            product_id: params.product_id || undefined,
+            status: params.status || "active",
+            start_date: params.start_date || undefined,
+            end_date: params.end_date || undefined,
+            sort_type: params.sort_type || undefined,
+            sort_order: params.sort_order || "descending"
+          }
+        });
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("SALES:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+
+      } catch (error) {
+        const result = describeError(error, "getSales /sale/get");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ GET SALES — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     updateUser: async function (data) {
       console.log("========== UPDATE USER ==========");
 

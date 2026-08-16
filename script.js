@@ -1,4 +1,4 @@
-const API_URL = "https://mark1-crm-sytem.onrender.com/api";
+const API_URL = "https://mark1-crm-sytem.onrender.com";
 // ============================================================
 // 📦 USER DATA LOADING (SODDALASHTIRILGAN)
 // ============================================================
@@ -1776,46 +1776,242 @@ async function loadAndRenderTransactions(period = transactionFilter) {
 }
 
 async function apiLoadSales() {
-  // OFFLINE DATA MODE START
+  // ===============================================
+  // SALES LOAD — YANGI /sale/get API
+  // ===============================================
+
   if (OFFLINE_DATA_MODE) {
     renderSales();
-    if (typeof updateDailySalesCounter === 'function') updateDailySalesCounter();
-    if (typeof updateDailySalesPageCounter === 'function') updateDailySalesPageCounter();
-    if (typeof updateTotalTransactions === 'function') updateTotalTransactions();
-    if (typeof updateMonthlyRevenueUI === 'function') updateMonthlyRevenueUI();
-    if (typeof updateProfitUI === 'function') updateProfitUI();
-    if (typeof updateCharts === 'function') updateCharts();
-    console.log("✅ Sales loaded from OFFLINE storage:", sales.length);
+
+    if (typeof updateDailySalesCounter === "function") {
+      updateDailySalesCounter();
+    }
+
+    if (typeof updateDailySalesPageCounter === "function") {
+      updateDailySalesPageCounter();
+    }
+
+    if (typeof updateTotalTransactions === "function") {
+      updateTotalTransactions();
+    }
+
+    if (typeof updateMonthlyRevenueUI === "function") {
+      updateMonthlyRevenueUI();
+    }
+
+    if (typeof updateProfitUI === "function") {
+      updateProfitUI();
+    }
+
+    if (typeof updateCharts === "function") {
+      await updateCharts();
+    }
+
+    console.log(
+      "✅ SALES — OFFLINE:",
+      sales.length
+    );
+
     return;
   }
-  // OFFLINE DATA MODE END
-  try {
-    // const response = await window.crmApi.get("/api/v1/sales/");
-    const response = await window.crmApi.get("/api/v1/sales/today");
-    const rawSales = response.data;
 
-    sales = [];
-    rawSales.forEach(sale => {
-      if (sale.items && Array.isArray(sale.items)) {
-        sale.items.forEach(item => {
-          sales.push(mapApiSale(sale, item));
-        });
-      }
+  try {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("🛒 SALES LOAD — NEW API");
+    console.log("📤 GET /sale/get");
+
+    // Yangi tekshirilgan API
+    const result = await AuthSystem.getSales({
+      status: "active",
+      sort_order: "descending"
     });
+
+    console.log("📥 SALE API RESULT:", result);
+
+    if (!result || !result.success) {
+      console.error(
+        "❌ SALES API XATO:",
+        result?.backendMessage || result?.responseData
+      );
+
+      return;
+    }
+
+    const rawSales = Array.isArray(result.data)
+      ? result.data
+      : [];
+
+    console.log(
+      "✅ BACKEND SALES:",
+      rawSales.length
+    );
+
+    // ===============================================
+    // YANGI SALE FORMAT → ESKI UI FORMAT
+    // ===============================================
+
+    const mappedSales = [];
+
+    rawSales.forEach(sale => {
+      if (
+        !sale ||
+        !Array.isArray(sale.products)
+      ) {
+        return;
+      }
+
+      sale.products.forEach(item => {
+        const product = products.find(
+          p => String(p.id) === String(item.product_id)
+        );
+
+        const quantity =
+          Number(item.quantity) || 0;
+
+        const sellingPrice =
+          Number(item.selling_price) || 0;
+
+        const total =
+          sellingPrice * quantity;
+
+        mappedSales.push({
+          id: sale._id,
+
+          itemId:
+            `${sale._id}_${item.product_id}`,
+
+          sessionId:
+            sale.note || "api",
+
+          productId:
+            item.product_id,
+
+          name:
+            product?.name || "Mahsulot",
+
+          category:
+            product?.category || "Kategoriyasiz",
+
+          qty:
+            quantity,
+
+          unit:
+            product?.unit || "dona",
+
+          price:
+            sellingPrice,
+
+          total:
+            total,
+
+          currency:
+            "UZS",
+
+          // Muhim:
+          // yangi backend statuslari:
+          // active / cancelled / returned
+          //
+          // eski UI esa "sold" kutadi
+          status:
+            sale.status === "active"
+              ? "sold"
+              : sale.status,
+
+          paymentType:
+            "cash",
+
+          date:
+            sale.createdAt ||
+            sale.updatedAt ||
+            new Date().toISOString(),
+
+          timestamp:
+            new Date(
+              sale.createdAt ||
+              sale.updatedAt ||
+              Date.now()
+            ).getTime()
+        });
+      });
+    });
+
+    // ===============================================
+    // LOCAL SALESNI YANGI BACKEND MA'LUMOTI BILAN
+    // ALMASHTIRAMIZ
+    // ===============================================
+
+    sales = mappedSales;
+
     saveSales();
 
-    renderSales();
-    // if (typeof renderTransactions === 'function') renderTransactions();
-    if (typeof updateDailySalesCounter === 'function') updateDailySalesCounter();
-    if (typeof updateDailySalesPageCounter === 'function') updateDailySalesPageCounter();
-    if (typeof updateTotalTransactions === 'function') updateTotalTransactions();
-    if (typeof updateMonthlyRevenueUI === 'function') updateMonthlyRevenueUI();
-    if (typeof updateProfitUI === 'function') updateProfitUI();
-    if (typeof updateCharts === 'function') updateCharts();
+    console.log(
+      "✅ SALES MAPPED:",
+      sales.length
+    );
 
-    console.log("✅ Sales loaded from API:", sales.length);
+    // ===============================================
+    // ESKI UI YANGILANISHI
+    // ===============================================
+
+    renderSales();
+
+    if (
+      typeof updateDailySalesCounter ===
+      "function"
+    ) {
+      updateDailySalesCounter();
+    }
+
+    if (
+      typeof updateDailySalesPageCounter ===
+      "function"
+    ) {
+      updateDailySalesPageCounter();
+    }
+
+    if (
+      typeof updateTotalTransactions ===
+      "function"
+    ) {
+      updateTotalTransactions();
+    }
+
+    if (
+      typeof updateMonthlyRevenueUI ===
+      "function"
+    ) {
+      updateMonthlyRevenueUI();
+    }
+
+    if (
+      typeof updateProfitUI ===
+      "function"
+    ) {
+      updateProfitUI();
+    }
+
+    // CHARTNI ENG OXIRIDA YANGILAYMIZ
+    if (
+      typeof updateCharts ===
+      "function"
+    ) {
+      await updateCharts();
+    }
+
+    console.log(
+      "✅ SALES LOADED FROM /sale/get:",
+      sales.length
+    );
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
   } catch (error) {
-    console.error("❌ Error loading sales from API:", error);
+    console.error(
+      "❌ SALES LOAD ERROR:",
+      error?.response?.data ||
+      error?.message ||
+      error
+    );
   }
 }
 
@@ -2153,9 +2349,36 @@ function updateProfitUI() {
 function calculateInventoryBalance() {
   return products.reduce((sum, product) => {
     const stock = Number(product.stock) || 0;
-    const unitCost = Number(product.costPrice || product.price) || 0;
-    return sum + stock * unitCost;
+    const costPrice = Number(product.costPrice);
+
+    if (!Number.isFinite(costPrice) || costPrice < 0) {
+      return sum;
+    }
+
+    return sum + (stock * costPrice);
   }, 0);
+}
+
+function updateInventoryBalanceUI() {
+  const counterEl = document.querySelector(
+    '.counter[data-key="inventoryBalance"]'
+  );
+
+  if (!counterEl) return;
+
+  const balance = Math.round(calculateInventoryBalance());
+
+  counterEl.dataset.lastValue = balance;
+
+  counterEl.innerHTML = `
+    ${balance.toLocaleString("uz-UZ")}
+    <small style="
+      font-size:0.55em;
+      color:#94a3b8;
+      font-weight:400;
+      margin-left:4px
+    ">UZS</small>
+  `;
 }
 
 function updateInventoryBalanceUI() {
@@ -2479,143 +2702,368 @@ document.querySelectorAll(".counter").forEach(counter => {
    ✅ CHARTS (REAL DATA + AUTO UPDATE)
 =============================================== */
 async function updateCharts() {
-  // if (typeof Chart === "undefined") {
-  //   return;
-  // }
 
-  // const weeklyData = calculateWeeklyRevenue();
-  // const dailySales = calculateTodayRevenue();
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📊 UPDATING DASHBOARD CHARTS");
 
-  // const weekDays = [];
-  // const today = new Date();
-  // const dayNames = ["Yak", "Dush", "Sesh", "Char", "Pay", "Juma", "Shan"];
+  try {
 
-  // for (let i = 6; i >= 0; i--) {
-  //   const date = new Date(today);
-  //   date.setDate(date.getDate() - i);
-  //   weekDays.push(dayNames[date.getDay()]);
-  // }
-  // const dailySales = calculateTodayRevenue();
+    if (typeof Chart === "undefined") {
 
-  // const dailyData = await getDailyRevenue();
+      console.error(
+        "❌ Chart.js topilmadi"
+      );
 
-  // const dailySales = dailyData.daily_revenue;
-
-  const dailyData = await getDailyRevenue();
-  const dailySales = dailyData ? (dailyData.daily_revenue || 0) : 0;
-
-  const trendData =
-    await getWeeklyTrend();
-
-  const weekDays =
-    trendData.map(item => item.day);
-
-  const weeklyData =
-    trendData.map(item => item.amount);
-
-  // влыдл
-  console.log("weekDays:", weekDays);
-  console.log("weeklyData:", weeklyData);
-  // лылыд
-  const weeklyChart = document.getElementById("weeklyChart");
-  if (weeklyChart) {
-    if (chartInstances.weekly) {
-      chartInstances.weekly.destroy();
+      return;
     }
 
-    chartInstances.weekly = new Chart(weeklyChart, {
-      type: "line",
-      data: {
-        labels: weekDays,
-        datasets: [{
-          label: "Daromad (UZS)",
-          data: weeklyData,
-          borderColor: "#06b6d4",
-          backgroundColor: "rgba(6,182,212,0.15)",
-          fill: true,
-          tension: 0.4,
-          pointRadius: 5,
-          pointBackgroundColor: "#06b6d4",
-          pointBorderColor: "#fff",
-          pointBorderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        animation: {
-          duration: 750,
-          easing: 'easeInOutQuart'
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return context.parsed.y.toLocaleString() + " UZS";
-              }
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: function (value) {
-                return value.toLocaleString();
-              }
-            }
-          }
-        }
-      }
-    });
-  }
+    // ===============================================
+    // DAILY
+    // ===============================================
 
-  const dailyChart = document.getElementById("dailyChart");
-  if (dailyChart) {
-    if (chartInstances.daily) {
-      chartInstances.daily.destroy();
+    const dailyData =
+      await getDailyRevenue();
+
+    const dailySales =
+      Number(
+        dailyData?.daily_revenue
+      ) || 0;
+
+    // ===============================================
+    // WEEKLY
+    // ===============================================
+
+    const trendData =
+      await getWeeklyTrend();
+
+    const safeTrend =
+      Array.isArray(trendData)
+        ? trendData
+        : [];
+
+    const weekDays =
+      safeTrend.map(
+        item => item.day
+      );
+
+    const weeklyData =
+      safeTrend.map(
+        item =>
+          Number(item.amount) || 0
+      );
+
+    console.log(
+      "📅 WEEK DAYS:",
+      weekDays
+    );
+
+    console.log(
+      "📈 WEEKLY DATA:",
+      weeklyData
+    );
+
+    console.log(
+      "📊 DAILY DATA:",
+      dailySales
+    );
+
+    // ===============================================
+    // WEEKLY CHART
+    // ===============================================
+
+    const weeklyCanvas =
+      document.getElementById(
+        "weeklyChart"
+      );
+
+    if (
+      weeklyCanvas &&
+      weekDays.length
+    ) {
+
+      if (
+        chartInstances.weekly
+      ) {
+
+        chartInstances.weekly.destroy();
+
+        chartInstances.weekly =
+          null;
+      }
+
+      chartInstances.weekly =
+        new Chart(
+          weeklyCanvas,
+          {
+            type: "line",
+
+            data: {
+
+              labels:
+                weekDays,
+
+              datasets: [
+
+                {
+                  label:
+                    "Daromad (UZS)",
+
+                  data:
+                    weeklyData,
+
+                  borderColor:
+                    "#06b6d4",
+
+                  backgroundColor:
+                    "rgba(6,182,212,0.15)",
+
+                  fill:
+                    true,
+
+                  tension:
+                    0.4,
+
+                  pointRadius:
+                    5,
+
+                  pointBackgroundColor:
+                    "#06b6d4",
+
+                  pointBorderColor:
+                    "#fff",
+
+                  pointBorderWidth:
+                    2
+                }
+
+              ]
+            },
+
+            options: {
+
+              responsive:
+                true,
+
+              maintainAspectRatio:
+                true,
+
+              animation: {
+
+                duration:
+                  750,
+
+                easing:
+                  "easeInOutQuart"
+              },
+
+              plugins: {
+
+                legend: {
+                  display:
+                    false
+                },
+
+                tooltip: {
+
+                  callbacks: {
+
+                    label:
+                      function(context) {
+
+                        return (
+                          Number(
+                            context.parsed.y
+                          ).toLocaleString()
+                          +
+                          " UZS"
+                        );
+
+                      }
+
+                  }
+
+                }
+
+              },
+
+              scales: {
+
+                y: {
+
+                  beginAtZero:
+                    true,
+
+                  ticks: {
+
+                    callback:
+                      function(value) {
+
+                        return Number(
+                          value
+                        ).toLocaleString();
+
+                      }
+
+                  }
+
+                }
+
+              }
+
+            }
+
+          }
+        );
+
     }
 
-    chartInstances.daily = new Chart(dailyChart, {
-      type: "bar",
-      data: {
-        labels: ["Bugun"],
-        datasets: [{
-          data: [dailySales],
-          backgroundColor: "#22c55e",
-          borderRadius: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        animation: {
-          duration: 750,
-          easing: 'easeInOutQuart'
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return context.parsed.y.toLocaleString() + " UZS";
-              }
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: function (value) {
-                return value.toLocaleString();
-              }
-            }
-          }
-        }
+    // ===============================================
+    // DAILY CHART
+    // ===============================================
+
+    const dailyCanvas =
+      document.getElementById(
+        "dailyChart"
+      );
+
+    if (dailyCanvas) {
+
+      if (
+        chartInstances.daily
+      ) {
+
+        chartInstances.daily.destroy();
+
+        chartInstances.daily =
+          null;
       }
-    });
+
+      chartInstances.daily =
+        new Chart(
+          dailyCanvas,
+          {
+
+            type:
+              "bar",
+
+            data: {
+
+              labels:
+                ["Bugun"],
+
+              datasets: [
+
+                {
+
+                  label:
+                    "Kunlik daromad",
+
+                  data:
+                    [dailySales],
+
+                  backgroundColor:
+                    "#22c55e",
+
+                  borderRadius:
+                    8
+                }
+
+              ]
+
+            },
+
+            options: {
+
+              responsive:
+                true,
+
+              maintainAspectRatio:
+                true,
+
+              animation: {
+
+                duration:
+                  750,
+
+                easing:
+                  "easeInOutQuart"
+              },
+
+              plugins: {
+
+                legend: {
+
+                  display:
+                    false
+                },
+
+                tooltip: {
+
+                  callbacks: {
+
+                    label:
+                      function(context) {
+
+                        return (
+                          Number(
+                            context.parsed.y
+                          ).toLocaleString()
+                          +
+                          " UZS"
+                        );
+
+                      }
+
+                  }
+
+                }
+
+              },
+
+              scales: {
+
+                y: {
+
+                  beginAtZero:
+                    true,
+
+                  ticks: {
+
+                    callback:
+                      function(value) {
+
+                        return Number(
+                          value
+                        ).toLocaleString();
+
+                      }
+
+                  }
+
+                }
+
+              }
+
+            }
+
+          }
+        );
+
+    }
+
+    console.log(
+      "✅ CHARTS SUCCESSFULLY UPDATED"
+    );
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+  } catch (error) {
+
+    console.error(
+      "❌ UPDATE CHARTS ERROR:",
+      error
+    );
+
   }
 }
 
@@ -6117,52 +6565,366 @@ window.getDashboardStatistics = getDashboardStatistics;
 // }
 
 async function getWeeklyTrend() {
-  // OFFLINE DATA MODE START
-  if (OFFLINE_DATA_MODE) {
-    const dayNames = ["Yak", "Dush", "Sesh", "Char", "Pay", "Juma", "Shan"];
+
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📈 WEEKLY TREND");
+
+  try {
+
+    let result;
+
+    // ===============================================
+    // ONLINE
+    // ===============================================
+
+    if (!OFFLINE_DATA_MODE) {
+
+      result = await AuthSystem.getSales({
+        status: "active",
+        sort_order: "ascending"
+      });
+
+      console.log(
+        "📥 WEEKLY SALES API:",
+        result
+      );
+
+      if (
+        !result ||
+        !result.success
+      ) {
+        console.error(
+          "❌ WEEKLY SALES API ERROR:",
+          result?.backendMessage ||
+          result?.responseData
+        );
+
+        return [];
+      }
+
+    }
+
+    // ===============================================
+    // SALES MANBAI
+    // ===============================================
+
+    let sourceSales = [];
+
+    if (OFFLINE_DATA_MODE) {
+
+      sourceSales = Array.isArray(sales)
+        ? sales
+        : [];
+
+    } else {
+
+      sourceSales =
+        Array.isArray(result.data)
+          ? result.data
+          : [];
+
+    }
+
+    // ===============================================
+    // 7 KUN
+    // ===============================================
+
+    const dayNames = [
+      "Yak",
+      "Dush",
+      "Sesh",
+      "Char",
+      "Pay",
+      "Juma",
+      "Shan"
+    ];
+
     const trend = [];
 
     for (let i = 6; i >= 0; i--) {
+
       const date = new Date();
-      date.setDate(date.getDate() - i);
+
+      date.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+      date.setDate(
+        date.getDate() - i
+      );
+
+      const dateKey =
+        getDateKey(date);
+
+      let amount = 0;
+
+      // =============================================
+      // ONLINE YANGI SALE FORMAT
+      // =============================================
+
+      if (!OFFLINE_DATA_MODE) {
+
+        sourceSales.forEach(sale => {
+
+          if (
+            !sale ||
+            sale.status !== "active"
+          ) {
+            return;
+          }
+
+          const saleDate =
+            sale.createdAt ||
+            sale.updatedAt;
+
+          if (
+            !saleDate ||
+            getDateKey(saleDate) !== dateKey
+          ) {
+            return;
+          }
+
+          if (
+            Array.isArray(sale.products)
+          ) {
+
+            sale.products.forEach(item => {
+
+              const quantity =
+                Number(item.quantity) || 0;
+
+              const price =
+                Number(item.selling_price) || 0;
+
+              amount +=
+                price * quantity;
+            });
+
+          } else {
+
+            amount +=
+              Number(sale.total_price) || 0;
+          }
+
+        });
+
+      }
+
+      // =============================================
+      // OFFLINE / ESKI FORMAT
+      // =============================================
+
+      else {
+
+        sourceSales.forEach(sale => {
+
+          if (
+            sale.status !== "sold"
+          ) {
+            return;
+          }
+
+          if (
+            getDateKey(sale.date) !== dateKey
+          ) {
+            return;
+          }
+
+          amount +=
+            Number(sale.total) || 0;
+        });
+
+      }
 
       trend.push({
-        day: dayNames[date.getDay()],
-        amount: calculateTodayRevenue(getDateKey(date))
+
+        day:
+          dayNames[date.getDay()],
+
+        amount:
+          Math.round(amount)
+
       });
+
     }
 
-    console.log("📈 WEEKLY TREND (OFFLINE)", trend);
-    return trend;
-  }
-  // OFFLINE DATA MODE END
+    console.log(
+      "✅ WEEKLY TREND RESULT:",
+      trend
+    );
 
-  try {
-    const response = await window.crmApi.get("/api/v1/dashboard/weekly-trend");
-    console.log("📈 WEEKLY TREND", response.data);
-    return response.data;
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    return trend;
+
   } catch (error) {
-    console.error("❌ WEEKLY TREND ERROR", error);
+
+    console.error(
+      "❌ WEEKLY TREND ERROR:",
+      error?.response?.data ||
+      error?.message ||
+      error
+    );
+
     return [];
   }
 }
 
 async function getDailyRevenue() {
-  // OFFLINE DATA MODE START
-  if (OFFLINE_DATA_MODE) {
-    const data = { daily_revenue: calculateTodayRevenue() };
-    console.log("📊 DAILY REVENUE (OFFLINE)", data);
-    return data;
-  }
-  // OFFLINE DATA MODE END
+
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📊 DAILY REVENUE");
 
   try {
-    const response = await window.crmApi.get("/api/v1/dashboard/daily-revenue");
-    console.log("📊 DAILY REVENUE", response.data);
-    return response.data;
+
+    // ===============================================
+    // ONLINE
+    // ===============================================
+
+    if (!OFFLINE_DATA_MODE) {
+
+      const result =
+        await AuthSystem.getSales({
+          status: "active",
+          sort_order: "descending"
+        });
+
+      console.log(
+        "📥 DAILY SALES API:",
+        result
+      );
+
+      if (
+        !result ||
+        !result.success
+      ) {
+
+        console.error(
+          "❌ DAILY SALES API ERROR:",
+          result?.backendMessage ||
+          result?.responseData
+        );
+
+        return {
+          daily_revenue: 0
+        };
+      }
+
+      const today =
+        getToday();
+
+      let dailyRevenue = 0;
+
+      const rawSales =
+        Array.isArray(result.data)
+          ? result.data
+          : [];
+
+      rawSales.forEach(sale => {
+
+        if (
+          !sale ||
+          sale.status !== "active"
+        ) {
+          return;
+        }
+
+        const saleDate =
+          sale.createdAt ||
+          sale.updatedAt;
+
+        if (
+          !saleDate ||
+          getDateKey(saleDate) !== today
+        ) {
+          return;
+        }
+
+        // =========================================
+        // YANGI API:
+        // products[]
+        // =========================================
+
+        if (
+          Array.isArray(sale.products)
+        ) {
+
+          sale.products.forEach(item => {
+
+            const quantity =
+              Number(item.quantity) || 0;
+
+            const sellingPrice =
+              Number(item.selling_price) || 0;
+
+            dailyRevenue +=
+              quantity * sellingPrice;
+
+          });
+
+        }
+
+        // =========================================
+        // FALLBACK
+        // =========================================
+
+        else {
+
+          dailyRevenue +=
+            Number(sale.total_price) || 0;
+
+        }
+
+      });
+
+      const data = {
+        daily_revenue:
+          Math.round(dailyRevenue)
+      };
+
+      console.log(
+        "✅ DAILY REVENUE:",
+        data
+      );
+
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+      return data;
+    }
+
+    // ===============================================
+    // OFFLINE
+    // ===============================================
+
+    const data = {
+      daily_revenue:
+        calculateTodayRevenue()
+    };
+
+    console.log(
+      "📊 DAILY REVENUE (OFFLINE):",
+      data
+    );
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    return data;
+
   } catch (error) {
-    console.error("❌ DAILY REVENUE ERROR", error);
-    return null;
+
+    console.error(
+      "❌ DAILY REVENUE ERROR:",
+      error?.response?.data ||
+      error?.message ||
+      error
+    );
+
+    return {
+      daily_revenue: 0
+    };
   }
 }
 
