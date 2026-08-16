@@ -870,6 +870,34 @@
         return result;
       }
     },
+    getDebts: async function () {
+      console.log("========== GET DEBTS ==========");
+
+      try {
+        const res = await crmApi.get("/debt/get");
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("DEBTS:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "getDebts /debt/get");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ GET DEBTS — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     updateUser: async function (data) {
       console.log("========== UPDATE USER ==========");
 
