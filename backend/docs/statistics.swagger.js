@@ -7,7 +7,7 @@
 
 /**
  * @swagger
- * /statistics:
+ * /statistics/full:
  *   get:
  *     summary: Umumiy statistika (oylik daromad, foyda, qarzdorlik va h.k.)
  *     tags: [Statistics]
