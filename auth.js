@@ -723,6 +723,274 @@
         return result;
       }
     },
+    createClient: async function (clientData) {
+      console.log("========== CREATE CLIENT ==========");
+
+      try {
+        const res = await crmApi.post("/client/create", {
+          client_name: clientData.client_name,
+          client_phone: clientData.client_phone
+        });
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "createClient /client/create");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ CREATE CLIENT — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
+    updateClient: async function (clientId, clientData) {
+      console.log("========== UPDATE CLIENT ==========");
+      console.log("CLIENT ID:", clientId);
+
+      try {
+        const res = await crmApi.put(
+          "/client/update",
+          {
+            client_name: clientData.client_name,
+            client_phone: clientData.client_phone
+          },
+          {
+            params: {
+              client_id: clientId
+            }
+          }
+        );
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(
+          error,
+          "updateClient /client/update"
+        );
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+
+        console.error(
+          "❌ UPDATE CLIENT — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
+    deleteClient: async function (clientId) {
+      console.log("========== DELETE CLIENT ==========");
+      console.log("CLIENT ID:", clientId);
+
+      try {
+        const res = await crmApi.delete("/client/delete", {
+          params: {
+            client_id: clientId
+          }
+        });
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(
+          error,
+          "deleteClient /client/delete"
+        );
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+
+        console.error(
+          "❌ DELETE CLIENT — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
+    getClients: async function (params = {}) {
+      console.log("========== GET CLIENTS ==========");
+      console.log("PARAMS:", params);
+
+      try {
+        const res = await crmApi.get("/client/get", {
+          params: {
+            client_id: params.client_id || undefined,
+            client_name: params.client_name || undefined,
+            client_phone: params.client_phone || undefined
+          }
+        });
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("CLIENTS:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "getClients /client/get");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ GET CLIENTS — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
+    getStatistics: async function () {
+      console.log("========== GET STATISTICS ==========");
+
+      try {
+        const res = await crmApi.get("/statistics/full");
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "getStatistics /statistics");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ GET STATISTICS — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
+    getDailyRevenue: async function () {
+      console.log("========== GET DAILY REVENUE ==========");
+
+      try {
+        const res = await crmApi.get("/statistics/daily-revenue");
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(
+          error,
+          "getDailyRevenue /statistics/daily-revenue"
+        );
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+
+        console.error(
+          "❌ GET DAILY REVENUE — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
+    getWeeklyTrend: async function () {
+      console.log("========== GET WEEKLY TREND ==========");
+
+      try {
+        const res = await crmApi.get("/statistics/weekly-trend");
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+
+      } catch (error) {
+        const result = describeError(
+          error,
+          "getWeeklyTrend /statistics/weekly-trend"
+        );
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+
+        console.error(
+          "❌ WEEKLY TREND — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
+    getDebts: async function () {
+      console.log("========== GET DEBTS ==========");
+
+      try {
+        const res = await crmApi.get("/debt/get");
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("DEBTS:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "getDebts /debt/get");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ GET DEBTS — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     updateUser: async function (data) {
       console.log("========== UPDATE USER ==========");
 
