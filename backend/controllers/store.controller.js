@@ -76,7 +76,7 @@ exports.verify = async (req, res) => {
     }
 
     if (store.otp !== otp) {
-      return res.status(400).json({ message: "Kod mos emas" });
+      return res.status(400).json({ message: "Kod xato" });
     }
 
     store.otp = null;
@@ -127,7 +127,7 @@ exports.signin = async (req, res) => {
     const isMatch = await bcrypt.compare(password, store.password);
 
     if (!isMatch) {
-      return res.status(400).json({ message: "Parol mos emas" });
+      return res.status(400).json({ message: "Parol xato" });
     }
 
     const refreshToken = generateRefreshToken({
@@ -285,7 +285,7 @@ exports.resetPassword = async (req, res) => {
     }
 
     if (store.otp !== otp) {
-      return res.status(400).json({ message: "Kod mos emas" });
+      return res.status(400).json({ message: "Kod xato" });
     }
 
     const hashedPassword = await bcrypt.hash(new_password, 10);
@@ -296,6 +296,41 @@ exports.resetPassword = async (req, res) => {
     store.otp_expires_at = null;
 
     await store.save();
+
+    res.status(200).json({
+      message: "Parol muvaffaqiyatli o'zgartirildi",
+    });
+  } catch (err) {
+    console.log(err.message);
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { old_password, new_password } = req.body;
+    const { store_id } = req.user;
+    const store = await Store.findById(store_id);
+    if (!store) {
+      return res.status(400).json({ message: "ID bo'yicha do'kon topilmadi" });
+    }
+    const isMatch = await bcrypt.compare(old_password, store.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Hozirgi parol xato" });
+    }
+
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+    store.password = hashedPassword;
+
+    await store.save();
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      path: "/api/auth/store/refresh",
+    });
 
     res.status(200).json({
       message: "Parol muvaffaqiyatli o'zgartirildi",
