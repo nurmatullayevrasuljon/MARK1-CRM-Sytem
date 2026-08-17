@@ -7113,27 +7113,13 @@ async function getDailyTransactions(period = "daily") {
 // other code still depends on it.
 
 // // Backend API TransactionsExcel Export
-async function exportTransactionsExcel() {
+function exportTransactionsExcel() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📊 EXCEL EXPORT START");
+  console.log("📊 EXPORT START");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   try {
-    // 1. XLSX kutubxonasini tekshirish
-    if (typeof XLSX === "undefined") {
-      console.error("❌ XLSX library topilmadi");
-
-      alert(
-        "Excel eksport kutubxonasi yuklanmagan.\n" +
-        "Sahifani yangilang va qayta urinib ko'ring."
-      );
-
-      return;
-    }
-
-    // 2. Sales mavjudligini tekshirish
     if (!Array.isArray(sales)) {
-      console.error("❌ sales array mavjud emas:", sales);
       alert("Savdo ma'lumotlari topilmadi.");
       return;
     }
@@ -7143,37 +7129,32 @@ async function exportTransactionsExcel() {
     let filteredSales = [];
     let fileName = "";
 
-    // 3. Filter
     if (transactionFilter === "daily") {
       filteredSales = sales.filter(
         s => getDateKey(s.date) === today
       );
 
-      fileName = `Kunlik_Savdo_${today}.xlsx`;
-    }
+      fileName = `Kunlik_Savdo_${today}`;
 
-    else if (transactionFilter === "weekly") {
+    } else if (transactionFilter === "weekly") {
       const now = new Date();
-
       const start = new Date(now);
+
       start.setDate(now.getDate() - 6);
       start.setHours(0, 0, 0, 0);
 
       filteredSales = sales.filter(s => {
-        const date = toLocalDate(s.date);
-
-        return date >= start && date <= now;
+        const d = toLocalDate(s.date);
+        return d >= start && d <= now;
       });
 
-      fileName = `Haftalik_Savdo_${today}.xlsx`;
-    }
+      fileName = `Haftalik_Savdo_${today}`;
 
-    else if (transactionFilter === "monthly") {
+    } else if (transactionFilter === "monthly") {
       const [year, month] = today.split("-");
 
       filteredSales = sales.filter(s => {
         const saleDate = getDateKey(s.date);
-
         const [saleYear, saleMonth] =
           saleDate.split("-");
 
@@ -7183,30 +7164,20 @@ async function exportTransactionsExcel() {
         );
       });
 
-      fileName = `Oylik_Savdo_${year}-${month}.xlsx`;
-    }
+      fileName = `Oylik_Savdo_${year}-${month}`;
 
-    else {
-      // fallback
+    } else {
       filteredSales = [...sales];
-      fileName = `Savdolar_${today}.xlsx`;
+      fileName = `Savdolar_${today}`;
     }
 
-    console.log(
-      "📦 EXPORT SALES COUNT:",
-      filteredSales.length
-    );
-
-    // 4. Bo'sh bo'lsa
     if (!filteredSales.length) {
       alert(
         "Eksport qilish uchun savdo ma'lumotlari mavjud emas."
       );
-
       return;
     }
 
-    // 5. Excel rows
     const rows = filteredSales.map((s, index) => {
       const d = toLocalDate(s.date);
 
@@ -7262,62 +7233,191 @@ async function exportTransactionsExcel() {
       };
     });
 
-    console.log("📋 EXCEL ROWS:", rows);
+    console.log("📦 EXPORT COUNT:", rows.length);
 
-    // 6. Worksheet
-    const worksheet =
-      XLSX.utils.json_to_sheet(rows);
+    /*
+     * ==========================================
+     * 1. CSV YARATISH
+     * ==========================================
+     *
+     * CSV deyarli barcha jadval dasturlarida ochiladi.
+     */
 
-    // 7. Ustun kengliklari
-    worksheet["!cols"] = [
-      { wch: 5 },
-      { wch: 25 },
-      { wch: 10 },
-      { wch: 10 },
-      { wch: 15 },
-      { wch: 12 },
-      { wch: 18 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 12 },
-      { wch: 15 }
+    const headers = Object.keys(rows[0]);
+
+    const csvRows = [
+      headers.join(";"),
+
+      ...rows.map(row =>
+        headers
+          .map(header => {
+            let value = row[header];
+
+            if (value === null || value === undefined) {
+              value = "";
+            }
+
+            value = String(value);
+
+            // CSV ichidagi maxsus belgilarni himoyalash
+            value = value
+              .replace(/"/g, '""')
+              .replace(/\r?\n/g, " ");
+
+            return `"${value}"`;
+          })
+          .join(";")
+      )
     ];
 
-    // 8. Workbook
-    const workbook =
-      XLSX.utils.book_new();
+    /*
+     * UTF-8 BOM
+     *
+     * O'zbekcha harflar:
+     * o‘, g‘, ʻ, қ va boshqalar
+     * Excelda to'g'ri chiqishi uchun.
+     */
 
-    XLSX.utils.book_append_sheet(
-      workbook,
-      worksheet,
-      "Savdolar"
-    );
+    const csvContent =
+      "\uFEFF" +
+      csvRows.join("\r\n");
 
-    // 9. Excel yaratish
-    XLSX.writeFile(
-      workbook,
-      fileName,
+    const csvBlob = new Blob(
+      [csvContent],
       {
-        bookType: "xlsx",
-        compression: true
+        type:
+          "text/csv;charset=utf-8;"
       }
     );
 
+    const csvUrl =
+      URL.createObjectURL(csvBlob);
+
+    const csvLink =
+      document.createElement("a");
+
+    csvLink.href = csvUrl;
+    csvLink.download =
+      `${fileName}.csv`;
+
+    document.body.appendChild(csvLink);
+
+    csvLink.click();
+
+    document.body.removeChild(csvLink);
+
+    setTimeout(() => {
+      URL.revokeObjectURL(csvUrl);
+    }, 1000);
+
+    console.log(
+      "✅ CSV EXPORT SUCCESS"
+    );
+
+
+    /*
+     * ==========================================
+     * 2. XLSX YARATISH
+     * ==========================================
+     *
+     * XLSX kutubxonasi mavjud bo'lsa,
+     * Excel faylini ham yaratamiz.
+     */
+
+    if (typeof XLSX !== "undefined") {
+
+      try {
+
+        const worksheet =
+          XLSX.utils.json_to_sheet(rows);
+
+        worksheet["!cols"] = [
+          { wch: 5 },
+          { wch: 25 },
+          { wch: 10 },
+          { wch: 10 },
+          { wch: 15 },
+          { wch: 12 },
+          { wch: 18 },
+          { wch: 15 },
+          { wch: 15 },
+          { wch: 12 },
+          { wch: 15 }
+        ];
+
+        const workbook =
+          XLSX.utils.book_new();
+
+        XLSX.utils.book_append_sheet(
+          workbook,
+          worksheet,
+          "Savdolar"
+        );
+
+        XLSX.writeFile(
+          workbook,
+          `${fileName}.xlsx`,
+          {
+            bookType: "xlsx",
+            compression: true
+          }
+        );
+
+        console.log(
+          "✅ XLSX EXPORT SUCCESS"
+        );
+
+      } catch (xlsxError) {
+
+        console.error(
+          "⚠️ XLSX yaratilmadi:",
+          xlsxError
+        );
+
+        console.log(
+          "✅ CSV fallback ishladi."
+        );
+      }
+
+    } else {
+
+      console.warn(
+        "⚠️ XLSX library mavjud emas."
+      );
+
+      console.log(
+        "✅ CSV fallback ishladi."
+      );
+    }
+
+
+    /*
+     * ==========================================
+     * YAKUN
+     * ==========================================
+     */
+
+    alert(
+      `✅ Eksport muvaffaqiyatli!\n\n` +
+      `📊 ${rows.length} ta savdo eksport qilindi.\n\n` +
+      `📄 CSV — barcha jadval dasturlarida ochiladi.\n` +
+      `📗 XLSX — Excel formati ham yaratildi.`
+    );
+
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("✅ EXCEL EXPORT SUCCESS");
-    console.log("📁 FILE:", fileName);
-    console.log("📊 ROWS:", rows.length);
+    console.log("✅ EXPORT COMPLETE");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   } catch (error) {
+
     console.error(
-      "❌ EXCEL EXPORT ERROR:",
+      "❌ EXPORT ERROR:",
       error
     );
 
     alert(
-      "Excel faylini yaratishda xatolik yuz berdi.\n" +
-      "Console orqali xatoni tekshiring."
+      "Eksportda xatolik yuz berdi.\n" +
+      "CSV formatini ishlatib qayta urinib ko'ring."
     );
   }
 }
