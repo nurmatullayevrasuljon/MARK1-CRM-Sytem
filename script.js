@@ -2628,63 +2628,6 @@ if (transactionFilterSelect) {
     await loadAndRenderTransactions(transactionFilter);
   });
 }
-// Exel eksport funksiyasi
-function exportTransactionsExcel() {
-  if (typeof XLSX === "undefined") {
-    alert("Excel eksport kutubxonasi yuklanmadi. Sahifani yangilab qayta urinib ko'ring.");
-    return;
-  }
-
-  const today = getToday();
-  let filteredSales = [];
-  let fileName = "";
-
-  if (transactionFilter === "daily") {
-    filteredSales = sales.filter(s => getDateKey(s.date) === today);
-    fileName = `Kunlik_Savdo_${today}.xlsx`;
-  }
-  else if (transactionFilter === "weekly") {
-    const d = new Date();
-    d.setDate(d.getDate() - 7);
-    filteredSales = sales.filter(s => toLocalDate(s.date) >= d);
-    fileName = `Haftalik_Savdo_${today}.xlsx`;
-  }
-  else if (transactionFilter === "monthly") {
-    const [y, m] = today.split("-");
-    filteredSales = sales.filter(s => {
-      const [sy, sm] = getDateKey(s.date).split("-");
-      return sy === y && sm === m;
-    });
-    fileName = `Oylik_Savdo_${y}-${m}.xlsx`;
-  }
-
-  if (!filteredSales.length) {
-    alert("Eksport qilish uchun ma'lumot yo‘q!");
-    return;
-  }
-
-  const rows = filteredSales.map(s => {
-    const d = toLocalDate(s.date);
-    return {
-      Mahsulot: s.name,
-      Miqdor: s.qty,
-      Birlik: s.unit,
-      Narx: s.price,
-      Valyuta: s.currency,
-      Jami: s.total,
-      "To‘lov turi": s.paymentType === "card" ? "Karta" : "Naqd",
-      Sana: d.toLocaleDateString('en-GB').replace(/\//g, '.'),
-      Vaqt: d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-      Status: s.status === "sold" ? "Sotildi" : "Qaytarildi"
-    };
-  });
-
-  const worksheet = XLSX.utils.json_to_sheet(rows);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Savdolar");
-
-  XLSX.writeFile(workbook, fileName);
-}
 
 function calculateTotalRevenue() {
   return sales
