@@ -874,7 +874,7 @@
       console.log("========== GET STATISTICS ==========");
 
       try {
-        const res = await crmApi.get("/statistics");
+        const res = await crmApi.get("/statistics/full");
 
         console.log("SUCCESS:", true);
         console.log("STATUS:", res.status);
