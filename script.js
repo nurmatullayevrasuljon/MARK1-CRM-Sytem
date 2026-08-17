@@ -7114,54 +7114,212 @@ async function getDailyTransactions(period = "daily") {
 
 // // Backend API TransactionsExcel Export
 async function exportTransactionsExcel() {
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📊 EXCEL EXPORT START");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   try {
+    // 1. XLSX kutubxonasini tekshirish
+    if (typeof XLSX === "undefined") {
+      console.error("❌ XLSX library topilmadi");
 
-    console.log("📥 EXPORT START");
-
-    const response =
-      await window.crmApi.get(
-        "/api/v1/daily-sales/export",
-        {
-          responseType: "blob"
-        }
+      alert(
+        "Excel eksport kutubxonasi yuklanmagan.\n" +
+        "Sahifani yangilang va qayta urinib ko'ring."
       );
 
-    const url =
-      window.URL.createObjectURL(
-        response.data
+      return;
+    }
+
+    // 2. Sales mavjudligini tekshirish
+    if (!Array.isArray(sales)) {
+      console.error("❌ sales array mavjud emas:", sales);
+      alert("Savdo ma'lumotlari topilmadi.");
+      return;
+    }
+
+    const today = getToday();
+
+    let filteredSales = [];
+    let fileName = "";
+
+    // 3. Filter
+    if (transactionFilter === "daily") {
+      filteredSales = sales.filter(
+        s => getDateKey(s.date) === today
       );
 
-    const a =
-      document.createElement("a");
+      fileName = `Kunlik_Savdo_${today}.xlsx`;
+    }
 
-    a.href = url;
+    else if (transactionFilter === "weekly") {
+      const now = new Date();
 
-    a.download =
-      `transactions-${Date.now()}.csv`;
+      const start = new Date(now);
+      start.setDate(now.getDate() - 6);
+      start.setHours(0, 0, 0, 0);
 
-    document.body.appendChild(a);
+      filteredSales = sales.filter(s => {
+        const date = toLocalDate(s.date);
 
-    a.click();
+        return date >= start && date <= now;
+      });
 
-    a.remove();
+      fileName = `Haftalik_Savdo_${today}.xlsx`;
+    }
 
-    window.URL.revokeObjectURL(url);
+    else if (transactionFilter === "monthly") {
+      const [year, month] = today.split("-");
+
+      filteredSales = sales.filter(s => {
+        const saleDate = getDateKey(s.date);
+
+        const [saleYear, saleMonth] =
+          saleDate.split("-");
+
+        return (
+          saleYear === year &&
+          saleMonth === month
+        );
+      });
+
+      fileName = `Oylik_Savdo_${year}-${month}.xlsx`;
+    }
+
+    else {
+      // fallback
+      filteredSales = [...sales];
+      fileName = `Savdolar_${today}.xlsx`;
+    }
 
     console.log(
-      "✅ EXPORT SUCCESS"
+      "📦 EXPORT SALES COUNT:",
+      filteredSales.length
     );
+
+    // 4. Bo'sh bo'lsa
+    if (!filteredSales.length) {
+      alert(
+        "Eksport qilish uchun savdo ma'lumotlari mavjud emas."
+      );
+
+      return;
+    }
+
+    // 5. Excel rows
+    const rows = filteredSales.map((s, index) => {
+      const d = toLocalDate(s.date);
+
+      return {
+        "#": index + 1,
+
+        "Mahsulot":
+          s.name ||
+          s.product_name ||
+          "Noma'lum",
+
+        "Miqdor":
+          Number(s.qty ?? s.quantity ?? 0),
+
+        "Birlik":
+          s.unit || "",
+
+        "Narx":
+          Number(s.price ?? 0),
+
+        "Valyuta":
+          s.currency || "UZS",
+
+        "Jami":
+          Number(
+            s.total ??
+            s.total_amount ??
+            0
+          ),
+
+        "To'lov turi":
+          s.paymentType === "card"
+            ? "Karta"
+            : s.paymentType === "cash"
+              ? "Naqd"
+              : s.paymentType || "",
+
+        "Sana":
+          d.toLocaleDateString("uz-UZ"),
+
+        "Vaqt":
+          d.toLocaleTimeString("uz-UZ", {
+            hour: "2-digit",
+            minute: "2-digit"
+          }),
+
+        "Status":
+          s.status === "sold"
+            ? "Sotildi"
+            : s.status === "returned"
+              ? "Qaytarildi"
+              : s.status || ""
+      };
+    });
+
+    console.log("📋 EXCEL ROWS:", rows);
+
+    // 6. Worksheet
+    const worksheet =
+      XLSX.utils.json_to_sheet(rows);
+
+    // 7. Ustun kengliklari
+    worksheet["!cols"] = [
+      { wch: 5 },
+      { wch: 25 },
+      { wch: 10 },
+      { wch: 10 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 18 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 15 }
+    ];
+
+    // 8. Workbook
+    const workbook =
+      XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      "Savdolar"
+    );
+
+    // 9. Excel yaratish
+    XLSX.writeFile(
+      workbook,
+      fileName,
+      {
+        bookType: "xlsx",
+        compression: true
+      }
+    );
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("✅ EXCEL EXPORT SUCCESS");
+    console.log("📁 FILE:", fileName);
+    console.log("📊 ROWS:", rows.length);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   } catch (error) {
-
     console.error(
-      "❌ EXPORT ERROR"
+      "❌ EXCEL EXPORT ERROR:",
+      error
     );
 
-    console.error(error);
-
+    alert(
+      "Excel faylini yaratishda xatolik yuz berdi.\n" +
+      "Console orqali xatoni tekshiring."
+    );
   }
-
 }
 
 // NOTE: a second, fully identical `async function apiLoadCategories()` used
