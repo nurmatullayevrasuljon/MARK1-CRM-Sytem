@@ -930,6 +930,39 @@
         return result;
       }
     },
+    getWeeklyTrend: async function () {
+      console.log("========== GET WEEKLY TREND ==========");
+
+      try {
+        const res = await crmApi.get("/statistics/weekly-trend");
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+
+      } catch (error) {
+        const result = describeError(
+          error,
+          "getWeeklyTrend /statistics/weekly-trend"
+        );
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+
+        console.error(
+          "❌ WEEKLY TREND — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     getDebts: async function () {
       console.log("========== GET DEBTS ==========");
 
