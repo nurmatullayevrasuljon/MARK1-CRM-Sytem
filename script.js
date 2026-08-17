@@ -69,54 +69,91 @@ async function updateDailySalesPageCounter() {
 
   if (!counterEl || !changeEl) return;
 
-  const today = getToday();
-  // const todayTotal = calculateTodayRevenue(today);
-  const stats = await getDailySalesStats();
+  try {
+    const today = getToday();
 
-  const todayTotal = stats?.today_revenue || 0;
-  const yesterdayTotal = Number(localStorage.getItem("yesterdaySalesTotal")) || 0;
+    const stats = await getDailySalesStats();
 
-  const lastShown = Number(counterEl.dataset.lastValue || 0);
+    if (!stats || typeof stats.today_revenue !== "number") {
+      console.warn("⚠️ DAILY SALES STATS noto'g'ri:", stats);
+      return;
+    }
 
-  // Counter animatsiya
-  if (todayTotal !== lastShown) {
-    animateCounter(counterEl, lastShown, todayTotal);
-    counterEl.dataset.lastValue = todayTotal;
-  } else {
-    counterEl.innerText = todayTotal.toLocaleString();
-  }
+    const todayTotal = Number(stats.today_revenue) || 0;
+    const yesterdayTotal =
+      Number(localStorage.getItem("yesterdaySalesTotal")) || 0;
 
-  // Animatsiya tugagandan keyin UZS qo'shish
-  setTimeout(() => {
-    counterEl.innerHTML = `${todayTotal.toLocaleString()} <small style="font-size:0.6em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
-  }, 1200);
+    const lastShown =
+      Number(counterEl.dataset.lastValue || 0);
 
-  // REAL FOIZ HISOBLASH
-  if (todayTotal === 0 && yesterdayTotal === 0) {
-    changeEl.innerText = "Bugun savdo yo'q";
-    changeEl.className = "counter-change text-muted";
-  }
-  else if (yesterdayTotal === 0 && todayTotal > 0) {
-    changeEl.innerText = "▲ Yangi savdolar boshlandi";
-    changeEl.className = "counter-change text-success";
-  }
-  else if (todayTotal === 0 && yesterdayTotal > 0) {
-    changeEl.innerText = "▼ 100% kamaydi (kechaga nisbatan)";
-    changeEl.className = "counter-change text-danger";
-  }
-  else {
-    const percent = ((todayTotal - yesterdayTotal) / yesterdayTotal) * 100;
-
-    if (percent > 0) {
-      changeEl.innerText = `▲ ${percent.toFixed(1)}% kechaga nisbatan`;
-      changeEl.className = "counter-change text-success";
-    } else if (percent < 0) {
-      changeEl.innerText = `▼ ${Math.abs(percent).toFixed(1)}% kechaga nisbatan`;
-      changeEl.className = "counter-change text-danger";
+    if (todayTotal !== lastShown) {
+      animateCounter(counterEl, lastShown, todayTotal);
+      counterEl.dataset.lastValue = todayTotal;
     } else {
-      changeEl.innerText = "Kecha bilan teng";
+      counterEl.innerText =
+        todayTotal.toLocaleString("uz-UZ");
+    }
+
+    setTimeout(() => {
+      counterEl.innerHTML = `
+        ${todayTotal.toLocaleString("uz-UZ")}
+        <small style="
+          font-size:0.6em;
+          color:#94a3b8;
+          font-weight:400;
+          margin-left:4px
+        ">UZS</small>
+      `;
+    }, 1200);
+
+    if (todayTotal === 0 && yesterdayTotal === 0) {
+      changeEl.innerText = "Bugun savdo yo'q";
       changeEl.className = "counter-change text-muted";
     }
+
+    else if (yesterdayTotal === 0 && todayTotal > 0) {
+      changeEl.innerText = "▲ Yangi savdolar boshlandi";
+      changeEl.className = "counter-change text-success";
+    }
+
+    else if (todayTotal === 0 && yesterdayTotal > 0) {
+      changeEl.innerText =
+        "▼ 100% kamaydi (kechaga nisbatan)";
+      changeEl.className = "counter-change text-danger";
+    }
+
+    else {
+      const percent =
+        ((todayTotal - yesterdayTotal) / yesterdayTotal) * 100;
+
+      if (percent > 0) {
+        changeEl.innerText =
+          `▲ ${percent.toFixed(1)}% kechaga nisbatan`;
+        changeEl.className =
+          "counter-change text-success";
+      }
+
+      else if (percent < 0) {
+        changeEl.innerText =
+          `▼ ${Math.abs(percent).toFixed(1)}% kechaga nisbatan`;
+        changeEl.className =
+          "counter-change text-danger";
+      }
+
+      else {
+        changeEl.innerText = "Kecha bilan teng";
+        changeEl.className =
+          "counter-change text-muted";
+      }
+    }
+
+    console.log("✅ DAILY SALES COUNTER UPDATED:", todayTotal);
+
+  } catch (error) {
+    console.error(
+      "❌ updateDailySalesPageCounter ERROR:",
+      error
+    );
   }
 }
 
