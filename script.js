@@ -367,12 +367,39 @@ let OFFLINE_DATA_MODE = false;
 
 async function detectBackendAvailability() {
   try {
-    await window.crmApi.get("/api/v1/settings/profile", { timeout: 5000 });
+    await window.crmApi.get("/store/profile/get", {
+      timeout: 7000
+    });
+
     OFFLINE_DATA_MODE = false;
+
     console.log("✅ Backend mavjud — ONLINE rejim");
-  } catch (err) {
+    return true;
+
+  } catch (error) {
+    const status = error?.response?.status;
+
+    // 401/403 = backend ishlayapti,
+    // faqat autentifikatsiya muammosi
+    if (status === 401 || status === 403) {
+      OFFLINE_DATA_MODE = false;
+
+      console.warn(
+        "⚠️ Backend mavjud, lekin authorization muammosi:",
+        status
+      );
+
+      return true;
+    }
+
     OFFLINE_DATA_MODE = true;
-    console.warn("⚠️ Backend javob bermadi — OFFLINE rejimga o'tildi:", err.message);
+
+    console.warn(
+      "⚠️ Backend unavailable — OFFLINE rejim:",
+      error?.message
+    );
+
+    return false;
   }
 }
 const OFFLINE_CATEGORIES_KEY = "crm_offline_categories";
@@ -430,9 +457,29 @@ function getApiErrorMessage(error, fallback) {
 }
 
 function normalizeApiAssetUrl(url) {
-  if (!url) return "img/product.jpg";
-  if (/^https?:\/\//i.test(url) || String(url).startsWith("data:")) return url;
-  return getApiBaseUrl().replace(/\/$/, "") + "/" + String(url).replace(/^\//, "");
+  if (
+    !url ||
+    url === "null" ||
+    url === "undefined" ||
+    String(url).trim() === ""
+  ) {
+    return "img/product.jpg";
+  }
+
+  const value = String(url).trim();
+
+  if (
+    /^https?:\/\//i.test(value) ||
+    value.startsWith("data:")
+  ) {
+    return value;
+  }
+
+  return (
+    getApiBaseUrl().replace(/\/$/, "") +
+    "/" +
+    value.replace(/^\//, "")
+  );
 }
 
 function mapApiProduct(product) {
@@ -6445,52 +6492,61 @@ var DashboardStatisticsManager = {
 
 // Backend DASHBOARD API 
 async function getDashboardStatistics() {
-  console.log("📊 Dashboard API START");
-
-  // OFFLINE DATA MODE START
   if (OFFLINE_DATA_MODE) {
     const todayRevenue = calculateTodayRevenue();
-    const yesterdayRevenue = Number(localStorage.getItem("yesterdaySalesTotal")) || 0;
-    const dailyChange = yesterdayRevenue > 0
-      ? Math.round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100)
-      : 0;
+    const yesterdayRevenue =
+      Number(localStorage.getItem("yesterdaySalesTotal")) || 0;
+
+    const dailyChange =
+      yesterdayRevenue > 0
+        ? Math.round(
+            ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
+          )
+        : 0;
 
     const monthlyRevenue = calculateMonthlyRevenue();
     const previousMonthRevenue = getPreviousMonthRevenue();
-    const monthlyGrowth = previousMonthRevenue > 0
-      ? Math.round(((monthlyRevenue - previousMonthRevenue) / previousMonthRevenue) * 100)
-      : 0;
 
-    const inventoryBalance = products.reduce(
-      (sum, p) => sum + (Number(p.stock) || 0) * (Number(p.costPrice) || 0),
-      0
-    );
+    const monthlyGrowth =
+      previousMonthRevenue > 0
+        ? Math.round(
+            ((monthlyRevenue - previousMonthRevenue) /
+              previousMonthRevenue) *
+              100
+          )
+        : 0;
 
-    const data = {
+    return {
       monthly_revenue: monthlyRevenue,
       monthly_revenue_growth: monthlyGrowth,
       daily_sales: todayRevenue,
       daily_sales_change: dailyChange,
       monthly_profit: calculateMonthlyProfit(),
-      inventory_balance: inventoryBalance
+      inventory_balance: products.reduce(
+        (sum, p) =>
+          sum +
+          (Number(p.stock) || 0) *
+            (Number(p.costPrice) || 0),
+        0
+      )
     };
-
-    DashboardStatisticsManager.updateDashboard(data);
-    return data;
   }
-  // OFFLINE DATA MODE END
 
   try {
-    const response = await window.crmApi.get("/api/v1/dashboard/stats");
-    console.log("🔥 DASHBOARD API ISHLADI");
-    console.log(response.data);
+    const response = await window.crmApi.get("/statistics/full");
 
-    // UI UPDATE
-    DashboardStatisticsManager.updateDashboard(response.data);
+    const data = response.data;
 
-    return response.data;
+    DashboardStatisticsManager.updateDashboard(data);
+
+    return data;
   } catch (error) {
-    console.error("❌ DASHBOARD API ERROR", error);
+    console.error(
+      "❌ STATISTICS FULL ERROR:",
+      error?.response?.status,
+      error?.response?.data || error.message
+    );
+
     return null;
   }
 }
@@ -6976,38 +7032,34 @@ async function getOverduePayments() {
 
 // // Backend API DailySalesStats
 async function getDailySalesStats() {
-  console.log("━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📊 DAILY SALES STATS API");
-
-  // OFFLINE DATA MODE START
   if (OFFLINE_DATA_MODE) {
-    const data = { today_revenue: calculateTodayRevenue() };
-    console.log("📊 RESPONSE (OFFLINE):", data);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    return data;
+    return {
+      today_revenue: calculateTodayRevenue()
+    };
   }
-  // OFFLINE DATA MODE END
-
-  console.log("📤 REQUEST: GET /api/v1/daily-sales/stats");
-  console.log("🕒 Time:", new Date().toLocaleTimeString());
 
   try {
-    // ✅ window.crmApi ishlatiladi — qo'lda token + Authorization header kerak emas
-    const response = await window.crmApi.get("/api/v1/daily-sales/stats");
+    const response = await window.crmApi.get(
+      "/statistics/daily-revenue"
+    );
 
-    console.log("✅ STATUS: SUCCESS");
-    console.log("🌐 HTTP:", response.status);
-    console.log("📊 RESPONSE:");
-    console.table(response.data);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    const data = response.data;
 
-    return response.data;
+    return {
+      today_revenue: Number(
+        data.today_revenue ??
+        data.daily_revenue ??
+        data.revenue ??
+        0
+      )
+    };
   } catch (error) {
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    console.error("❌ STATUS: FAILED");
-    console.error("🌐 HTTP:", error?.response?.status);
-    console.error("📄 ERROR:", error?.response?.data || error.message);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    console.error(
+      "❌ DAILY REVENUE ERROR:",
+      error?.response?.status,
+      error?.response?.data || error.message
+    );
+
     return null;
   }
 }
