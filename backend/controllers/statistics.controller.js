@@ -73,6 +73,24 @@ exports.getStatistics = async (req, res) => {
                     $subtract: ["$total_price", "$total_purchase"],
                   },
                 },
+                cash_sale_revenue: {
+                  $sum: {
+                    $cond: [
+                      { $eq: ["$total_remaining", 0] },
+                      "$paid_by_cash",
+                      0,
+                    ],
+                  },
+                },
+                card_sale_revenue: {
+                  $sum: {
+                    $cond: [
+                      { $eq: ["$total_remaining", 0] },
+                      "$paid_by_card",
+                      0,
+                    ],
+                  },
+                },
               },
             },
           ],
@@ -109,6 +127,24 @@ exports.getStatistics = async (req, res) => {
               $group: {
                 _id: null,
                 revenue: { $sum: "$total_price" },
+                cash_sale_revenue: {
+                  $sum: {
+                    $cond: [
+                      { $eq: ["$total_remaining", 0] },
+                      "$paid_by_cash",
+                      0,
+                    ],
+                  },
+                },
+                card_sale_revenue: {
+                  $sum: {
+                    $cond: [
+                      { $eq: ["$total_remaining", 0] },
+                      "$paid_by_card",
+                      0,
+                    ],
+                  },
+                },
               },
             },
           ],
@@ -171,9 +207,19 @@ exports.getStatistics = async (req, res) => {
 
     const monthlyRevenue = stats.currentMonth[0]?.revenue || 0;
 
+    const monthlyCashSaleRevenue =
+      stats.currentMonth[0]?.cash_sale_revenue || 0;
+
+    const monthlyCardSaleRevenue =
+      stats.currentMonth[0]?.card_sale_revenue || 0;
+
     const previousMonthlyRevenue = stats.previousMonth[0]?.revenue || 0;
 
     const dailySales = stats.today[0]?.revenue || 0;
+
+    const dailyCashSaleRevenue = stats.today[0]?.cash_sale_revenue || 0;
+
+    const dailyCardSaleRevenue = stats.today[0]?.card_sale_revenue || 0;
 
     const yesterdaySales = stats.yesterday[0]?.revenue || 0;
 
@@ -249,9 +295,17 @@ exports.getStatistics = async (req, res) => {
 
       monthly_revenue_growth: Number(monthlyRevenueGrowth.toFixed(2)),
 
+      monthly_cash_sale_revenue: monthlyCashSaleRevenue,
+
+      monthly_card_sale_revenue: monthlyCardSaleRevenue,
+
       daily_sales: dailySales,
 
       daily_sales_change: Number(dailySalesChange.toFixed(2)),
+
+      daily_cash_sale_revenue: dailyCashSaleRevenue,
+
+      daily_card_sale_revenue: dailyCardSaleRevenue,
 
       monthly_profit: monthlyProfit,
 
@@ -300,14 +354,30 @@ exports.getDailyRevenue = async (req, res) => {
           revenue: {
             $sum: "$total_price",
           },
+          cash_sale_revenue: {
+            $sum: {
+              $cond: [{ $eq: ["$total_remaining", 0] }, "$paid_by_cash", 0],
+            },
+          },
+          card_sale_revenue: {
+            $sum: {
+              $cond: [{ $eq: ["$total_remaining", 0] }, "$paid_by_card", 0],
+            },
+          },
         },
       },
     ]);
 
     const dailyRevenue = result[0]?.revenue || 0;
 
+    const cashSaleRevenue = result[0]?.cash_sale_revenue || 0;
+
+    const cardSaleRevenue = result[0]?.card_sale_revenue || 0;
+
     return res.status(200).json({
       daily_revenue: dailyRevenue,
+      cash_sale_revenue: cashSaleRevenue,
+      card_sale_revenue: cardSaleRevenue,
     });
   } catch (err) {
     console.log(err.message);
@@ -374,6 +444,16 @@ exports.getWeeklyTrend = async (req, res) => {
           revenue: {
             $sum: "$total_price",
           },
+          cash_sale_revenue: {
+            $sum: {
+              $cond: [{ $eq: ["$total_remaining", 0] }, "$paid_by_cash", 0],
+            },
+          },
+          card_sale_revenue: {
+            $sum: {
+              $cond: [{ $eq: ["$total_remaining", 0] }, "$paid_by_card", 0],
+            },
+          },
         },
       },
     ]);
@@ -381,7 +461,11 @@ exports.getWeeklyTrend = async (req, res) => {
     const revenueByDate = {};
 
     for (const item of result) {
-      revenueByDate[item._id] = item.revenue;
+      revenueByDate[item._id] = {
+        total_revenue: item.revenue,
+        cash_sale_revenue: item.cash_sale_revenue,
+        card_sale_revenue: item.card_sale_revenue,
+      };
     }
 
     const dayNames = [
@@ -407,7 +491,11 @@ exports.getWeeklyTrend = async (req, res) => {
         `${String(dateParts.month).padStart(2, "0")}-` +
         `${String(dateParts.day).padStart(2, "0")}`;
 
-      weeklyTrend[dayNames[i]] = revenueByDate[dateKey] || 0;
+      weeklyTrend[dayNames[i]] = revenueByDate[dateKey] || {
+        total_revenue: 0,
+        cash_sale_revenue: 0,
+        card_sale_revenue: 0,
+      };
     }
 
     return res.status(200).json(weeklyTrend);
@@ -419,5 +507,3 @@ exports.getWeeklyTrend = async (req, res) => {
     });
   }
 };
-
-

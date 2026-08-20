@@ -267,7 +267,6 @@ module.exports = {
              STATISTICS
     ============================ */
 
-
     Statistics: {
       type: "object",
       properties: {
@@ -279,6 +278,18 @@ module.exports = {
           type: "number",
           example: 12.5,
         },
+        monthly_cash_sale_revenue: {
+          type: "number",
+          description:
+            "Shu oy davomida to'liq to'langan (total_remaining = 0) sotuvlardagi naqd to'lovlar yig'indisi",
+          example: 6500000,
+        },
+        monthly_card_sale_revenue: {
+          type: "number",
+          description:
+            "Shu oy davomida to'liq to'langan (total_remaining = 0) sotuvlardagi karta to'lovlari yig'indisi",
+          example: 5200000,
+        },
         daily_sales: {
           type: "number",
           example: 850000,
@@ -286,6 +297,18 @@ module.exports = {
         daily_sales_change: {
           type: "number",
           example: -5.3,
+        },
+        daily_cash_sale_revenue: {
+          type: "number",
+          description:
+            "Bugungi to'liq to'langan (total_remaining = 0) sotuvlardagi naqd to'lovlar yig'indisi",
+          example: 500000,
+        },
+        daily_card_sale_revenue: {
+          type: "number",
+          description:
+            "Bugungi to'liq to'langan (total_remaining = 0) sotuvlardagi karta to'lovlari yig'indisi",
+          example: 350000,
         },
         monthly_profit: {
           type: "number",
@@ -317,40 +340,49 @@ module.exports = {
           type: "number",
           example: 850000,
         },
+        cash_sale_revenue: {
+          type: "number",
+          description:
+            "Bugungi to'liq to'langan (total_remaining = 0) sotuvlardagi naqd to'lovlar yig'indisi",
+          example: 500000,
+        },
+        card_sale_revenue: {
+          type: "number",
+          description:
+            "Bugungi to'liq to'langan (total_remaining = 0) sotuvlardagi karta to'lovlari yig'indisi",
+          example: 350000,
+        },
+      },
+    },
+
+    DayRevenue: {
+      type: "object",
+      properties: {
+        total_revenue: {
+          type: "number",
+          example: 500000,
+        },
+        cash_sale_revenue: {
+          type: "number",
+          example: 300000,
+        },
+        card_sale_revenue: {
+          type: "number",
+          example: 200000,
+        },
       },
     },
 
     WeeklyTrend: {
       type: "object",
       properties: {
-        monday: {
-          type: "number",
-          example: 500000,
-        },
-        tuesday: {
-          type: "number",
-          example: 620000,
-        },
-        wednesday: {
-          type: "number",
-          example: 480000,
-        },
-        thursday: {
-          type: "number",
-          example: 710000,
-        },
-        friday: {
-          type: "number",
-          example: 890000,
-        },
-        saturday: {
-          type: "number",
-          example: 1020000,
-        },
-        sunday: {
-          type: "number",
-          example: 300000,
-        },
+        monday: { $ref: "#/components/schemas/DayRevenue" },
+        tuesday: { $ref: "#/components/schemas/DayRevenue" },
+        wednesday: { $ref: "#/components/schemas/DayRevenue" },
+        thursday: { $ref: "#/components/schemas/DayRevenue" },
+        friday: { $ref: "#/components/schemas/DayRevenue" },
+        saturday: { $ref: "#/components/schemas/DayRevenue" },
+        sunday: { $ref: "#/components/schemas/DayRevenue" },
       },
     },
 
@@ -411,6 +443,12 @@ module.exports = {
         total_remaining: {
           type: "number",
           example: 100000,
+        },
+        due_date: {
+          type: "string",
+          format: "date-time",
+          nullable: true,
+          example: "2026-09-05T00:00:00.000Z",
         },
         createdAt: {
           type: "string",
@@ -902,6 +940,11 @@ module.exports = {
           type: "number",
           example: 10000,
         },
+        payment_method: {
+          type: "string",
+          enum: ["cash", "card"],
+          example: "cash",
+        },
         paid_at: {
           type: "string",
           format: "date-time",
@@ -919,15 +962,29 @@ module.exports = {
             $ref: "#/components/schemas/SaleProductInput",
           },
         },
-        total_paid: {
+        paid_by_cash: {
           type: "number",
           default: 0,
+          description: "Naqd to'langan summa",
           example: 10000,
+        },
+        paid_by_card: {
+          type: "number",
+          default: 0,
+          description: "Karta orqali to'langan summa",
+          example: 0,
         },
         client_id: {
           type: "string",
           nullable: true,
           example: "68922f5e7d82d8c2d5e4c123",
+        },
+        due_date: {
+          type: "string",
+          format: "date-time",
+          nullable: true,
+          description: "Qarz uchun to'lov muddati",
+          example: "2026-09-05T00:00:00.000Z",
         },
         note: {
           type: "string",
@@ -939,11 +996,16 @@ module.exports = {
 
     AddPaymentInput: {
       type: "object",
-      required: ["amount"],
+      required: ["amount", "payment_method"],
       properties: {
         amount: {
           type: "number",
           example: 5000,
+        },
+        payment_method: {
+          type: "string",
+          enum: ["cash", "card"],
+          example: "cash",
         },
       },
     },
@@ -995,6 +1057,22 @@ module.exports = {
         total_remaining: {
           type: "number",
           example: 30000,
+        },
+        paid_by_cash: {
+          type: "number",
+          description: "Naqd to'langan summa",
+          example: 10000,
+        },
+        paid_by_card: {
+          type: "number",
+          description: "Karta orqali to'langan summa",
+          example: 0,
+        },
+        due_date: {
+          type: "string",
+          format: "date-time",
+          nullable: true,
+          example: "2026-09-05T00:00:00.000Z",
         },
         payments: {
           type: "array",

@@ -11,16 +11,22 @@ exports.createSale = async (req, res) => {
 
     const {
       products,
-      total_paid = 0,
       client_id = null,
       note = null,
       due_date = null,
+      paid_by_cash = 0,
+      paid_by_card = 0,
     } = req.body;
     const { store_id } = req.user;
+
+    if (paid_by_cash < 0 || paid_by_card < 0) {
+      throw new Error("To'lov qiymatlari manfiy bo'lmasligi kerak");
+    }
 
     let saleProducts = [];
     let total_price = 0;
     let total_purchase = 0;
+    const total_paid = paid_by_card + paid_by_cash;
 
     for (const item of products) {
       const product = await Product.findOne({
@@ -54,6 +60,24 @@ exports.createSale = async (req, res) => {
 
     const total_remaining = total_price - total_paid;
 
+    const payments = [];
+
+    if (paid_by_cash > 0) {
+      payments.push({
+        amount: paid_by_cash,
+        payment_method: "cash",
+        paid_at: new Date(),
+      });
+    }
+
+    if (paid_by_card > 0) {
+      payments.push({
+        amount: paid_by_card,
+        payment_method: "card",
+        paid_at: new Date(),
+      });
+    }
+
     const sale = new Sale({
       store_id,
       client_id,
@@ -63,16 +87,10 @@ exports.createSale = async (req, res) => {
       total_price,
       total_paid,
       total_remaining,
+      paid_by_cash,
+      paid_by_card,
       due_date,
-      payments:
-        total_paid > 0
-          ? [
-              {
-                amount: total_paid,
-                paid_at: new Date(),
-              },
-            ]
-          : [],
+      payments,
     });
 
     await sale.save({ session });
@@ -225,7 +243,7 @@ exports.returnSale = async (req, res) => {
 exports.addPayment = async (req, res) => {
   try {
     const { sale_id } = req.query;
-    const { amount } = req.body;
+    const { amount, payment_method } = req.body;
     const { store_id } = req.user;
 
     const sale = await Sale.findOne({
@@ -256,8 +274,17 @@ exports.addPayment = async (req, res) => {
       paid_at: new Date(),
     });
 
-    sale.total_paid += amount;
+    if (payment_method === "cash") {
+      sale.paid_by_cash += amount;
+    } else if (payment_method === "card") {
+      sale.paid_by_card += amount;
+    } else {
+      return res.status(400).json({
+        message: "To'lov usuli xato",
+      });
+    }
     sale.total_remaining -= amount;
+    sale.total_paid += amount;
 
     await sale.save();
 

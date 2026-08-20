@@ -160,9 +160,74 @@ exports.getClients = async (req, res) => {
       filter.client_phone = client_phone;
     }
 
-    const clients = await Client.find(filter).sort({
-      createdAt: -1,
-    });
+    const clients = await Client.aggregate([
+      {
+        $match: filter,
+      },
+
+      {
+        $lookup: {
+          from: "sales",
+          let: {
+            clientId: "$_id",
+            storeId: "$store_id",
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $eq: ["$client_id", "$$clientId"],
+                    },
+                    {
+                      $eq: ["$store_id", "$$storeId"],
+                    },
+                    {
+                      $gt: ["$remaining_amount", 0],
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                total_debt: {
+                  $sum: "$remaining_amount",
+                },
+              },
+            },
+          ],
+          as: "debt",
+        },
+      },
+
+      {
+        $addFields: {
+          total_debt: {
+            $ifNull: [
+              {
+                $arrayElemAt: ["$debt.total_debt", 0],
+              },
+              0,
+            ],
+          },
+        },
+      },
+
+      {
+        $project: {
+          debt: 0,
+        },
+      },
+
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+    ]);
 
     return res.status(200).json(clients);
   } catch (err) {

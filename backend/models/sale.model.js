@@ -32,6 +32,8 @@ const SaleSchema = new mongoose.Schema(
     total_price: { type: Number, required: true },
     total_paid: { type: Number, default: 0 },
     total_remaining: { type: Number, required: true, default: 0 },
+    paid_by_cash: { type: Number, default: 0 },
+    paid_by_card: { type: Number, default: 0 },
     due_date: {
       type: Date,
       default: null,
@@ -46,6 +48,11 @@ const SaleSchema = new mongoose.Schema(
           paid_at: {
             type: Date,
             required: true,
+          },
+          payment_method: {
+            type: String,
+            default: "cash",
+            enum: ["cash", "card"],
           },
         },
       ],
