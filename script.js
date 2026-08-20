@@ -363,42 +363,29 @@ let transactionSearchQuery = "";
 // "OFFLINE DATA MODE" bloklarini butunlay o'chiring — asl (real API) kod
 // hech qayerda o'chirilmagan, faqat vaqtincha chetlab o'tilmoqda.
 // const OFFLINE_DATA_MODE = true;
+// script.js boshida, OFFLINE_DATA_MODE e'lon qilingandan keyin:
 let OFFLINE_DATA_MODE = false;
+
+// ✅ Tekshiruvni sahifa yuklanishi bilanoq (DOMContentLoaded’ni kutmay) boshlaymiz
+let backendCheckPromise = detectBackendAvailability();
 
 async function detectBackendAvailability() {
   try {
     await window.crmApi.get("/store/profile/get", {
-      timeout: 7000
+      timeout: 20000 // ⬅️ 7000 dan 20000ga oshirildi — Render cold-start uchun
     });
-
     OFFLINE_DATA_MODE = false;
-
     console.log("✅ Backend mavjud — ONLINE rejim");
     return true;
-
   } catch (error) {
     const status = error?.response?.status;
-
-    // 401/403 = backend ishlayapti,
-    // faqat autentifikatsiya muammosi
     if (status === 401 || status === 403) {
       OFFLINE_DATA_MODE = false;
-
-      console.warn(
-        "⚠️ Backend mavjud, lekin authorization muammosi:",
-        status
-      );
-
+      console.warn("⚠️ Backend mavjud, lekin authorization muammosi:", status);
       return true;
     }
-
     OFFLINE_DATA_MODE = true;
-
-    console.warn(
-      "⚠️ Backend unavailable — OFFLINE rejim:",
-      error?.message
-    );
-
+    console.warn("⚠️ Backend unavailable — OFFLINE rejim:", error?.message);
     return false;
   }
 }
@@ -1446,6 +1433,7 @@ let globalCategories = [];
 
 async function apiLoadProducts() {
 
+    await backendCheckPromise;
   // OFFLINE DATA MODE START
   if (OFFLINE_DATA_MODE) {
     renderProducts();
