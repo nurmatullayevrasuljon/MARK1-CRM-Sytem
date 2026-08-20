@@ -1433,7 +1433,6 @@ let globalCategories = [];
 
 async function apiLoadProducts() {
 
-    await backendCheckPromise;
   // OFFLINE DATA MODE START
   if (OFFLINE_DATA_MODE) {
     renderProducts();
