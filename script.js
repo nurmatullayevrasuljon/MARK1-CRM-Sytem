@@ -363,16 +363,30 @@ let transactionSearchQuery = "";
 // "OFFLINE DATA MODE" bloklarini butunlay o'chiring — asl (real API) kod
 // hech qayerda o'chirilmagan, faqat vaqtincha chetlab o'tilmoqda.
 // const OFFLINE_DATA_MODE = true;
+// script.js boshida, OFFLINE_DATA_MODE e'lon qilingandan keyin:
 let OFFLINE_DATA_MODE = false;
+
+// ✅ Tekshiruvni sahifa yuklanishi bilanoq (DOMContentLoaded’ni kutmay) boshlaymiz
+let backendCheckPromise = detectBackendAvailability();
 
 async function detectBackendAvailability() {
   try {
-    await window.crmApi.get("/api/v1/settings/profile", { timeout: 5000 });
+    await window.crmApi.get("/store/profile/get", {
+      timeout: 20000 // ⬅️ 7000 dan 20000ga oshirildi — Render cold-start uchun
+    });
     OFFLINE_DATA_MODE = false;
     console.log("✅ Backend mavjud — ONLINE rejim");
-  } catch (err) {
+    return true;
+  } catch (error) {
+    const status = error?.response?.status;
+    if (status === 401 || status === 403) {
+      OFFLINE_DATA_MODE = false;
+      console.warn("⚠️ Backend mavjud, lekin authorization muammosi:", status);
+      return true;
+    }
     OFFLINE_DATA_MODE = true;
-    console.warn("⚠️ Backend javob bermadi — OFFLINE rejimga o'tildi:", err.message);
+    console.warn("⚠️ Backend unavailable — OFFLINE rejim:", error?.message);
+    return false;
   }
 }
 const OFFLINE_CATEGORIES_KEY = "crm_offline_categories";
@@ -430,9 +444,29 @@ function getApiErrorMessage(error, fallback) {
 }
 
 function normalizeApiAssetUrl(url) {
-  if (!url) return "img/product.jpg";
-  if (/^https?:\/\//i.test(url) || String(url).startsWith("data:")) return url;
-  return getApiBaseUrl().replace(/\/$/, "") + "/" + String(url).replace(/^\//, "");
+  if (
+    !url ||
+    url === "null" ||
+    url === "undefined" ||
+    String(url).trim() === ""
+  ) {
+    return "img/product.jpg";
+  }
+
+  const value = String(url).trim();
+
+  if (
+    /^https?:\/\//i.test(value) ||
+    value.startsWith("data:")
+  ) {
+    return value;
+  }
+
+  return (
+    getApiBaseUrl().replace(/\/$/, "") +
+    "/" +
+    value.replace(/^\//, "")
+  );
 }
 
 function mapApiProduct(product) {
@@ -6445,52 +6479,61 @@ var DashboardStatisticsManager = {
 
 // Backend DASHBOARD API 
 async function getDashboardStatistics() {
-  console.log("📊 Dashboard API START");
-
-  // OFFLINE DATA MODE START
   if (OFFLINE_DATA_MODE) {
     const todayRevenue = calculateTodayRevenue();
-    const yesterdayRevenue = Number(localStorage.getItem("yesterdaySalesTotal")) || 0;
-    const dailyChange = yesterdayRevenue > 0
-      ? Math.round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100)
-      : 0;
+    const yesterdayRevenue =
+      Number(localStorage.getItem("yesterdaySalesTotal")) || 0;
+
+    const dailyChange =
+      yesterdayRevenue > 0
+        ? Math.round(
+            ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
+          )
+        : 0;
 
     const monthlyRevenue = calculateMonthlyRevenue();
     const previousMonthRevenue = getPreviousMonthRevenue();
-    const monthlyGrowth = previousMonthRevenue > 0
-      ? Math.round(((monthlyRevenue - previousMonthRevenue) / previousMonthRevenue) * 100)
-      : 0;
 
-    const inventoryBalance = products.reduce(
-      (sum, p) => sum + (Number(p.stock) || 0) * (Number(p.costPrice) || 0),
-      0
-    );
+    const monthlyGrowth =
+      previousMonthRevenue > 0
+        ? Math.round(
+            ((monthlyRevenue - previousMonthRevenue) /
+              previousMonthRevenue) *
+              100
+          )
+        : 0;
 
-    const data = {
+    return {
       monthly_revenue: monthlyRevenue,
       monthly_revenue_growth: monthlyGrowth,
       daily_sales: todayRevenue,
       daily_sales_change: dailyChange,
       monthly_profit: calculateMonthlyProfit(),
-      inventory_balance: inventoryBalance
+      inventory_balance: products.reduce(
+        (sum, p) =>
+          sum +
+          (Number(p.stock) || 0) *
+            (Number(p.costPrice) || 0),
+        0
+      )
     };
-
-    DashboardStatisticsManager.updateDashboard(data);
-    return data;
   }
-  // OFFLINE DATA MODE END
 
   try {
-    const response = await window.crmApi.get("/api/v1/dashboard/stats");
-    console.log("🔥 DASHBOARD API ISHLADI");
-    console.log(response.data);
+    const response = await window.crmApi.get("/statistics/full");
 
-    // UI UPDATE
-    DashboardStatisticsManager.updateDashboard(response.data);
+    const data = response.data;
 
-    return response.data;
+    DashboardStatisticsManager.updateDashboard(data);
+
+    return data;
   } catch (error) {
-    console.error("❌ DASHBOARD API ERROR", error);
+    console.error(
+      "❌ STATISTICS FULL ERROR:",
+      error?.response?.status,
+      error?.response?.data || error.message
+    );
+
     return null;
   }
 }
@@ -6976,38 +7019,34 @@ async function getOverduePayments() {
 
 // // Backend API DailySalesStats
 async function getDailySalesStats() {
-  console.log("━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📊 DAILY SALES STATS API");
-
-  // OFFLINE DATA MODE START
   if (OFFLINE_DATA_MODE) {
-    const data = { today_revenue: calculateTodayRevenue() };
-    console.log("📊 RESPONSE (OFFLINE):", data);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    return data;
+    return {
+      today_revenue: calculateTodayRevenue()
+    };
   }
-  // OFFLINE DATA MODE END
-
-  console.log("📤 REQUEST: GET /api/v1/daily-sales/stats");
-  console.log("🕒 Time:", new Date().toLocaleTimeString());
 
   try {
-    // ✅ window.crmApi ishlatiladi — qo'lda token + Authorization header kerak emas
-    const response = await window.crmApi.get("/api/v1/daily-sales/stats");
+    const response = await window.crmApi.get(
+      "/statistics/daily-revenue"
+    );
 
-    console.log("✅ STATUS: SUCCESS");
-    console.log("🌐 HTTP:", response.status);
-    console.log("📊 RESPONSE:");
-    console.table(response.data);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    const data = response.data;
 
-    return response.data;
+    return {
+      today_revenue: Number(
+        data.today_revenue ??
+        data.daily_revenue ??
+        data.revenue ??
+        0
+      )
+    };
   } catch (error) {
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    console.error("❌ STATUS: FAILED");
-    console.error("🌐 HTTP:", error?.response?.status);
-    console.error("📄 ERROR:", error?.response?.data || error.message);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    console.error(
+      "❌ DAILY REVENUE ERROR:",
+      error?.response?.status,
+      error?.response?.data || error.message
+    );
+
     return null;
   }
 }
@@ -7055,49 +7094,99 @@ async function getDailyTransactions(period = "daily") {
 // was wired in. getDailyTransactions() itself is left intact below in case
 // other code still depends on it.
 
-// // Backend API TransactionsExcel Export
+// ==========================================
+// TRANSACTIONS EXCEL EXPORT
+// Professional XLSX Export
+// ==========================================
 function exportTransactionsExcel() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("📊 EXPORT START");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   try {
+    // ------------------------------------------
+    // 1. SALES DATA CHECK
+    // ------------------------------------------
     if (!Array.isArray(sales)) {
-      alert("Savdo ma'lumotlari topilmadi.");
+      console.error("❌ EXPORT: sales array mavjud emas");
       return;
     }
 
+    // Har bosishda filterning ENG YANGI qiymatini olamiz
+    const currentFilter = String(transactionFilter || "all")
+      .trim()
+      .toLowerCase();
+
     const today = getToday();
+
+    console.log("🔎 CURRENT FILTER:", currentFilter);
+    console.log("📅 TODAY:", today);
+    console.log("📦 TOTAL SALES:", sales.length);
 
     let filteredSales = [];
     let fileName = "";
 
-    if (transactionFilter === "daily") {
-      filteredSales = sales.filter(
-        s => getDateKey(s.date) === today
-      );
+    // ------------------------------------------
+    // 2. DAILY
+    // ------------------------------------------
+    if (currentFilter === "daily") {
+      filteredSales = sales.filter((sale) => {
+        if (!sale || !sale.date) return false;
+
+        return getDateKey(sale.date) === today;
+      });
 
       fileName = `Kunlik_Savdo_${today}`;
 
-    } else if (transactionFilter === "weekly") {
+      console.log("📅 FILTER: DAILY");
+    }
+
+    // ------------------------------------------
+    // 3. WEEKLY
+    // Oxirgi 7 kun: bugun + oldingi 6 kun
+    // ------------------------------------------
+    else if (currentFilter === "weekly") {
       const now = new Date();
+
       const start = new Date(now);
-
-      start.setDate(now.getDate() - 6);
       start.setHours(0, 0, 0, 0);
+      start.setDate(start.getDate() - 6);
 
-      filteredSales = sales.filter(s => {
-        const d = toLocalDate(s.date);
-        return d >= start && d <= now;
+      const end = new Date(now);
+      end.setHours(23, 59, 59, 999);
+
+      filteredSales = sales.filter((sale) => {
+        if (!sale || !sale.date) return false;
+
+        const saleDate = toLocalDate(sale.date);
+
+        if (!(saleDate instanceof Date) || isNaN(saleDate)) {
+          return false;
+        }
+
+        return saleDate >= start && saleDate <= end;
       });
 
       fileName = `Haftalik_Savdo_${today}`;
 
-    } else if (transactionFilter === "monthly") {
+      console.log("📅 FILTER: WEEKLY");
+      console.log("🟢 START:", start);
+      console.log("🔴 END:", end);
+    }
+
+    // ------------------------------------------
+    // 4. MONTHLY
+    // ------------------------------------------
+    else if (currentFilter === "monthly") {
       const [year, month] = today.split("-");
 
-      filteredSales = sales.filter(s => {
-        const saleDate = getDateKey(s.date);
+      filteredSales = sales.filter((sale) => {
+        if (!sale || !sale.date) return false;
+
+        const saleDate = getDateKey(sale.date);
+
+        if (!saleDate) return false;
+
         const [saleYear, saleMonth] =
           saleDate.split("-");
 
@@ -7109,258 +7198,201 @@ function exportTransactionsExcel() {
 
       fileName = `Oylik_Savdo_${year}-${month}`;
 
-    } else {
-      filteredSales = [...sales];
-      fileName = `Savdolar_${today}`;
+      console.log("📅 FILTER: MONTHLY");
+      console.log("📅 YEAR:", year);
+      console.log("📅 MONTH:", month);
     }
 
+    // ------------------------------------------
+    // 5. ALL
+    // ------------------------------------------
+    else {
+      filteredSales = [...sales];
+
+      fileName = `Savdolar_${today}`;
+
+      console.log("📅 FILTER: ALL");
+    }
+
+    // ------------------------------------------
+    // 6. DATA CHECK
+    // ------------------------------------------
     if (!filteredSales.length) {
-      alert(
-        "Eksport qilish uchun savdo ma'lumotlari mavjud emas."
+      console.warn(
+        "⚠️ EXPORT: Tanlangan davrda savdo mavjud emas."
       );
+
+      console.log(
+        "ℹ️ FILTER:",
+        currentFilter
+      );
+
+      console.log(
+        "ℹ️ TOTAL SALES:",
+        sales.length
+      );
+
       return;
     }
 
-    const rows = filteredSales.map((s, index) => {
-      const d = toLocalDate(s.date);
+    console.log(
+      "📦 FILTERED SALES:",
+      filteredSales.length
+    );
+
+    // ------------------------------------------
+    // 7. TABLE DATA
+    // ------------------------------------------
+    const rows = filteredSales.map((sale, index) => {
+      const date = toLocalDate(sale.date);
 
       return {
         "#": index + 1,
 
         "Mahsulot":
-          s.name ||
-          s.product_name ||
+          sale.name ||
+          sale.product_name ||
           "Noma'lum",
 
         "Miqdor":
-          Number(s.qty ?? s.quantity ?? 0),
+          Number(
+            sale.qty ??
+            sale.quantity ??
+            0
+          ),
 
         "Birlik":
-          s.unit || "",
+          sale.unit || "",
 
         "Narx":
-          Number(s.price ?? 0),
+          Number(
+            sale.price ??
+            0
+          ),
 
         "Valyuta":
-          s.currency || "UZS",
+          sale.currency ||
+          "UZS",
 
         "Jami":
           Number(
-            s.total ??
-            s.total_amount ??
+            sale.total ??
+            sale.total_amount ??
             0
           ),
 
         "To'lov turi":
-          s.paymentType === "card"
+          sale.paymentType === "card"
             ? "Karta"
-            : s.paymentType === "cash"
+            : sale.paymentType === "cash"
               ? "Naqd"
-              : s.paymentType || "",
+              : sale.paymentType || "",
 
         "Sana":
-          d.toLocaleDateString("uz-UZ"),
+          date instanceof Date &&
+          !isNaN(date)
+            ? date.toLocaleDateString("uz-UZ")
+            : "",
 
         "Vaqt":
-          d.toLocaleTimeString("uz-UZ", {
-            hour: "2-digit",
-            minute: "2-digit"
-          }),
+          date instanceof Date &&
+          !isNaN(date)
+            ? date.toLocaleTimeString(
+                "uz-UZ",
+                {
+                  hour: "2-digit",
+                  minute: "2-digit"
+                }
+              )
+            : "",
 
         "Status":
-          s.status === "sold"
+          sale.status === "sold"
             ? "Sotildi"
-            : s.status === "returned"
+            : sale.status === "returned"
               ? "Qaytarildi"
-              : s.status || ""
+              : sale.status || ""
       };
     });
 
-    console.log("📦 EXPORT COUNT:", rows.length);
-
-    /*
-     * ==========================================
-     * 1. CSV YARATISH
-     * ==========================================
-     *
-     * CSV deyarli barcha jadval dasturlarida ochiladi.
-     */
-
-    const headers = Object.keys(rows[0]);
-
-    const csvRows = [
-      headers.join(";"),
-
-      ...rows.map(row =>
-        headers
-          .map(header => {
-            let value = row[header];
-
-            if (value === null || value === undefined) {
-              value = "";
-            }
-
-            value = String(value);
-
-            // CSV ichidagi maxsus belgilarni himoyalash
-            value = value
-              .replace(/"/g, '""')
-              .replace(/\r?\n/g, " ");
-
-            return `"${value}"`;
-          })
-          .join(";")
-      )
-    ];
-
-    /*
-     * UTF-8 BOM
-     *
-     * O'zbekcha harflar:
-     * o‘, g‘, ʻ, қ va boshqalar
-     * Excelda to'g'ri chiqishi uchun.
-     */
-
-    const csvContent =
-      "\uFEFF" +
-      csvRows.join("\r\n");
-
-    const csvBlob = new Blob(
-      [csvContent],
-      {
-        type:
-          "text/csv;charset=utf-8;"
-      }
-    );
-
-    const csvUrl =
-      URL.createObjectURL(csvBlob);
-
-    const csvLink =
-      document.createElement("a");
-
-    csvLink.href = csvUrl;
-    csvLink.download =
-      `${fileName}.csv`;
-
-    document.body.appendChild(csvLink);
-
-    csvLink.click();
-
-    document.body.removeChild(csvLink);
-
-    setTimeout(() => {
-      URL.revokeObjectURL(csvUrl);
-    }, 1000);
-
     console.log(
-      "✅ CSV EXPORT SUCCESS"
+      "📊 EXPORT ROWS:",
+      rows.length
     );
 
-
-    /*
-     * ==========================================
-     * 2. XLSX YARATISH
-     * ==========================================
-     *
-     * XLSX kutubxonasi mavjud bo'lsa,
-     * Excel faylini ham yaratamiz.
-     */
-
-    if (typeof XLSX !== "undefined") {
-
-      try {
-
-        const worksheet =
-          XLSX.utils.json_to_sheet(rows);
-
-        worksheet["!cols"] = [
-          { wch: 5 },
-          { wch: 25 },
-          { wch: 10 },
-          { wch: 10 },
-          { wch: 15 },
-          { wch: 12 },
-          { wch: 18 },
-          { wch: 15 },
-          { wch: 15 },
-          { wch: 12 },
-          { wch: 15 }
-        ];
-
-        const workbook =
-          XLSX.utils.book_new();
-
-        XLSX.utils.book_append_sheet(
-          workbook,
-          worksheet,
-          "Savdolar"
-        );
-
-        XLSX.writeFile(
-          workbook,
-          `${fileName}.xlsx`,
-          {
-            bookType: "xlsx",
-            compression: true
-          }
-        );
-
-        console.log(
-          "✅ XLSX EXPORT SUCCESS"
-        );
-
-      } catch (xlsxError) {
-
-        console.error(
-          "⚠️ XLSX yaratilmadi:",
-          xlsxError
-        );
-
-        console.log(
-          "✅ CSV fallback ishladi."
-        );
-      }
-
-    } else {
-
-      console.warn(
-        "⚠️ XLSX library mavjud emas."
+    // ------------------------------------------
+    // 8. XLSX LIBRARY CHECK
+    // ------------------------------------------
+    if (
+      typeof XLSX === "undefined" ||
+      !XLSX.utils ||
+      !XLSX.writeFile
+    ) {
+      console.error(
+        "❌ XLSX library topilmadi."
       );
 
-      console.log(
-        "✅ CSV fallback ishladi."
-      );
+      return;
     }
 
+    // ------------------------------------------
+    // 9. CREATE WORKSHEET
+    // ------------------------------------------
+    const worksheet =
+      XLSX.utils.json_to_sheet(rows);
 
-    /*
-     * ==========================================
-     * YAKUN
-     * ==========================================
-     */
+    // ------------------------------------------
+    // 10. COLUMN WIDTHS
+    // ------------------------------------------
+    worksheet["!cols"] = [
+      { wch: 6 },   // #
+      { wch: 30 },  // Mahsulot
+      { wch: 12 },  // Miqdor
+      { wch: 12 },  // Birlik
+      { wch: 16 },  // Narx
+      { wch: 12 },  // Valyuta
+      { wch: 18 },  // Jami
+      { wch: 18 },  // To'lov turi
+      { wch: 15 },  // Sana
+      { wch: 12 },  // Vaqt
+      { wch: 16 }   // Status
+    ];
 
-    alert(
-      `✅ Eksport muvaffaqiyatli!\n\n` +
-      `📊 ${rows.length} ta savdo eksport qilindi.\n\n` +
-      `📄 CSV — barcha jadval dasturlarida ochiladi.\n` +
-      `📗 XLSX — Excel formati ham yaratildi.`
+    // ------------------------------------------
+    // 11. CREATE WORKBOOK
+    // ------------------------------------------
+    const workbook =
+      XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      "Savdolar"
+    );
+
+    // ------------------------------------------
+    // 12. EXPORT XLSX ONLY
+    // ------------------------------------------
+    XLSX.writeFile(
+      workbook,
+      `${fileName}.xlsx`,
+      {
+        bookType: "xlsx",
+        compression: true
+      }
     );
 
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("✅ EXPORT COMPLETE");
+    console.log("✅ XLSX EXPORT SUCCESS");
+    console.log("📄 FILE:", `${fileName}.xlsx`);
+    console.log("📊 ROWS:", rows.length);
+    console.log("🔎 FILTER:", currentFilter);
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   } catch (error) {
-
     console.error(
       "❌ EXPORT ERROR:",
       error
-    );
-
-    alert(
-      "Eksportda xatolik yuz berdi.\n" +
-      "CSV formatini ishlatib qayta urinib ko'ring."
     );
   }
 }
