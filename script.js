@@ -469,73 +469,27 @@ function normalizeApiAssetUrl(url) {
   );
 }
 
-// function mapApiProduct(product) {
-//   const existing = products.find(item => item.id === product.id) || {};
-//   const quantity = Number(product.quantity) || 0;
-//   const category = product.category || null;
-//   const unit = product.unit === "kg" ? "kg" : "dona";
-
-//   return {
-//     id: product.id,
-//     name: product.name || "",
-//     categoryId: category ? category.id : null,
-//     category: category ? category.name : "Kategoriyasiz",
-//     image: normalizeApiAssetUrl(product.image_url),
-//     imageUrl: normalizeApiAssetUrl(product.image_url),
-//     costPrice: Number(product.cost_price) || 0,
-//     price: Number(product.sell_price) || 0,
-//     currency: "UZS",
-//     stock: quantity,
-//     initialStock: Math.max(Number(existing.initialStock) || 0, quantity),
-//     unit,
-//     isLowStock: !!product.is_low_stock,
-//     createdAt: product.created_at || null
-//   };
-// }
 function mapApiProduct(product) {
+  const existing = products.find(item => item.id === product.id) || {};
   const quantity = Number(product.quantity) || 0;
+  const category = product.category || null;
+  const unit = product.unit === "kg" ? "kg" : "dona";
 
   return {
-    id: String(product._id),
-
-    name: product.product_name || "",
-
-    categoryId: product.category_id?._id
-      ? String(product.category_id._id)
-      : product.category_id
-        ? String(product.category_id)
-        : null,
-
-    category:
-      product.category_id?.category_name ||
-      "Kategoriyasiz",
-
-    image:
-      normalizeApiAssetUrl(product.images?.[0]),
-
-    imageUrl:
-      normalizeApiAssetUrl(product.images?.[0]),
-
-    costPrice:
-      Number(product.purchase_price) || 0,
-
-    price:
-      Number(product.selling_price) || 0,
-
+    id: product.id,
+    name: product.name || "",
+    categoryId: category ? category.id : null,
+    category: category ? category.name : "Kategoriyasiz",
+    image: normalizeApiAssetUrl(product.image_url),
+    imageUrl: normalizeApiAssetUrl(product.image_url),
+    costPrice: Number(product.cost_price) || 0,
+    price: Number(product.sell_price) || 0,
     currency: "UZS",
-
     stock: quantity,
-
-    initialStock: quantity,
-
-    unit: "dona",
-
-    isLowStock:
-      quantity <=
-      Number(product.minimum_quantity || 0),
-
-    createdAt:
-      product.createdAt || null
+    initialStock: Math.max(Number(existing.initialStock) || 0, quantity),
+    unit,
+    isLowStock: !!product.is_low_stock,
+    createdAt: product.created_at || null
   };
 }
 
@@ -1351,24 +1305,7 @@ if (productForm) {
           unit: productUnit.value === "ta" ? "dona" : productUnit.value
         };
 
-        await window.crmApi.put(
-          "/product/update",
-          {
-            product_name: productName.value.trim(),
-            product_barcode: productBarcode.value.trim(),
-            category_id: String(categoryId),
-            purchase_price: Number(costPriceValue),
-            selling_price: Number(salePriceValue),
-            quantity: Number(stockValue),
-            minimum_quantity: 0,
-            images: []
-          },
-          {
-            params: {
-              product_id: editingId
-            }
-          }
-        );
+        await window.crmApi.put(`/api/v1/products/${editingId}`, updateData);
         showSaleAlert("Mahsulot yangilandi!", "success");
         editingId = null;
       } else {
@@ -1433,14 +1370,7 @@ async function deleteProduct(id) {
   // OFFLINE DATA MODE END
 
   try {
-    await window.crmApi.delete(
-      "/product/delete",
-      {
-        params: {
-          product_id: id
-        }
-      }
-    );
+    await window.crmApi.delete(`/api/v1/products/${id}`);
     showSaleAlert("Mahsulot o'chirildi!", "success");
     await apiLoadProducts();
   } catch (error) {
@@ -1502,109 +1432,111 @@ const deleteCategoryBtn = document.getElementById("deleteCategory");
 let globalCategories = [];
 
 async function apiLoadProducts() {
+
+  // OFFLINE DATA MODE START
   if (OFFLINE_DATA_MODE) {
     renderProducts();
     renderSaleProducts();
     console.log("✅ Products loaded from OFFLINE storage:", products.length);
     return;
   }
+  // OFFLINE DATA MODE END
 
   try {
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("📦 PRODUCTS API");
 
-    const response = await window.crmApi.get("/product/get");
+    console.log(
+      "━━━━━━━━━━━━━━━━━━━━━━"
+    );
 
-    console.log("✅ STATUS:", response.status);
-    console.log("📥 RAW RESPONSE:", response.data);
+    console.log(
+      "📦 PRODUCTS API"
+    );
 
-    const rawProducts = Array.isArray(response.data)
-      ? response.data
-      : response.data?.data || [];
+    const response =
+      await window.crmApi.get(
+        "/api/v1/products/"
+      );
 
-    console.log("📊 PRODUCTS COUNT:", rawProducts.length);
+    console.log(
+      "✅ STATUS: SUCCESS"
+    );
 
-    products = rawProducts.map(product => ({
-      id: String(product._id),
-      name: product.product_name || "",
-      categoryId: product.category_id?._id
-        ? String(product.category_id._id)
-        : product.category_id
-          ? String(product.category_id)
-          : null,
-      category: product.category_id?.category_name || "Kategoriyasiz",
-      image: normalizeApiAssetUrl(product.images?.[0]),
-      imageUrl: normalizeApiAssetUrl(product.images?.[0]),
-      costPrice: Number(product.purchase_price) || 0,
-      price: Number(product.selling_price) || 0,
-      currency: "UZS",
-      stock: Number(product.quantity) || 0,
-      initialStock: Number(product.quantity) || 0,
-      unit: "dona",
-      isLowStock:
-        Number(product.quantity) <= Number(product.minimum_quantity),
-      createdAt: product.createdAt || null
-    }));
+    console.log(
+      "📊 PRODUCTS COUNT:",
+      response.data.length
+    );
 
-    console.table(products);
+    console.table(
+      response.data
+    );
+
+    products =
+      (response.data || [])
+        .map(mapApiProduct);
+
+    console.log(
+      "🔄 MAPPED PRODUCTS:"
+    );
+
+    console.table(
+      products
+    );
 
     saveProducts();
+
     renderProducts();
+
     renderSaleProducts();
 
-    console.log("✅ PRODUCTS RENDERED");
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    console.log(
+      "✅ PRODUCTS RENDERED"
+    );
+
+    console.log(
+      "━━━━━━━━━━━━━━━━━━━━━━"
+    );
 
   } catch (error) {
-    console.error("❌ PRODUCTS API ERROR:", error);
+
     console.error(
-      "📄 RESPONSE:",
-      error?.response?.data
+      "❌ PRODUCTS API ERROR"
+    );
+
+    console.error(
+      error
+    );
+
+    showSaleAlert(
+      getApiErrorMessage(
+        error,
+        "Mahsulotlarni yuklashda xatolik yuz berdi"
+      ),
+      "error"
     );
   }
 }
 
 async function apiLoadCategories() {
+  // OFFLINE DATA MODE START
   if (OFFLINE_DATA_MODE) {
     globalCategories = loadOfflineCategories();
     saveOfflineCategories();
     renderCategories();
     renderCategoryList();
+    console.log("✅ Categories loaded from OFFLINE storage:", globalCategories.length);
     return;
   }
-
+  // OFFLINE DATA MODE END
   try {
-    const response =
-      await window.crmApi.get("/category/get/all");
-
-    console.log("📥 CATEGORIES:", response.data);
-
-    globalCategories =
-      (Array.isArray(response.data)
-        ? response.data
-        : []
-      ).map(c => ({
-        id: String(c._id),
-        name: c.category_name
-      }));
-
-    categories =
-      globalCategories.map(c => c.name);
-
+    const response = await window.crmApi.get("/api/v1/products/categories");
+    globalCategories = response.data;
+    categories = globalCategories.map(c => c.name);
     saveCategories();
     renderCategories();
     renderCategoryList();
-
-    console.log(
-      "✅ Categories loaded:",
-      globalCategories.length
-    );
-
+    console.log("✅ Categories loaded from API:", globalCategories.length);
   } catch (error) {
-    console.error(
-      "❌ CATEGORY ERROR:",
-      error?.response?.data || error
-    );
+    console.error("❌ Error loading categories from API:", error);
   }
 }
 
@@ -1688,8 +1620,8 @@ if (saveCategory) {
       }
       // OFFLINE DATA MODE END
 
-      await window.crmApi.post("/category/create", {
-        category_name: value
+      await window.crmApi.post("/api/v1/products/categories", {
+        name: value
       });
       showSaleAlert("Kategoriya qo'shildi!", "success");
       await apiLoadCategories();
@@ -1732,17 +1664,7 @@ if (updateCategoryBtn) {
       }
       // OFFLINE DATA MODE END
 
-      await window.crmApi.put(
-        "/category/update",
-        {
-          category_name: newName
-        },
-        {
-          params: {
-            category_id: catId
-          }
-        }
-      );
+      await window.crmApi.put(`/api/v1/products/categories/${catId}`, { name: newName });
       showSaleAlert("Kategoriya tahrirlandi!", "success");
       await apiLoadCategories();
       $("#categoryModal").modal("hide");
@@ -1776,14 +1698,7 @@ if (deleteCategoryBtn) {
       }
       // OFFLINE DATA MODE END
 
-      await window.crmApi.delete(
-        "/category/delete",
-        {
-          params: {
-            category_id: catId
-          }
-        }
-      );
+      await window.crmApi.delete(`/api/v1/products/categories/${catId}`);
       showSaleAlert("Kategoriya o'chirildi!", "success");
       await apiLoadCategories();
       newCategory.value = "";
@@ -1892,37 +1807,18 @@ if (saleSearch) {
 =============================================== */
 async function getTransactions(params = {}) {
   try {
-    const response =
-      await window.crmApi.get(
-        "/sale/get",
-        {
-          params: {
-            status: "active",
-            sort_order: "descending"
-          }
-        }
-      );
+    const response = await window.crmApi.get("/api/v1/transactions/", { params });
 
-    const sales =
-      Array.isArray(response.data)
-        ? response.data
-        : [];
+    // Backend may return a raw array OR a paginated object ({items}/{results}/{data})
+    const raw = response.data;
+    const items = Array.isArray(raw)
+      ? raw
+      : (raw.items || raw.results || raw.data || []);
 
-    return {
-      items: sales,
-      total: sales.length
-    };
-
+    return { items, total: raw.total ?? items.length };
   } catch (error) {
-    console.error(
-      "❌ TRANSACTIONS API ERROR:",
-      error?.response?.data || error
-    );
-
-    return {
-      items: [],
-      total: 0
-    };
+    console.error("❌ TRANSACTIONS API ERROR:", error);
+    return { items: [], total: 0 };
   }
 }
 
@@ -2252,59 +2148,17 @@ async function handleSale(paymentType) {
     }
     // OFFLINE DATA MODE END
 
-    // await window.crmApi.post("/api/v1/sales/", {
-    //   items: [
-    //     {
-    //       product_id: parseInt(product.id),
-    //       quantity: parseFloat(qty)
-    //     }
-    //   ],
-    //   payment_type: paymentType,
-    //   notes: currentSaleSessionId.toString()
-    // });
-    const saleData = {
-      products: [
+    await window.crmApi.post("/api/v1/sales/", {
+      items: [
         {
-          product_id: String(product.id),
-
-          purchase_price:
-            Number(product.costPrice),
-
-          selling_price:
-            Number(product.price),
-
-          quantity:
-            Number(qty)
+          product_id: parseInt(product.id),
+          quantity: parseFloat(qty)
         }
       ],
+      payment_type: paymentType,
+      notes: currentSaleSessionId.toString()
+    });
 
-      paid_by_cash:
-        paymentType === "cash"
-          ? Number(product.price) * Number(qty)
-          : 0,
-
-      paid_by_card:
-        paymentType === "card"
-          ? Number(product.price) * Number(qty)
-          : 0,
-
-      note:
-        currentSaleSessionId.toString()
-    };
-
-    console.log("📤 CREATE SALE:", saleData);
-
-    const response =
-      await window.crmApi.post(
-        "/sale/create",
-        saleData
-      );
-
-    console.log(
-      "✅ SALE CREATED:",
-      response.data
-    );
-    
     showSaleAlert(`✅ ${product.name} sotildi!`, "success");
     saleQty.value = "";
     saleQty.focus();
@@ -3307,7 +3161,7 @@ async function apiLoadDebtors() {
   // OFFLINE DATA MODE END
 
   try {
-    const response = await window.crmApi.get("/debt/get");
+    const response = await window.crmApi.get("/api/v1/debtors/");
 
     console.log("📥 RESPONSE:", response.status, response.data);
 
@@ -3419,7 +3273,7 @@ async function handleAdjustDebt(event) {
       console.log("📤 REQUEST: POST /api/v1/debtors/");
       console.log("📦 PAYLOAD:", { full_name: debtor.name, debt_amount: amount });
 
-      const res = await window.crmApi.post("/debt/get", {
+      const res = await window.crmApi.post("/api/v1/debtors/", {
         full_name: debtor.name,
         phone: debtor.phone,
         debt_amount: amount,
@@ -3528,7 +3382,7 @@ async function handleSubmit(event) {
     }
     // OFFLINE DATA MODE END
 
-    await window.crmApi.post("/debt/get", {
+    await window.crmApi.post("/api/v1/debtors/", {
       full_name: newDebtor.name,
       phone: newDebtor.phone,
       debt_amount: newDebtor.amount,
@@ -6733,410 +6587,362 @@ window.getDashboardStatistics = getDashboardStatistics;
 //   }
 // }
 
-// async function getWeeklyTrend() {
-
-//   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-//   console.log("📈 WEEKLY TREND");
-
-//   try {
-
-//     let result;
-
-//     // ===============================================
-//     // ONLINE
-//     // ===============================================
-
-//     if (!OFFLINE_DATA_MODE) {
-
-//       result = await AuthSystem.getSales({
-//         status: "active",
-//         sort_order: "ascending"
-//       });
-
-//       console.log(
-//         "📥 WEEKLY SALES API:",
-//         result
-//       );
-
-//       if (
-//         !result ||
-//         !result.success
-//       ) {
-//         console.error(
-//           "❌ WEEKLY SALES API ERROR:",
-//           result?.backendMessage ||
-//           result?.responseData
-//         );
-
-//         return [];
-//       }
-
-//     }
-
-//     // ===============================================
-//     // SALES MANBAI
-//     // ===============================================
-
-//     let sourceSales = [];
-
-//     if (OFFLINE_DATA_MODE) {
-
-//       sourceSales = Array.isArray(sales)
-//         ? sales
-//         : [];
-
-//     } else {
-
-//       sourceSales =
-//         Array.isArray(result.data)
-//           ? result.data
-//           : [];
-
-//     }
-
-//     // ===============================================
-//     // 7 KUN
-//     // ===============================================
-
-//     const dayNames = [
-//       "Yak",
-//       "Dush",
-//       "Sesh",
-//       "Char",
-//       "Pay",
-//       "Juma",
-//       "Shan"
-//     ];
-
-//     const trend = [];
-
-//     for (let i = 6; i >= 0; i--) {
-
-//       const date = new Date();
-
-//       date.setHours(
-//         0,
-//         0,
-//         0,
-//         0
-//       );
-
-//       date.setDate(
-//         date.getDate() - i
-//       );
-
-//       const dateKey =
-//         getDateKey(date);
-
-//       let amount = 0;
-
-//       // =============================================
-//       // ONLINE YANGI SALE FORMAT
-//       // =============================================
-
-//       if (!OFFLINE_DATA_MODE) {
-
-//         sourceSales.forEach(sale => {
-
-//           if (
-//             !sale ||
-//             sale.status !== "active"
-//           ) {
-//             return;
-//           }
-
-//           const saleDate =
-//             sale.createdAt ||
-//             sale.updatedAt;
-
-//           if (
-//             !saleDate ||
-//             getDateKey(saleDate) !== dateKey
-//           ) {
-//             return;
-//           }
-
-//           if (
-//             Array.isArray(sale.products)
-//           ) {
-
-//             sale.products.forEach(item => {
-
-//               const quantity =
-//                 Number(item.quantity) || 0;
-
-//               const price =
-//                 Number(item.selling_price) || 0;
-
-//               amount +=
-//                 price * quantity;
-//             });
-
-//           } else {
-
-//             amount +=
-//               Number(sale.total_price) || 0;
-//           }
-
-//         });
-
-//       }
-
-//       // =============================================
-//       // OFFLINE / ESKI FORMAT
-//       // =============================================
-
-//       else {
-
-//         sourceSales.forEach(sale => {
-
-//           if (
-//             sale.status !== "sold"
-//           ) {
-//             return;
-//           }
-
-//           if (
-//             getDateKey(sale.date) !== dateKey
-//           ) {
-//             return;
-//           }
-
-//           amount +=
-//             Number(sale.total) || 0;
-//         });
-
-//       }
-
-//       trend.push({
-
-//         day:
-//           dayNames[date.getDay()],
-
-//         amount:
-//           Math.round(amount)
-
-//       });
-
-//     }
-
-//     console.log(
-//       "✅ WEEKLY TREND RESULT:",
-//       trend
-//     );
-
-//     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
-//     return trend;
-
-//   } catch (error) {
-
-//     console.error(
-//       "❌ WEEKLY TREND ERROR:",
-//       error?.response?.data ||
-//       error?.message ||
-//       error
-//     );
-
-//     return [];
-//   }
-// }
-
 async function getWeeklyTrend() {
+
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📈 WEEKLY TREND");
+
   try {
-    const response =
-      await window.crmApi.get(
-        "/statistics/weekly-trend"
+
+    let result;
+
+    // ===============================================
+    // ONLINE
+    // ===============================================
+
+    if (!OFFLINE_DATA_MODE) {
+
+      result = await AuthSystem.getSales({
+        status: "active",
+        sort_order: "ascending"
+      });
+
+      console.log(
+        "📥 WEEKLY SALES API:",
+        result
       );
 
+      if (
+        !result ||
+        !result.success
+      ) {
+        console.error(
+          "❌ WEEKLY SALES API ERROR:",
+          result?.backendMessage ||
+          result?.responseData
+        );
+
+        return [];
+      }
+
+    }
+
+    // ===============================================
+    // SALES MANBAI
+    // ===============================================
+
+    let sourceSales = [];
+
+    if (OFFLINE_DATA_MODE) {
+
+      sourceSales = Array.isArray(sales)
+        ? sales
+        : [];
+
+    } else {
+
+      sourceSales =
+        Array.isArray(result.data)
+          ? result.data
+          : [];
+
+    }
+
+    // ===============================================
+    // 7 KUN
+    // ===============================================
+
+    const dayNames = [
+      "Yak",
+      "Dush",
+      "Sesh",
+      "Char",
+      "Pay",
+      "Juma",
+      "Shan"
+    ];
+
+    const trend = [];
+
+    for (let i = 6; i >= 0; i--) {
+
+      const date = new Date();
+
+      date.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+      date.setDate(
+        date.getDate() - i
+      );
+
+      const dateKey =
+        getDateKey(date);
+
+      let amount = 0;
+
+      // =============================================
+      // ONLINE YANGI SALE FORMAT
+      // =============================================
+
+      if (!OFFLINE_DATA_MODE) {
+
+        sourceSales.forEach(sale => {
+
+          if (
+            !sale ||
+            sale.status !== "active"
+          ) {
+            return;
+          }
+
+          const saleDate =
+            sale.createdAt ||
+            sale.updatedAt;
+
+          if (
+            !saleDate ||
+            getDateKey(saleDate) !== dateKey
+          ) {
+            return;
+          }
+
+          if (
+            Array.isArray(sale.products)
+          ) {
+
+            sale.products.forEach(item => {
+
+              const quantity =
+                Number(item.quantity) || 0;
+
+              const price =
+                Number(item.selling_price) || 0;
+
+              amount +=
+                price * quantity;
+            });
+
+          } else {
+
+            amount +=
+              Number(sale.total_price) || 0;
+          }
+
+        });
+
+      }
+
+      // =============================================
+      // OFFLINE / ESKI FORMAT
+      // =============================================
+
+      else {
+
+        sourceSales.forEach(sale => {
+
+          if (
+            sale.status !== "sold"
+          ) {
+            return;
+          }
+
+          if (
+            getDateKey(sale.date) !== dateKey
+          ) {
+            return;
+          }
+
+          amount +=
+            Number(sale.total) || 0;
+        });
+
+      }
+
+      trend.push({
+
+        day:
+          dayNames[date.getDay()],
+
+        amount:
+          Math.round(amount)
+
+      });
+
+    }
+
     console.log(
-      "📈 WEEKLY TREND:",
-      response.data
+      "✅ WEEKLY TREND RESULT:",
+      trend
     );
 
-    return response.data;
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    return trend;
 
   } catch (error) {
+
     console.error(
       "❌ WEEKLY TREND ERROR:",
-      error?.response?.data || error
+      error?.response?.data ||
+      error?.message ||
+      error
     );
 
-    return {};
+    return [];
   }
 }
-// async function getDailyRevenue() {
 
-//   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-//   console.log("📊 DAILY REVENUE");
-
-//   try {
-
-//     // ===============================================
-//     // ONLINE
-//     // ===============================================
-
-//     if (!OFFLINE_DATA_MODE) {
-
-//       const result =
-//         await AuthSystem.getSales({
-//           status: "active",
-//           sort_order: "descending"
-//         });
-
-//       console.log(
-//         "📥 DAILY SALES API:",
-//         result
-//       );
-
-//       if (
-//         !result ||
-//         !result.success
-//       ) {
-
-//         console.error(
-//           "❌ DAILY SALES API ERROR:",
-//           result?.backendMessage ||
-//           result?.responseData
-//         );
-
-//         return {
-//           daily_revenue: 0
-//         };
-//       }
-
-//       const today =
-//         getToday();
-
-//       let dailyRevenue = 0;
-
-//       const rawSales =
-//         Array.isArray(result.data)
-//           ? result.data
-//           : [];
-
-//       rawSales.forEach(sale => {
-
-//         if (
-//           !sale ||
-//           sale.status !== "active"
-//         ) {
-//           return;
-//         }
-
-//         const saleDate =
-//           sale.createdAt ||
-//           sale.updatedAt;
-
-//         if (
-//           !saleDate ||
-//           getDateKey(saleDate) !== today
-//         ) {
-//           return;
-//         }
-
-//         // =========================================
-//         // YANGI API:
-//         // products[]
-//         // =========================================
-
-//         if (
-//           Array.isArray(sale.products)
-//         ) {
-
-//           sale.products.forEach(item => {
-
-//             const quantity =
-//               Number(item.quantity) || 0;
-
-//             const sellingPrice =
-//               Number(item.selling_price) || 0;
-
-//             dailyRevenue +=
-//               quantity * sellingPrice;
-
-//           });
-
-//         }
-
-//         // =========================================
-//         // FALLBACK
-//         // =========================================
-
-//         else {
-
-//           dailyRevenue +=
-//             Number(sale.total_price) || 0;
-
-//         }
-
-//       });
-
-//       const data = {
-//         daily_revenue:
-//           Math.round(dailyRevenue)
-//       };
-
-//       console.log(
-//         "✅ DAILY REVENUE:",
-//         data
-//       );
-
-//       console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
-//       return data;
-//     }
-
-//     // ===============================================
-//     // OFFLINE
-//     // ===============================================
-
-//     const data = {
-//       daily_revenue:
-//         calculateTodayRevenue()
-//     };
-
-//     console.log(
-//       "📊 DAILY REVENUE (OFFLINE):",
-//       data
-//     );
-
-//     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
-//     return data;
-
-//   } catch (error) {
-
-//     console.error(
-//       "❌ DAILY REVENUE ERROR:",
-//       error?.response?.data ||
-//       error?.message ||
-//       error
-//     );
-
-//     return {
-//       daily_revenue: 0
-//     };
-//   }
-// }
 async function getDailyRevenue() {
+
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📊 DAILY REVENUE");
+
   try {
-    const response =
-      await window.crmApi.get(
-        "/statistics/daily-revenue"
+
+    // ===============================================
+    // ONLINE
+    // ===============================================
+
+    if (!OFFLINE_DATA_MODE) {
+
+      const result =
+        await AuthSystem.getSales({
+          status: "active",
+          sort_order: "descending"
+        });
+
+      console.log(
+        "📥 DAILY SALES API:",
+        result
       );
 
+      if (
+        !result ||
+        !result.success
+      ) {
+
+        console.error(
+          "❌ DAILY SALES API ERROR:",
+          result?.backendMessage ||
+          result?.responseData
+        );
+
+        return {
+          daily_revenue: 0
+        };
+      }
+
+      const today =
+        getToday();
+
+      let dailyRevenue = 0;
+
+      const rawSales =
+        Array.isArray(result.data)
+          ? result.data
+          : [];
+
+      rawSales.forEach(sale => {
+
+        if (
+          !sale ||
+          sale.status !== "active"
+        ) {
+          return;
+        }
+
+        const saleDate =
+          sale.createdAt ||
+          sale.updatedAt;
+
+        if (
+          !saleDate ||
+          getDateKey(saleDate) !== today
+        ) {
+          return;
+        }
+
+        // =========================================
+        // YANGI API:
+        // products[]
+        // =========================================
+
+        if (
+          Array.isArray(sale.products)
+        ) {
+
+          sale.products.forEach(item => {
+
+            const quantity =
+              Number(item.quantity) || 0;
+
+            const sellingPrice =
+              Number(item.selling_price) || 0;
+
+            dailyRevenue +=
+              quantity * sellingPrice;
+
+          });
+
+        }
+
+        // =========================================
+        // FALLBACK
+        // =========================================
+
+        else {
+
+          dailyRevenue +=
+            Number(sale.total_price) || 0;
+
+        }
+
+      });
+
+      const data = {
+        daily_revenue:
+          Math.round(dailyRevenue)
+      };
+
+      console.log(
+        "✅ DAILY REVENUE:",
+        data
+      );
+
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+      return data;
+    }
+
+    // ===============================================
+    // OFFLINE
+    // ===============================================
+
+    const data = {
+      daily_revenue:
+        calculateTodayRevenue()
+    };
+
     console.log(
-      "📊 DAILY REVENUE:",
-      response.data
+      "📊 DAILY REVENUE (OFFLINE):",
+      data
     );
 
-    return response.data;
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    return data;
 
   } catch (error) {
+
     console.error(
       "❌ DAILY REVENUE ERROR:",
-      error?.response?.data || error
+      error?.response?.data ||
+      error?.message ||
+      error
     );
 
     return {
@@ -7159,38 +6965,7 @@ async function getLowStockAlerts() {
   // OFFLINE DATA MODE END
 
   try {
-    async function getLowStockAlerts() {
-  if (OFFLINE_DATA_MODE) {
-    return products.filter(p =>
-      Number(p.stock) <=
-      Number(p.minimumQuantity || 0)
-    );
-  }
-
-  try {
-    const response =
-      await window.crmApi.get(
-        "/statistics/full"
-      );
-
-    return {
-      count:
-        Number(
-          response.data?.low_stock_count
-        ) || 0
-    };
-
-  } catch (error) {
-    console.error(
-      "❌ LOW STOCK ERROR:",
-      error?.response?.data || error
-    );
-
-    return {
-      count: 0
-    };
-  }
-}
+    const response = await window.crmApi.get("/api/v1/dashboard/low-stock-alerts");
     console.log("⚠️ LOW STOCK", response.data);
     return response.data;
   } catch (error) {
@@ -7216,34 +6991,29 @@ async function getLowStockAlerts() {
 
 // // Backend API Overdue Payments
 async function getOverduePayments() {
+  console.log("━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("⏰ OVERDUE PAYMENTS API");
+  console.log("📤 REQUEST: GET /api/v1/dashboard/overdue-payments");
+  console.log("🕒 Time:", new Date().toLocaleTimeString());
+
   try {
-    const response =
-      await window.crmApi.get(
-        "/statistics/full"
-      );
+    // ✅ window.crmApi interceptor token ni avtomatik qo'shadi — qo'lda olish shart emas
+    const response = await window.crmApi.get("/api/v1/dashboard/overdue-payments");
 
-    return {
-      overdue_payments:
-        Number(
-          response.data?.overdue_payments
-        ) || 0,
+    console.log("✅ STATUS: SUCCESS");
+    console.log("🌐 HTTP:", response.status);
+    console.log("📊 RESPONSE:");
+    console.table(response.data);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
 
-      overdue_count:
-        Number(
-          response.data?.overdue_count
-        ) || 0
-    };
-
+    return response.data;
   } catch (error) {
-    console.error(
-      "❌ OVERDUE ERROR:",
-      error?.response?.data || error
-    );
-
-    return {
-      overdue_payments: 0,
-      overdue_count: 0
-    };
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    console.error("❌ STATUS: FAILED");
+    console.error("🌐 HTTP:", error?.response?.status);
+    console.error("📄 ERROR:", error?.response?.data || error.message);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    return [];
   }
 }
 
@@ -7636,9 +7406,13 @@ async function createCategory(name) {
 
   try {
 
-    const response = await window.crmApi.get(
-      "/category/get/all"
-    );
+    const response =
+      await window.crmApi.post(
+        "/api/v1/products/categories",
+        {
+          name: name
+        }
+      );
 
     console.log(
       "✅ CATEGORY CREATED"
