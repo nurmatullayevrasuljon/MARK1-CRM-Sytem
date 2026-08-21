@@ -470,32 +470,26 @@ function normalizeApiAssetUrl(url) {
 }
 
 function mapApiProduct(product) {
-  const id = product._id || product.id;
-  const existing = products.find(item => item.id === id) || {};
+  const existing = products.find(item => item.id === product.id) || {};
   const quantity = Number(product.quantity) || 0;
-  // Backend "category_id" ni .populate("category_id", "category_name") bilan qaytaradi,
-  // shuning uchun bu maydon aslida to'liq kategoriya obyekti bo'ladi ({_id, category_name})
-  const category = product.category_id && typeof product.category_id === "object"
-    ? product.category_id
-    : null;
+  const category = product.category || null;
+  const unit = product.unit === "kg" ? "kg" : "dona";
 
   return {
-    id: id,
-    name: product.product_name || product.name || "",
-    barcode: product.product_barcode || "",
-    categoryId: category ? category._id : (typeof product.category_id === "string" ? product.category_id : null),
-    category: category ? category.category_name : "Kategoriyasiz",
-    image: normalizeApiAssetUrl((product.images && product.images[0]) || product.image_url),
-    imageUrl: normalizeApiAssetUrl((product.images && product.images[0]) || product.image_url),
-    costPrice: Number(product.purchase_price) || 0,
-    price: Number(product.selling_price) || 0,
+    id: product.id,
+    name: product.name || "",
+    categoryId: category ? category.id : null,
+    category: category ? category.name : "Kategoriyasiz",
+    image: normalizeApiAssetUrl(product.image_url),
+    imageUrl: normalizeApiAssetUrl(product.image_url),
+    costPrice: Number(product.cost_price) || 0,
+    price: Number(product.sell_price) || 0,
     currency: "UZS",
     stock: quantity,
-    minStock: Number(product.minimum_quantity) || 0,
     initialStock: Math.max(Number(existing.initialStock) || 0, quantity),
-    unit: "dona",
-    isLowStock: quantity <= (Number(product.minimum_quantity) || 0),
-    createdAt: product.createdAt || product.created_at || null
+    unit,
+    isLowStock: !!product.is_low_stock,
+    createdAt: product.created_at || null
   };
 }
 
@@ -1143,7 +1137,7 @@ function renderProducts(list = products) {
           <!-- EDIT -->
           <button 
             class="btn btn-sm btn-edit"
-            onclick="editProduct('${p.id}')">
+            onclick="editProduct(${p.id})">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
               <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
             </svg>
@@ -1153,7 +1147,7 @@ function renderProducts(list = products) {
           <!-- DELETE -->
           <button 
             class="btn btn-sm btn-danger ms-2"
-            onclick="deleteProduct('${p.id}')">
+            onclick="deleteProduct(${p.id})">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
               <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
             </svg>
@@ -1236,7 +1230,7 @@ if (productForm) {
     const stockValue = Number(productStock.value);
     const costPriceValue = Number(document.getElementById("productCostPrice").value);
     const salePriceValue = Number(productPrice.value);
-    const categoryId = productCategory.value;
+    const categoryId = Number(productCategory.value);
 
     if (!productName.value.trim()) {
       alert("Mahsulot nomini kiriting");
@@ -1300,52 +1294,39 @@ if (productForm) {
       }
       // OFFLINE DATA MODE END
 
-      // Rasm tanlangan bo'lsa, avval /file/create orqali yuklaymiz va URL olamiz
-      let imageUrl = null;
-      if (productImage.files[0]) {
-        try {
-          const fileForm = new FormData();
-          fileForm.append("file", productImage.files[0]);
-          const fileRes = await window.crmApi.post("/file/create", fileForm, {
-            headers: { "Content-Type": "multipart/form-data" }
-          });
-          imageUrl = fileRes?.data?.file?.file_url || null;
-        } catch (imgErr) {
-          console.error("Rasm yuklashda xatolik:", imgErr);
-          // Rasm yuklanmasa ham mahsulotni saqlashda davom etamiz
-        }
-      }
-
-      const payload = {
-        product_name: productName.value.trim(),
-        category_id: categoryId,
-        purchase_price: costPriceValue,
-        selling_price: salePriceValue,
-        quantity: stockValue
-      };
-
-      if (imageUrl) {
-        payload.images = [imageUrl];
-      }
-
       if (editingId) {
-        const result = await AuthSystem.updateProduct(editingId, payload);
+        // Update product using JSON PUT
+        const updateData = {
+          name: productName.value.trim(),
+          category_id: categoryId,
+          cost_price: parseFloat(costPriceValue),
+          sell_price: parseFloat(salePriceValue),
+          quantity: parseFloat(stockValue),
+          unit: productUnit.value === "ta" ? "dona" : productUnit.value
+        };
 
-        if (!result || !result.success) {
-          alert(result?.backendMessage || "Mahsulotni saqlashda xatolik yuz berdi");
-          return;
-        }
-
+        await window.crmApi.put(`/api/v1/products/${editingId}`, updateData);
         showSaleAlert("Mahsulot yangilandi!", "success");
         editingId = null;
       } else {
-        const result = await AuthSystem.createProduct(payload);
+        // Create product using FormData POST
+        const formData = new FormData();
+        formData.append("name", productName.value.trim());
+        formData.append("category_id", categoryId);
+        formData.append("cost_price", parseFloat(costPriceValue));
+        formData.append("sell_price", parseFloat(salePriceValue));
+        formData.append("quantity", parseFloat(stockValue));
+        formData.append("unit", productUnit.value === "ta" ? "dona" : productUnit.value);
 
-        if (!result || !result.success) {
-          alert(result?.backendMessage || "Mahsulotni saqlashda xatolik yuz berdi");
-          return;
+        if (productImage.files[0]) {
+          formData.append("image", productImage.files[0]);
         }
 
+        await window.crmApi.post("/api/v1/products/", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        });
         showSaleAlert("Mahsulot qo'shildi!", "success");
       }
 
@@ -1389,13 +1370,7 @@ async function deleteProduct(id) {
   // OFFLINE DATA MODE END
 
   try {
-    const result = await AuthSystem.deleteProduct(id);
-
-    if (!result || !result.success) {
-      alert(result?.backendMessage || "Mahsulotni o'chirishda xatolik yuz berdi");
-      return;
-    }
-
+    await window.crmApi.delete(`/api/v1/products/${id}`);
     showSaleAlert("Mahsulot o'chirildi!", "success");
     await apiLoadProducts();
   } catch (error) {
@@ -1477,21 +1452,10 @@ async function apiLoadProducts() {
       "📦 PRODUCTS API"
     );
 
-    const result = await AuthSystem.getProducts();
-
-    if (!result || !result.success) {
-      console.error(
-        "❌ PRODUCTS API XATO:",
-        result?.backendMessage || result?.responseData
+    const response =
+      await window.crmApi.get(
+        "/api/v1/products/"
       );
-
-      showSaleAlert(
-        result?.backendMessage || "Mahsulotlarni yuklashda xatolik yuz berdi",
-        "error"
-      );
-
-      return;
-    }
 
     console.log(
       "✅ STATUS: SUCCESS"
@@ -1499,15 +1463,15 @@ async function apiLoadProducts() {
 
     console.log(
       "📊 PRODUCTS COUNT:",
-      result.products.length
+      response.data.length
     );
 
     console.table(
-      result.products
+      response.data
     );
 
     products =
-      (result.products || [])
+      (response.data || [])
         .map(mapApiProduct);
 
     console.log(
@@ -1564,20 +1528,8 @@ async function apiLoadCategories() {
   }
   // OFFLINE DATA MODE END
   try {
-    const result = await AuthSystem.getCategories();
-
-    if (!result || !result.success) {
-      console.error(
-        "❌ CATEGORIES API XATO:",
-        result?.backendMessage || result?.responseData
-      );
-      return;
-    }
-
-    globalCategories = (result.categories || []).map(c => ({
-      id: c._id || c.id,
-      name: c.category_name || c.name || ""
-    }));
+    const response = await window.crmApi.get("/api/v1/products/categories");
+    globalCategories = response.data;
     categories = globalCategories.map(c => c.name);
     saveCategories();
     renderCategories();
@@ -1668,15 +1620,9 @@ if (saveCategory) {
       }
       // OFFLINE DATA MODE END
 
-      const result = await AuthSystem.createCategory({
-        category_name: value
+      await window.crmApi.post("/api/v1/products/categories", {
+        name: value
       });
-
-      if (!result || !result.success) {
-        alert(result?.backendMessage || "Kategoriya qo'shishda xatolik yuz berdi");
-        return;
-      }
-
       showSaleAlert("Kategoriya qo'shildi!", "success");
       await apiLoadCategories();
       newCategory.value = "";
@@ -1718,13 +1664,7 @@ if (updateCategoryBtn) {
       }
       // OFFLINE DATA MODE END
 
-      const result = await AuthSystem.updateCategory(catId, { category_name: newName });
-
-      if (!result || !result.success) {
-        alert(result?.backendMessage || "Kategoriyani tahrirlashda xatolik yuz berdi");
-        return;
-      }
-
+      await window.crmApi.put(`/api/v1/products/categories/${catId}`, { name: newName });
       showSaleAlert("Kategoriya tahrirlandi!", "success");
       await apiLoadCategories();
       $("#categoryModal").modal("hide");
@@ -1758,13 +1698,7 @@ if (deleteCategoryBtn) {
       }
       // OFFLINE DATA MODE END
 
-      const result = await AuthSystem.deleteCategory(catId);
-
-      if (!result || !result.success) {
-        alert(result?.backendMessage || "Kategoriyani o'chirishda xatolik yuz berdi");
-        return;
-      }
-
+      await window.crmApi.delete(`/api/v1/products/categories/${catId}`);
       showSaleAlert("Kategoriya o'chirildi!", "success");
       await apiLoadCategories();
       newCategory.value = "";
@@ -2214,29 +2148,16 @@ async function handleSale(paymentType) {
     }
     // OFFLINE DATA MODE END
 
-    const totalAmount = product.price * qty;
-
-    const result = await AuthSystem.createSale({
-      products: [
+    await window.crmApi.post("/api/v1/sales/", {
+      items: [
         {
-          product_id: product.id,
-          purchase_price: product.costPrice,
-          selling_price: product.price,
-          quantity: qty
+          product_id: parseInt(product.id),
+          quantity: parseFloat(qty)
         }
       ],
-      note: currentSaleSessionId.toString(),
-      paid_by_cash: paymentType === "cash" ? totalAmount : 0,
-      paid_by_card: paymentType === "card" ? totalAmount : 0
+      payment_type: paymentType,
+      notes: currentSaleSessionId.toString()
     });
-
-    if (!result || !result.success) {
-      showSaleAlert(
-        result?.backendMessage || "❌ Sotuv amalga oshirilmadi!",
-        "error"
-      );
-      return;
-    }
 
     showSaleAlert(`✅ ${product.name} sotildi!`, "success");
     saleQty.value = "";
@@ -7485,26 +7406,25 @@ async function createCategory(name) {
 
   try {
 
-    const result = await AuthSystem.createCategory({
-      category_name: name
-    });
-
-    if (!result || !result.success) {
-      console.error("❌ CREATE CATEGORY ERROR:", result?.backendMessage);
-      return null;
-    }
+    const response =
+      await window.crmApi.post(
+        "/api/v1/products/categories",
+        {
+          name: name
+        }
+      );
 
     console.log(
       "✅ CATEGORY CREATED"
     );
 
     console.table(
-      result.data
+      response.data
     );
 
     await apiLoadCategories();
 
-    return result.data;
+    return response.data;
 
   } catch (error) {
 
@@ -8064,4 +7984,4 @@ async function loadProfileNew() {
 
 window.loadProfileNew = loadProfileNew;
 // ✅ FIX 3b: Ikkinchi loadProfileNew() o'chirildi — birinchisini override qilar edi
-// va mavjud bo'lmagan updateProfileStats() → ReferenceError berardi.
+// va mavjud bo'lmagan updateProfileStats() → ReferenceError berardi.olib
