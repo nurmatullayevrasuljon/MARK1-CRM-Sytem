@@ -7984,4 +7984,4 @@ async function loadProfileNew() {
 
 window.loadProfileNew = loadProfileNew;
 // ✅ FIX 3b: Ikkinchi loadProfileNew() o'chirildi — birinchisini override qilar edi
-// va mavjud bo'lmagan updateProfileStats() → ReferenceError berardi.olib
+// va mavjud bo'lmagan updateProfileStats() → ReferenceError berardi.
