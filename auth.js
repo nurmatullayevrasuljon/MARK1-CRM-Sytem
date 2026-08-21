@@ -436,19 +436,6 @@
         return describeError(error, "getStoreProfile /store/profile/get");
       }
     },
-    getCategories: async function () {
-      try {
-        const res = await crmApi.get("/category");
-
-        return {
-          success: true,
-          status: res.status,
-          data: res.data
-        };
-      } catch (error) {
-        return describeError(error, "getCategories /category");
-      }
-    },
     createCategory: async function (data) {
       try {
         const res = await crmApi.post("/category/create", data);
@@ -510,20 +497,25 @@
       console.log("========== GET CATEGORIES ==========");
 
       try {
-        const res = await crmApi.get("/category");
+        const res = await crmApi.get("/category/get/all");
 
         console.log("SUCCESS:", true);
         console.log("STATUS:", res.status);
         console.log("CATEGORIES:", res.data);
         console.table(res.data);
 
+        const categories = Array.isArray(res.data)
+          ? res.data
+          : res.data?.data || res.data?.categories || [];
+
         return {
           success: true,
           status: res.status,
-          data: res.data
+          data: res.data,
+          categories
         };
       } catch (error) {
-        const result = describeError(error, "getCategories /category");
+        const result = describeError(error, "getCategories /category/get/all");
 
         console.log("SUCCESS:", false);
         console.log("STATUS:", result.status);
@@ -1065,7 +1057,7 @@
       console.log("========== GET PRODUCTS ==========");
 
       try {
-        const res = await crmApi.get("/product");
+        const res = await crmApi.get("/product/get");
 
         console.log("SUCCESS:", true);
         console.log("STATUS:", res.status);
@@ -1073,7 +1065,7 @@
 
         const products = Array.isArray(res.data)
           ? res.data
-          : res.data?.products || [];
+          : res.data?.data || res.data?.products || [];
 
         console.table(products);
 
@@ -1124,6 +1116,23 @@
         };
       } catch (error) {
         return describeError(error, "createProduct /product/create");
+      }
+    },
+    deleteProduct: async function (productId) {
+      try {
+        const res = await crmApi.delete("/product/delete", {
+          params: {
+            product_id: productId
+          }
+        });
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        return describeError(error, "deleteProduct /product/delete");
       }
     },
 
