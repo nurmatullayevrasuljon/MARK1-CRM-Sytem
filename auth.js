@@ -438,7 +438,7 @@
     },
     getCategories: async function () {
       try {
-        const res = await crmApi.get("/category");
+        const res = await crmApi.get("/category/get/all");
 
         return {
           success: true,
@@ -510,7 +510,7 @@
       console.log("========== GET CATEGORIES ==========");
 
       try {
-        const res = await crmApi.get("/category");
+        const res = await crmApi.get("/category/get/all");
 
         console.log("SUCCESS:", true);
         console.log("STATUS:", res.status);
@@ -1065,7 +1065,7 @@
       console.log("========== GET PRODUCTS ==========");
 
       try {
-        const res = await crmApi.get("/product");
+        const res = await crmApi.get("/product/get");
 
         console.log("SUCCESS:", true);
         console.log("STATUS:", res.status);

@@ -13,11 +13,49 @@ exports.getStatistics = async (req, res) => {
     // O'zbekiston vaqti (UTC+5) bo'yicha bugungi sanani aniqlash
     const now = new Date();
 
-    const uzbekTime = new Date(
-      now.toLocaleString("en-US", {
-        timeZone: "Asia/Tashkent",
-      }),
-    );
+    const now = new Date();
+
+const {
+  year,
+  month,
+  day
+} = getTashkentDateParts(now);
+
+const todayStart =
+  tashkentMidnight(
+    year,
+    month,
+    day
+  );
+
+const tomorrowStart =
+  tashkentMidnight(
+    year,
+    month,
+    day + 1
+  );
+
+const currentMonthStart =
+  tashkentMidnight(
+    year,
+    month,
+    1
+  );
+
+const nextMonthStart =
+  tashkentMidnight(
+    month === 12 ? year + 1 : year,
+    month === 12 ? 1 : month + 1,
+    1
+  );
+
+const previousMonthStart =
+  month === 1
+    ? tashkentMidnight(year - 1, 12, 1)
+    : tashkentMidnight(year, month - 1, 1);
+
+const previousMonthEnd =
+  currentMonthStart;
 
     const year = uzbekTime.getFullYear();
     const month = uzbekTime.getMonth();
