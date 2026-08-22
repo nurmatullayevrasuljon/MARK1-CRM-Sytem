@@ -470,26 +470,32 @@ function normalizeApiAssetUrl(url) {
 }
 
 function mapApiProduct(product) {
-  const existing = products.find(item => item.id === product.id) || {};
+  const id = product._id || product.id;
+  const existing = products.find(item => item.id === id) || {};
   const quantity = Number(product.quantity) || 0;
-  const category = product.category || null;
-  const unit = product.unit === "kg" ? "kg" : "dona";
+  // Backend "category_id" ni .populate("category_id", "category_name") bilan qaytaradi,
+  // shuning uchun bu maydon aslida to'liq kategoriya obyekti bo'ladi ({_id, category_name})
+  const category = product.category_id && typeof product.category_id === "object"
+    ? product.category_id
+    : null;
 
   return {
-    id: product.id,
-    name: product.name || "",
-    categoryId: category ? category.id : null,
-    category: category ? category.name : "Kategoriyasiz",
-    image: normalizeApiAssetUrl(product.image_url),
-    imageUrl: normalizeApiAssetUrl(product.image_url),
-    costPrice: Number(product.cost_price) || 0,
-    price: Number(product.sell_price) || 0,
+    id: id,
+    name: product.product_name || product.name || "",
+    barcode: product.product_barcode || "",
+    categoryId: category ? category._id : (typeof product.category_id === "string" ? product.category_id : null),
+    category: category ? category.category_name : "Kategoriyasiz",
+    image: normalizeApiAssetUrl((product.images && product.images[0]) || product.image_url),
+    imageUrl: normalizeApiAssetUrl((product.images && product.images[0]) || product.image_url),
+    costPrice: Number(product.purchase_price) || 0,
+    price: Number(product.selling_price) || 0,
     currency: "UZS",
     stock: quantity,
+    minStock: Number(product.minimum_quantity) || 0,
     initialStock: Math.max(Number(existing.initialStock) || 0, quantity),
-    unit,
-    isLowStock: !!product.is_low_stock,
-    createdAt: product.created_at || null
+    unit: "dona",
+    isLowStock: quantity <= (Number(product.minimum_quantity) || 0),
+    createdAt: product.createdAt || product.created_at || null
   };
 }
 
@@ -610,18 +616,23 @@ function mapTransaction(apiTransaction) {
 }
 
 function mapApiDebtor(debtor) {
+  // Yangi backend'da "qarzdor" alohida obyekt emas — bu total_remaining > 0
+  // bo'lgan Sale (sotuv) hujjati, client_id va products.product_id populate qilingan holda
+  const client = debtor.client_id && typeof debtor.client_id === "object" ? debtor.client_id : null;
+
   return {
-    id: debtor.id,
-    name: debtor.full_name || "",
-    phone: debtor.phone || "",
-    amount: Number(debtor.remaining_amount ?? debtor.debt_amount) || 0,
-    originalAmount: Number(debtor.debt_amount) || 0,
-    paidAmount: Number(debtor.paid_amount) || 0,
-    debtDate: debtor.debt_date || debtor.created_at || getCurrentLocalDateTime(),
-    returnDate: debtor.due_date || getCurrentLocalDateTime(),
-    notes: debtor.notes || "",
-    status: debtor.status || "normal",
-    isActive: debtor.is_active !== false
+    id: debtor._id || debtor.id,
+    saleId: debtor._id || debtor.id,
+    name: client?.full_name || client?.name || debtor.note || "Noma'lum mijoz",
+    phone: client?.phone || "",
+    amount: Number(debtor.total_remaining) || 0,
+    originalAmount: Number(debtor.total_price) || 0,
+    paidAmount: Number(debtor.total_paid) || 0,
+    debtDate: debtor.createdAt || getCurrentLocalDateTime(),
+    returnDate: debtor.due_date || null,
+    notes: debtor.note || "",
+    status: debtor.status || "active",
+    isActive: debtor.status === "active"
   };
 }
 
@@ -1137,7 +1148,7 @@ function renderProducts(list = products) {
           <!-- EDIT -->
           <button 
             class="btn btn-sm btn-edit"
-            onclick="editProduct(${p.id})">
+            onclick="editProduct('${p.id}')">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
               <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
             </svg>
@@ -1147,7 +1158,7 @@ function renderProducts(list = products) {
           <!-- DELETE -->
           <button 
             class="btn btn-sm btn-danger ms-2"
-            onclick="deleteProduct(${p.id})">
+            onclick="deleteProduct('${p.id}')">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
               <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
             </svg>
@@ -1230,7 +1241,7 @@ if (productForm) {
     const stockValue = Number(productStock.value);
     const costPriceValue = Number(document.getElementById("productCostPrice").value);
     const salePriceValue = Number(productPrice.value);
-    const categoryId = Number(productCategory.value);
+    const categoryId = productCategory.value;
 
     if (!productName.value.trim()) {
       alert("Mahsulot nomini kiriting");
@@ -1294,39 +1305,52 @@ if (productForm) {
       }
       // OFFLINE DATA MODE END
 
-      if (editingId) {
-        // Update product using JSON PUT
-        const updateData = {
-          name: productName.value.trim(),
-          category_id: categoryId,
-          cost_price: parseFloat(costPriceValue),
-          sell_price: parseFloat(salePriceValue),
-          quantity: parseFloat(stockValue),
-          unit: productUnit.value === "ta" ? "dona" : productUnit.value
-        };
+      // Rasm tanlangan bo'lsa, avval /file/create orqali yuklaymiz va URL olamiz
+      let imageUrl = null;
+      if (productImage.files[0]) {
+        try {
+          const fileForm = new FormData();
+          fileForm.append("file", productImage.files[0]);
+          const fileRes = await window.crmApi.post("/file/create", fileForm, {
+            headers: { "Content-Type": "multipart/form-data" }
+          });
+          imageUrl = fileRes?.data?.file?.file_url || null;
+        } catch (imgErr) {
+          console.error("Rasm yuklashda xatolik:", imgErr);
+          // Rasm yuklanmasa ham mahsulotni saqlashda davom etamiz
+        }
+      }
 
-        await window.crmApi.put(`/api/v1/products/${editingId}`, updateData);
+      const payload = {
+        product_name: productName.value.trim(),
+        category_id: categoryId,
+        purchase_price: costPriceValue,
+        selling_price: salePriceValue,
+        quantity: stockValue
+      };
+
+      if (imageUrl) {
+        payload.images = [imageUrl];
+      }
+
+      if (editingId) {
+        const result = await AuthSystem.updateProduct(editingId, payload);
+
+        if (!result || !result.success) {
+          alert(result?.backendMessage || "Mahsulotni saqlashda xatolik yuz berdi");
+          return;
+        }
+
         showSaleAlert("Mahsulot yangilandi!", "success");
         editingId = null;
       } else {
-        // Create product using FormData POST
-        const formData = new FormData();
-        formData.append("name", productName.value.trim());
-        formData.append("category_id", categoryId);
-        formData.append("cost_price", parseFloat(costPriceValue));
-        formData.append("sell_price", parseFloat(salePriceValue));
-        formData.append("quantity", parseFloat(stockValue));
-        formData.append("unit", productUnit.value === "ta" ? "dona" : productUnit.value);
+        const result = await AuthSystem.createProduct(payload);
 
-        if (productImage.files[0]) {
-          formData.append("image", productImage.files[0]);
+        if (!result || !result.success) {
+          alert(result?.backendMessage || "Mahsulotni saqlashda xatolik yuz berdi");
+          return;
         }
 
-        await window.crmApi.post("/api/v1/products/", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        });
         showSaleAlert("Mahsulot qo'shildi!", "success");
       }
 
@@ -1370,7 +1394,13 @@ async function deleteProduct(id) {
   // OFFLINE DATA MODE END
 
   try {
-    await window.crmApi.delete(`/api/v1/products/${id}`);
+    const result = await AuthSystem.deleteProduct(id);
+
+    if (!result || !result.success) {
+      alert(result?.backendMessage || "Mahsulotni o'chirishda xatolik yuz berdi");
+      return;
+    }
+
     showSaleAlert("Mahsulot o'chirildi!", "success");
     await apiLoadProducts();
   } catch (error) {
@@ -1452,10 +1482,21 @@ async function apiLoadProducts() {
       "📦 PRODUCTS API"
     );
 
-    const response =
-      await window.crmApi.get(
-        "/api/v1/products/"
+    const result = await AuthSystem.getProducts();
+
+    if (!result || !result.success) {
+      console.error(
+        "❌ PRODUCTS API XATO:",
+        result?.backendMessage || result?.responseData
       );
+
+      showSaleAlert(
+        result?.backendMessage || "Mahsulotlarni yuklashda xatolik yuz berdi",
+        "error"
+      );
+
+      return;
+    }
 
     console.log(
       "✅ STATUS: SUCCESS"
@@ -1463,15 +1504,15 @@ async function apiLoadProducts() {
 
     console.log(
       "📊 PRODUCTS COUNT:",
-      response.data.length
+      result.products.length
     );
 
     console.table(
-      response.data
+      result.products
     );
 
     products =
-      (response.data || [])
+      (result.products || [])
         .map(mapApiProduct);
 
     console.log(
@@ -1528,8 +1569,20 @@ async function apiLoadCategories() {
   }
   // OFFLINE DATA MODE END
   try {
-    const response = await window.crmApi.get("/api/v1/products/categories");
-    globalCategories = response.data;
+    const result = await AuthSystem.getCategories();
+
+    if (!result || !result.success) {
+      console.error(
+        "❌ CATEGORIES API XATO:",
+        result?.backendMessage || result?.responseData
+      );
+      return;
+    }
+
+    globalCategories = (result.categories || []).map(c => ({
+      id: c._id || c.id,
+      name: c.category_name || c.name || ""
+    }));
     categories = globalCategories.map(c => c.name);
     saveCategories();
     renderCategories();
@@ -1620,9 +1673,15 @@ if (saveCategory) {
       }
       // OFFLINE DATA MODE END
 
-      await window.crmApi.post("/api/v1/products/categories", {
-        name: value
+      const result = await AuthSystem.createCategory({
+        category_name: value
       });
+
+      if (!result || !result.success) {
+        alert(result?.backendMessage || "Kategoriya qo'shishda xatolik yuz berdi");
+        return;
+      }
+
       showSaleAlert("Kategoriya qo'shildi!", "success");
       await apiLoadCategories();
       newCategory.value = "";
@@ -1664,7 +1723,13 @@ if (updateCategoryBtn) {
       }
       // OFFLINE DATA MODE END
 
-      await window.crmApi.put(`/api/v1/products/categories/${catId}`, { name: newName });
+      const result = await AuthSystem.updateCategory(catId, { category_name: newName });
+
+      if (!result || !result.success) {
+        alert(result?.backendMessage || "Kategoriyani tahrirlashda xatolik yuz berdi");
+        return;
+      }
+
       showSaleAlert("Kategoriya tahrirlandi!", "success");
       await apiLoadCategories();
       $("#categoryModal").modal("hide");
@@ -1698,7 +1763,13 @@ if (deleteCategoryBtn) {
       }
       // OFFLINE DATA MODE END
 
-      await window.crmApi.delete(`/api/v1/products/categories/${catId}`);
+      const result = await AuthSystem.deleteCategory(catId);
+
+      if (!result || !result.success) {
+        alert(result?.backendMessage || "Kategoriyani o'chirishda xatolik yuz berdi");
+        return;
+      }
+
       showSaleAlert("Kategoriya o'chirildi!", "success");
       await apiLoadCategories();
       newCategory.value = "";
@@ -1805,27 +1876,27 @@ if (saleSearch) {
    GET /api/v1/transactions/stats   -> stats
    GET /api/v1/transactions/export  -> export
 =============================================== */
+// NOTE: bu ikkita funksiya endi hech qayerdan chaqirilmaydi — ularning ishi
+// endi loadAndRenderTransactions() ichida to'g'ridan-to'g'ri renderTransactions()
+// orqali local `sales` massividan (apiLoadSales() /sale/get orqali to'ldiradi)
+// bajariladi. Backendda alohida /transactions endpointi yo'q edi, shu sabab
+// bu funksiyalar har doim 404 qaytarardi. Kelajakda tasodifan chaqirilib
+// qolmasligi uchun ularni ham xavfsiz (local sales'ga asoslangan) qilib qo'ydik.
 async function getTransactions(params = {}) {
   try {
-    const response = await window.crmApi.get("/api/v1/transactions/", { params });
-
-    // Backend may return a raw array OR a paginated object ({items}/{results}/{data})
-    const raw = response.data;
-    const items = Array.isArray(raw)
-      ? raw
-      : (raw.items || raw.results || raw.data || []);
-
-    return { items, total: raw.total ?? items.length };
+    const items = sales.filter(s => s.status === "sold");
+    return { items, total: items.length };
   } catch (error) {
-    console.error("❌ TRANSACTIONS API ERROR:", error);
+    console.error("❌ TRANSACTIONS ERROR:", error);
     return { items: [], total: 0 };
   }
 }
 
 async function getTransactionsStats(params = {}) {
   try {
-    const response = await window.crmApi.get("/api/v1/transactions/stats", { params });
-    return response.data;
+    const items = sales.filter(s => s.status === "sold");
+    const total = items.reduce((sum, s) => sum + (Number(s.total) || 0), 0);
+    return { count: items.length, total };
   } catch (error) {
     console.error("❌ TRANSACTIONS STATS ERROR:", error);
     return null;
@@ -1842,8 +1913,13 @@ async function loadAndRenderTransactions(period = transactionFilter) {
   }
   // OFFLINE DATA MODE END
 
-  const data = await getTransactions({ period });
-  renderTransactions(data.items);
+  // Backendda alohida /transactions endpointi yo'q. `sales` massivi
+  // allaqachon apiLoadSales() orqali haqiqiy backend (/sale/get) ma'lumoti
+  // bilan to'ldirilgan, shuning uchun argumentsiz chaqirilganda
+  // renderTransactions() shu local `sales`ni transactionFilter bo'yicha
+  // filtrlaydi — bu haqiqiy backend ma'lumoti, taxminiy emas.
+  transactionFilter = period;
+  renderTransactions();
 }
 
 async function apiLoadSales() {
@@ -2148,16 +2224,29 @@ async function handleSale(paymentType) {
     }
     // OFFLINE DATA MODE END
 
-    await window.crmApi.post("/api/v1/sales/", {
-      items: [
+    const totalAmount = product.price * qty;
+
+    const result = await AuthSystem.createSale({
+      products: [
         {
-          product_id: parseInt(product.id),
-          quantity: parseFloat(qty)
+          product_id: product.id,
+          purchase_price: product.costPrice,
+          selling_price: product.price,
+          quantity: qty
         }
       ],
-      payment_type: paymentType,
-      notes: currentSaleSessionId.toString()
+      note: currentSaleSessionId.toString(),
+      paid_by_cash: paymentType === "cash" ? totalAmount : 0,
+      paid_by_card: paymentType === "card" ? totalAmount : 0
     });
+
+    if (!result || !result.success) {
+      showSaleAlert(
+        result?.backendMessage || "❌ Sotuv amalga oshirilmadi!",
+        "error"
+      );
+      return;
+    }
 
     showSaleAlert(`✅ ${product.name} sotildi!`, "success");
     saleQty.value = "";
@@ -2299,7 +2388,14 @@ async function cancelSale(id) {
   // OFFLINE DATA MODE END
 
   try {
-    await window.crmApi.post(`/api/v1/sales/${id}/return`);
+    // "Bekor qilish" = returnSale (mahsulot omborga qaytadi, sale statusi "returned")
+    const result = await AuthSystem.returnSale(id);
+
+    if (!result || !result.success) {
+      alert(result?.backendMessage || "Sotuvni bekor qilishda xatolik yuz berdi");
+      return;
+    }
+
     showSaleAlert("✅ Sotuv bekor qilindi!", "success");
     await apiLoadProducts();
     await apiLoadSales();
@@ -2339,7 +2435,14 @@ async function deleteSale(id) {
   // OFFLINE DATA MODE END
 
   try {
-    await window.crmApi.post(`/api/v1/sales/${id}/return`);
+    // "O'chirish" = cancelSale (sale bekor qilinadi va mahsulot omborga qaytadi)
+    const result = await AuthSystem.cancelSale(id);
+
+    if (!result || !result.success) {
+      alert(result?.backendMessage || "Sotuvni o'chirishda xatolik yuz berdi");
+      return;
+    }
+
     showSaleAlert("✅ Sotuv bekor qilindi!", "success");
     await apiLoadProducts();
     await apiLoadSales();
@@ -3145,7 +3248,7 @@ function normalizeDebtPhone(value) {
 async function apiLoadDebtors() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━");
   console.log("📋 LIST DEBTORS API");
-  console.log("📤 REQUEST: GET /api/v1/debtors/");
+  console.log("📤 REQUEST: GET /debt/get");
 
   // OFFLINE DATA MODE START
   if (OFFLINE_DATA_MODE) {
@@ -3161,11 +3264,18 @@ async function apiLoadDebtors() {
   // OFFLINE DATA MODE END
 
   try {
-    const response = await window.crmApi.get("/api/v1/debtors/");
+    const result = await AuthSystem.getDebts();
 
-    console.log("📥 RESPONSE:", response.status, response.data);
+    if (!result || !result.success) {
+      console.error("❌ ERROR:", result?.backendMessage || result?.responseData);
+      console.log("━━━━━━━━━━━━━━━━━━━━━━");
+      showNotification(result?.backendMessage || "Qarzdorlarni yuklashda xatolik yuz berdi", "error");
+      return;
+    }
 
-    debtors = (response.data || []).map(mapApiDebtor).filter(d => d.isActive && d.amount > 0);
+    const rawDebts = result.data?.debts || [];
+
+    debtors = rawDebts.map(mapApiDebtor).filter(d => d.isActive && d.amount > 0);
     saveDebtors();
     renderDebtors();
     updateStatistics();
@@ -3220,7 +3330,7 @@ function closeAdjustModal() {
 async function handleAdjustDebt(event) {
   event.preventDefault();
 
-  const id = parseInt(document.getElementById("adjustDebtorId").value);
+  const id = document.getElementById("adjustDebtorId").value;
   const type = document.getElementById("adjustType").value;
   const amount = parseFloat(document.getElementById("adjustAmount").value);
 
@@ -3267,44 +3377,30 @@ async function handleAdjustDebt(event) {
     // OFFLINE DATA MODE END
 
     if (type === "add") {
-      // ✅ Yangi qarz yaratish — POST /api/v1/debtors/
-      console.log("━━━━━━━━━━━━━━━━━━━━━━");
-      console.log("➕ ADD DEBT API");
-      console.log("📤 REQUEST: POST /api/v1/debtors/");
-      console.log("📦 PAYLOAD:", { full_name: debtor.name, debt_amount: amount });
-
-      const res = await window.crmApi.post("/api/v1/debtors/", {
-        full_name: debtor.name,
-        phone: debtor.phone,
-        debt_amount: amount,
-        debt_date: new Date().toISOString(),
-        due_date: toApiDateTime(debtor.returnDate),
-        notes: "Qo'shimcha qarz"
-      });
-
-      console.log("📥 RESPONSE:", res.status, res.data);
-      console.log("✅ SUCCESS");
-      console.log("━━━━━━━━━━━━━━━━━━━━━━");
-
-      showSuccessMessage(`${debtor.name}ga ${amount.toLocaleString()} so'm qarz qo'shildi!`);
-
+      // ⚠️ Yangi backend'da qarzni mahsulot/sotuvsiz, ixtiyoriy summa bilan
+      // to'g'ridan-to'g'ri "qo'shish" imkoni yo'q — backendda "qarz" alohida
+      // obyekt emas, balki total_remaining > 0 bo'lgan Sale hisoblanadi.
+      // Shuning uchun bu amalni backendga yubormaymiz (404 bo'lardi);
+      // buning o'rniga foydalanuvchini Sotish sahifasiga yo'naltiramiz.
+      alert(
+        "Yangi backend'da qarzni alohida qo'shib bo'lmaydi — qarz faqat Sotish sahifasida " +
+        "mijoz tanlab, to'liq to'lovsiz (yoki qisman to'lov bilan) sotuv amalga oshirilganda avtomatik yaratiladi. " +
+        "Iltimos, \"Sotish\" bo'limidan foydalaning."
+      );
+      return;
     } else {
-      // ✅ To'lov qabul qilish — POST /api/v1/debtors/{id}/pay
+      // ✅ To'lov qabul qilish — POST /sale/payment/add?sale_id=...
       if (amount > debtor.amount) {
         alert("To'lanadigan summa qarzdan katta bo'lishi mumkin emas!");
         return;
       }
 
-      console.log("━━━━━━━━━━━━━━━━━━━━━━");
-      console.log("💰 ADD PAYMENT API");
-      console.log(`📤 REQUEST: POST /api/v1/debtors/${id}/pay`);
-      console.log("📦 PAYLOAD:", { amount });
+      const result = await AuthSystem.addPayment(debtor.saleId || id, amount, "cash");
 
-      const res = await window.crmApi.post(`/api/v1/debtors/${id}/pay`, { amount });
-
-      console.log("📥 RESPONSE:", res.status, res.data);
-      console.log("✅ SUCCESS");
-      console.log("━━━━━━━━━━━━━━━━━━━━━━");
+      if (!result || !result.success) {
+        alert(result?.backendMessage || "To'lovni saqlashda xatolik yuz berdi");
+        return;
+      }
 
       paidDebtors.push({
         debtorId: id,
@@ -3382,18 +3478,17 @@ async function handleSubmit(event) {
     }
     // OFFLINE DATA MODE END
 
-    await window.crmApi.post("/api/v1/debtors/", {
-      full_name: newDebtor.name,
-      phone: newDebtor.phone,
-      debt_amount: newDebtor.amount,
-      debt_date: toApiDateTime(newDebtor.debtDate),
-      due_date: toApiDateTime(newDebtor.returnDate),
-      notes: newDebtor.notes
-    });
-
-    closeModal();
-    showSuccessMessage(`✅ ${newDebtor.name} muvaffaqiyatli qo'shildi!`);
-    await apiLoadDebtors();
+    // ⚠️ Yangi backend'da qarzni mahsulot/sotuvsiz, ixtiyoriy summa bilan
+    // to'g'ridan-to'g'ri "qo'shish" imkoni yo'q — backendda "qarz" alohida
+    // obyekt emas, balki total_remaining > 0 bo'lgan Sale hisoblanadi.
+    // Shuning uchun bu amalni backendga yubormaymiz (404 bo'lardi);
+    // buning o'rniga foydalanuvchini Sotish sahifasiga yo'naltiramiz.
+    alert(
+      "Yangi backend'da qarzni alohida qo'shib bo'lmaydi — qarz faqat Sotish sahifasida " +
+      "mijoz tanlab, to'liq to'lovsiz (yoki qisman to'lov bilan) sotuv amalga oshirilganda avtomatik yaratiladi. " +
+      "Iltimos, \"Sotish\" bo'limidan foydalaning."
+    );
+    return;
   } catch (error) {
     console.error(error);
     alert(getApiErrorMessage(error, "Qarzdorni qo'shishda xatolik yuz berdi"));
@@ -3422,11 +3517,11 @@ async function deleteDebtor(id) {
   const debtor = debtors.find(d => d.id === id);
   const name = debtor ? debtor.name : `#${id}`;
 
-  if (!confirm(`"${name}" ni qarzdorlar ro'yxatidan o'chirish?`)) return;
+  if (!confirm(`"${name}" — bog'liq sotuvni bekor qilib, qarzni o'chirish? (Mahsulot omborga qaytariladi)`)) return;
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("🗑 DELETE DEBTOR API");
-  console.log(`📤 REQUEST: DELETE /api/v1/debtors/${id}`);
+  console.log("🗑 DELETE DEBTOR API (via cancelSale)");
+  console.log(`📤 REQUEST: DELETE /sale/cancel?sale_id=${id}`);
 
   try {
     // OFFLINE DATA MODE START
@@ -3439,9 +3534,17 @@ async function deleteDebtor(id) {
     }
     // OFFLINE DATA MODE END
 
-    const res = await window.crmApi.delete(`/api/v1/debtors/${id}`);
+    // ⚠️ Yangi backend'da alohida "qarzdorni o'chirish" endpoint'i yo'q —
+    // qarz aslida to'liq to'lanmagan Sale bo'lgani uchun, uni "o'chirish"
+    // shu sotuvni bekor qilish (cancelSale) orqali amalga oshiriladi;
+    // bu mahsulot miqdorini omborga qaytaradi.
+    const result = await AuthSystem.cancelSale(debtor?.saleId || id);
 
-    console.log("📥 RESPONSE:", res.status, res.data);
+    if (!result || !result.success) {
+      alert(result?.backendMessage || "Qarzdorni o'chirishda xatolik yuz berdi");
+      return;
+    }
+
     console.log("✅ SUCCESS");
     console.log("━━━━━━━━━━━━━━━━━━━━━━");
 
@@ -3507,24 +3610,16 @@ async function updateDebtor(id, data) {
     }
     // OFFLINE DATA MODE END
 
-    const payload = {
-      full_name: data.name,
-      phone: data.phone,
-      debt_amount: data.originalAmount,
-      debt_date: toApiDateTime(data.debtDate),
-      due_date: toApiDateTime(data.returnDate),
-      notes: data.notes || ""
-    };
-
-    const res = await window.crmApi.put(`/api/v1/debtors/${id}`, payload);
-
-    console.log("📥 RESPONSE:", res.status, res.data);
-    console.log("✅ SUCCESS");
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-
-    showSuccessMessage(`✅ ${data.name} ma'lumotlari yangilandi!`);
+    // ⚠️ Yangi backend'da mavjud Sale (qarz)ning mijoz ismi/telefoni/muddatini
+    // alohida tahrirlash imkoni yo'q — sale.routes.js'da faqat create/cancel/
+    // return/payment/get bor, umumiy "update" yo'q. Shuning uchun bu amalni
+    // backendga yubormaymiz (404 bo'lardi).
+    alert(
+      "Yangi backend'da mavjud qarz (sotuv) ma'lumotlarini tahrirlash imkoni hali yo'q — " +
+      "faqat to'lov qabul qilish (\"Qarzni kamaytirish\") yoki uni butunlay bekor qilish " +
+      "(\"O'chirish\") mumkin."
+    );
     closeEditDebtorModal();
-    await apiLoadDebtors();
   } catch (e) {
     console.error("❌ ERROR:", e?.response?.status, e?.response?.data || e.message);
     console.log("━━━━━━━━━━━━━━━━━━━━━━");
@@ -4079,16 +4174,16 @@ function renderDebtors() {
             <button class="action-btn action-btn-sms" onclick="openSmsModal(${d.id})" title="SMS yuborish">
               <i class="bi bi-chat-dots-fill"></i>
             </button>
-            <button class="action-btn action-btn-add" onclick="openAdjustModal(${d.id}, 'add')" title="Qarz qo'shish">
+            <button class="action-btn action-btn-add" onclick="openAdjustModal('${d.id}', 'add')" title="Qarz qo'shish">
               <i class="bi bi-plus-circle-fill"></i>
             </button>
-            <button class="action-btn action-btn-reduce" onclick="openAdjustModal(${d.id}, 'reduce')" title="To'lov qabul qilish">
+            <button class="action-btn action-btn-reduce" onclick="openAdjustModal('${d.id}', 'reduce')" title="To'lov qabul qilish">
               <i class="bi bi-dash-circle-fill"></i>
             </button>
             <button class="action-btn action-btn-edit" onclick="openEditDebtorModal(${d.id})" title="Tahrirlash" style="background:#f59e0b; color:#fff;">
               <i class="bi bi-pencil-fill"></i>
             </button>
-            <button class="action-btn action-btn-delete" onclick="deleteDebtor(${d.id})" title="O'chirish">
+            <button class="action-btn action-btn-delete" onclick="deleteDebtor('${d.id}')" title="O'chirish">
               <i class="bi bi-trash-fill"></i>
             </button>
           </div>
@@ -6964,10 +7059,17 @@ async function getLowStockAlerts() {
   }
   // OFFLINE DATA MODE END
 
+  // Backendda alohida /dashboard/low-stock-alerts endpointi yo'q.
+  // /product/get orqali allaqachon yuklangan `products` massividan,
+  // minimum_quantity chegarasiga qarab, frontendda hisoblaymiz.
   try {
-    const response = await window.crmApi.get("/api/v1/dashboard/low-stock-alerts");
-    console.log("⚠️ LOW STOCK", response.data);
-    return response.data;
+    const lowStock = products.filter(p => {
+      const stock = Number(p.stock) || 0;
+      const minStock = Number(p.minStock) || 0;
+      return stock <= minStock;
+    });
+    console.log("⚠️ LOW STOCK", lowStock);
+    return lowStock;
   } catch (error) {
     console.error("❌ LOW STOCK ERROR", error);
     return [];
@@ -6993,27 +7095,31 @@ async function getLowStockAlerts() {
 async function getOverduePayments() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━");
   console.log("⏰ OVERDUE PAYMENTS API");
-  console.log("📤 REQUEST: GET /api/v1/dashboard/overdue-payments");
-  console.log("🕒 Time:", new Date().toLocaleTimeString());
 
   try {
-    // ✅ window.crmApi interceptor token ni avtomatik qo'shadi — qo'lda olish shart emas
-    const response = await window.crmApi.get("/api/v1/dashboard/overdue-payments");
+    // Backendda alohida /dashboard/overdue-payments endpointi yo'q.
+    // /statistics/full ichidagi overdue_payments/overdue_count dan foydalanamiz.
+    const result = await AuthSystem.getStatistics();
 
-    console.log("✅ STATUS: SUCCESS");
-    console.log("🌐 HTTP:", response.status);
-    console.log("📊 RESPONSE:");
-    console.table(response.data);
+    if (!result || !result.success) {
+      console.error("❌ OVERDUE PAYMENTS ERROR:", result?.backendMessage);
+      return { overdue_payments: 0, overdue_count: 0 };
+    }
+
+    const stats = result.data?.data || result.data || {};
+    const data = {
+      overdue_payments: Number(stats.overdue_payments) || 0,
+      overdue_count: Number(stats.overdue_count) || 0
+    };
+
+    console.log("✅ OVERDUE PAYMENTS:", data);
     console.log("━━━━━━━━━━━━━━━━━━━━━━");
 
-    return response.data;
+    return data;
   } catch (error) {
     console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    console.error("❌ STATUS: FAILED");
-    console.error("🌐 HTTP:", error?.response?.status);
-    console.error("📄 ERROR:", error?.response?.data || error.message);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    return [];
+    console.error("❌ STATUS: FAILED", error?.message || error);
+    return { overdue_payments: 0, overdue_count: 0 };
   }
 }
 
@@ -7406,25 +7512,26 @@ async function createCategory(name) {
 
   try {
 
-    const response =
-      await window.crmApi.post(
-        "/api/v1/products/categories",
-        {
-          name: name
-        }
-      );
+    const result = await AuthSystem.createCategory({
+      category_name: name
+    });
+
+    if (!result || !result.success) {
+      console.error("❌ CREATE CATEGORY ERROR:", result?.backendMessage);
+      return null;
+    }
 
     console.log(
       "✅ CATEGORY CREATED"
     );
 
     console.table(
-      response.data
+      result.data
     );
 
     await apiLoadCategories();
 
-    return response.data;
+    return result.data;
 
   } catch (error) {
 
