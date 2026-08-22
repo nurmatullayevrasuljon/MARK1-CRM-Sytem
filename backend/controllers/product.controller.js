@@ -3,16 +3,25 @@ const Product = require("../models/product.model");
 
 exports.createProduct = async (req, res) => {
   try {
-    const { product_barcode } = req.body;
-    const existingProduct = await Product.findOne({
-      product_barcode,
-      store_id: req.user.store_id,
-    });
+    let { product_barcode } = req.body;
 
-    if (existingProduct) {
-      return res.status(400).json({
-        message: `${product_barcode}: ushbu barkod bilan tovar mavjud`,
+    // Shtrix-kod frontend tomonidan yuborilmasa, avtomatik generatsiya qilamiz
+    if (!product_barcode) {
+      product_barcode = `AUTO-${Date.now()}-${Math.floor(
+        Math.random() * 10000,
+      )}`;
+      req.body.product_barcode = product_barcode;
+    } else {
+      const existingProduct = await Product.findOne({
+        product_barcode,
+        store_id: req.user.store_id,
       });
+
+      if (existingProduct) {
+        return res.status(400).json({
+          message: `${product_barcode}: ushbu barkod bilan tovar mavjud`,
+        });
+      }
     }
 
     req.body.store_id = req.user.store_id;
@@ -32,16 +41,21 @@ exports.updateProduct = async (req, res) => {
   try {
     const { product_barcode } = req.body;
     const { product_id } = req.query;
-    const existingProduct = await Product.findOne({
-      product_barcode,
-      _id: { $ne: product_id },
-      store_id: req.user.store_id,
-    });
 
-    if (existingProduct) {
-      return res.status(400).json({
-        message: `${product_barcode}: ushbu barkod bilan tovar mavjud`,
+    if (product_barcode) {
+      const existingProduct = await Product.findOne({
+        product_barcode,
+        _id: { $ne: product_id },
+        store_id: req.user.store_id,
       });
+
+      if (existingProduct) {
+        return res.status(400).json({
+          message: `${product_barcode}: ushbu barkod bilan tovar mavjud`,
+        });
+      }
+    } else {
+      delete req.body.product_barcode;
     }
 
     req.body.store_id = req.user.store_id;

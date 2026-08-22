@@ -10,7 +10,7 @@ const ProductSchema = new mongoose.Schema(
     product_name: { type: String, required: [true, "Tovar nomini kiriting"] },
     product_barcode: {
       type: String,
-      required: [true, "Tovar kodini kiriting"],
+      default: null,
     },
     category_id: {
       type: mongoose.Types.ObjectId,
