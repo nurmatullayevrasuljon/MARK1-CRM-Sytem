@@ -11,8 +11,16 @@
   const USER_KEY = "crm_current_user";
 
   // ---------- 2) STORAGE HELPERLARI ----------
-  function store(remember) { return remember ? localStorage : sessionStorage; }
-  function otherStore(remember) { return remember ? sessionStorage : localStorage; }
+  // ⚠️ TUZATISH: foydalanuvchi login qilgach, u o'zi logout qilmaguncha
+  // sessiya saqlanib turishi kerak (brauzer/tab yopilsa ham). Avval "Remember me"
+  // belgilanmasa (login.html'dagi checkbox standart holatda o'chirilgan edi)
+  // token faqat sessionStorage'ga yozilardi — bu esa tab/brauzer yopilishi bilan
+  // (yoki ba'zi brauzerlarda sahifa yangilanishida) sessiyani yo'qotib, dashboard
+  // "hammasi 0" holatiga qaytib qolishiga sabab bo'lardi. Endi remember qiymatidan
+  // qat'i nazar HAR DOIM localStorage ishlatiladi — sessiya faqat aniq logout
+  // bosilganda o'chadi.
+  function store(remember) { return localStorage; }
+  function otherStore(remember) { return sessionStorage; }
 
   function getAccessToken() {
     return localStorage.getItem(ACCESS_KEY) || sessionStorage.getItem(ACCESS_KEY) || null;

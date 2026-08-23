@@ -3722,48 +3722,16 @@ async function sendSms(event) {
   const debtor = debtors.find(d => d.id === currentSmsDebtorId);
   if (!debtor) return;
 
-  const message = document.getElementById("smsMessage").value;
-
-  console.log("━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📱 SMS REMINDER API");
-  console.log(`📤 REQUEST: POST /api/v1/debtors/${debtor.id}/sms-reminder`);
-  console.log("📦 PAYLOAD:", { phone: debtor.phone, message });
-
-  try {
-    // ✅ FIXED: GET emas, POST — backend POST /api/v1/debtors/{id}/sms-reminder kutadi
-    const res = await window.crmApi.post(`/api/v1/debtors/${debtor.id}/sms-reminder`, {
-      message: message
-    });
-
-    console.log("📥 RESPONSE:", res.status, res.data);
-    console.log("✅ SUCCESS — SMS yuborildi");
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-
-    const smsData = {
-      id: Date.now(),
-      debtorId: debtor.id,
-      debtorName: debtor.name,
-      phone: debtor.phone,
-      message: message,
-      date: getCurrentLocalDateTime(),
-      type: "manual",
-      status: "sent"
-    };
-
-    smsHistory.push(smsData);
-    saveSmsHistory();
-
-    localStorage.setItem(`last_sms_${debtor.id}`, getToday());
-
-    renderSmsHistory();
-    renderDebtors();
-    closeSmsModal();
-    showSuccessMessage(`📱 SMS yuborildi: ${debtor.name}`);
-  } catch (error) {
-    console.error("❌ ERROR:", error?.response?.status, error?.response?.data || error.message);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    alert(getApiErrorMessage(error, "SMS yuborishda xatolik yuz berdi"));
-  }
+  // ⚠️ Yangi backend'da SMS yuborish uchun umuman route yo'q (SMS provayder
+  // integratsiyasi hali qo'shilmagan). Eski /api/v1/debtors/{id}/sms-reminder
+  // doim 404 qaytarardi va foydalanuvchi buni "SMS yuborildi" deb noto'g'ri
+  // tushunardi (chunki xato faqat konsolda ko'rinardi). Endi buning o'rniga
+  // ochiq-oydin xabar beramiz — soxta so'rov yubormaymiz.
+  alert(
+    "SMS yuborish funksiyasi hali backend'da ulanmagan (SMS provayder integratsiyasi yo'q). " +
+    "Bu funksiya ishlashi uchun backend tomonda alohida SMS route qo'shilishi kerak."
+  );
+  closeSmsModal();
 }
 
 function sendAutoSms(debtor) {
