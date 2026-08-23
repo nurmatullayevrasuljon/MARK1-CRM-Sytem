@@ -11,7 +11,7 @@ exports.getStatistics = async (req, res) => {
     const store_id = req.user.store_id;
 
     // O'zbekiston vaqti (UTC+5) bo'yicha bugungi sanani aniqlash
-    const now = new Date();
+    // const now = new Date();
 
     const now = new Date();
 
