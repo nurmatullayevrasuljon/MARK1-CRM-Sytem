@@ -425,7 +425,7 @@
     // ⚠️ TASDIQLASH KERAK: Swagger'da "Settings"/"Security" bo'limini tekshiring.
     changePassword: async function (oldPassword, newPassword) {
       try {
-        const res = await crmApi.post("/api/v1/settings/security/change-password", {
+        const res = await crmApi.post("/v1/settings/security/change-password", {
           old_password: oldPassword,
           new_password: newPassword
         });

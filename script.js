@@ -500,27 +500,119 @@ function mapApiProduct(product) {
 }
 
 function mapApiSale(sale, item) {
-  const product = item.product || products.find(p => p.id === item.product_id) || null;
-  const category = product && product.category
-    ? (typeof product.category === "string" ? product.category : product.category.name)
-    : (product && product.categoryName) || "Kategoriyasiz";
+
+  const product =
+    item.product ||
+    products.find(
+      p => String(p.id) === String(item.product_id)
+    ) ||
+    null;
+
+  const category =
+    product && product.category
+      ? (
+          typeof product.category === "string"
+            ? product.category
+            : product.category.name
+        )
+      : "Kategoriyasiz";
+
+  const qty =
+    Number(item.quantity) || 0;
+
+  const unitPrice =
+    Number(
+      item.unit_price ??
+      item.selling_price ??
+      sale.unit_price ??
+      product?.price ??
+      0
+    );
+
+  const unitCost =
+    Number(
+      item.unit_cost ??
+      item.cost_price ??
+      item.purchase_price ??
+      sale.unit_cost ??
+      product?.costPrice ??
+      0
+    );
+
+  const total =
+    Number(
+      item.total_price ??
+      sale.total_amount ??
+      unitPrice * qty
+    ) || 0;
+
+  const profit =
+    Number(
+      item.profit ??
+      sale.profit ??
+      ((unitPrice - unitCost) * qty)
+    ) || 0;
 
   return {
+
     id: sale.id,
+
     itemId: item.id,
-    sessionId: sale.notes || "api",
-    productId: item.product_id,
-    name: product ? product.name : "Mahsulot",
+
+    sessionId:
+      sale.notes || "api",
+
+    productId:
+      item.product_id,
+
+    name:
+      product
+        ? product.name
+        : item.product_name || "Mahsulot",
+
     category,
-    qty: Number(item.quantity) || 0,
-    unit: product ? product.unit : "dona",
-    price: Number(item.unit_price) || 0,
-    total: Number(item.total_price) || Number(sale.total_amount) || 0,
-    currency: "UZS",
-    status: sale.status || "sold",
-    paymentType: sale.payment_type || "cash",
-    date: sale.sold_at || getCurrentLocalDateTime(),
-    timestamp: new Date(sale.sold_at || Date.now()).getTime()
+
+    qty,
+
+    unit:
+      product?.unit ||
+      item.unit ||
+      "dona",
+
+    // Sotuv paytidagi narx
+    price: unitPrice,
+
+    // Sotuv paytidagi tannarx
+    costPrice: unitCost,
+
+    // Shu sotuvning foydasi
+    profit,
+
+    total,
+
+    currency:
+      sale.currency ||
+      "UZS",
+
+    status:
+      sale.status ||
+      "sold",
+
+    paymentType:
+      sale.payment_type ||
+      "cash",
+
+    date:
+      sale.sold_at ||
+      sale.created_at ||
+      getCurrentLocalDateTime(),
+
+    timestamp:
+      new Date(
+        sale.sold_at ||
+        sale.created_at ||
+        Date.now()
+      ).getTime()
   };
 }
 
@@ -2459,25 +2551,92 @@ async function deleteSale(id) {
 /* ===============================================
    FOYDA HISOBLASH (Professional - Oylik real foyda)
 =============================================== */
+// ===============================================
+// MONTHLY PROFIT — PROFESSIONAL
+// Sale snapshot → profit
+// ===============================================
 function calculateMonthlyProfit(date = getToday()) {
-  const [year, month] = date.split('-');
+
+  const [year, month] =
+    String(date).split("-");
+
   let totalProfit = 0;
 
+  if (!Array.isArray(sales)) {
+    return 0;
+  }
+
   sales.forEach(sale => {
-    if (sale.status === "sold") {
-      const [sYear, sMonth] = getDateKey(sale.date).split('-');
 
-      if (sYear === year && sMonth === month) {
-        const product = products.find(p => p.id === sale.productId);
+    if (!sale) return;
 
-        if (product && product.costPrice && product.price) {
-          const profitPerUnit = product.price - product.costPrice;
-          const totalProfitForSale = profitPerUnit * sale.qty;
-
-          totalProfit += totalProfitForSale;
-        }
-      }
+    if (sale.status !== "sold") {
+      return;
     }
+
+    if (!sale.date) {
+      return;
+    }
+
+    const saleDate =
+      getDateKey(sale.date);
+
+    const [saleYear, saleMonth] =
+      String(saleDate).split("-");
+
+    if (
+      saleYear !== year ||
+      saleMonth !== month
+    ) {
+      return;
+    }
+
+    const qty =
+      Number(
+        sale.qty ??
+        sale.quantity ??
+        0
+      );
+
+    if (qty <= 0) return;
+
+    // 1. Eng yaxshi variant:
+    // backend sale ichida tayyor profit yuborsa
+    if (
+      sale.profit !== undefined &&
+      sale.profit !== null
+    ) {
+      totalProfit +=
+        Number(sale.profit) || 0;
+
+      return;
+    }
+
+    // 2. Sale snapshot tannarxi
+    const unitCost =
+      Number(
+        sale.costPrice ??
+        sale.unitCost ??
+        sale.unit_cost ??
+        0
+      );
+
+    const unitPrice =
+      Number(
+        sale.price ??
+        sale.unitPrice ??
+        sale.unit_price ??
+        0
+      );
+
+    // 3. Eski sale'lar uchun
+    // productdan fallback
+    if (unitCost > 0 && unitPrice > 0) {
+
+      totalProfit +=
+        (unitPrice - unitCost) * qty;
+    }
+
   });
 
   return Math.round(totalProfit);
@@ -5923,26 +6082,68 @@ function initLogout() {
 }
 
 /* ========== INITIALIZATION ========== */
+async function initDashboard() {
 
-function initDashboard() {
-  console.log('=== Initializing Dashboard ===');
+  console.log("=== Initializing Dashboard ===");
 
-  // Auth tekshirish
   if (!checkAuth()) {
     return;
   }
 
-  // ✅ FIX 6: updateProfileDisplay() olib tashlandi — eski localStorage-based funksiya.
-  // initializeApp() → TopbarProfileManager.init() barcha profil UI ni boshqaradi.
-
-  // Dropdown va logout
   initProfileDropdown();
   initLogout();
 
   console.log("=== Dashboard Initialized ===");
 
-  getDashboardStatistics();
+  // Muhim:
+  // Dashboard kerakli ma'lumotlarni kutadi.
+  try {
+
+    await Promise.all([
+      apiLoadCategories(),
+      apiLoadProducts(),
+      apiLoadSales()
+    ]);
+
+  } catch (error) {
+
+    console.warn(
+      "⚠️ Dashboard initial data load:",
+      error
+    );
+
+  }
+
+  // Endi statistics hisoblanadi
+  await getDashboardStatistics();
+
+  // Profit va inventory ham yakuniy qiymat bilan
+  updateProfitUI();
+  updateInventoryBalanceUI();
+
+  console.log(
+    "✅ Dashboard fully ready"
+  );
 }
+// function initDashboard() {
+//   console.log('=== Initializing Dashboard ===');
+
+//   // Auth tekshirish
+//   if (!checkAuth()) {
+//     return;
+//   }
+
+//   // ✅ FIX 6: updateProfileDisplay() olib tashlandi — eski localStorage-based funksiya.
+//   // initializeApp() → TopbarProfileManager.init() barcha profil UI ni boshqaradi.
+
+//   // Dropdown va logout
+//   initProfileDropdown();
+//   initLogout();
+
+//   console.log("=== Dashboard Initialized ===");
+
+//   getDashboardStatistics();
+// }
 
 // Sahifa yuklanganda ishga tushirish
 if (document.readyState === 'loading') {
@@ -5958,16 +6159,81 @@ window.getUserData = getUserData;
 window.saveUserData = saveUserData;
 window.logout = logout;
 
+// =========================================
+// CHANGE PASSWORD API — VERIFIED ENDPOINT
+// =========================================
 async function changePassword(oldPassword, newPassword) {
-  const Auth = window.AuthSystem;
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("🔐 CHANGE PASSWORD API");
+  console.log("📤 REQUEST: PUT /store/password/change");
 
-  if (!Auth || typeof Auth.changePassword !== "function") {
-    return { success: false, message: "Auth tizimi topilmadi!" };
+  try {
+    const response = await crmApi.put(
+      "/store/password/change",
+      {
+        old_password: oldPassword,
+        new_password: newPassword
+      }
+    );
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("✅ CHANGE PASSWORD SUCCESS");
+    console.log("🌐 HTTP:", response.status);
+    console.log("📊 RESPONSE:", response.data);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    return {
+      success: true,
+      status: response.status,
+      data: response.data,
+      message:
+        response.data?.message ||
+        "Parol muvaffaqiyatli o'zgartirildi."
+    };
+
+  } catch (error) {
+
+    const status = error?.response?.status;
+
+    const backendMessage =
+      error?.response?.data?.detail ||
+      error?.response?.data?.message ||
+      error?.response?.data?.error;
+
+    console.error("❌ CHANGE PASSWORD FAILED");
+
+    console.table({
+      success: false,
+      status,
+      url: error?.config?.url || null,
+      message: backendMessage || error?.message
+    });
+
+    let message = "Parolni o'zgartirishda xatolik yuz berdi.";
+
+    if (status === 400) {
+      message =
+        backendMessage ||
+        "Eski parol noto'g'ri yoki yangi parol talabga javob bermaydi.";
+    }
+
+    if (status === 401) {
+      message =
+        "Sessiya tugagan. Qaytadan tizimga kiring.";
+    }
+
+    if (status === 404) {
+      message =
+        "Parol API endpointi backendda topilmadi.";
+    }
+
+    return {
+      success: false,
+      status,
+      message
+    };
   }
-
-  return Auth.changePassword(oldPassword, newPassword);
 }
-
 window.changePassword = changePassword;
 
 
@@ -6541,63 +6807,122 @@ var DashboardStatisticsManager = {
 }
 
 // Backend DASHBOARD API 
+// =========================================
+// DASHBOARD STATISTICS — FIXED
+// =========================================
 async function getDashboardStatistics() {
+  console.log("📊 DASHBOARD API START");
+
+  // OFFLINE MODE
   if (OFFLINE_DATA_MODE) {
+
     const todayRevenue = calculateTodayRevenue();
-    const yesterdayRevenue =
-      Number(localStorage.getItem("yesterdaySalesTotal")) || 0;
-
-    const dailyChange =
-      yesterdayRevenue > 0
-        ? Math.round(
-            ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
-          )
-        : 0;
-
     const monthlyRevenue = calculateMonthlyRevenue();
-    const previousMonthRevenue = getPreviousMonthRevenue();
+
+    const previousMonthRevenue =
+      getPreviousMonthRevenue();
 
     const monthlyGrowth =
       previousMonthRevenue > 0
         ? Math.round(
             ((monthlyRevenue - previousMonthRevenue) /
-              previousMonthRevenue) *
-              100
+              previousMonthRevenue) * 100
           )
         : 0;
 
-    return {
+    const inventoryBalance =
+      calculateInventoryBalance();
+
+    const data = {
       monthly_revenue: monthlyRevenue,
       monthly_revenue_growth: monthlyGrowth,
       daily_sales: todayRevenue,
-      daily_sales_change: dailyChange,
+      daily_sales_change: 0,
       monthly_profit: calculateMonthlyProfit(),
-      inventory_balance: products.reduce(
-        (sum, p) =>
-          sum +
-          (Number(p.stock) || 0) *
-            (Number(p.costPrice) || 0),
-        0
-      )
+      inventory_balance: inventoryBalance
     };
-  }
-
-  try {
-    const response = await window.crmApi.get("/statistics/full");
-
-    const data = response.data;
 
     DashboardStatisticsManager.updateDashboard(data);
 
     return data;
-  } catch (error) {
-    console.error(
-      "❌ STATISTICS FULL ERROR:",
-      error?.response?.status,
-      error?.response?.data || error.message
+  }
+
+  // ONLINE MODE
+  try {
+
+    const response = await window.crmApi.get(
+      "/v1/dashboard/stats"
     );
 
-    return null;
+    const raw =
+      response.data?.data ||
+      response.data;
+
+    const data = {
+      monthly_revenue:
+        Number(raw.monthly_revenue) || 0,
+
+      monthly_revenue_growth:
+        Number(raw.monthly_revenue_growth) || 0,
+
+      daily_sales:
+        Number(raw.daily_sales) || 0,
+
+      daily_sales_change:
+        Number(raw.daily_sales_change) || 0,
+
+      monthly_profit:
+        Number(raw.monthly_profit) || 0,
+
+      inventory_balance:
+        Number(raw.inventory_balance) || 0
+    };
+
+    console.log("✅ DASHBOARD STATISTICS");
+    console.table([data]);
+
+    DashboardStatisticsManager.updateDashboard(data);
+
+    return data;
+
+  } catch (error) {
+
+    console.error("❌ DASHBOARD API ERROR");
+
+    console.table({
+      status: error?.response?.status || null,
+      url: error?.config?.url || null,
+      message:
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        error?.message
+    });
+
+    // Backend statistics ishlamasa,
+    // frontenddagi real ma'lumotlardan hisoblaymiz.
+    const fallbackData = {
+      monthly_revenue:
+        calculateMonthlyRevenue(),
+
+      monthly_revenue_growth: 0,
+
+      daily_sales:
+        calculateTodayRevenue(),
+
+      daily_sales_change: 0,
+
+      monthly_profit:
+        calculateMonthlyProfit(),
+
+      inventory_balance:
+        calculateInventoryBalance()
+    };
+
+    DashboardStatisticsManager.updateDashboard(
+      fallbackData
+    );
+
+    return fallbackData;
   }
 }
 
@@ -7713,136 +8038,181 @@ async function apiGetProfile() {
 }
 
 // // Backend SETTINGS PROFILE API
+// =========================================
+// GET SETTINGS PROFILE — FIXED
+// =========================================
 async function apiLoadSettingsProfile() {
-
-  // console.clear();
-
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("⚙️ SETTINGS PROFILE API");
-  console.log("📤 REQUEST");
-  console.log("GET /api/v1/settings/profile");
-  console.log("🕒", new Date().toLocaleString());
+  console.log("📤 REQUEST: GET /v1/settings/profile");
 
   try {
+    const response = await window.crmApi.get(
+      "/v1/settings/profile"
+    );
 
-    const response = await window.crmApi.get("/api/v1/settings/profile");
-
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("✅ STATUS : SUCCESS");
-    console.log("🌐 HTTP :", response.status);
-    console.log("📊 RESPONSE");
-
-    console.table([response.data]);
-
-    window.settingsProfile = response.data;
-
-    console.log("👤 Full Name :", response.data.full_name);
-    console.log("📧 Email     :", response.data.email);
-    console.log("📱 Phone     :", response.data.phone);
-    console.log("🏢 Company   :", response.data.company_name);
-    console.log("🏷 Role      :", response.data.role);
-    console.log("🏢 Department:", response.data.department);
-    console.log("🌙 Dark Mode :", response.data.dark_mode);
-    console.log("🔐 2FA       :", response.data.two_factor_enabled);
-    console.log("📩 Email Not :", response.data.email_notifications);
+    const profile =
+      response.data?.data ||
+      response.data?.profile ||
+      response.data;
 
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("✅ PROFILE LOAD SUCCESS");
+    console.log("🌐 HTTP:", response.status);
+    console.table([profile]);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-    return response.data;
+    window.settingsProfile = profile;
+
+    if (window.AuthSystem?.updateCurrentUserData) {
+      window.AuthSystem.updateCurrentUserData(profile);
+    }
+
+    if (window.CRMTopbar?.updateProfile) {
+      window.CRMTopbar.updateProfile(profile);
+    }
+
+    if (window.TopbarProfileManager) {
+      window.TopbarProfileManager.updateAllUI({
+        fullName:
+          profile.full_name ||
+          profile.fullName ||
+          "",
+        email:
+          profile.email ||
+          "",
+        phone:
+          profile.phone ||
+          "",
+        company:
+          profile.company_name ||
+          profile.company ||
+          "",
+        department:
+          profile.department ||
+          profile.role ||
+          "",
+        avatar:
+          profile.avatar_url ||
+          profile.avatar ||
+          ""
+      });
+    }
+
+    return profile;
 
   } catch (error) {
+    console.error("❌ PROFILE LOAD ERROR");
 
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("❌ STATUS : FAILED");
-
-    console.log("🌐 HTTP :", error.response?.status);
-
-    console.log("📄 RESPONSE");
-
-    console.table([
-      error.response?.data || {
-        message: error.message
-      }
-    ]);
-
-    console.error(error);
-
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.table({
+      status: error?.response?.status || null,
+      url: error?.config?.url || null,
+      message:
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Profil yuklanmadi"
+    });
 
     return null;
   }
 }
 
 // // Backend UPDATE PROFILE API
+// =========================================
+// PROFILE UPDATE API — FIXED
+// =========================================
 async function apiUpdateProfile(profileData) {
-
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("👤 UPDATE PROFILE API");
-  console.log("📤 REQUEST");
-  console.log("PUT /api/v1/settings/profile");
+  console.log("📤 REQUEST: PUT /v1/settings/profile");
   console.table([profileData]);
 
   try {
-
     const response = await window.crmApi.put(
-      "/api/v1/settings/profile",
+      "/v1/settings/profile",
       profileData
     );
 
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("✅ STATUS : SUCCESS");
-    console.log("🌐 HTTP :", response.status);
-    console.log("📊 RESPONSE");
+    console.log("✅ PROFILE UPDATE SUCCESS");
+    console.log("🌐 HTTP:", response.status);
     console.table([response.data]);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-    // AuthSystem yangilash
+    const profile = response.data?.data || response.data?.profile || response.data;
+
+    // Auth storage'ni yangilash
     if (window.AuthSystem?.updateCurrentUserData) {
-      window.AuthSystem.updateCurrentUserData(response.data);
+      window.AuthSystem.updateCurrentUserData(profile);
     }
 
+    // Topbar
     if (window.TopbarProfileManager) {
-
       window.TopbarProfileManager.updateAllUI({
-
-        fullName: response.data.full_name,
-        email: response.data.email,
-        phone: response.data.phone,
-        company: response.data.company_name,
-        department: response.data.role,
-        avatar: response.data.avatar_url
-
+        fullName:
+          profile.full_name ||
+          profile.fullName ||
+          "",
+        email:
+          profile.email ||
+          "",
+        phone:
+          profile.phone ||
+          "",
+        company:
+          profile.company_name ||
+          profile.company ||
+          "",
+        department:
+          profile.department ||
+          profile.role ||
+          "",
+        avatar:
+          profile.avatar_url ||
+          profile.avatar ||
+          ""
       });
-
     }
 
+    // Boshqa UI modullariga signal
     window.dispatchEvent(
       new CustomEvent("profileUpdated", {
-        detail: {
-          avatar: response.data.avatar_url
-        }
+        detail: profile
       })
     );
 
-    // Topbar yangilash
     if (window.CRMTopbar?.updateProfile) {
-      window.CRMTopbar.updateProfile(response.data);
+      window.CRMTopbar.updateProfile(profile);
     }
 
-    console.log("✅ Profile muvaffaqiyatli yangilandi.");
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
-    return response.data;
+    return {
+      success: true,
+      data: profile
+    };
 
   } catch (error) {
+    console.error("❌ PROFILE UPDATE ERROR");
 
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("❌ STATUS : FAILED");
-    console.log("🌐 HTTP :", error?.response?.status);
-    console.log("📄 ERROR");
-    console.error(error?.response?.data || error.message);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.table({
+      success: false,
+      status: error?.response?.status || null,
+      url: error?.config?.url || null,
+      message:
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Profilni saqlashda xatolik"
+    });
 
-    throw error;
+    return {
+      success: false,
+      status: error?.response?.status || null,
+      message:
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        "Profilni saqlashda xatolik yuz berdi."
+    };
   }
 }
 
