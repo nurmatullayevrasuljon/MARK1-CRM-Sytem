@@ -4412,8 +4412,6 @@ async function syncAllApiData() {
   await apiLoadDebtors();
   await loadProfile();
   await loadAndRenderTransactions(transactionFilter);
-  const lowStockProducts = await getLowStockAlerts();
-  renderLowStockAlerts(lowStockProducts);
 }
 
 /* ===============================================
