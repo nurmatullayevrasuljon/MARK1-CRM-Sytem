@@ -421,6 +421,7 @@ let chartInstances = {
   daily: null
 };
 
+let dashboardBootstrapped = false;
 // function getApiBaseUrl() {
 //   // return window.CRM_API_URL || "https://backend-api-production-87e9.up.railway.app";
 //   return window.CRM_API_URL || "https://z3wax.pythonanywhere.com";
@@ -1375,8 +1376,8 @@ if (productForm) {
             name: productName.value.trim(),
             categoryId: categoryId,
             category: categoryMeta ? categoryMeta.name : "Kategoriyasiz",
-            image: null,
-            imageUrl: null,
+            image: "img/product.jpg",
+            imageUrl: "img/product.jpg",
             costPrice: costPriceValue,
             price: salePriceValue,
             currency: "UZS",
@@ -2110,8 +2111,14 @@ async function apiLoadSales() {
         const sellingPrice =
           Number(item.selling_price) || 0;
 
-        const total =
+          const total =
           sellingPrice * quantity;
+
+        const purchasePrice =
+          Number(item.purchase_price) || 0;
+
+        const profit =
+          (sellingPrice - purchasePrice) * quantity;
 
         mappedSales.push({
           id: sale._id,
@@ -2140,8 +2147,14 @@ async function apiLoadSales() {
           price:
             sellingPrice,
 
-          total:
+                    total:
             total,
+
+          costPrice:
+            purchasePrice,
+
+          profit:
+            profit,
 
           currency:
             "UZS",
@@ -4437,6 +4450,7 @@ document.addEventListener("DOMContentLoaded",
     updateStatistics();
     bindSystemSettings();
 
+    dashboardBootstrapped = true;
     syncAllApiData();
 
     // ✅ Avtomatik SMS tizimini ishga tushirish (08:00 da)
@@ -5293,12 +5307,12 @@ var TopbarProfileManager = {
 
       // BACKEND → FRONTEND MAPPING
       const mappedData = {
-        fullName: user.full_name,
-        email: user.email,
-        phone: user.phone,
-        company: user.company_name,
+        fullName: user.full_name || user.fullName || user.ceo_name || "",
+        email: user.email || "",
+        phone: user.phone || user.ceo_phone || "",
+        company: user.company_name || user.company || user.store_name || "",
         department: this.mapRole(user.role),
-        avatar: user.avatar || user.avatar_url
+        avatar: user.avatar || user.avatar_url || user.profile_picture || ""
       };
 
       this.updateAllUI(mappedData)
@@ -6093,7 +6107,15 @@ async function initDashboard() {
   initProfileDropdown();
   initLogout();
 
-  console.log("=== Dashboard Initialized ===");
+    console.log("=== Dashboard Initialized ===");
+
+  // BUG FIX: boshqa oqim (asosiy DOMContentLoaded -> syncAllApiData)
+  // allaqachon shu ma'lumotlarni yuklagan/yuklayotgan bo'lsa, qayta yuklamaymiz.
+  if (dashboardBootstrapped) {
+    console.log("ℹ️ Dashboard allaqachon boshqa oqim orqali yuklangan, initDashboard() takroriy yuklamaydi.");
+    return;
+  }
+  dashboardBootstrapped = true;
 
   // Muhim:
   // Dashboard kerakli ma'lumotlarni kutadi.
@@ -6281,62 +6303,62 @@ window.changePassword = changePassword;
 
     if (cancelBtn) cancelBtn.addEventListener("click", reset);
 
-    if (saveBtn) {
-      saveBtn.addEventListener("click", async function () {
-        if (msgEl) { msgEl.style.display = "none"; }
+    // if (saveBtn) {
+    //   saveBtn.addEventListener("click", async function () {
+    //     if (msgEl) { msgEl.style.display = "none"; }
 
-        var oldPass = oldPassInput ? oldPassInput.value : "";
-        var newPass = newPassInput ? newPassInput.value : "";
-        var confirmPass = confirmPassInput ? confirmPassInput.value : "";
+    //     var oldPass = oldPassInput ? oldPassInput.value : "";
+    //     var newPass = newPassInput ? newPassInput.value : "";
+    //     var confirmPass = confirmPassInput ? confirmPassInput.value : "";
 
-        if (!oldPass) return showMsg("Eski parolni kiriting!", false);
-        if (newPass.length < 6) return showMsg("Yangi parol kamida 6 ta belgi bo'lishi kerak!", false);
-        if (newPass !== confirmPass) return showMsg("Parollar mos kelmadi!", false);
+    //     if (!oldPass) return showMsg("Eski parolni kiriting!", false);
+    //     if (newPass.length < 6) return showMsg("Yangi parol kamida 6 ta belgi bo'lishi kerak!", false);
+    //     if (newPass !== confirmPass) return showMsg("Parollar mos kelmadi!", false);
 
-        var Auth = window.AuthSystem;
-        if (!Auth || typeof Auth.changePassword !== "function") {
-          return showMsg("Auth tizimi topilmadi!", false);
-        }
-        console.log("━━━━━━━━━━━━━━━━━━");
-        console.log("🔐 CHANGE PASSWORD");
-        console.log("📤 REQUEST");
-        console.table({
-          old_password: oldPass,
-          new_password: newPass
-        });
+    //     var Auth = window.AuthSystem;
+    //     if (!Auth || typeof Auth.changePassword !== "function") {
+    //       return showMsg("Auth tizimi topilmadi!", false);
+    //     }
+    //     console.log("━━━━━━━━━━━━━━━━━━");
+    //     console.log("🔐 CHANGE PASSWORD");
+    //     console.log("📤 REQUEST");
+    //     console.table({
+    //       old_password: oldPass,
+    //       new_password: newPass
+    //     });
 
-        var result = await Auth.changePassword(oldPass, newPass);
+    //     var result = await Auth.changePassword(oldPass, newPass);
 
-        console.log("━━━━━━━━━━━━━━━━━━");
+    //     console.log("━━━━━━━━━━━━━━━━━━");
 
-        if (result.success) {
+    //     if (result.success) {
 
-          console.log("✅ STATUS : SUCCESS");
-          console.table(result);
+    //       console.log("✅ STATUS : SUCCESS");
+    //       console.table(result);
 
-          alert("✅ Parol muvaffaqiyatli o'zgartirildi!");
+    //       alert("✅ Parol muvaffaqiyatli o'zgartirildi!");
 
-          showMsg("✅ Parol muvaffaqiyatli yangilandi!", true);
+    //       showMsg("✅ Parol muvaffaqiyatli yangilandi!", true);
 
-          saveBtn.disabled = true;
+    //       saveBtn.disabled = true;
 
-          setTimeout(function () {
-            reset();
-            saveBtn.disabled = false;
-          }, 2000);
+    //       setTimeout(function () {
+    //         reset();
+    //         saveBtn.disabled = false;
+    //       }, 2000);
 
-        } else {
+    //     } else {
 
-          console.log("❌ STATUS : ERROR");
-          console.table(result);
+    //       console.log("❌ STATUS : ERROR");
+    //       console.table(result);
 
-          alert("❌ " + result.message);
+    //       alert("❌ " + result.message);
 
-          showMsg(result.message || "Xatolik yuz berdi!", false);
+    //       showMsg(result.message || "Xatolik yuz berdi!", false);
 
-        }
-      });
-    }
+    //     }
+    //   });
+    // }
   }
 
   document.addEventListener(
@@ -6553,6 +6575,13 @@ var DashboardStatisticsManager = {
 
   init: async function () {
 
+    // BUG FIX: boshqa oqim allaqachon bootstrap qilgan bo'lsa, qayta yuklamaymiz.
+    if (dashboardBootstrapped) {
+      console.log("ℹ️ DASHBOARD INIT — allaqachon bootstrap qilingan, skip.");
+      return;
+    }
+    dashboardBootstrapped = true;
+
     console.log(
       "🚀 DASHBOARD INIT"
     )
@@ -6560,7 +6589,6 @@ var DashboardStatisticsManager = {
     // API LOAD
     const data =
       await getDashboardStatistics()
-
     // AGAR DATA KELSA
     if (data) {
 
