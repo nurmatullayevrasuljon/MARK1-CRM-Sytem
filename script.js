@@ -716,8 +716,12 @@ function mapApiDebtor(debtor) {
   return {
     id: debtor._id || debtor.id,
     saleId: debtor._id || debtor.id,
-    name: client?.full_name || client?.name || debtor.note || "Noma'lum mijoz",
-    phone: client?.phone || "",
+    // BUG FIX: backend Client modeli client_name/client_phone maydonlarini
+    // ishlatadi (full_name/name/phone emas — Client Schema'da bunday
+    // maydonlar yo'q). Eski nomlar bilan bu doim "Noma'lum mijoz" va bo'sh
+    // telefon ko'rsatardi, garchi backend to'g'ri ma'lumot qaytargan bo'lsa ham.
+    name: client?.client_name || debtor.note || "Noma'lum mijoz",
+    phone: client?.client_phone || "",
     amount: Number(debtor.total_remaining) || 0,
     originalAmount: Number(debtor.total_price) || 0,
     paidAmount: Number(debtor.total_paid) || 0,
@@ -2101,8 +2105,21 @@ async function apiLoadSales() {
       }
 
       sale.products.forEach(item => {
+        // BUG FIX: backend GET /sale/get so'rovida "products.product_id"ni
+        // to'liq mahsulot hujjati bilan populate qiladi (ID string emas,
+        // {_id, product_name, ...} obyekt). Shu sabab quyidagi taqqoslash
+        // hech qachon String(p.id) bilan mos kelmasdi — natijada:
+        //  1) mahsulot nomi doim "Mahsulot" bo'lib chiqardi,
+        //  2) productId noto'g'ri (butun obyekt) saqlanardi, shu sabab
+        //     "Sotuv holati (hafta)" doim 0% – Sotilmayapti ko'rsatardi,
+        //     chunki getSalesStatus() s.productId === product.id ni solishtiradi.
+        const isPopulated = item.product_id && typeof item.product_id === "object";
+        const realProductId = isPopulated
+          ? String(item.product_id._id)
+          : String(item.product_id);
+
         const product = products.find(
-          p => String(p.id) === String(item.product_id)
+          p => String(p.id) === realProductId
         );
 
         const quantity =
@@ -2124,16 +2141,18 @@ async function apiLoadSales() {
           id: sale._id,
 
           itemId:
-            `${sale._id}_${item.product_id}`,
+            `${sale._id}_${realProductId}`,
 
           sessionId:
             sale.note || "api",
 
           productId:
-            item.product_id,
+            realProductId,
 
           name:
-            product?.name || "Mahsulot",
+            product?.name ||
+            (isPopulated ? item.product_id.product_name : null) ||
+            "Mahsulot",
 
           category:
             product?.category || "Kategoriyasiz",
@@ -2427,7 +2446,7 @@ function renderSales() {
         <td>${s.total.toLocaleString()} ${s.currency}</td>
         <td>${time}</td>
         <td>
-          <button class="btn btn-sm btn-danger" onclick="cancelSale(${s.id})" title="Bekor qilish">
+          <button class="btn btn-sm btn-danger" onclick="cancelSale('${s.id}')" title="Bekor qilish">
             ✖
           </button>
         </td>
@@ -2472,7 +2491,7 @@ async function cancelSale(id) {
 
   // OFFLINE DATA MODE START
   if (OFFLINE_DATA_MODE) {
-    const sale = sales.find(s => s.id === id);
+    const sale = sales.find(s => String(s.id) === String(id));
     if (sale && sale.status === "sold") {
       const product = products.find(p => p.id === sale.productId);
       if (product) product.stock += sale.qty;
@@ -2519,7 +2538,7 @@ async function deleteSale(id) {
 
   // OFFLINE DATA MODE START
   if (OFFLINE_DATA_MODE) {
-    const sale = sales.find(s => s.id === id);
+    const sale = sales.find(s => String(s.id) === String(id));
     if (sale && sale.status === "sold") {
       const product = products.find(p => p.id === sale.productId);
       if (product) product.stock += sale.qty;
@@ -4412,6 +4431,8 @@ async function syncAllApiData() {
   await apiLoadDebtors();
   await loadProfile();
   await loadAndRenderTransactions(transactionFilter);
+  const lowStockProducts = await getLowStockAlerts();
+  renderLowStockAlerts(lowStockProducts);
 }
 
 /* ===============================================
@@ -4448,7 +4469,6 @@ document.addEventListener("DOMContentLoaded",
     updateStatistics();
     bindSystemSettings();
 
-    dashboardBootstrapped = true;
     syncAllApiData();
 
     // ✅ Avtomatik SMS tizimini ishga tushirish (08:00 da)
@@ -4916,29 +4936,52 @@ async function saveChanges() {
     };
 
     try {
-      const response = await window.crmApi.put("/api/v1/settings/profile", {
-        full_name: data.fullName,
-        email: data.email,
-        phone: data.phone,
-        company_name: data.company,
-        department: mapDepartmentToApi(data.department)
+      // BUG FIX: /api/v1/settings/profile mavjud emas (backendda bunday
+      // endpoint yo'q — natijada baseURL bilan qo'shilganda 404 qaytardi).
+      // Haqiqiy, backend routes.js'da tasdiqlangan endpoint:
+      //   POST /store/profile/update  body: { ceo_name, store_name, profile_picture }
+      // Backend Store modeli faqat shu uch maydonni saqlaydi — email/phone/department
+      // uchun ustunlar mavjud emas, shuning uchun ular hamon faqat localStorage'da
+      // (UI cache sifatida) saqlanadi, lekin bu ular backend ma'lumotining o'rnini
+      // bosadi degani emas: ceo_name va store_name endi haqiqatan backendga yoziladi.
+      const existingUser = (window.AuthSystem && typeof window.AuthSystem.getCurrentUser === "function")
+        ? (window.AuthSystem.getCurrentUser() || {})
+        : {};
+
+      const result = await window.AuthSystem.updateStoreProfile({
+        ceo_name: data.fullName,
+        store_name: data.company,
+        profile_picture: existingUser.profile_picture || existingUser.avatar_url || null
       });
 
-      const user = response.data;
+      if (!result || !result.success) {
+        showNotification(result?.backendMessage || result?.message || "Profilni saqlashda xatolik yuz berdi", "error");
+        return;
+      }
+
+      const store = result.data?.data || result.data;
       localStorage.setItem("profile_data", JSON.stringify(data));
 
       if (window.AuthSystem && typeof window.AuthSystem.updateCurrentUserData === "function") {
-        window.AuthSystem.updateCurrentUserData(user);
+        window.AuthSystem.updateCurrentUserData({
+          full_name: store.ceo_name,
+          company_name: store.store_name,
+          avatar_url: store.profile_picture,
+          // Backend qo'llab-quvvatlamaydigan maydonlar — faqat local cache:
+          email: data.email,
+          phone: data.phone,
+          department: data.department
+        });
       }
 
       window.dispatchEvent(new CustomEvent("profileUpdated", {
         detail: {
-          fullName: user.full_name || data.fullName,
-          email: user.email || data.email,
-          phone: user.phone || data.phone,
-          company: user.company_name || data.company,
-          department: user.department || data.department,
-          avatar: user.avatar_url || null
+          fullName: store.ceo_name || data.fullName,
+          email: data.email,
+          phone: data.phone,
+          company: store.store_name || data.company,
+          department: data.department,
+          avatar: store.profile_picture || null
         }
       }));
 
@@ -5025,14 +5068,43 @@ if (avatarInput && avatarImg && avatarFallback) {
     }
 
     try {
-      const formData = new FormData();
-      formData.append("avatar", file);
+      // BUG FIX: /api/v1/settings/profile/avatar backendda mavjud emas (404).
+      // Backendda alohida avatar-upload endpointi yo'q — haqiqiy flow ikki
+      // bosqichli: 1) POST /file/create orqali faylni yuklab URL olish
+      // (xuddi mahsulot rasmi yuklashda ishlatilgan, tasdiqlangan yo'l bilan
+      // bir xil), 2) shu URLni POST /store/profile/update orqali
+      // profile_picture sifatida saqlash.
+      const fileForm = new FormData();
+      fileForm.append("file", file);
 
-      const response = await window.crmApi.post("/api/v1/settings/profile/avatar", formData, {
+      const fileRes = await window.crmApi.post("/file/create", fileForm, {
         headers: { "Content-Type": "multipart/form-data" }
       });
 
-      const avatarUrl = normalizeApiAssetUrl(response.data && response.data.avatar_url);
+      const uploadedUrl = fileRes?.data?.file?.file_url || null;
+
+      if (!uploadedUrl) {
+        alert("Rasm yuklanmadi. Qaytadan urinib ko'ring.");
+        return;
+      }
+
+      const existingUser = (window.AuthSystem && typeof window.AuthSystem.getCurrentUser === "function")
+        ? (window.AuthSystem.getCurrentUser() || {})
+        : {};
+
+      const result = await window.AuthSystem.updateStoreProfile({
+        ceo_name: existingUser.full_name || existingUser.fullName || existingUser.ceo_name || "",
+        store_name: existingUser.company_name || existingUser.company || existingUser.store_name || "",
+        profile_picture: uploadedUrl
+      });
+
+      if (!result || !result.success) {
+        alert(result?.backendMessage || result?.message || "Avatarni saqlashda xatolik yuz berdi");
+        return;
+      }
+
+      const store = result.data?.data || result.data;
+      const avatarUrl = normalizeApiAssetUrl(store.profile_picture || uploadedUrl);
 
       // UI
       avatarImg.src = avatarUrl;
@@ -5042,13 +5114,13 @@ if (avatarInput && avatarImg && avatarFallback) {
       localStorage.setItem("profile_avatar", avatarUrl);
 
       if (window.AuthSystem && typeof window.AuthSystem.updateCurrentUserData === "function") {
-        window.AuthSystem.updateCurrentUserData(response.data);
+        window.AuthSystem.updateCurrentUserData({ avatar_url: store.profile_picture });
       }
 
       window.dispatchEvent(
         new CustomEvent("profileUpdated", {
           detail: {
-            avatar: response.data.avatar_url
+            avatar: store.profile_picture
           }
         })
       );
@@ -6107,37 +6179,24 @@ async function initDashboard() {
 
     console.log("=== Dashboard Initialized ===");
 
-  // BUG FIX: boshqa oqim (asosiy DOMContentLoaded -> syncAllApiData)
-  // allaqachon shu ma'lumotlarni yuklagan/yuklayotgan bo'lsa, qayta yuklamaymiz.
+  // BUG FIX: categories/products/sales'ni bu yerda QAYTA yuklash olib
+  // tashlandi — bu doim asosiy DOMContentLoaded blokidagi syncAllApiData()
+  // bilan takrorlanardi (tartibiga qaramay), token/parallel-request
+  // "401 keyin 200" holatini kuchaytirar edi. syncAllApiData() ularni
+  // allaqachon yuklaydi.
+  //
+  // getDashboardStatistics() esa DashboardStatisticsManager.init() (boshqa,
+  // alohida init oqimi) orqali ham chaqiriladi — shuning uchun FAQAT shu
+  // ikkisi orasida flag bilan bitta marta ishlashini ta'minlaymiz.
   if (dashboardBootstrapped) {
-    console.log("ℹ️ Dashboard allaqachon boshqa oqim orqali yuklangan, initDashboard() takroriy yuklamaydi.");
+    console.log("ℹ️ Dashboard statistikasi allaqachon boshqa oqim orqali yuklangan, qayta yuklanmaydi.");
     return;
   }
   dashboardBootstrapped = true;
 
-  // Muhim:
-  // Dashboard kerakli ma'lumotlarni kutadi.
-  try {
-
-    await Promise.all([
-      apiLoadCategories(),
-      apiLoadProducts(),
-      apiLoadSales()
-    ]);
-
-  } catch (error) {
-
-    console.warn(
-      "⚠️ Dashboard initial data load:",
-      error
-    );
-
-  }
-
-  // Endi statistics hisoblanadi
   await getDashboardStatistics();
 
-  // Profit va inventory ham yakuniy qiymat bilan
+  // Profit va inventory local fallback bilan ham yakuniy qiymat bilan
   updateProfitUI();
   updateInventoryBalanceUI();
 
@@ -6876,8 +6935,14 @@ async function getDashboardStatistics() {
   // ONLINE MODE
   try {
 
+    // BUG FIX: /v1/dashboard/stats backendda mavjud emas (404 → har doim
+    // fallbackData'ga tushib, "0" ko'rsatardi). Backend routes.js/statistics.route.js'da
+    // tasdiqlangan haqiqiy endpoint: GET /statistics/full. U aynan shu quyida
+    // o'qilayotgan field nomlarini (monthly_revenue, monthly_revenue_growth,
+    // daily_sales, daily_sales_change, monthly_profit, inventory_balance) qaytaradi —
+    // shuning uchun pastdagi parsing kodiga tegilmadi, faqat URL to'g'irlandi.
     const response = await window.crmApi.get(
-      "/v1/dashboard/stats"
+      "/statistics/full"
     );
 
     const raw =
