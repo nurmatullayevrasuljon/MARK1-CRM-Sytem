@@ -355,20 +355,9 @@ let transactionFilter = "daily";
 let transactionSearchQuery = "";
 
 // OFFLINE DATA MODE START
-// Backend hali tiklanmagani uchun Products/Categories/Sales/Debtors bo'yicha
-// barcha yozish (create/update/delete) amallari to'g'ridan-to'g'ri
-// localStorage asosidagi local massivlar (products/categories/sales/debtors)
-// ustida bajariladi — window.crmApi orqali backendga chiqilmaydi.
-// Backend qaytganda OFFLINE_DATA_MODE ni false qiling yoki shu
-// "OFFLINE DATA MODE" bloklarini butunlay o'chiring — asl (real API) kod
-// hech qayerda o'chirilmagan, faqat vaqtincha chetlab o'tilmoqda.
-// const OFFLINE_DATA_MODE = true;
-// script.js boshida, OFFLINE_DATA_MODE e'lon qilingandan keyin:
 let OFFLINE_DATA_MODE = false;
 
-// ✅ Tekshiruvni sahifa yuklanishi bilanoq (DOMContentLoaded’ni kutmay) boshlaymiz
-let backendCheckPromise = detectBackendAvailability();
-
+// ✅ Tekshiruvni sahifa yuklanishi bilanoq boshlaymiz
 let backendCheckPromise = detectBackendAvailability();
 
 async function detectBackendAvailability() {
@@ -391,8 +380,7 @@ async function detectBackendAvailability() {
     } catch (error) {
       const status = error?.response?.status;
 
-      // 401/403 — server ishlayapti.
-      // Bu backend offline degani EMAS.
+      // 401/403 — server ishlayapti, faqat authorization muammosi
       if (status === 401 || status === 403) {
         OFFLINE_DATA_MODE = false;
 
@@ -414,7 +402,6 @@ async function detectBackendAvailability() {
     }
   }
 
-  // Faqat 3 marta ham haqiqiy network/timeout xatosi bo'lsa offline.
   OFFLINE_DATA_MODE = true;
 
   console.warn(
@@ -430,23 +417,32 @@ function offlineGenId() {
   return Date.now() + Math.floor(Math.random() * 1000);
 }
 
-// globalCategories ({id, name}) har sahifa yuklanishida bo'shdan boshlanadi,
-// shuning uchun uni categories (nomlar ro'yxati) bilan birga alohida
-// localStorage kalitida saqlaymiz — id'lar tahrirlash/o'chirish orasida barqaror qolishi uchun.
 function loadOfflineCategories() {
   try {
-    const stored = JSON.parse(localStorage.getItem(OFFLINE_CATEGORIES_KEY) || "null");
-    if (Array.isArray(stored) && stored.length) return stored;
-  } catch { }
-  return categories.map(name => ({ id: offlineGenId(), name }));
+    const stored = JSON.parse(
+      localStorage.getItem(OFFLINE_CATEGORIES_KEY) || "null"
+    );
+
+    if (Array.isArray(stored) && stored.length) {
+      return stored;
+    }
+  } catch {}
+
+  return categories.map(name => ({
+    id: offlineGenId(),
+    name
+  }));
 }
 
 function saveOfflineCategories() {
-  localStorage.setItem(OFFLINE_CATEGORIES_KEY, JSON.stringify(globalCategories));
+  localStorage.setItem(
+    OFFLINE_CATEGORIES_KEY,
+    JSON.stringify(globalCategories)
+  );
+
   categories = globalCategories.map(c => c.name);
   saveCategories();
 }
-// OFFLINE DATA MODE END
 
 // loadUserData();
 
