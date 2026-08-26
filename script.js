@@ -369,7 +369,6 @@ let OFFLINE_DATA_MODE = false;
 // ✅ Tekshiruvni sahifa yuklanishi bilanoq (DOMContentLoaded’ni kutmay) boshlaymiz
 let backendCheckPromise = detectBackendAvailability();
 
-let OFFLINE_DATA_MODE = false;
 let backendCheckPromise = detectBackendAvailability();
 
 async function detectBackendAvailability() {
