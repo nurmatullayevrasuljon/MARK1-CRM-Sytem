@@ -369,26 +369,62 @@ let OFFLINE_DATA_MODE = false;
 // ✅ Tekshiruvni sahifa yuklanishi bilanoq (DOMContentLoaded’ni kutmay) boshlaymiz
 let backendCheckPromise = detectBackendAvailability();
 
+let OFFLINE_DATA_MODE = false;
+let backendCheckPromise = detectBackendAvailability();
+
 async function detectBackendAvailability() {
-  try {
-    await window.crmApi.get("/store/profile/get", {
-      timeout: 20000 // ⬅️ 7000 dan 20000ga oshirildi — Render cold-start uchun
-    });
-    OFFLINE_DATA_MODE = false;
-    console.log("✅ Backend mavjud — ONLINE rejim");
-    return true;
-  } catch (error) {
-    const status = error?.response?.status;
-    if (status === 401 || status === 403) {
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      console.log(`🔌 Backend tekshirilmoqda (${attempt}/${maxAttempts})...`);
+
+      await window.crmApi.get("/store/profile/get", {
+        timeout: 45000
+      });
+
       OFFLINE_DATA_MODE = false;
-      console.warn("⚠️ Backend mavjud, lekin authorization muammosi:", status);
+
+      console.log("✅ Backend mavjud — ONLINE rejim");
+
       return true;
+
+    } catch (error) {
+      const status = error?.response?.status;
+
+      // 401/403 — server ishlayapti.
+      // Bu backend offline degani EMAS.
+      if (status === 401 || status === 403) {
+        OFFLINE_DATA_MODE = false;
+
+        console.warn(
+          `⚠️ Backend ONLINE, authorization muammosi: ${status}`
+        );
+
+        return true;
+      }
+
+      console.warn(
+        `⚠️ Backend javob bermadi (${attempt}/${maxAttempts}):`,
+        error?.message
+      );
+
+      if (attempt < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
     }
-    OFFLINE_DATA_MODE = true;
-    console.warn("⚠️ Backend unavailable — OFFLINE rejim:", error?.message);
-    return false;
   }
+
+  // Faqat 3 marta ham haqiqiy network/timeout xatosi bo'lsa offline.
+  OFFLINE_DATA_MODE = true;
+
+  console.warn(
+    "⚠️ Backend 3 marta tekshirildi va javob bermadi — OFFLINE rejim"
+  );
+
+  return false;
 }
+
 const OFFLINE_CATEGORIES_KEY = "crm_offline_categories";
 
 function offlineGenId() {
@@ -824,6 +860,30 @@ function calculateTodayRevenue(date = getToday()) {
     .reduce((sum, s) => sum + Number(s.total), 0);
 }
 
+function calculateYesterdayRevenue() {
+    const yesterday = new Date();
+
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    return sales
+        .filter(sale => {
+            const date = new Date(
+                sale.createdAt ||
+                sale.created_at ||
+                sale.date
+            );
+
+            return (
+                !Number.isNaN(date.getTime()) &&
+                date.toDateString() === yesterday.toDateString()
+            );
+        })
+        .reduce(
+            (sum, sale) =>
+                sum + (Number(sale.total) || 0),
+            0
+        );
+}
 /* ===============================================
    OYLIK DAROMAD HISOBLASH
 =============================================== */
@@ -4951,8 +5011,13 @@ async function saveChanges() {
       const result = await window.AuthSystem.updateStoreProfile({
         ceo_name: data.fullName,
         store_name: data.company,
-        profile_picture: existingUser.profile_picture || existingUser.avatar_url || null
+        profile_picture: existingUser.profile_picture || null
       });
+      // const result = await window.AuthSystem.updateStoreProfile({
+      //   ceo_name: data.fullName,
+      //   store_name: data.company,
+      //   profile_picture: existingUser.profile_picture || existingUser.avatar_url || null
+      // });
 
       if (!result || !result.success) {
         showNotification(result?.backendMessage || result?.message || "Profilni saqlashda xatolik yuz berdi", "error");
@@ -5093,9 +5158,9 @@ if (avatarInput && avatarImg && avatarFallback) {
         : {};
 
       const result = await window.AuthSystem.updateStoreProfile({
-        ceo_name: existingUser.full_name || existingUser.fullName || existingUser.ceo_name || "",
-        store_name: existingUser.company_name || existingUser.company || existingUser.store_name || "",
-        profile_picture: uploadedUrl
+        ceo_name: data.fullName,
+        store_name: data.company,
+        profile_picture: existingUser.profile_picture || null
       });
 
       if (!result || !result.success) {
@@ -6704,13 +6769,18 @@ var DashboardStatisticsManager = {
         "monthlyRevenueChange"
       )
 
-    if (revenueChange) {
+   if (revenueChange) {
+      const growth = Number(data.monthly_revenue_growth);
 
-      revenueChange.textContent =
-        `+${data.monthly_revenue_growth}% o'sish`
-
+      if (!Number.isFinite(growth) || growth === 0) {
+        revenueChange.textContent = "—";
+      } else if (growth > 0) {
+        revenueChange.textContent = `▲ ${growth}% o'sish`;
+      } else {
+        revenueChange.textContent =
+          `▼ ${Math.abs(growth)}% kamayish`;
+      }
     }
-
     // 2. DAILY SALES
     const dailySales =
       document.getElementById(
@@ -6726,7 +6796,6 @@ var DashboardStatisticsManager = {
         )}
                 <small>UZS</small>
                 `
-
     }
 
     // DAILY CHANGE
@@ -6736,10 +6805,17 @@ var DashboardStatisticsManager = {
       )
 
     if (dailyChange) {
+      const change = Number(data.daily_sales_change);
 
-      dailyChange.textContent =
-        `${data.daily_sales_change}% o'zgarish`
-
+      if (!Number.isFinite(change) || change === 0) {
+        dailyChange.textContent = "—";
+      } else if (change > 0) {
+        dailyChange.textContent =
+          `▲ ${change}% kechaga nisbatan`;
+      } else {
+        dailyChange.textContent =
+          `▼ ${Math.abs(change)}% kechaga nisbatan`;
+      }
     }
 
     // 3. MONTHLY PROFIT
@@ -6991,16 +7067,47 @@ async function getDashboardStatistics() {
 
     // Backend statistics ishlamasa,
     // frontenddagi real ma'lumotlardan hisoblaymiz.
-    const fallbackData = {
-      monthly_revenue:
-        calculateMonthlyRevenue(),
+    const monthlyRevenue =
+      calculateMonthlyRevenue();
 
-      monthly_revenue_growth: 0,
+    const previousMonthRevenue =
+      getPreviousMonthRevenue();
+
+    const monthlyGrowth =
+      previousMonthRevenue > 0
+        ? Math.round(
+            ((monthlyRevenue - previousMonthRevenue) /
+              previousMonthRevenue) * 100
+          )
+        : 0;
+
+    const todayRevenue =
+      calculateTodayRevenue();
+
+    const yesterdayRevenue =
+      calculateYesterdayRevenue
+        ? calculateYesterdayRevenue()
+        : 0;
+
+    const dailyChange =
+      yesterdayRevenue > 0
+        ? Math.round(
+            ((todayRevenue - yesterdayRevenue) /
+              yesterdayRevenue) * 100
+          )
+        : 0;
+
+    const fallbackData = {
+      monthly_revenue: monthlyRevenue,
+
+      monthly_revenue_growth:
+        monthlyGrowth,
 
       daily_sales:
-        calculateTodayRevenue(),
+        todayRevenue,
 
-      daily_sales_change: 0,
+      daily_sales_change:
+        dailyChange,
 
       monthly_profit:
         calculateMonthlyProfit(),
@@ -7009,13 +7116,13 @@ async function getDashboardStatistics() {
         calculateInventoryBalance()
     };
 
-    DashboardStatisticsManager.updateDashboard(
-      fallbackData
-    );
+        DashboardStatisticsManager.updateDashboard(
+          fallbackData
+        );
 
-    return fallbackData;
-  }
-}
+        return fallbackData;
+      }
+    }
 
 // Automatically bind to window
 window.getDashboardStatistics = getDashboardStatistics;
@@ -7544,45 +7651,70 @@ async function getDailySalesStats() {
 // // Backend API DAILY TRANSACTIONS 
 async function getDailyTransactions(period = "daily") {
   console.log("━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("🛒 DAILY TRANSACTIONS API");
-  console.log(`📤 REQUEST: GET /api/v1/daily-sales/transactions?period=${period}`);
-  console.log("📅 PERIOD:", period.toUpperCase());
-  console.log("🕒 Time:", new Date().toLocaleTimeString());
+  console.log("🛒 DAILY TRANSACTIONS");
+  console.log("📅 PERIOD:", period);
 
   try {
-    // ✅ window.crmApi interceptor token ni avtomatik qo'shadi
-    const response = await window.crmApi.get(
-      `/api/v1/daily-sales/transactions?period=${period}`
-    );
+    const allSales = Array.isArray(sales)
+      ? sales
+      : [];
 
-    console.log("✅ STATUS: SUCCESS");
-    console.log("🌐 HTTP:", response.status);
-    console.log("📊 RESPONSE:");
-    console.table(response.data.items);
-    console.log("📊 TOTAL:", response.data.total);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    const now = new Date();
 
-    return response.data;
+    const filtered = allSales.filter(sale => {
+      if (sale.status && sale.status !== "sold") {
+        return false;
+      }
+
+      const saleDate = new Date(
+        sale.createdAt ||
+        sale.created_at ||
+        sale.date ||
+        sale.sale_date
+      );
+
+      if (Number.isNaN(saleDate.getTime())) {
+        return false;
+      }
+
+      if (period === "daily") {
+        return saleDate.toDateString() === now.toDateString();
+      }
+
+      if (period === "weekly") {
+        const weekAgo = new Date(now);
+        weekAgo.setDate(now.getDate() - 7);
+
+        return saleDate >= weekAgo;
+      }
+
+      if (period === "monthly") {
+        return (
+          saleDate.getMonth() === now.getMonth() &&
+          saleDate.getFullYear() === now.getFullYear()
+        );
+      }
+
+      return true;
+    });
+
+    return {
+      items: filtered,
+      total: filtered.reduce(
+        (sum, sale) => sum + (Number(sale.total) || 0),
+        0
+      )
+    };
+
   } catch (error) {
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    console.error("❌ STATUS: FAILED");
-    console.error("🌐 HTTP:", error?.response?.status);
-    console.error("📄 ERROR:", error?.response?.data || error.message);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    return { items: [] };
+    console.error("❌ TRANSACTIONS ERROR:", error);
+
+    return {
+      items: [],
+      total: 0
+    };
   }
 }
-
-// NOTE: duplicate "transactionFilter" change listener removed from here.
-// It was attaching a SECOND change handler to the same <select>, calling
-// the old getDailyTransactions() (unverified /api/v1/daily-sales/transactions
-// endpoint) and racing against the listener defined earlier in this file
-// (which now calls the verified getTransactions() -> /api/v1/transactions/).
-// Two listeners on one element meant two renderTransactions() calls fired
-// per change event, and whichever resolved last silently won/overwrote the
-// other — this was the actual cause of the table going empty after the API
-// was wired in. getDailyTransactions() itself is left intact below in case
-// other code still depends on it.
 
 // ==========================================
 // TRANSACTIONS EXCEL EXPORT
@@ -8043,31 +8175,77 @@ async function searchProductApi(keyword) {
 // // Backend DEBTORS API
 async function getDebtorsStats() {
   try {
-    const response = await window.crmApi.get("/api/v1/debtors/stats");
+    const result = await AuthSystem.getDebts();
 
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("💰 DEBTORS STATS API");
-    console.log("✅ STATUS: SUCCESS");
+    if (!result || !result.success) {
+      return {
+        monthly_collected: 0,
+        overdue_count: 0,
+        overdue_total: 0,
+        upcoming_count: 0,
+        upcoming_total: 0
+      };
+    }
 
-    console.table([response.data]);
+    const debts =
+      result.data?.debts ||
+      result.data?.data ||
+      result.debts ||
+      [];
 
-    console.log("💵 Monthly Collected:", response.data.monthly_collected);
-    console.log("⚠️ Overdue Count:", response.data.overdue_count);
-    console.log("💸 Overdue Total:", response.data.overdue_total);
-    console.log("📅 Upcoming Count:", response.data.upcoming_count);
-    console.log("💰 Upcoming Total:", response.data.upcoming_total);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    const now = new Date();
 
-    return response.data;
+    let overdue_count = 0;
+    let overdue_total = 0;
+    let upcoming_count = 0;
+    let upcoming_total = 0;
+
+    debts.forEach(debt => {
+      const remaining =
+        Number(
+          debt.total_remaining ??
+          debt.remaining_amount ??
+          debt.remaining ??
+          0
+        );
+
+      if (remaining <= 0) return;
+
+      const dueDate = new Date(
+        debt.due_date ||
+        debt.dueDate ||
+        debt.payment_date
+      );
+
+      if (Number.isNaN(dueDate.getTime())) return;
+
+      if (dueDate < now) {
+        overdue_count++;
+        overdue_total += remaining;
+      } else {
+        upcoming_count++;
+        upcoming_total += remaining;
+      }
+    });
+
+    return {
+      monthly_collected: 0,
+      overdue_count,
+      overdue_total,
+      upcoming_count,
+      upcoming_total
+    };
 
   } catch (error) {
+    console.error("❌ DEBT STATS:", error);
 
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("💰 DEBTORS STATS API");
-    console.error("❌ ERROR:", error);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-
-    return null;
+    return {
+      monthly_collected: 0,
+      overdue_count: 0,
+      overdue_total: 0,
+      upcoming_count: 0,
+      upcoming_total: 0
+    };
   }
 }
 
@@ -8084,7 +8262,7 @@ async function apiGetProfile() {
   console.log("🕒", new Date().toLocaleString());
 
   try {
-    const response = await window.crmApi.get("/api/v1/settings/profile");
+    const response = await window.crmApi.get("/settings/profile");
 
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log("✅ STATUS : SUCCESS");
@@ -8221,7 +8399,7 @@ async function apiUpdateProfile(profileData) {
 
   try {
     const response = await window.crmApi.put(
-      "/v1/settings/profile",
+      "/settings/profile",
       profileData
     );
 
