@@ -355,63 +355,94 @@ let transactionFilter = "daily";
 let transactionSearchQuery = "";
 
 // OFFLINE DATA MODE START
-// Backend hali tiklanmagani uchun Products/Categories/Sales/Debtors bo'yicha
-// barcha yozish (create/update/delete) amallari to'g'ridan-to'g'ri
-// localStorage asosidagi local massivlar (products/categories/sales/debtors)
-// ustida bajariladi — window.crmApi orqali backendga chiqilmaydi.
-// Backend qaytganda OFFLINE_DATA_MODE ni false qiling yoki shu
-// "OFFLINE DATA MODE" bloklarini butunlay o'chiring — asl (real API) kod
-// hech qayerda o'chirilmagan, faqat vaqtincha chetlab o'tilmoqda.
-// const OFFLINE_DATA_MODE = true;
-// script.js boshida, OFFLINE_DATA_MODE e'lon qilingandan keyin:
 let OFFLINE_DATA_MODE = false;
 
-// ✅ Tekshiruvni sahifa yuklanishi bilanoq (DOMContentLoaded’ni kutmay) boshlaymiz
+// ✅ Tekshiruvni sahifa yuklanishi bilanoq boshlaymiz
 let backendCheckPromise = detectBackendAvailability();
 
 async function detectBackendAvailability() {
-  try {
-    await window.crmApi.get("/store/profile/get", {
-      timeout: 20000 // ⬅️ 7000 dan 20000ga oshirildi — Render cold-start uchun
-    });
-    OFFLINE_DATA_MODE = false;
-    console.log("✅ Backend mavjud — ONLINE rejim");
-    return true;
-  } catch (error) {
-    const status = error?.response?.status;
-    if (status === 401 || status === 403) {
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      console.log(`🔌 Backend tekshirilmoqda (${attempt}/${maxAttempts})...`);
+
+      await window.crmApi.get("/store/profile/get", {
+        timeout: 45000
+      });
+
       OFFLINE_DATA_MODE = false;
-      console.warn("⚠️ Backend mavjud, lekin authorization muammosi:", status);
+
+      console.log("✅ Backend mavjud — ONLINE rejim");
+
       return true;
+
+    } catch (error) {
+      const status = error?.response?.status;
+
+      // 401/403 — server ishlayapti, faqat authorization muammosi
+      if (status === 401 || status === 403) {
+        OFFLINE_DATA_MODE = false;
+
+        console.warn(
+          `⚠️ Backend ONLINE, authorization muammosi: ${status}`
+        );
+
+        return true;
+      }
+
+      console.warn(
+        `⚠️ Backend javob bermadi (${attempt}/${maxAttempts}):`,
+        error?.message
+      );
+
+      if (attempt < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
     }
-    OFFLINE_DATA_MODE = true;
-    console.warn("⚠️ Backend unavailable — OFFLINE rejim:", error?.message);
-    return false;
   }
+
+  OFFLINE_DATA_MODE = true;
+
+  console.warn(
+    "⚠️ Backend 3 marta tekshirildi va javob bermadi — OFFLINE rejim"
+  );
+
+  return false;
 }
+
 const OFFLINE_CATEGORIES_KEY = "crm_offline_categories";
 
 function offlineGenId() {
   return Date.now() + Math.floor(Math.random() * 1000);
 }
 
-// globalCategories ({id, name}) har sahifa yuklanishida bo'shdan boshlanadi,
-// shuning uchun uni categories (nomlar ro'yxati) bilan birga alohida
-// localStorage kalitida saqlaymiz — id'lar tahrirlash/o'chirish orasida barqaror qolishi uchun.
 function loadOfflineCategories() {
   try {
-    const stored = JSON.parse(localStorage.getItem(OFFLINE_CATEGORIES_KEY) || "null");
-    if (Array.isArray(stored) && stored.length) return stored;
-  } catch { }
-  return categories.map(name => ({ id: offlineGenId(), name }));
+    const stored = JSON.parse(
+      localStorage.getItem(OFFLINE_CATEGORIES_KEY) || "null"
+    );
+
+    if (Array.isArray(stored) && stored.length) {
+      return stored;
+    }
+  } catch {}
+
+  return categories.map(name => ({
+    id: offlineGenId(),
+    name
+  }));
 }
 
 function saveOfflineCategories() {
-  localStorage.setItem(OFFLINE_CATEGORIES_KEY, JSON.stringify(globalCategories));
+  localStorage.setItem(
+    OFFLINE_CATEGORIES_KEY,
+    JSON.stringify(globalCategories)
+  );
+
   categories = globalCategories.map(c => c.name);
   saveCategories();
 }
-// OFFLINE DATA MODE END
 
 // loadUserData();
 
@@ -421,6 +452,7 @@ let chartInstances = {
   daily: null
 };
 
+let dashboardBootstrapped = false;
 // function getApiBaseUrl() {
 //   // return window.CRM_API_URL || "https://backend-api-production-87e9.up.railway.app";
 //   return window.CRM_API_URL || "https://z3wax.pythonanywhere.com";
@@ -470,51 +502,149 @@ function normalizeApiAssetUrl(url) {
 }
 
 function mapApiProduct(product) {
-  const existing = products.find(item => item.id === product.id) || {};
+  const id = product._id || product.id;
+  const existing = products.find(item => item.id === id) || {};
   const quantity = Number(product.quantity) || 0;
-  const category = product.category || null;
-  const unit = product.unit === "kg" ? "kg" : "dona";
+  // Backend "category_id" ni .populate("category_id", "category_name") bilan qaytaradi,
+  // shuning uchun bu maydon aslida to'liq kategoriya obyekti bo'ladi ({_id, category_name})
+  const category = product.category_id && typeof product.category_id === "object"
+    ? product.category_id
+    : null;
 
   return {
-    id: product.id,
-    name: product.name || "",
-    categoryId: category ? category.id : null,
-    category: category ? category.name : "Kategoriyasiz",
-    image: normalizeApiAssetUrl(product.image_url),
-    imageUrl: normalizeApiAssetUrl(product.image_url),
-    costPrice: Number(product.cost_price) || 0,
-    price: Number(product.sell_price) || 0,
+    id: id,
+    name: product.product_name || product.name || "",
+    barcode: product.product_barcode || "",
+    categoryId: category ? category._id : (typeof product.category_id === "string" ? product.category_id : null),
+    category: category ? category.category_name : "Kategoriyasiz",
+    image: normalizeApiAssetUrl((product.images && product.images[0]) || product.image_url),
+    imageUrl: normalizeApiAssetUrl((product.images && product.images[0]) || product.image_url),
+    costPrice: Number(product.purchase_price) || 0,
+    price: Number(product.selling_price) || 0,
     currency: "UZS",
     stock: quantity,
+    minStock: Number(product.minimum_quantity) || 0,
     initialStock: Math.max(Number(existing.initialStock) || 0, quantity),
-    unit,
-    isLowStock: !!product.is_low_stock,
-    createdAt: product.created_at || null
+    unit: "dona",
+    isLowStock: quantity <= (Number(product.minimum_quantity) || 0),
+    createdAt: product.createdAt || product.created_at || null
   };
 }
 
 function mapApiSale(sale, item) {
-  const product = item.product || products.find(p => p.id === item.product_id) || null;
-  const category = product && product.category
-    ? (typeof product.category === "string" ? product.category : product.category.name)
-    : (product && product.categoryName) || "Kategoriyasiz";
+
+  const product =
+    item.product ||
+    products.find(
+      p => String(p.id) === String(item.product_id)
+    ) ||
+    null;
+
+  const category =
+    product && product.category
+      ? (
+          typeof product.category === "string"
+            ? product.category
+            : product.category.name
+        )
+      : "Kategoriyasiz";
+
+  const qty =
+    Number(item.quantity) || 0;
+
+  const unitPrice =
+    Number(
+      item.unit_price ??
+      item.selling_price ??
+      sale.unit_price ??
+      product?.price ??
+      0
+    );
+
+  const unitCost =
+    Number(
+      item.unit_cost ??
+      item.cost_price ??
+      item.purchase_price ??
+      sale.unit_cost ??
+      product?.costPrice ??
+      0
+    );
+
+  const total =
+    Number(
+      item.total_price ??
+      sale.total_amount ??
+      unitPrice * qty
+    ) || 0;
+
+  const profit =
+    Number(
+      item.profit ??
+      sale.profit ??
+      ((unitPrice - unitCost) * qty)
+    ) || 0;
 
   return {
+
     id: sale.id,
+
     itemId: item.id,
-    sessionId: sale.notes || "api",
-    productId: item.product_id,
-    name: product ? product.name : "Mahsulot",
+
+    sessionId:
+      sale.notes || "api",
+
+    productId:
+      item.product_id,
+
+    name:
+      product
+        ? product.name
+        : item.product_name || "Mahsulot",
+
     category,
-    qty: Number(item.quantity) || 0,
-    unit: product ? product.unit : "dona",
-    price: Number(item.unit_price) || 0,
-    total: Number(item.total_price) || Number(sale.total_amount) || 0,
-    currency: "UZS",
-    status: sale.status || "sold",
-    paymentType: sale.payment_type || "cash",
-    date: sale.sold_at || getCurrentLocalDateTime(),
-    timestamp: new Date(sale.sold_at || Date.now()).getTime()
+
+    qty,
+
+    unit:
+      product?.unit ||
+      item.unit ||
+      "dona",
+
+    // Sotuv paytidagi narx
+    price: unitPrice,
+
+    // Sotuv paytidagi tannarx
+    costPrice: unitCost,
+
+    // Shu sotuvning foydasi
+    profit,
+
+    total,
+
+    currency:
+      sale.currency ||
+      "UZS",
+
+    status:
+      sale.status ||
+      "sold",
+
+    paymentType:
+      sale.payment_type ||
+      "cash",
+
+    date:
+      sale.sold_at ||
+      sale.created_at ||
+      getCurrentLocalDateTime(),
+
+    timestamp:
+      new Date(
+        sale.sold_at ||
+        sale.created_at ||
+        Date.now()
+      ).getTime()
   };
 }
 
@@ -610,18 +740,27 @@ function mapTransaction(apiTransaction) {
 }
 
 function mapApiDebtor(debtor) {
+  // Yangi backend'da "qarzdor" alohida obyekt emas — bu total_remaining > 0
+  // bo'lgan Sale (sotuv) hujjati, client_id va products.product_id populate qilingan holda
+  const client = debtor.client_id && typeof debtor.client_id === "object" ? debtor.client_id : null;
+
   return {
-    id: debtor.id,
-    name: debtor.full_name || "",
-    phone: debtor.phone || "",
-    amount: Number(debtor.remaining_amount ?? debtor.debt_amount) || 0,
-    originalAmount: Number(debtor.debt_amount) || 0,
-    paidAmount: Number(debtor.paid_amount) || 0,
-    debtDate: debtor.debt_date || debtor.created_at || getCurrentLocalDateTime(),
-    returnDate: debtor.due_date || getCurrentLocalDateTime(),
-    notes: debtor.notes || "",
-    status: debtor.status || "normal",
-    isActive: debtor.is_active !== false
+    id: debtor._id || debtor.id,
+    saleId: debtor._id || debtor.id,
+    // BUG FIX: backend Client modeli client_name/client_phone maydonlarini
+    // ishlatadi (full_name/name/phone emas — Client Schema'da bunday
+    // maydonlar yo'q). Eski nomlar bilan bu doim "Noma'lum mijoz" va bo'sh
+    // telefon ko'rsatardi, garchi backend to'g'ri ma'lumot qaytargan bo'lsa ham.
+    name: client?.client_name || debtor.note || "Noma'lum mijoz",
+    phone: client?.client_phone || "",
+    amount: Number(debtor.total_remaining) || 0,
+    originalAmount: Number(debtor.total_price) || 0,
+    paidAmount: Number(debtor.total_paid) || 0,
+    debtDate: debtor.createdAt || getCurrentLocalDateTime(),
+    returnDate: debtor.due_date || null,
+    notes: debtor.note || "",
+    status: debtor.status || "active",
+    isActive: debtor.status === "active"
   };
 }
 
@@ -716,6 +855,30 @@ function calculateTodayRevenue(date = getToday()) {
     .reduce((sum, s) => sum + Number(s.total), 0);
 }
 
+function calculateYesterdayRevenue() {
+    const yesterday = new Date();
+
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    return sales
+        .filter(sale => {
+            const date = new Date(
+                sale.createdAt ||
+                sale.created_at ||
+                sale.date
+            );
+
+            return (
+                !Number.isNaN(date.getTime()) &&
+                date.toDateString() === yesterday.toDateString()
+            );
+        })
+        .reduce(
+            (sum, sale) =>
+                sum + (Number(sale.total) || 0),
+            0
+        );
+}
 /* ===============================================
    OYLIK DAROMAD HISOBLASH
 =============================================== */
@@ -1137,7 +1300,7 @@ function renderProducts(list = products) {
           <!-- EDIT -->
           <button 
             class="btn btn-sm btn-edit"
-            onclick="editProduct(${p.id})">
+            onclick="editProduct('${p.id}')">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
               <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
             </svg>
@@ -1147,7 +1310,7 @@ function renderProducts(list = products) {
           <!-- DELETE -->
           <button 
             class="btn btn-sm btn-danger ms-2"
-            onclick="deleteProduct(${p.id})">
+            onclick="deleteProduct('${p.id}')">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
               <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
             </svg>
@@ -1230,7 +1393,7 @@ if (productForm) {
     const stockValue = Number(productStock.value);
     const costPriceValue = Number(document.getElementById("productCostPrice").value);
     const salePriceValue = Number(productPrice.value);
-    const categoryId = Number(productCategory.value);
+    const categoryId = productCategory.value;
 
     if (!productName.value.trim()) {
       alert("Mahsulot nomini kiriting");
@@ -1272,8 +1435,8 @@ if (productForm) {
             name: productName.value.trim(),
             categoryId: categoryId,
             category: categoryMeta ? categoryMeta.name : "Kategoriyasiz",
-            image: null,
-            imageUrl: null,
+            image: "img/product.jpg",
+            imageUrl: "img/product.jpg",
             costPrice: costPriceValue,
             price: salePriceValue,
             currency: "UZS",
@@ -1294,39 +1457,52 @@ if (productForm) {
       }
       // OFFLINE DATA MODE END
 
-      if (editingId) {
-        // Update product using JSON PUT
-        const updateData = {
-          name: productName.value.trim(),
-          category_id: categoryId,
-          cost_price: parseFloat(costPriceValue),
-          sell_price: parseFloat(salePriceValue),
-          quantity: parseFloat(stockValue),
-          unit: productUnit.value === "ta" ? "dona" : productUnit.value
-        };
+      // Rasm tanlangan bo'lsa, avval /file/create orqali yuklaymiz va URL olamiz
+      let imageUrl = null;
+      if (productImage.files[0]) {
+        try {
+          const fileForm = new FormData();
+          fileForm.append("file", productImage.files[0]);
+          const fileRes = await window.crmApi.post("/file/create", fileForm, {
+            headers: { "Content-Type": "multipart/form-data" }
+          });
+          imageUrl = fileRes?.data?.file?.file_url || null;
+        } catch (imgErr) {
+          console.error("Rasm yuklashda xatolik:", imgErr);
+          // Rasm yuklanmasa ham mahsulotni saqlashda davom etamiz
+        }
+      }
 
-        await window.crmApi.put(`/api/v1/products/${editingId}`, updateData);
+      const payload = {
+        product_name: productName.value.trim(),
+        category_id: categoryId,
+        purchase_price: costPriceValue,
+        selling_price: salePriceValue,
+        quantity: stockValue
+      };
+
+      if (imageUrl) {
+        payload.images = [imageUrl];
+      }
+
+      if (editingId) {
+        const result = await AuthSystem.updateProduct(editingId, payload);
+
+        if (!result || !result.success) {
+          alert(result?.backendMessage || "Mahsulotni saqlashda xatolik yuz berdi");
+          return;
+        }
+
         showSaleAlert("Mahsulot yangilandi!", "success");
         editingId = null;
       } else {
-        // Create product using FormData POST
-        const formData = new FormData();
-        formData.append("name", productName.value.trim());
-        formData.append("category_id", categoryId);
-        formData.append("cost_price", parseFloat(costPriceValue));
-        formData.append("sell_price", parseFloat(salePriceValue));
-        formData.append("quantity", parseFloat(stockValue));
-        formData.append("unit", productUnit.value === "ta" ? "dona" : productUnit.value);
+        const result = await AuthSystem.createProduct(payload);
 
-        if (productImage.files[0]) {
-          formData.append("image", productImage.files[0]);
+        if (!result || !result.success) {
+          alert(result?.backendMessage || "Mahsulotni saqlashda xatolik yuz berdi");
+          return;
         }
 
-        await window.crmApi.post("/api/v1/products/", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        });
         showSaleAlert("Mahsulot qo'shildi!", "success");
       }
 
@@ -1370,7 +1546,13 @@ async function deleteProduct(id) {
   // OFFLINE DATA MODE END
 
   try {
-    await window.crmApi.delete(`/api/v1/products/${id}`);
+    const result = await AuthSystem.deleteProduct(id);
+
+    if (!result || !result.success) {
+      alert(result?.backendMessage || "Mahsulotni o'chirishda xatolik yuz berdi");
+      return;
+    }
+
     showSaleAlert("Mahsulot o'chirildi!", "success");
     await apiLoadProducts();
   } catch (error) {
@@ -1452,10 +1634,21 @@ async function apiLoadProducts() {
       "📦 PRODUCTS API"
     );
 
-    const response =
-      await window.crmApi.get(
-        "/api/v1/products/"
+    const result = await AuthSystem.getProducts();
+
+    if (!result || !result.success) {
+      console.error(
+        "❌ PRODUCTS API XATO:",
+        result?.backendMessage || result?.responseData
       );
+
+      showSaleAlert(
+        result?.backendMessage || "Mahsulotlarni yuklashda xatolik yuz berdi",
+        "error"
+      );
+
+      return;
+    }
 
     console.log(
       "✅ STATUS: SUCCESS"
@@ -1463,15 +1656,15 @@ async function apiLoadProducts() {
 
     console.log(
       "📊 PRODUCTS COUNT:",
-      response.data.length
+      result.products.length
     );
 
     console.table(
-      response.data
+      result.products
     );
 
     products =
-      (response.data || [])
+      (result.products || [])
         .map(mapApiProduct);
 
     console.log(
@@ -1528,8 +1721,20 @@ async function apiLoadCategories() {
   }
   // OFFLINE DATA MODE END
   try {
-    const response = await window.crmApi.get("/api/v1/products/categories");
-    globalCategories = response.data;
+    const result = await AuthSystem.getCategories();
+
+    if (!result || !result.success) {
+      console.error(
+        "❌ CATEGORIES API XATO:",
+        result?.backendMessage || result?.responseData
+      );
+      return;
+    }
+
+    globalCategories = (result.categories || []).map(c => ({
+      id: c._id || c.id,
+      name: c.category_name || c.name || ""
+    }));
     categories = globalCategories.map(c => c.name);
     saveCategories();
     renderCategories();
@@ -1620,9 +1825,15 @@ if (saveCategory) {
       }
       // OFFLINE DATA MODE END
 
-      await window.crmApi.post("/api/v1/products/categories", {
-        name: value
+      const result = await AuthSystem.createCategory({
+        category_name: value
       });
+
+      if (!result || !result.success) {
+        alert(result?.backendMessage || "Kategoriya qo'shishda xatolik yuz berdi");
+        return;
+      }
+
       showSaleAlert("Kategoriya qo'shildi!", "success");
       await apiLoadCategories();
       newCategory.value = "";
@@ -1664,7 +1875,13 @@ if (updateCategoryBtn) {
       }
       // OFFLINE DATA MODE END
 
-      await window.crmApi.put(`/api/v1/products/categories/${catId}`, { name: newName });
+      const result = await AuthSystem.updateCategory(catId, { category_name: newName });
+
+      if (!result || !result.success) {
+        alert(result?.backendMessage || "Kategoriyani tahrirlashda xatolik yuz berdi");
+        return;
+      }
+
       showSaleAlert("Kategoriya tahrirlandi!", "success");
       await apiLoadCategories();
       $("#categoryModal").modal("hide");
@@ -1698,7 +1915,13 @@ if (deleteCategoryBtn) {
       }
       // OFFLINE DATA MODE END
 
-      await window.crmApi.delete(`/api/v1/products/categories/${catId}`);
+      const result = await AuthSystem.deleteCategory(catId);
+
+      if (!result || !result.success) {
+        alert(result?.backendMessage || "Kategoriyani o'chirishda xatolik yuz berdi");
+        return;
+      }
+
       showSaleAlert("Kategoriya o'chirildi!", "success");
       await apiLoadCategories();
       newCategory.value = "";
@@ -1805,27 +2028,27 @@ if (saleSearch) {
    GET /api/v1/transactions/stats   -> stats
    GET /api/v1/transactions/export  -> export
 =============================================== */
+// NOTE: bu ikkita funksiya endi hech qayerdan chaqirilmaydi — ularning ishi
+// endi loadAndRenderTransactions() ichida to'g'ridan-to'g'ri renderTransactions()
+// orqali local `sales` massividan (apiLoadSales() /sale/get orqali to'ldiradi)
+// bajariladi. Backendda alohida /transactions endpointi yo'q edi, shu sabab
+// bu funksiyalar har doim 404 qaytarardi. Kelajakda tasodifan chaqirilib
+// qolmasligi uchun ularni ham xavfsiz (local sales'ga asoslangan) qilib qo'ydik.
 async function getTransactions(params = {}) {
   try {
-    const response = await window.crmApi.get("/api/v1/transactions/", { params });
-
-    // Backend may return a raw array OR a paginated object ({items}/{results}/{data})
-    const raw = response.data;
-    const items = Array.isArray(raw)
-      ? raw
-      : (raw.items || raw.results || raw.data || []);
-
-    return { items, total: raw.total ?? items.length };
+    const items = sales.filter(s => s.status === "sold");
+    return { items, total: items.length };
   } catch (error) {
-    console.error("❌ TRANSACTIONS API ERROR:", error);
+    console.error("❌ TRANSACTIONS ERROR:", error);
     return { items: [], total: 0 };
   }
 }
 
 async function getTransactionsStats(params = {}) {
   try {
-    const response = await window.crmApi.get("/api/v1/transactions/stats", { params });
-    return response.data;
+    const items = sales.filter(s => s.status === "sold");
+    const total = items.reduce((sum, s) => sum + (Number(s.total) || 0), 0);
+    return { count: items.length, total };
   } catch (error) {
     console.error("❌ TRANSACTIONS STATS ERROR:", error);
     return null;
@@ -1842,8 +2065,13 @@ async function loadAndRenderTransactions(period = transactionFilter) {
   }
   // OFFLINE DATA MODE END
 
-  const data = await getTransactions({ period });
-  renderTransactions(data.items);
+  // Backendda alohida /transactions endpointi yo'q. `sales` massivi
+  // allaqachon apiLoadSales() orqali haqiqiy backend (/sale/get) ma'lumoti
+  // bilan to'ldirilgan, shuning uchun argumentsiz chaqirilganda
+  // renderTransactions() shu local `sales`ni transactionFilter bo'yicha
+  // filtrlaydi — bu haqiqiy backend ma'lumoti, taxminiy emas.
+  transactionFilter = period;
+  renderTransactions();
 }
 
 async function apiLoadSales() {
@@ -1932,8 +2160,21 @@ async function apiLoadSales() {
       }
 
       sale.products.forEach(item => {
+        // BUG FIX: backend GET /sale/get so'rovida "products.product_id"ni
+        // to'liq mahsulot hujjati bilan populate qiladi (ID string emas,
+        // {_id, product_name, ...} obyekt). Shu sabab quyidagi taqqoslash
+        // hech qachon String(p.id) bilan mos kelmasdi — natijada:
+        //  1) mahsulot nomi doim "Mahsulot" bo'lib chiqardi,
+        //  2) productId noto'g'ri (butun obyekt) saqlanardi, shu sabab
+        //     "Sotuv holati (hafta)" doim 0% – Sotilmayapti ko'rsatardi,
+        //     chunki getSalesStatus() s.productId === product.id ni solishtiradi.
+        const isPopulated = item.product_id && typeof item.product_id === "object";
+        const realProductId = isPopulated
+          ? String(item.product_id._id)
+          : String(item.product_id);
+
         const product = products.find(
-          p => String(p.id) === String(item.product_id)
+          p => String(p.id) === realProductId
         );
 
         const quantity =
@@ -1942,23 +2183,31 @@ async function apiLoadSales() {
         const sellingPrice =
           Number(item.selling_price) || 0;
 
-        const total =
+          const total =
           sellingPrice * quantity;
+
+        const purchasePrice =
+          Number(item.purchase_price) || 0;
+
+        const profit =
+          (sellingPrice - purchasePrice) * quantity;
 
         mappedSales.push({
           id: sale._id,
 
           itemId:
-            `${sale._id}_${item.product_id}`,
+            `${sale._id}_${realProductId}`,
 
           sessionId:
             sale.note || "api",
 
           productId:
-            item.product_id,
+            realProductId,
 
           name:
-            product?.name || "Mahsulot",
+            product?.name ||
+            (isPopulated ? item.product_id.product_name : null) ||
+            "Mahsulot",
 
           category:
             product?.category || "Kategoriyasiz",
@@ -1972,8 +2221,14 @@ async function apiLoadSales() {
           price:
             sellingPrice,
 
-          total:
+                    total:
             total,
+
+          costPrice:
+            purchasePrice,
+
+          profit:
+            profit,
 
           currency:
             "UZS",
@@ -2148,16 +2403,29 @@ async function handleSale(paymentType) {
     }
     // OFFLINE DATA MODE END
 
-    await window.crmApi.post("/api/v1/sales/", {
-      items: [
+    const totalAmount = product.price * qty;
+
+    const result = await AuthSystem.createSale({
+      products: [
         {
-          product_id: parseInt(product.id),
-          quantity: parseFloat(qty)
+          product_id: product.id,
+          purchase_price: product.costPrice,
+          selling_price: product.price,
+          quantity: qty
         }
       ],
-      payment_type: paymentType,
-      notes: currentSaleSessionId.toString()
+      note: currentSaleSessionId.toString(),
+      paid_by_cash: paymentType === "cash" ? totalAmount : 0,
+      paid_by_card: paymentType === "card" ? totalAmount : 0
     });
+
+    if (!result || !result.success) {
+      showSaleAlert(
+        result?.backendMessage || "❌ Sotuv amalga oshirilmadi!",
+        "error"
+      );
+      return;
+    }
 
     showSaleAlert(`✅ ${product.name} sotildi!`, "success");
     saleQty.value = "";
@@ -2233,7 +2501,7 @@ function renderSales() {
         <td>${s.total.toLocaleString()} ${s.currency}</td>
         <td>${time}</td>
         <td>
-          <button class="btn btn-sm btn-danger" onclick="cancelSale(${s.id})" title="Bekor qilish">
+          <button class="btn btn-sm btn-danger" onclick="cancelSale('${s.id}')" title="Bekor qilish">
             ✖
           </button>
         </td>
@@ -2278,7 +2546,7 @@ async function cancelSale(id) {
 
   // OFFLINE DATA MODE START
   if (OFFLINE_DATA_MODE) {
-    const sale = sales.find(s => s.id === id);
+    const sale = sales.find(s => String(s.id) === String(id));
     if (sale && sale.status === "sold") {
       const product = products.find(p => p.id === sale.productId);
       if (product) product.stock += sale.qty;
@@ -2299,7 +2567,14 @@ async function cancelSale(id) {
   // OFFLINE DATA MODE END
 
   try {
-    await window.crmApi.post(`/api/v1/sales/${id}/return`);
+    // "Bekor qilish" = returnSale (mahsulot omborga qaytadi, sale statusi "returned")
+    const result = await AuthSystem.returnSale(id);
+
+    if (!result || !result.success) {
+      alert(result?.backendMessage || "Sotuvni bekor qilishda xatolik yuz berdi");
+      return;
+    }
+
     showSaleAlert("✅ Sotuv bekor qilindi!", "success");
     await apiLoadProducts();
     await apiLoadSales();
@@ -2318,7 +2593,7 @@ async function deleteSale(id) {
 
   // OFFLINE DATA MODE START
   if (OFFLINE_DATA_MODE) {
-    const sale = sales.find(s => s.id === id);
+    const sale = sales.find(s => String(s.id) === String(id));
     if (sale && sale.status === "sold") {
       const product = products.find(p => p.id === sale.productId);
       if (product) product.stock += sale.qty;
@@ -2339,7 +2614,14 @@ async function deleteSale(id) {
   // OFFLINE DATA MODE END
 
   try {
-    await window.crmApi.post(`/api/v1/sales/${id}/return`);
+    // "O'chirish" = cancelSale (sale bekor qilinadi va mahsulot omborga qaytadi)
+    const result = await AuthSystem.cancelSale(id);
+
+    if (!result || !result.success) {
+      alert(result?.backendMessage || "Sotuvni o'chirishda xatolik yuz berdi");
+      return;
+    }
+
     showSaleAlert("✅ Sotuv bekor qilindi!", "success");
     await apiLoadProducts();
     await apiLoadSales();
@@ -2356,25 +2638,92 @@ async function deleteSale(id) {
 /* ===============================================
    FOYDA HISOBLASH (Professional - Oylik real foyda)
 =============================================== */
+// ===============================================
+// MONTHLY PROFIT — PROFESSIONAL
+// Sale snapshot → profit
+// ===============================================
 function calculateMonthlyProfit(date = getToday()) {
-  const [year, month] = date.split('-');
+
+  const [year, month] =
+    String(date).split("-");
+
   let totalProfit = 0;
 
+  if (!Array.isArray(sales)) {
+    return 0;
+  }
+
   sales.forEach(sale => {
-    if (sale.status === "sold") {
-      const [sYear, sMonth] = getDateKey(sale.date).split('-');
 
-      if (sYear === year && sMonth === month) {
-        const product = products.find(p => p.id === sale.productId);
+    if (!sale) return;
 
-        if (product && product.costPrice && product.price) {
-          const profitPerUnit = product.price - product.costPrice;
-          const totalProfitForSale = profitPerUnit * sale.qty;
-
-          totalProfit += totalProfitForSale;
-        }
-      }
+    if (sale.status !== "sold") {
+      return;
     }
+
+    if (!sale.date) {
+      return;
+    }
+
+    const saleDate =
+      getDateKey(sale.date);
+
+    const [saleYear, saleMonth] =
+      String(saleDate).split("-");
+
+    if (
+      saleYear !== year ||
+      saleMonth !== month
+    ) {
+      return;
+    }
+
+    const qty =
+      Number(
+        sale.qty ??
+        sale.quantity ??
+        0
+      );
+
+    if (qty <= 0) return;
+
+    // 1. Eng yaxshi variant:
+    // backend sale ichida tayyor profit yuborsa
+    if (
+      sale.profit !== undefined &&
+      sale.profit !== null
+    ) {
+      totalProfit +=
+        Number(sale.profit) || 0;
+
+      return;
+    }
+
+    // 2. Sale snapshot tannarxi
+    const unitCost =
+      Number(
+        sale.costPrice ??
+        sale.unitCost ??
+        sale.unit_cost ??
+        0
+      );
+
+    const unitPrice =
+      Number(
+        sale.price ??
+        sale.unitPrice ??
+        sale.unit_price ??
+        0
+      );
+
+    // 3. Eski sale'lar uchun
+    // productdan fallback
+    if (unitCost > 0 && unitPrice > 0) {
+
+      totalProfit +=
+        (unitPrice - unitCost) * qty;
+    }
+
   });
 
   return Math.round(totalProfit);
@@ -3145,7 +3494,7 @@ function normalizeDebtPhone(value) {
 async function apiLoadDebtors() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━");
   console.log("📋 LIST DEBTORS API");
-  console.log("📤 REQUEST: GET /api/v1/debtors/");
+  console.log("📤 REQUEST: GET /debt/get");
 
   // OFFLINE DATA MODE START
   if (OFFLINE_DATA_MODE) {
@@ -3161,11 +3510,18 @@ async function apiLoadDebtors() {
   // OFFLINE DATA MODE END
 
   try {
-    const response = await window.crmApi.get("/api/v1/debtors/");
+    const result = await AuthSystem.getDebts();
 
-    console.log("📥 RESPONSE:", response.status, response.data);
+    if (!result || !result.success) {
+      console.error("❌ ERROR:", result?.backendMessage || result?.responseData);
+      console.log("━━━━━━━━━━━━━━━━━━━━━━");
+      showNotification(result?.backendMessage || "Qarzdorlarni yuklashda xatolik yuz berdi", "error");
+      return;
+    }
 
-    debtors = (response.data || []).map(mapApiDebtor).filter(d => d.isActive && d.amount > 0);
+    const rawDebts = result.data?.debts || [];
+
+    debtors = rawDebts.map(mapApiDebtor).filter(d => d.isActive && d.amount > 0);
     saveDebtors();
     renderDebtors();
     updateStatistics();
@@ -3220,7 +3576,7 @@ function closeAdjustModal() {
 async function handleAdjustDebt(event) {
   event.preventDefault();
 
-  const id = parseInt(document.getElementById("adjustDebtorId").value);
+  const id = document.getElementById("adjustDebtorId").value;
   const type = document.getElementById("adjustType").value;
   const amount = parseFloat(document.getElementById("adjustAmount").value);
 
@@ -3267,44 +3623,30 @@ async function handleAdjustDebt(event) {
     // OFFLINE DATA MODE END
 
     if (type === "add") {
-      // ✅ Yangi qarz yaratish — POST /api/v1/debtors/
-      console.log("━━━━━━━━━━━━━━━━━━━━━━");
-      console.log("➕ ADD DEBT API");
-      console.log("📤 REQUEST: POST /api/v1/debtors/");
-      console.log("📦 PAYLOAD:", { full_name: debtor.name, debt_amount: amount });
-
-      const res = await window.crmApi.post("/api/v1/debtors/", {
-        full_name: debtor.name,
-        phone: debtor.phone,
-        debt_amount: amount,
-        debt_date: new Date().toISOString(),
-        due_date: toApiDateTime(debtor.returnDate),
-        notes: "Qo'shimcha qarz"
-      });
-
-      console.log("📥 RESPONSE:", res.status, res.data);
-      console.log("✅ SUCCESS");
-      console.log("━━━━━━━━━━━━━━━━━━━━━━");
-
-      showSuccessMessage(`${debtor.name}ga ${amount.toLocaleString()} so'm qarz qo'shildi!`);
-
+      // ⚠️ Yangi backend'da qarzni mahsulot/sotuvsiz, ixtiyoriy summa bilan
+      // to'g'ridan-to'g'ri "qo'shish" imkoni yo'q — backendda "qarz" alohida
+      // obyekt emas, balki total_remaining > 0 bo'lgan Sale hisoblanadi.
+      // Shuning uchun bu amalni backendga yubormaymiz (404 bo'lardi);
+      // buning o'rniga foydalanuvchini Sotish sahifasiga yo'naltiramiz.
+      alert(
+        "Yangi backend'da qarzni alohida qo'shib bo'lmaydi — qarz faqat Sotish sahifasida " +
+        "mijoz tanlab, to'liq to'lovsiz (yoki qisman to'lov bilan) sotuv amalga oshirilganda avtomatik yaratiladi. " +
+        "Iltimos, \"Sotish\" bo'limidan foydalaning."
+      );
+      return;
     } else {
-      // ✅ To'lov qabul qilish — POST /api/v1/debtors/{id}/pay
+      // ✅ To'lov qabul qilish — POST /sale/payment/add?sale_id=...
       if (amount > debtor.amount) {
         alert("To'lanadigan summa qarzdan katta bo'lishi mumkin emas!");
         return;
       }
 
-      console.log("━━━━━━━━━━━━━━━━━━━━━━");
-      console.log("💰 ADD PAYMENT API");
-      console.log(`📤 REQUEST: POST /api/v1/debtors/${id}/pay`);
-      console.log("📦 PAYLOAD:", { amount });
+      const result = await AuthSystem.addPayment(debtor.saleId || id, amount, "cash");
 
-      const res = await window.crmApi.post(`/api/v1/debtors/${id}/pay`, { amount });
-
-      console.log("📥 RESPONSE:", res.status, res.data);
-      console.log("✅ SUCCESS");
-      console.log("━━━━━━━━━━━━━━━━━━━━━━");
+      if (!result || !result.success) {
+        alert(result?.backendMessage || "To'lovni saqlashda xatolik yuz berdi");
+        return;
+      }
 
       paidDebtors.push({
         debtorId: id,
@@ -3382,18 +3724,17 @@ async function handleSubmit(event) {
     }
     // OFFLINE DATA MODE END
 
-    await window.crmApi.post("/api/v1/debtors/", {
-      full_name: newDebtor.name,
-      phone: newDebtor.phone,
-      debt_amount: newDebtor.amount,
-      debt_date: toApiDateTime(newDebtor.debtDate),
-      due_date: toApiDateTime(newDebtor.returnDate),
-      notes: newDebtor.notes
-    });
-
-    closeModal();
-    showSuccessMessage(`✅ ${newDebtor.name} muvaffaqiyatli qo'shildi!`);
-    await apiLoadDebtors();
+    // ⚠️ Yangi backend'da qarzni mahsulot/sotuvsiz, ixtiyoriy summa bilan
+    // to'g'ridan-to'g'ri "qo'shish" imkoni yo'q — backendda "qarz" alohida
+    // obyekt emas, balki total_remaining > 0 bo'lgan Sale hisoblanadi.
+    // Shuning uchun bu amalni backendga yubormaymiz (404 bo'lardi);
+    // buning o'rniga foydalanuvchini Sotish sahifasiga yo'naltiramiz.
+    alert(
+      "Yangi backend'da qarzni alohida qo'shib bo'lmaydi — qarz faqat Sotish sahifasida " +
+      "mijoz tanlab, to'liq to'lovsiz (yoki qisman to'lov bilan) sotuv amalga oshirilganda avtomatik yaratiladi. " +
+      "Iltimos, \"Sotish\" bo'limidan foydalaning."
+    );
+    return;
   } catch (error) {
     console.error(error);
     alert(getApiErrorMessage(error, "Qarzdorni qo'shishda xatolik yuz berdi"));
@@ -3422,11 +3763,11 @@ async function deleteDebtor(id) {
   const debtor = debtors.find(d => d.id === id);
   const name = debtor ? debtor.name : `#${id}`;
 
-  if (!confirm(`"${name}" ni qarzdorlar ro'yxatidan o'chirish?`)) return;
+  if (!confirm(`"${name}" — bog'liq sotuvni bekor qilib, qarzni o'chirish? (Mahsulot omborga qaytariladi)`)) return;
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("🗑 DELETE DEBTOR API");
-  console.log(`📤 REQUEST: DELETE /api/v1/debtors/${id}`);
+  console.log("🗑 DELETE DEBTOR API (via cancelSale)");
+  console.log(`📤 REQUEST: DELETE /sale/cancel?sale_id=${id}`);
 
   try {
     // OFFLINE DATA MODE START
@@ -3439,9 +3780,17 @@ async function deleteDebtor(id) {
     }
     // OFFLINE DATA MODE END
 
-    const res = await window.crmApi.delete(`/api/v1/debtors/${id}`);
+    // ⚠️ Yangi backend'da alohida "qarzdorni o'chirish" endpoint'i yo'q —
+    // qarz aslida to'liq to'lanmagan Sale bo'lgani uchun, uni "o'chirish"
+    // shu sotuvni bekor qilish (cancelSale) orqali amalga oshiriladi;
+    // bu mahsulot miqdorini omborga qaytaradi.
+    const result = await AuthSystem.cancelSale(debtor?.saleId || id);
 
-    console.log("📥 RESPONSE:", res.status, res.data);
+    if (!result || !result.success) {
+      alert(result?.backendMessage || "Qarzdorni o'chirishda xatolik yuz berdi");
+      return;
+    }
+
     console.log("✅ SUCCESS");
     console.log("━━━━━━━━━━━━━━━━━━━━━━");
 
@@ -3507,24 +3856,16 @@ async function updateDebtor(id, data) {
     }
     // OFFLINE DATA MODE END
 
-    const payload = {
-      full_name: data.name,
-      phone: data.phone,
-      debt_amount: data.originalAmount,
-      debt_date: toApiDateTime(data.debtDate),
-      due_date: toApiDateTime(data.returnDate),
-      notes: data.notes || ""
-    };
-
-    const res = await window.crmApi.put(`/api/v1/debtors/${id}`, payload);
-
-    console.log("📥 RESPONSE:", res.status, res.data);
-    console.log("✅ SUCCESS");
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-
-    showSuccessMessage(`✅ ${data.name} ma'lumotlari yangilandi!`);
+    // ⚠️ Yangi backend'da mavjud Sale (qarz)ning mijoz ismi/telefoni/muddatini
+    // alohida tahrirlash imkoni yo'q — sale.routes.js'da faqat create/cancel/
+    // return/payment/get bor, umumiy "update" yo'q. Shuning uchun bu amalni
+    // backendga yubormaymiz (404 bo'lardi).
+    alert(
+      "Yangi backend'da mavjud qarz (sotuv) ma'lumotlarini tahrirlash imkoni hali yo'q — " +
+      "faqat to'lov qabul qilish (\"Qarzni kamaytirish\") yoki uni butunlay bekor qilish " +
+      "(\"O'chirish\") mumkin."
+    );
     closeEditDebtorModal();
-    await apiLoadDebtors();
   } catch (e) {
     console.error("❌ ERROR:", e?.response?.status, e?.response?.data || e.message);
     console.log("━━━━━━━━━━━━━━━━━━━━━━");
@@ -3627,48 +3968,16 @@ async function sendSms(event) {
   const debtor = debtors.find(d => d.id === currentSmsDebtorId);
   if (!debtor) return;
 
-  const message = document.getElementById("smsMessage").value;
-
-  console.log("━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📱 SMS REMINDER API");
-  console.log(`📤 REQUEST: POST /api/v1/debtors/${debtor.id}/sms-reminder`);
-  console.log("📦 PAYLOAD:", { phone: debtor.phone, message });
-
-  try {
-    // ✅ FIXED: GET emas, POST — backend POST /api/v1/debtors/{id}/sms-reminder kutadi
-    const res = await window.crmApi.post(`/api/v1/debtors/${debtor.id}/sms-reminder`, {
-      message: message
-    });
-
-    console.log("📥 RESPONSE:", res.status, res.data);
-    console.log("✅ SUCCESS — SMS yuborildi");
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-
-    const smsData = {
-      id: Date.now(),
-      debtorId: debtor.id,
-      debtorName: debtor.name,
-      phone: debtor.phone,
-      message: message,
-      date: getCurrentLocalDateTime(),
-      type: "manual",
-      status: "sent"
-    };
-
-    smsHistory.push(smsData);
-    saveSmsHistory();
-
-    localStorage.setItem(`last_sms_${debtor.id}`, getToday());
-
-    renderSmsHistory();
-    renderDebtors();
-    closeSmsModal();
-    showSuccessMessage(`📱 SMS yuborildi: ${debtor.name}`);
-  } catch (error) {
-    console.error("❌ ERROR:", error?.response?.status, error?.response?.data || error.message);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    alert(getApiErrorMessage(error, "SMS yuborishda xatolik yuz berdi"));
-  }
+  // ⚠️ Yangi backend'da SMS yuborish uchun umuman route yo'q (SMS provayder
+  // integratsiyasi hali qo'shilmagan). Eski /api/v1/debtors/{id}/sms-reminder
+  // doim 404 qaytarardi va foydalanuvchi buni "SMS yuborildi" deb noto'g'ri
+  // tushunardi (chunki xato faqat konsolda ko'rinardi). Endi buning o'rniga
+  // ochiq-oydin xabar beramiz — soxta so'rov yubormaymiz.
+  alert(
+    "SMS yuborish funksiyasi hali backend'da ulanmagan (SMS provayder integratsiyasi yo'q). " +
+    "Bu funksiya ishlashi uchun backend tomonda alohida SMS route qo'shilishi kerak."
+  );
+  closeSmsModal();
 }
 
 function sendAutoSms(debtor) {
@@ -4079,16 +4388,16 @@ function renderDebtors() {
             <button class="action-btn action-btn-sms" onclick="openSmsModal(${d.id})" title="SMS yuborish">
               <i class="bi bi-chat-dots-fill"></i>
             </button>
-            <button class="action-btn action-btn-add" onclick="openAdjustModal(${d.id}, 'add')" title="Qarz qo'shish">
+            <button class="action-btn action-btn-add" onclick="openAdjustModal('${d.id}', 'add')" title="Qarz qo'shish">
               <i class="bi bi-plus-circle-fill"></i>
             </button>
-            <button class="action-btn action-btn-reduce" onclick="openAdjustModal(${d.id}, 'reduce')" title="To'lov qabul qilish">
+            <button class="action-btn action-btn-reduce" onclick="openAdjustModal('${d.id}', 'reduce')" title="To'lov qabul qilish">
               <i class="bi bi-dash-circle-fill"></i>
             </button>
             <button class="action-btn action-btn-edit" onclick="openEditDebtorModal(${d.id})" title="Tahrirlash" style="background:#f59e0b; color:#fff;">
               <i class="bi bi-pencil-fill"></i>
             </button>
-            <button class="action-btn action-btn-delete" onclick="deleteDebtor(${d.id})" title="O'chirish">
+            <button class="action-btn action-btn-delete" onclick="deleteDebtor('${d.id}')" title="O'chirish">
               <i class="bi bi-trash-fill"></i>
             </button>
           </div>
@@ -4682,29 +4991,57 @@ async function saveChanges() {
     };
 
     try {
-      const response = await window.crmApi.put("/api/v1/settings/profile", {
-        full_name: data.fullName,
-        email: data.email,
-        phone: data.phone,
-        company_name: data.company,
-        department: mapDepartmentToApi(data.department)
-      });
+      // BUG FIX: /api/v1/settings/profile mavjud emas (backendda bunday
+      // endpoint yo'q — natijada baseURL bilan qo'shilganda 404 qaytardi).
+      // Haqiqiy, backend routes.js'da tasdiqlangan endpoint:
+      //   POST /store/profile/update  body: { ceo_name, store_name, profile_picture }
+      // Backend Store modeli faqat shu uch maydonni saqlaydi — email/phone/department
+      // uchun ustunlar mavjud emas, shuning uchun ular hamon faqat localStorage'da
+      // (UI cache sifatida) saqlanadi, lekin bu ular backend ma'lumotining o'rnini
+      // bosadi degani emas: ceo_name va store_name endi haqiqatan backendga yoziladi.
+      const existingUser = (window.AuthSystem && typeof window.AuthSystem.getCurrentUser === "function")
+        ? (window.AuthSystem.getCurrentUser() || {})
+        : {};
 
-      const user = response.data;
+      const result = await window.AuthSystem.updateStoreProfile({
+        ceo_name: data.fullName,
+        store_name: data.company,
+        profile_picture: existingUser.profile_picture || null
+      });
+      // const result = await window.AuthSystem.updateStoreProfile({
+      //   ceo_name: data.fullName,
+      //   store_name: data.company,
+      //   profile_picture: existingUser.profile_picture || existingUser.avatar_url || null
+      // });
+
+      if (!result || !result.success) {
+        showNotification(result?.backendMessage || result?.message || "Profilni saqlashda xatolik yuz berdi", "error");
+        return;
+      }
+
+      const store = result.data?.data || result.data;
       localStorage.setItem("profile_data", JSON.stringify(data));
 
       if (window.AuthSystem && typeof window.AuthSystem.updateCurrentUserData === "function") {
-        window.AuthSystem.updateCurrentUserData(user);
+        window.AuthSystem.updateCurrentUserData({
+          full_name: store.ceo_name,
+          company_name: store.store_name,
+          avatar_url: store.profile_picture,
+          // Backend qo'llab-quvvatlamaydigan maydonlar — faqat local cache:
+          email: data.email,
+          phone: data.phone,
+          department: data.department
+        });
       }
 
       window.dispatchEvent(new CustomEvent("profileUpdated", {
         detail: {
-          fullName: user.full_name || data.fullName,
-          email: user.email || data.email,
-          phone: user.phone || data.phone,
-          company: user.company_name || data.company,
-          department: user.department || data.department,
-          avatar: user.avatar_url || null
+          fullName: store.ceo_name || data.fullName,
+          email: data.email,
+          phone: data.phone,
+          company: store.store_name || data.company,
+          department: data.department,
+          avatar: store.profile_picture || null
         }
       }));
 
@@ -4791,14 +5128,43 @@ if (avatarInput && avatarImg && avatarFallback) {
     }
 
     try {
-      const formData = new FormData();
-      formData.append("avatar", file);
+      // BUG FIX: /api/v1/settings/profile/avatar backendda mavjud emas (404).
+      // Backendda alohida avatar-upload endpointi yo'q — haqiqiy flow ikki
+      // bosqichli: 1) POST /file/create orqali faylni yuklab URL olish
+      // (xuddi mahsulot rasmi yuklashda ishlatilgan, tasdiqlangan yo'l bilan
+      // bir xil), 2) shu URLni POST /store/profile/update orqali
+      // profile_picture sifatida saqlash.
+      const fileForm = new FormData();
+      fileForm.append("file", file);
 
-      const response = await window.crmApi.post("/api/v1/settings/profile/avatar", formData, {
+      const fileRes = await window.crmApi.post("/file/create", fileForm, {
         headers: { "Content-Type": "multipart/form-data" }
       });
 
-      const avatarUrl = normalizeApiAssetUrl(response.data && response.data.avatar_url);
+      const uploadedUrl = fileRes?.data?.file?.file_url || null;
+
+      if (!uploadedUrl) {
+        alert("Rasm yuklanmadi. Qaytadan urinib ko'ring.");
+        return;
+      }
+
+      const existingUser = (window.AuthSystem && typeof window.AuthSystem.getCurrentUser === "function")
+        ? (window.AuthSystem.getCurrentUser() || {})
+        : {};
+
+      const result = await window.AuthSystem.updateStoreProfile({
+        ceo_name: data.fullName,
+        store_name: data.company,
+        profile_picture: existingUser.profile_picture || null
+      });
+
+      if (!result || !result.success) {
+        alert(result?.backendMessage || result?.message || "Avatarni saqlashda xatolik yuz berdi");
+        return;
+      }
+
+      const store = result.data?.data || result.data;
+      const avatarUrl = normalizeApiAssetUrl(store.profile_picture || uploadedUrl);
 
       // UI
       avatarImg.src = avatarUrl;
@@ -4808,13 +5174,13 @@ if (avatarInput && avatarImg && avatarFallback) {
       localStorage.setItem("profile_avatar", avatarUrl);
 
       if (window.AuthSystem && typeof window.AuthSystem.updateCurrentUserData === "function") {
-        window.AuthSystem.updateCurrentUserData(response.data);
+        window.AuthSystem.updateCurrentUserData({ avatar_url: store.profile_picture });
       }
 
       window.dispatchEvent(
         new CustomEvent("profileUpdated", {
           detail: {
-            avatar: response.data.avatar_url
+            avatar: store.profile_picture
           }
         })
       );
@@ -5071,12 +5437,12 @@ var TopbarProfileManager = {
 
       // BACKEND → FRONTEND MAPPING
       const mappedData = {
-        fullName: user.full_name,
-        email: user.email,
-        phone: user.phone,
-        company: user.company_name,
+        fullName: user.full_name || user.fullName || user.ceo_name || "",
+        email: user.email || "",
+        phone: user.phone || user.ceo_phone || "",
+        company: user.company_name || user.company || user.store_name || "",
         department: this.mapRole(user.role),
-        avatar: user.avatar || user.avatar_url
+        avatar: user.avatar || user.avatar_url || user.profile_picture || ""
       };
 
       this.updateAllUI(mappedData)
@@ -5860,26 +6226,63 @@ function initLogout() {
 }
 
 /* ========== INITIALIZATION ========== */
+async function initDashboard() {
 
-function initDashboard() {
-  console.log('=== Initializing Dashboard ===');
+  console.log("=== Initializing Dashboard ===");
 
-  // Auth tekshirish
   if (!checkAuth()) {
     return;
   }
 
-  // ✅ FIX 6: updateProfileDisplay() olib tashlandi — eski localStorage-based funksiya.
-  // initializeApp() → TopbarProfileManager.init() barcha profil UI ni boshqaradi.
-
-  // Dropdown va logout
   initProfileDropdown();
   initLogout();
 
-  console.log("=== Dashboard Initialized ===");
+    console.log("=== Dashboard Initialized ===");
 
-  getDashboardStatistics();
+  // BUG FIX: categories/products/sales'ni bu yerda QAYTA yuklash olib
+  // tashlandi — bu doim asosiy DOMContentLoaded blokidagi syncAllApiData()
+  // bilan takrorlanardi (tartibiga qaramay), token/parallel-request
+  // "401 keyin 200" holatini kuchaytirar edi. syncAllApiData() ularni
+  // allaqachon yuklaydi.
+  //
+  // getDashboardStatistics() esa DashboardStatisticsManager.init() (boshqa,
+  // alohida init oqimi) orqali ham chaqiriladi — shuning uchun FAQAT shu
+  // ikkisi orasida flag bilan bitta marta ishlashini ta'minlaymiz.
+  if (dashboardBootstrapped) {
+    console.log("ℹ️ Dashboard statistikasi allaqachon boshqa oqim orqali yuklangan, qayta yuklanmaydi.");
+    return;
+  }
+  dashboardBootstrapped = true;
+
+  await getDashboardStatistics();
+
+  // Profit va inventory local fallback bilan ham yakuniy qiymat bilan
+  updateProfitUI();
+  updateInventoryBalanceUI();
+
+  console.log(
+    "✅ Dashboard fully ready"
+  );
 }
+// function initDashboard() {
+//   console.log('=== Initializing Dashboard ===');
+
+//   // Auth tekshirish
+//   if (!checkAuth()) {
+//     return;
+//   }
+
+//   // ✅ FIX 6: updateProfileDisplay() olib tashlandi — eski localStorage-based funksiya.
+//   // initializeApp() → TopbarProfileManager.init() barcha profil UI ni boshqaradi.
+
+//   // Dropdown va logout
+//   initProfileDropdown();
+//   initLogout();
+
+//   console.log("=== Dashboard Initialized ===");
+
+//   getDashboardStatistics();
+// }
 
 // Sahifa yuklanganda ishga tushirish
 if (document.readyState === 'loading') {
@@ -5895,16 +6298,81 @@ window.getUserData = getUserData;
 window.saveUserData = saveUserData;
 window.logout = logout;
 
+// =========================================
+// CHANGE PASSWORD API — VERIFIED ENDPOINT
+// =========================================
 async function changePassword(oldPassword, newPassword) {
-  const Auth = window.AuthSystem;
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("🔐 CHANGE PASSWORD API");
+  console.log("📤 REQUEST: PUT /store/password/change");
 
-  if (!Auth || typeof Auth.changePassword !== "function") {
-    return { success: false, message: "Auth tizimi topilmadi!" };
+  try {
+    const response = await crmApi.put(
+      "/store/password/change",
+      {
+        old_password: oldPassword,
+        new_password: newPassword
+      }
+    );
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("✅ CHANGE PASSWORD SUCCESS");
+    console.log("🌐 HTTP:", response.status);
+    console.log("📊 RESPONSE:", response.data);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    return {
+      success: true,
+      status: response.status,
+      data: response.data,
+      message:
+        response.data?.message ||
+        "Parol muvaffaqiyatli o'zgartirildi."
+    };
+
+  } catch (error) {
+
+    const status = error?.response?.status;
+
+    const backendMessage =
+      error?.response?.data?.detail ||
+      error?.response?.data?.message ||
+      error?.response?.data?.error;
+
+    console.error("❌ CHANGE PASSWORD FAILED");
+
+    console.table({
+      success: false,
+      status,
+      url: error?.config?.url || null,
+      message: backendMessage || error?.message
+    });
+
+    let message = "Parolni o'zgartirishda xatolik yuz berdi.";
+
+    if (status === 400) {
+      message =
+        backendMessage ||
+        "Eski parol noto'g'ri yoki yangi parol talabga javob bermaydi.";
+    }
+
+    if (status === 401) {
+      message =
+        "Sessiya tugagan. Qaytadan tizimga kiring.";
+    }
+
+    if (status === 404) {
+      message =
+        "Parol API endpointi backendda topilmadi.";
+    }
+
+    return {
+      success: false,
+      status,
+      message
+    };
   }
-
-  return Auth.changePassword(oldPassword, newPassword);
 }
-
 window.changePassword = changePassword;
 
 
@@ -5952,62 +6420,62 @@ window.changePassword = changePassword;
 
     if (cancelBtn) cancelBtn.addEventListener("click", reset);
 
-    if (saveBtn) {
-      saveBtn.addEventListener("click", async function () {
-        if (msgEl) { msgEl.style.display = "none"; }
+    // if (saveBtn) {
+    //   saveBtn.addEventListener("click", async function () {
+    //     if (msgEl) { msgEl.style.display = "none"; }
 
-        var oldPass = oldPassInput ? oldPassInput.value : "";
-        var newPass = newPassInput ? newPassInput.value : "";
-        var confirmPass = confirmPassInput ? confirmPassInput.value : "";
+    //     var oldPass = oldPassInput ? oldPassInput.value : "";
+    //     var newPass = newPassInput ? newPassInput.value : "";
+    //     var confirmPass = confirmPassInput ? confirmPassInput.value : "";
 
-        if (!oldPass) return showMsg("Eski parolni kiriting!", false);
-        if (newPass.length < 6) return showMsg("Yangi parol kamida 6 ta belgi bo'lishi kerak!", false);
-        if (newPass !== confirmPass) return showMsg("Parollar mos kelmadi!", false);
+    //     if (!oldPass) return showMsg("Eski parolni kiriting!", false);
+    //     if (newPass.length < 6) return showMsg("Yangi parol kamida 6 ta belgi bo'lishi kerak!", false);
+    //     if (newPass !== confirmPass) return showMsg("Parollar mos kelmadi!", false);
 
-        var Auth = window.AuthSystem;
-        if (!Auth || typeof Auth.changePassword !== "function") {
-          return showMsg("Auth tizimi topilmadi!", false);
-        }
-        console.log("━━━━━━━━━━━━━━━━━━");
-        console.log("🔐 CHANGE PASSWORD");
-        console.log("📤 REQUEST");
-        console.table({
-          old_password: oldPass,
-          new_password: newPass
-        });
+    //     var Auth = window.AuthSystem;
+    //     if (!Auth || typeof Auth.changePassword !== "function") {
+    //       return showMsg("Auth tizimi topilmadi!", false);
+    //     }
+    //     console.log("━━━━━━━━━━━━━━━━━━");
+    //     console.log("🔐 CHANGE PASSWORD");
+    //     console.log("📤 REQUEST");
+    //     console.table({
+    //       old_password: oldPass,
+    //       new_password: newPass
+    //     });
 
-        var result = await Auth.changePassword(oldPass, newPass);
+    //     var result = await Auth.changePassword(oldPass, newPass);
 
-        console.log("━━━━━━━━━━━━━━━━━━");
+    //     console.log("━━━━━━━━━━━━━━━━━━");
 
-        if (result.success) {
+    //     if (result.success) {
 
-          console.log("✅ STATUS : SUCCESS");
-          console.table(result);
+    //       console.log("✅ STATUS : SUCCESS");
+    //       console.table(result);
 
-          alert("✅ Parol muvaffaqiyatli o'zgartirildi!");
+    //       alert("✅ Parol muvaffaqiyatli o'zgartirildi!");
 
-          showMsg("✅ Parol muvaffaqiyatli yangilandi!", true);
+    //       showMsg("✅ Parol muvaffaqiyatli yangilandi!", true);
 
-          saveBtn.disabled = true;
+    //       saveBtn.disabled = true;
 
-          setTimeout(function () {
-            reset();
-            saveBtn.disabled = false;
-          }, 2000);
+    //       setTimeout(function () {
+    //         reset();
+    //         saveBtn.disabled = false;
+    //       }, 2000);
 
-        } else {
+    //     } else {
 
-          console.log("❌ STATUS : ERROR");
-          console.table(result);
+    //       console.log("❌ STATUS : ERROR");
+    //       console.table(result);
 
-          alert("❌ " + result.message);
+    //       alert("❌ " + result.message);
 
-          showMsg(result.message || "Xatolik yuz berdi!", false);
+    //       showMsg(result.message || "Xatolik yuz berdi!", false);
 
-        }
-      });
-    }
+    //     }
+    //   });
+    // }
   }
 
   document.addEventListener(
@@ -6224,6 +6692,13 @@ var DashboardStatisticsManager = {
 
   init: async function () {
 
+    // BUG FIX: boshqa oqim allaqachon bootstrap qilgan bo'lsa, qayta yuklamaymiz.
+    if (dashboardBootstrapped) {
+      console.log("ℹ️ DASHBOARD INIT — allaqachon bootstrap qilingan, skip.");
+      return;
+    }
+    dashboardBootstrapped = true;
+
     console.log(
       "🚀 DASHBOARD INIT"
     )
@@ -6231,7 +6706,6 @@ var DashboardStatisticsManager = {
     // API LOAD
     const data =
       await getDashboardStatistics()
-
     // AGAR DATA KELSA
     if (data) {
 
@@ -6290,13 +6764,18 @@ var DashboardStatisticsManager = {
         "monthlyRevenueChange"
       )
 
-    if (revenueChange) {
+   if (revenueChange) {
+      const growth = Number(data.monthly_revenue_growth);
 
-      revenueChange.textContent =
-        `+${data.monthly_revenue_growth}% o'sish`
-
+      if (!Number.isFinite(growth) || growth === 0) {
+        revenueChange.textContent = "—";
+      } else if (growth > 0) {
+        revenueChange.textContent = `▲ ${growth}% o'sish`;
+      } else {
+        revenueChange.textContent =
+          `▼ ${Math.abs(growth)}% kamayish`;
+      }
     }
-
     // 2. DAILY SALES
     const dailySales =
       document.getElementById(
@@ -6312,7 +6791,6 @@ var DashboardStatisticsManager = {
         )}
                 <small>UZS</small>
                 `
-
     }
 
     // DAILY CHANGE
@@ -6322,10 +6800,17 @@ var DashboardStatisticsManager = {
       )
 
     if (dailyChange) {
+      const change = Number(data.daily_sales_change);
 
-      dailyChange.textContent =
-        `${data.daily_sales_change}% o'zgarish`
-
+      if (!Number.isFinite(change) || change === 0) {
+        dailyChange.textContent = "—";
+      } else if (change > 0) {
+        dailyChange.textContent =
+          `▲ ${change}% kechaga nisbatan`;
+      } else {
+        dailyChange.textContent =
+          `▼ ${Math.abs(change)}% kechaga nisbatan`;
+      }
     }
 
     // 3. MONTHLY PROFIT
@@ -6478,65 +6963,161 @@ var DashboardStatisticsManager = {
 }
 
 // Backend DASHBOARD API 
+// =========================================
+// DASHBOARD STATISTICS — FIXED
+// =========================================
 async function getDashboardStatistics() {
+  console.log("📊 DASHBOARD API START");
+
+  // OFFLINE MODE
   if (OFFLINE_DATA_MODE) {
+
     const todayRevenue = calculateTodayRevenue();
-    const yesterdayRevenue =
-      Number(localStorage.getItem("yesterdaySalesTotal")) || 0;
-
-    const dailyChange =
-      yesterdayRevenue > 0
-        ? Math.round(
-            ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
-          )
-        : 0;
-
     const monthlyRevenue = calculateMonthlyRevenue();
-    const previousMonthRevenue = getPreviousMonthRevenue();
+
+    const previousMonthRevenue =
+      getPreviousMonthRevenue();
 
     const monthlyGrowth =
       previousMonthRevenue > 0
         ? Math.round(
             ((monthlyRevenue - previousMonthRevenue) /
-              previousMonthRevenue) *
-              100
+              previousMonthRevenue) * 100
           )
         : 0;
 
-    return {
+    const inventoryBalance =
+      calculateInventoryBalance();
+
+    const data = {
       monthly_revenue: monthlyRevenue,
       monthly_revenue_growth: monthlyGrowth,
       daily_sales: todayRevenue,
-      daily_sales_change: dailyChange,
+      daily_sales_change: 0,
       monthly_profit: calculateMonthlyProfit(),
-      inventory_balance: products.reduce(
-        (sum, p) =>
-          sum +
-          (Number(p.stock) || 0) *
-            (Number(p.costPrice) || 0),
-        0
-      )
+      inventory_balance: inventoryBalance
     };
-  }
-
-  try {
-    const response = await window.crmApi.get("/statistics/full");
-
-    const data = response.data;
 
     DashboardStatisticsManager.updateDashboard(data);
 
     return data;
-  } catch (error) {
-    console.error(
-      "❌ STATISTICS FULL ERROR:",
-      error?.response?.status,
-      error?.response?.data || error.message
+  }
+
+  // ONLINE MODE
+  try {
+
+    // BUG FIX: /v1/dashboard/stats backendda mavjud emas (404 → har doim
+    // fallbackData'ga tushib, "0" ko'rsatardi). Backend routes.js/statistics.route.js'da
+    // tasdiqlangan haqiqiy endpoint: GET /statistics/full. U aynan shu quyida
+    // o'qilayotgan field nomlarini (monthly_revenue, monthly_revenue_growth,
+    // daily_sales, daily_sales_change, monthly_profit, inventory_balance) qaytaradi —
+    // shuning uchun pastdagi parsing kodiga tegilmadi, faqat URL to'g'irlandi.
+    const response = await window.crmApi.get(
+      "/statistics/full"
     );
 
-    return null;
-  }
-}
+    const raw =
+      response.data?.data ||
+      response.data;
+
+    const data = {
+      monthly_revenue:
+        Number(raw.monthly_revenue) || 0,
+
+      monthly_revenue_growth:
+        Number(raw.monthly_revenue_growth) || 0,
+
+      daily_sales:
+        Number(raw.daily_sales) || 0,
+
+      daily_sales_change:
+        Number(raw.daily_sales_change) || 0,
+
+      monthly_profit:
+        Number(raw.monthly_profit) || 0,
+
+      inventory_balance:
+        Number(raw.inventory_balance) || 0
+    };
+
+    console.log("✅ DASHBOARD STATISTICS");
+    console.table([data]);
+
+    DashboardStatisticsManager.updateDashboard(data);
+
+    return data;
+
+  } catch (error) {
+
+    console.error("❌ DASHBOARD API ERROR");
+
+    console.table({
+      status: error?.response?.status || null,
+      url: error?.config?.url || null,
+      message:
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        error?.message
+    });
+
+    // Backend statistics ishlamasa,
+    // frontenddagi real ma'lumotlardan hisoblaymiz.
+    const monthlyRevenue =
+      calculateMonthlyRevenue();
+
+    const previousMonthRevenue =
+      getPreviousMonthRevenue();
+
+    const monthlyGrowth =
+      previousMonthRevenue > 0
+        ? Math.round(
+            ((monthlyRevenue - previousMonthRevenue) /
+              previousMonthRevenue) * 100
+          )
+        : 0;
+
+    const todayRevenue =
+      calculateTodayRevenue();
+
+    const yesterdayRevenue =
+      calculateYesterdayRevenue
+        ? calculateYesterdayRevenue()
+        : 0;
+
+    const dailyChange =
+      yesterdayRevenue > 0
+        ? Math.round(
+            ((todayRevenue - yesterdayRevenue) /
+              yesterdayRevenue) * 100
+          )
+        : 0;
+
+    const fallbackData = {
+      monthly_revenue: monthlyRevenue,
+
+      monthly_revenue_growth:
+        monthlyGrowth,
+
+      daily_sales:
+        todayRevenue,
+
+      daily_sales_change:
+        dailyChange,
+
+      monthly_profit:
+        calculateMonthlyProfit(),
+
+      inventory_balance:
+        calculateInventoryBalance()
+    };
+
+        DashboardStatisticsManager.updateDashboard(
+          fallbackData
+        );
+
+        return fallbackData;
+      }
+    }
 
 // Automatically bind to window
 window.getDashboardStatistics = getDashboardStatistics;
@@ -6964,10 +7545,17 @@ async function getLowStockAlerts() {
   }
   // OFFLINE DATA MODE END
 
+  // Backendda alohida /dashboard/low-stock-alerts endpointi yo'q.
+  // /product/get orqali allaqachon yuklangan `products` massividan,
+  // minimum_quantity chegarasiga qarab, frontendda hisoblaymiz.
   try {
-    const response = await window.crmApi.get("/api/v1/dashboard/low-stock-alerts");
-    console.log("⚠️ LOW STOCK", response.data);
-    return response.data;
+    const lowStock = products.filter(p => {
+      const stock = Number(p.stock) || 0;
+      const minStock = Number(p.minStock) || 0;
+      return stock <= minStock;
+    });
+    console.log("⚠️ LOW STOCK", lowStock);
+    return lowStock;
   } catch (error) {
     console.error("❌ LOW STOCK ERROR", error);
     return [];
@@ -6993,27 +7581,31 @@ async function getLowStockAlerts() {
 async function getOverduePayments() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━");
   console.log("⏰ OVERDUE PAYMENTS API");
-  console.log("📤 REQUEST: GET /api/v1/dashboard/overdue-payments");
-  console.log("🕒 Time:", new Date().toLocaleTimeString());
 
   try {
-    // ✅ window.crmApi interceptor token ni avtomatik qo'shadi — qo'lda olish shart emas
-    const response = await window.crmApi.get("/api/v1/dashboard/overdue-payments");
+    // Backendda alohida /dashboard/overdue-payments endpointi yo'q.
+    // /statistics/full ichidagi overdue_payments/overdue_count dan foydalanamiz.
+    const result = await AuthSystem.getStatistics();
 
-    console.log("✅ STATUS: SUCCESS");
-    console.log("🌐 HTTP:", response.status);
-    console.log("📊 RESPONSE:");
-    console.table(response.data);
+    if (!result || !result.success) {
+      console.error("❌ OVERDUE PAYMENTS ERROR:", result?.backendMessage);
+      return { overdue_payments: 0, overdue_count: 0 };
+    }
+
+    const stats = result.data?.data || result.data || {};
+    const data = {
+      overdue_payments: Number(stats.overdue_payments) || 0,
+      overdue_count: Number(stats.overdue_count) || 0
+    };
+
+    console.log("✅ OVERDUE PAYMENTS:", data);
     console.log("━━━━━━━━━━━━━━━━━━━━━━");
 
-    return response.data;
+    return data;
   } catch (error) {
     console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    console.error("❌ STATUS: FAILED");
-    console.error("🌐 HTTP:", error?.response?.status);
-    console.error("📄 ERROR:", error?.response?.data || error.message);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    return [];
+    console.error("❌ STATUS: FAILED", error?.message || error);
+    return { overdue_payments: 0, overdue_count: 0 };
   }
 }
 
@@ -7054,45 +7646,70 @@ async function getDailySalesStats() {
 // // Backend API DAILY TRANSACTIONS 
 async function getDailyTransactions(period = "daily") {
   console.log("━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("🛒 DAILY TRANSACTIONS API");
-  console.log(`📤 REQUEST: GET /api/v1/daily-sales/transactions?period=${period}`);
-  console.log("📅 PERIOD:", period.toUpperCase());
-  console.log("🕒 Time:", new Date().toLocaleTimeString());
+  console.log("🛒 DAILY TRANSACTIONS");
+  console.log("📅 PERIOD:", period);
 
   try {
-    // ✅ window.crmApi interceptor token ni avtomatik qo'shadi
-    const response = await window.crmApi.get(
-      `/api/v1/daily-sales/transactions?period=${period}`
-    );
+    const allSales = Array.isArray(sales)
+      ? sales
+      : [];
 
-    console.log("✅ STATUS: SUCCESS");
-    console.log("🌐 HTTP:", response.status);
-    console.log("📊 RESPONSE:");
-    console.table(response.data.items);
-    console.log("📊 TOTAL:", response.data.total);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    const now = new Date();
 
-    return response.data;
+    const filtered = allSales.filter(sale => {
+      if (sale.status && sale.status !== "sold") {
+        return false;
+      }
+
+      const saleDate = new Date(
+        sale.createdAt ||
+        sale.created_at ||
+        sale.date ||
+        sale.sale_date
+      );
+
+      if (Number.isNaN(saleDate.getTime())) {
+        return false;
+      }
+
+      if (period === "daily") {
+        return saleDate.toDateString() === now.toDateString();
+      }
+
+      if (period === "weekly") {
+        const weekAgo = new Date(now);
+        weekAgo.setDate(now.getDate() - 7);
+
+        return saleDate >= weekAgo;
+      }
+
+      if (period === "monthly") {
+        return (
+          saleDate.getMonth() === now.getMonth() &&
+          saleDate.getFullYear() === now.getFullYear()
+        );
+      }
+
+      return true;
+    });
+
+    return {
+      items: filtered,
+      total: filtered.reduce(
+        (sum, sale) => sum + (Number(sale.total) || 0),
+        0
+      )
+    };
+
   } catch (error) {
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    console.error("❌ STATUS: FAILED");
-    console.error("🌐 HTTP:", error?.response?.status);
-    console.error("📄 ERROR:", error?.response?.data || error.message);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    return { items: [] };
+    console.error("❌ TRANSACTIONS ERROR:", error);
+
+    return {
+      items: [],
+      total: 0
+    };
   }
 }
-
-// NOTE: duplicate "transactionFilter" change listener removed from here.
-// It was attaching a SECOND change handler to the same <select>, calling
-// the old getDailyTransactions() (unverified /api/v1/daily-sales/transactions
-// endpoint) and racing against the listener defined earlier in this file
-// (which now calls the verified getTransactions() -> /api/v1/transactions/).
-// Two listeners on one element meant two renderTransactions() calls fired
-// per change event, and whichever resolved last silently won/overwrote the
-// other — this was the actual cause of the table going empty after the API
-// was wired in. getDailyTransactions() itself is left intact below in case
-// other code still depends on it.
 
 // ==========================================
 // TRANSACTIONS EXCEL EXPORT
@@ -7406,25 +8023,26 @@ async function createCategory(name) {
 
   try {
 
-    const response =
-      await window.crmApi.post(
-        "/api/v1/products/categories",
-        {
-          name: name
-        }
-      );
+    const result = await AuthSystem.createCategory({
+      category_name: name
+    });
+
+    if (!result || !result.success) {
+      console.error("❌ CREATE CATEGORY ERROR:", result?.backendMessage);
+      return null;
+    }
 
     console.log(
       "✅ CATEGORY CREATED"
     );
 
     console.table(
-      response.data
+      result.data
     );
 
     await apiLoadCategories();
 
-    return response.data;
+    return result.data;
 
   } catch (error) {
 
@@ -7552,31 +8170,77 @@ async function searchProductApi(keyword) {
 // // Backend DEBTORS API
 async function getDebtorsStats() {
   try {
-    const response = await window.crmApi.get("/api/v1/debtors/stats");
+    const result = await AuthSystem.getDebts();
 
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("💰 DEBTORS STATS API");
-    console.log("✅ STATUS: SUCCESS");
+    if (!result || !result.success) {
+      return {
+        monthly_collected: 0,
+        overdue_count: 0,
+        overdue_total: 0,
+        upcoming_count: 0,
+        upcoming_total: 0
+      };
+    }
 
-    console.table([response.data]);
+    const debts =
+      result.data?.debts ||
+      result.data?.data ||
+      result.debts ||
+      [];
 
-    console.log("💵 Monthly Collected:", response.data.monthly_collected);
-    console.log("⚠️ Overdue Count:", response.data.overdue_count);
-    console.log("💸 Overdue Total:", response.data.overdue_total);
-    console.log("📅 Upcoming Count:", response.data.upcoming_count);
-    console.log("💰 Upcoming Total:", response.data.upcoming_total);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
+    const now = new Date();
 
-    return response.data;
+    let overdue_count = 0;
+    let overdue_total = 0;
+    let upcoming_count = 0;
+    let upcoming_total = 0;
+
+    debts.forEach(debt => {
+      const remaining =
+        Number(
+          debt.total_remaining ??
+          debt.remaining_amount ??
+          debt.remaining ??
+          0
+        );
+
+      if (remaining <= 0) return;
+
+      const dueDate = new Date(
+        debt.due_date ||
+        debt.dueDate ||
+        debt.payment_date
+      );
+
+      if (Number.isNaN(dueDate.getTime())) return;
+
+      if (dueDate < now) {
+        overdue_count++;
+        overdue_total += remaining;
+      } else {
+        upcoming_count++;
+        upcoming_total += remaining;
+      }
+    });
+
+    return {
+      monthly_collected: 0,
+      overdue_count,
+      overdue_total,
+      upcoming_count,
+      upcoming_total
+    };
 
   } catch (error) {
+    console.error("❌ DEBT STATS:", error);
 
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("💰 DEBTORS STATS API");
-    console.error("❌ ERROR:", error);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━");
-
-    return null;
+    return {
+      monthly_collected: 0,
+      overdue_count: 0,
+      overdue_total: 0,
+      upcoming_count: 0,
+      upcoming_total: 0
+    };
   }
 }
 
@@ -7593,7 +8257,7 @@ async function apiGetProfile() {
   console.log("🕒", new Date().toLocaleString());
 
   try {
-    const response = await window.crmApi.get("/api/v1/settings/profile");
+    const response = await window.crmApi.get("/settings/profile");
 
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log("✅ STATUS : SUCCESS");
@@ -7638,136 +8302,181 @@ async function apiGetProfile() {
 }
 
 // // Backend SETTINGS PROFILE API
+// =========================================
+// GET SETTINGS PROFILE — FIXED
+// =========================================
 async function apiLoadSettingsProfile() {
-
-  // console.clear();
-
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("⚙️ SETTINGS PROFILE API");
-  console.log("📤 REQUEST");
-  console.log("GET /api/v1/settings/profile");
-  console.log("🕒", new Date().toLocaleString());
+  console.log("📤 REQUEST: GET /v1/settings/profile");
 
   try {
+    const response = await window.crmApi.get(
+      "/v1/settings/profile"
+    );
 
-    const response = await window.crmApi.get("/api/v1/settings/profile");
-
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("✅ STATUS : SUCCESS");
-    console.log("🌐 HTTP :", response.status);
-    console.log("📊 RESPONSE");
-
-    console.table([response.data]);
-
-    window.settingsProfile = response.data;
-
-    console.log("👤 Full Name :", response.data.full_name);
-    console.log("📧 Email     :", response.data.email);
-    console.log("📱 Phone     :", response.data.phone);
-    console.log("🏢 Company   :", response.data.company_name);
-    console.log("🏷 Role      :", response.data.role);
-    console.log("🏢 Department:", response.data.department);
-    console.log("🌙 Dark Mode :", response.data.dark_mode);
-    console.log("🔐 2FA       :", response.data.two_factor_enabled);
-    console.log("📩 Email Not :", response.data.email_notifications);
+    const profile =
+      response.data?.data ||
+      response.data?.profile ||
+      response.data;
 
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("✅ PROFILE LOAD SUCCESS");
+    console.log("🌐 HTTP:", response.status);
+    console.table([profile]);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-    return response.data;
+    window.settingsProfile = profile;
+
+    if (window.AuthSystem?.updateCurrentUserData) {
+      window.AuthSystem.updateCurrentUserData(profile);
+    }
+
+    if (window.CRMTopbar?.updateProfile) {
+      window.CRMTopbar.updateProfile(profile);
+    }
+
+    if (window.TopbarProfileManager) {
+      window.TopbarProfileManager.updateAllUI({
+        fullName:
+          profile.full_name ||
+          profile.fullName ||
+          "",
+        email:
+          profile.email ||
+          "",
+        phone:
+          profile.phone ||
+          "",
+        company:
+          profile.company_name ||
+          profile.company ||
+          "",
+        department:
+          profile.department ||
+          profile.role ||
+          "",
+        avatar:
+          profile.avatar_url ||
+          profile.avatar ||
+          ""
+      });
+    }
+
+    return profile;
 
   } catch (error) {
+    console.error("❌ PROFILE LOAD ERROR");
 
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("❌ STATUS : FAILED");
-
-    console.log("🌐 HTTP :", error.response?.status);
-
-    console.log("📄 RESPONSE");
-
-    console.table([
-      error.response?.data || {
-        message: error.message
-      }
-    ]);
-
-    console.error(error);
-
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.table({
+      status: error?.response?.status || null,
+      url: error?.config?.url || null,
+      message:
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Profil yuklanmadi"
+    });
 
     return null;
   }
 }
 
 // // Backend UPDATE PROFILE API
+// =========================================
+// PROFILE UPDATE API — FIXED
+// =========================================
 async function apiUpdateProfile(profileData) {
-
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("👤 UPDATE PROFILE API");
-  console.log("📤 REQUEST");
-  console.log("PUT /api/v1/settings/profile");
+  console.log("📤 REQUEST: PUT /v1/settings/profile");
   console.table([profileData]);
 
   try {
-
     const response = await window.crmApi.put(
-      "/api/v1/settings/profile",
+      "/settings/profile",
       profileData
     );
 
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("✅ STATUS : SUCCESS");
-    console.log("🌐 HTTP :", response.status);
-    console.log("📊 RESPONSE");
+    console.log("✅ PROFILE UPDATE SUCCESS");
+    console.log("🌐 HTTP:", response.status);
     console.table([response.data]);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-    // AuthSystem yangilash
+    const profile = response.data?.data || response.data?.profile || response.data;
+
+    // Auth storage'ni yangilash
     if (window.AuthSystem?.updateCurrentUserData) {
-      window.AuthSystem.updateCurrentUserData(response.data);
+      window.AuthSystem.updateCurrentUserData(profile);
     }
 
+    // Topbar
     if (window.TopbarProfileManager) {
-
       window.TopbarProfileManager.updateAllUI({
-
-        fullName: response.data.full_name,
-        email: response.data.email,
-        phone: response.data.phone,
-        company: response.data.company_name,
-        department: response.data.role,
-        avatar: response.data.avatar_url
-
+        fullName:
+          profile.full_name ||
+          profile.fullName ||
+          "",
+        email:
+          profile.email ||
+          "",
+        phone:
+          profile.phone ||
+          "",
+        company:
+          profile.company_name ||
+          profile.company ||
+          "",
+        department:
+          profile.department ||
+          profile.role ||
+          "",
+        avatar:
+          profile.avatar_url ||
+          profile.avatar ||
+          ""
       });
-
     }
 
+    // Boshqa UI modullariga signal
     window.dispatchEvent(
       new CustomEvent("profileUpdated", {
-        detail: {
-          avatar: response.data.avatar_url
-        }
+        detail: profile
       })
     );
 
-    // Topbar yangilash
     if (window.CRMTopbar?.updateProfile) {
-      window.CRMTopbar.updateProfile(response.data);
+      window.CRMTopbar.updateProfile(profile);
     }
 
-    console.log("✅ Profile muvaffaqiyatli yangilandi.");
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
-    return response.data;
+    return {
+      success: true,
+      data: profile
+    };
 
   } catch (error) {
+    console.error("❌ PROFILE UPDATE ERROR");
 
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("❌ STATUS : FAILED");
-    console.log("🌐 HTTP :", error?.response?.status);
-    console.log("📄 ERROR");
-    console.error(error?.response?.data || error.message);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.table({
+      success: false,
+      status: error?.response?.status || null,
+      url: error?.config?.url || null,
+      message:
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Profilni saqlashda xatolik"
+    });
 
-    throw error;
+    return {
+      success: false,
+      status: error?.response?.status || null,
+      message:
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        "Profilni saqlashda xatolik yuz berdi."
+    };
   }
 }
 
@@ -7984,4 +8693,4 @@ async function loadProfileNew() {
 
 window.loadProfileNew = loadProfileNew;
 // ✅ FIX 3b: Ikkinchi loadProfileNew() o'chirildi — birinchisini override qilar edi
-// va mavjud bo'lmagan updateProfileStats() → ReferenceError berardi.
+// va mavjud bo'lmagan updateProfileStats() → ReferenceError berardi.  

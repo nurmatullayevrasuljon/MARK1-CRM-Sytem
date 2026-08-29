@@ -10,35 +10,23 @@ exports.getStatistics = async (req, res) => {
   try {
     const store_id = req.user.store_id;
 
-    // O'zbekiston vaqti (UTC+5) bo'yicha bugungi sanani aniqlash
+    // O'zbekiston (Toshkent, UTC+5) vaqti bo'yicha bugungi sanani aniqlash
     const now = new Date();
 
-    const uzbekTime = new Date(
-      now.toLocaleString("en-US", {
-        timeZone: "Asia/Tashkent",
-      }),
+    const { year, month, day } = getTashkentDateParts(now);
+
+    const todayStart = tashkentMidnight(year, month, day);
+    const tomorrowStart = tashkentMidnight(year, month, day + 1);
+    const currentMonthStart = tashkentMidnight(year, month, 1);
+    const nextMonthStart = tashkentMidnight(
+      month === 12 ? year + 1 : year,
+      month === 12 ? 1 : month + 1,
+      1
     );
-
-    const year = uzbekTime.getFullYear();
-    const month = uzbekTime.getMonth();
-    const day = uzbekTime.getDate();
-
-    // Bugun 00:00
-    const todayStart = new Date(year, month, day);
-
-    // Ertaga 00:00
-    const tomorrowStart = new Date(year, month, day + 1);
-
-    // Bu oy boshlanishi
-    const currentMonthStart = new Date(year, month, 1);
-
-    // Keyingi oy boshlanishi
-    const nextMonthStart = new Date(year, month + 1, 1);
-
-    // O'tgan oy boshlanishi
-    const previousMonthStart = new Date(year, month - 1, 1);
-
-    // O'tgan oy oxiri
+    const previousMonthStart =
+      month === 1
+        ? tashkentMidnight(year - 1, 12, 1)
+        : tashkentMidnight(year, month - 1, 1);
     const previousMonthEnd = currentMonthStart;
 
     // =========================================

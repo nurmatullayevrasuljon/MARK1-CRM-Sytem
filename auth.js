@@ -11,8 +11,16 @@
   const USER_KEY = "crm_current_user";
 
   // ---------- 2) STORAGE HELPERLARI ----------
-  function store(remember) { return remember ? localStorage : sessionStorage; }
-  function otherStore(remember) { return remember ? sessionStorage : localStorage; }
+  // ⚠️ TUZATISH: foydalanuvchi login qilgach, u o'zi logout qilmaguncha
+  // sessiya saqlanib turishi kerak (brauzer/tab yopilsa ham). Avval "Remember me"
+  // belgilanmasa (login.html'dagi checkbox standart holatda o'chirilgan edi)
+  // token faqat sessionStorage'ga yozilardi — bu esa tab/brauzer yopilishi bilan
+  // (yoki ba'zi brauzerlarda sahifa yangilanishida) sessiyani yo'qotib, dashboard
+  // "hammasi 0" holatiga qaytib qolishiga sabab bo'lardi. Endi remember qiymatidan
+  // qat'i nazar HAR DOIM localStorage ishlatiladi — sessiya faqat aniq logout
+  // bosilganda o'chadi.
+  function store(remember) { return localStorage; }
+  function otherStore(remember) { return sessionStorage; }
 
   function getAccessToken() {
     return localStorage.getItem(ACCESS_KEY) || sessionStorage.getItem(ACCESS_KEY) || null;
@@ -417,7 +425,7 @@
     // ⚠️ TASDIQLASH KERAK: Swagger'da "Settings"/"Security" bo'limini tekshiring.
     changePassword: async function (oldPassword, newPassword) {
       try {
-        const res = await crmApi.post("/api/v1/settings/security/change-password", {
+        const res = await crmApi.post("/v1/settings/security/change-password", {
           old_password: oldPassword,
           new_password: newPassword
         });
@@ -434,19 +442,6 @@
         return { success: true, status: res.status, data: res.data };
       } catch (error) {
         return describeError(error, "getStoreProfile /store/profile/get");
-      }
-    },
-    getCategories: async function () {
-      try {
-        const res = await crmApi.get("/category");
-
-        return {
-          success: true,
-          status: res.status,
-          data: res.data
-        };
-      } catch (error) {
-        return describeError(error, "getCategories /category");
       }
     },
     createCategory: async function (data) {
@@ -510,20 +505,25 @@
       console.log("========== GET CATEGORIES ==========");
 
       try {
-        const res = await crmApi.get("/category");
+        const res = await crmApi.get("/category/get/all");
 
         console.log("SUCCESS:", true);
         console.log("STATUS:", res.status);
         console.log("CATEGORIES:", res.data);
         console.table(res.data);
 
+        const categories = Array.isArray(res.data)
+          ? res.data
+          : res.data?.data || res.data?.categories || [];
+
         return {
           success: true,
           status: res.status,
-          data: res.data
+          data: res.data,
+          categories
         };
       } catch (error) {
-        const result = describeError(error, "getCategories /category");
+        const result = describeError(error, "getCategories /category/get/all");
 
         console.log("SUCCESS:", false);
         console.log("STATUS:", result.status);
@@ -991,6 +991,40 @@
         return result;
       }
     },
+    addPayment: async function (saleId, amount, paymentMethod) {
+      console.log("========== ADD PAYMENT (SALE) ==========");
+
+      try {
+        const res = await crmApi.post(
+          `/sale/payment/add?sale_id=${encodeURIComponent(saleId)}`,
+          {
+            amount,
+            payment_method: paymentMethod
+          }
+        );
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("SALE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "addPayment /sale/payment/add");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+        console.error(
+          "❌ ADD PAYMENT — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     updateUser: async function (data) {
       console.log("========== UPDATE USER ==========");
 
@@ -1065,7 +1099,7 @@
       console.log("========== GET PRODUCTS ==========");
 
       try {
-        const res = await crmApi.get("/product");
+        const res = await crmApi.get("/product/get");
 
         console.log("SUCCESS:", true);
         console.log("STATUS:", res.status);
@@ -1073,7 +1107,7 @@
 
         const products = Array.isArray(res.data)
           ? res.data
-          : res.data?.products || [];
+          : res.data?.data || res.data?.products || [];
 
         console.table(products);
 
@@ -1124,6 +1158,23 @@
         };
       } catch (error) {
         return describeError(error, "createProduct /product/create");
+      }
+    },
+    deleteProduct: async function (productId) {
+      try {
+        const res = await crmApi.delete("/product/delete", {
+          params: {
+            product_id: productId
+          }
+        });
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        return describeError(error, "deleteProduct /product/delete");
       }
     },
 
