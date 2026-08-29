@@ -58,6 +58,8 @@
  *                 count:
  *                   type: number
  *                   example: 12
+ *                 statistics:
+ *                   $ref: "#/components/schemas/DebtStatistics"
  *                 debts:
  *                   type: array
  *                   items:

@@ -27,7 +27,9 @@ exports.signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const { otp, otp_expires_at } = generateOtp();
 
-    const result = await sendSms(ceo_phone, otp);
+    const SMS_TEMPLATE = `MARK1-CRM platformasida ro'yxatdan o'tish uchun tasdiqlash kodi: ${otp}`;
+
+    const result = await sendSms(ceo_phone, SMS_TEMPLATE);
 
     if (!result.success) {
       return res
@@ -244,7 +246,9 @@ exports.forgotPassword = async (req, res) => {
 
     await ceo.save();
 
-    const result = await sendSms(ceo_phone, otp);
+    const SMS_TEMPLATE = `MARK1-CRM platformasida parolni tiklash uchun tasdiqlash kodi: ${otp}`;
+
+    const result = await sendSms(ceo_phone, SMS_TEMPLATE);
 
     if (!result.success) {
       return res
@@ -253,7 +257,7 @@ exports.forgotPassword = async (req, res) => {
     }
 
     return res.status(200).json({
-      message: "Parolni o'zgartirish uchun sms kod yuborildi",
+      message: "Parolni tiklash uchun sms kod yuborildi",
       verify_data: { ceo_phone, otp_expires_at },
     });
   } catch (err) {

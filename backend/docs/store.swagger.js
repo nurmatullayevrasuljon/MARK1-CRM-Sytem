@@ -60,3 +60,27 @@
  *       500:
  *         description: Internal server error.
  */
+
+/**
+ * @swagger
+ * /store/password/change:
+ *   put:
+ *     tags:
+ *       - Store
+ *     summary: Change store password
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ChangePassword'
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ */

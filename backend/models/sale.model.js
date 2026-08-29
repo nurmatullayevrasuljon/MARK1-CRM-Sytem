@@ -34,6 +34,7 @@ const SaleSchema = new mongoose.Schema(
     total_remaining: { type: Number, required: true, default: 0 },
     paid_by_cash: { type: Number, default: 0 },
     paid_by_card: { type: Number, default: 0 },
+    sms_sent: { type: Boolean, default: false },
     due_date: {
       type: Date,
       default: null,

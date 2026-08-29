@@ -232,3 +232,69 @@
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
+
+/**
+ * @swagger
+ * /sale/export:
+ *   get:
+ *     tags:
+ *       - Sale
+ *     summary: Export sales
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: client_id
+ *         schema:
+ *           type: integer
+ *
+ *       - in: query
+ *         name: product_id
+ *         schema:
+ *           type: integer
+ *
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *
+ *       - in: query
+ *         name: start_date
+ *         schema:
+ *           type: string
+ *           example: "2026-08-29"
+ *
+ *       - in: query
+ *         name: end_date
+ *         schema:
+ *           type: string
+ *           example: "2026-08-29"
+ *
+ *       - in: query
+ *         name: type
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum:
+ *             - sales
+ *             - items
+ *             - payments
+ *
+ *     responses:
+ *       200:
+ *         description: Excel file successfully generated
+ *         content:
+ *           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *
+ *       400:
+ *         description: Invalid request parameters
+ *
+ *       401:
+ *         description: Unauthorized
+ *
+ *       500:
+ *         description: Internal server error
+ */

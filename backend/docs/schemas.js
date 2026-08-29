@@ -102,6 +102,21 @@ module.exports = {
       },
     },
 
+    ChangePassword: {
+      type: "object",
+      required: ["old_password", "new_password"],
+      properties: {
+        old_password: {
+          type: "string",
+          example: "oldPassword123",
+        },
+        new_password: {
+          type: "string",
+          example: "newPassword123",
+        },
+      },
+    },
+
     /* ===========================
               USER
     ============================ */
@@ -403,10 +418,11 @@ module.exports = {
         },
         client_id: {
           type: "object",
+          nullable: true,
           example: {
             _id: "64f1a2b3c4d5e6f7a8b9c0d3",
-            full_name: "Ali Valiyev",
-            phone_number: "+998901234567",
+            client_name: "Ali Valiyev",
+            client_phone: "901234567",
           },
         },
         products: {
@@ -418,19 +434,33 @@ module.exports = {
                 type: "object",
                 example: {
                   _id: "64f1a2b3c4d5e6f7a8b9c0d4",
-                  name: "Coca Cola 1.5L",
+                  product_name: "Coca Cola 1.5L",
+                  product_barcode: "1234567890123",
                 },
+              },
+              purchase_price: {
+                type: "number",
+                example: 10000,
+              },
+              selling_price: {
+                type: "number",
+                example: 15000,
               },
               quantity: {
                 type: "number",
                 example: 5,
               },
-              price: {
-                type: "number",
-                example: 15000,
-              },
             },
           },
+        },
+        note: {
+          type: "string",
+          nullable: true,
+          example: "Chegirma bilan sotildi",
+        },
+        total_purchase: {
+          type: "number",
+          example: 50000,
         },
         total_price: {
           type: "number",
@@ -444,16 +474,71 @@ module.exports = {
           type: "number",
           example: 100000,
         },
+        paid_by_cash: {
+          type: "number",
+          example: 30000,
+        },
+        paid_by_card: {
+          type: "number",
+          example: 20000,
+        },
+        sms_sent: {
+          type: "boolean",
+          description: "Muddat eslatmasi SMS'i yuborilganmi",
+          example: false,
+        },
         due_date: {
           type: "string",
           format: "date-time",
           nullable: true,
           example: "2026-09-05T00:00:00.000Z",
         },
+        overdue_days_count: {
+          type: "number",
+          description:
+            "due_date'dan nechta kun o'tgani (Toshkent vaqti bo'yicha). Muddati o'tmagan bo'lsa 0.",
+          example: 3,
+        },
+        payments: {
+          type: "array",
+          items: {
+            $ref: "#/components/schemas/Payment",
+          },
+        },
+        status: {
+          type: "string",
+          enum: ["active", "cancelled", "returned"],
+          example: "active",
+        },
         createdAt: {
           type: "string",
           format: "date-time",
           example: "2025-01-15T10:30:00.000Z",
+        },
+        updatedAt: {
+          type: "string",
+          format: "date-time",
+          example: "2025-01-15T10:30:00.000Z",
+        },
+      },
+    },
+    DebtStatistics: {
+      type: "object",
+      properties: {
+        total_debtors_count: {
+          type: "number",
+          description: "Qarzdor (unikal) mijozlar soni",
+          example: 8,
+        },
+        total_debt_amount: {
+          type: "number",
+          description: "Barcha faol qarzlar summasi",
+          example: 1250000,
+        },
+        overdue_debts_count: {
+          type: "number",
+          description: "Muddati o'tgan qarzlar soni",
+          example: 2,
         },
       },
     },

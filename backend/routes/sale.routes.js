@@ -5,6 +5,7 @@ const {
   returnSale,
   addPayment,
   getSales,
+  exportSales,
 } = require("../controllers/sale.controller");
 const router = express.Router();
 
@@ -13,5 +14,6 @@ router.delete("/cancel", cancelSale);
 router.put("/return", returnSale);
 router.post("/payment/add", addPayment);
 router.get("/get", getSales);
+router.get("/export", exportSales);
 
 module.exports = router;
