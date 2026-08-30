@@ -64,7 +64,7 @@ async function sendReminders() {
 
 function startReminderCron() {
   cron.schedule(
-    "8 15 * * *",
+    "0 7 * * *",
     () => {
       console.log(
         "[CRON] Due date reminder job boshlandi:",

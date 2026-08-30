@@ -29,13 +29,13 @@ exports.signup = async (req, res) => {
 
     const SMS_TEMPLATE = `MARK1-CRM platformasida ro'yxatdan o'tish uchun tasdiqlash kodi: ${otp}`;
 
-    const result = await sendSms(ceo_phone, SMS_TEMPLATE);
+    // const result = await sendSms(ceo_phone, SMS_TEMPLATE);
 
-    if (!result.success) {
-      return res
-        .status(400)
-        .json({ message: `Sms yuborishda xatolik: ${result.error}` });
-    }
+    // if (!result.success) {
+    //   return res
+    //     .status(400)
+    //     .json({ message: `Sms yuborishda xatolik: ${result.error}` });
+    // }
 
     const newStore = await Store.create({
       ceo_name,
@@ -248,13 +248,13 @@ exports.forgotPassword = async (req, res) => {
 
     const SMS_TEMPLATE = `MARK1-CRM platformasida parolni tiklash uchun tasdiqlash kodi: ${otp}`;
 
-    const result = await sendSms(ceo_phone, SMS_TEMPLATE);
+    // const result = await sendSms(ceo_phone, SMS_TEMPLATE);
 
-    if (!result.success) {
-      return res
-        .status(400)
-        .json({ message: `Sms yuborishda xatolik: ${result.error}` });
-    }
+    // if (!result.success) {
+    //   return res
+    //     .status(400)
+    //     .json({ message: `Sms yuborishda xatolik: ${result.error}` });
+    // }
 
     return res.status(200).json({
       message: "Parolni tiklash uchun sms kod yuborildi",
