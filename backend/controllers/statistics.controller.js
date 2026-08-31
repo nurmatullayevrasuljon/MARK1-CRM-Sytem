@@ -16,12 +16,12 @@ exports.getStatistics = async (req, res) => {
     const { year, month, day } = getTashkentDateParts(now);
 
     const todayStart = tashkentMidnight(year, month, day);
-    const tomorrowStart = tashkentMidnight(year, month, day + 1);
+    const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
     const currentMonthStart = tashkentMidnight(year, month, 1);
     const nextMonthStart = tashkentMidnight(
       month === 12 ? year + 1 : year,
       month === 12 ? 1 : month + 1,
-      1
+      1,
     );
     const previousMonthStart =
       month === 1
@@ -323,7 +323,7 @@ exports.getDailyRevenue = async (req, res) => {
     const { year, month, day } = getTashkentDateParts(now);
 
     const todayStart = tashkentMidnight(year, month, day);
-    const tomorrowStart = tashkentMidnight(year, month, day + 1);
+    const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
     const result = await Sale.aggregate([
       {
@@ -339,18 +339,17 @@ exports.getDailyRevenue = async (req, res) => {
       {
         $group: {
           _id: null,
+
           revenue: {
             $sum: "$total_price",
           },
+
           cash_sale_revenue: {
-            $sum: {
-              $cond: [{ $eq: ["$total_remaining", 0] }, "$paid_by_cash", 0],
-            },
+            $sum: "$paid_by_cash",
           },
+
           card_sale_revenue: {
-            $sum: {
-              $cond: [{ $eq: ["$total_remaining", 0] }, "$paid_by_card", 0],
-            },
+            $sum: "$paid_by_card",
           },
         },
       },
@@ -385,7 +384,7 @@ exports.getWeeklyTrend = async (req, res) => {
     const { year, month, day } = getTashkentDateParts(now);
 
     const todayStart = tashkentMidnight(year, month, day);
-    const tomorrowStart = tashkentMidnight(year, month, day + 1);
+    const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
     // 0 = Sunday
     // 1 = Monday
