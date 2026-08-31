@@ -27,17 +27,24 @@ exports.signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const { otp, otp_expires_at } = generateOtp();
 
-    const SMS_TEMPLATE = `MARK1-CRM platformasida ro'yxatdan o'tish uchun tasdiqlash kodi: ${otp}`;
+    // const SMS_TEMPLATE = `MARK1 ilovasiga ro‘yxatdan o‘tish uchun tasdiqlash kodingiz: ${otp}. Ushbu kodni hech kimga bermang.`;
 
-    // const result = await sendSms(ceo_phone, SMS_TEMPLATE);
+    const result = await sendSms(
+      ceo_phone,
+      null,
+      "universal_otp",
+      3,
+      "MARK1",
+      otp,
+    );
 
-    // if (!result.success) {
-    //   return res
-    //     .status(400)
-    //     .json({ message: `Sms yuborishda xatolik: ${result.error}` });
-    // }
+    if (!result.success) {
+      return res
+        .status(400)
+        .json({ message: `Sms yuborishda xatolik: ${result.error}` });
+    }
 
-    const newStore = await Store.create({
+    await Store.create({
       ceo_name,
       ceo_phone,
       store_name,
@@ -246,15 +253,21 @@ exports.forgotPassword = async (req, res) => {
 
     await ceo.save();
 
-    const SMS_TEMPLATE = `MARK1-CRM platformasida parolni tiklash uchun tasdiqlash kodi: ${otp}`;
+    // const SMS_TEMPLATE = `MARK1 ilovasiga ro‘yxatdan o‘tish uchun tasdiqlash kodingiz: ${otp}. Ushbu kodni hech kimga bermang.`;
 
-    // const result = await sendSms(ceo_phone, SMS_TEMPLATE);
-
-    // if (!result.success) {
-    //   return res
-    //     .status(400)
-    //     .json({ message: `Sms yuborishda xatolik: ${result.error}` });
-    // }
+    const result = await sendSms(
+      ceo_phone,
+      null,
+      "universal_otp",
+      2,
+      "MARK1",
+      otp,
+    );
+    if (!result.success) {
+      return res
+        .status(400)
+        .json({ message: `Sms yuborishda xatolik: ${result.error}` });
+    }
 
     return res.status(200).json({
       message: "Parolni tiklash uchun sms kod yuborildi",

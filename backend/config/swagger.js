@@ -12,7 +12,7 @@ const options = {
 
     servers: [
       {
-        url: "https://platform-levitate-fernlike.ngrok-free.dev/api",
+        url: "https://mark1-crm-sytem.onrender.com/api",
         description: "Development Server",
       },
     ],
