@@ -180,7 +180,7 @@ exports.signinUser = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true, // FIX: Render odatda NODE_ENV=production'ni avtomatik o'rnatmaydi; shu sabab avvalgi shart doim false bo'lib, SameSite=None cookie brauzer tomonidan RAD ETILAR edi (refresh token hech qachon saqlanmasdi)
       sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/api/auth/user/refresh",

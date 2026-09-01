@@ -2136,9 +2136,14 @@ async function apiLoadSales() {
       return;
     }
 
-    const rawSales = Array.isArray(result.data)
-      ? result.data
-      : [];
+    // BUG FIX: backend /sale/get endi pagination bilan { sales: [...], pagination: {...} }
+    // shaklida qaytaradi (avval to'g'ridan-to'g'ri array edi). Array.isArray(result.data)
+    // shu sabab HAR DOIM false bo'lib, rawSales doim BO'SH massiv bo'lib qolar edi —
+    // garchi backendda haqiqiy sotuvlar bo'lsa ham (tranzaksiyalar, haftalik trend,
+    // cancel/return oqimlari shu local `sales` massividan foydalanadi).
+    const rawSales = Array.isArray(result.data?.sales)
+      ? result.data.sales
+      : (Array.isArray(result.data) ? result.data : []);
 
     console.log(
       "✅ BACKEND SALES:",
@@ -7222,10 +7227,12 @@ async function getWeeklyTrend() {
 
     } else {
 
+      // BUG FIX: xuddi apiLoadSales()dagi kabi — /sale/get endi
+      // { sales: [...], pagination: {...} } qaytaradi, flat array emas.
       sourceSales =
-        Array.isArray(result.data)
-          ? result.data
-          : [];
+        Array.isArray(result.data?.sales)
+          ? result.data.sales
+          : (Array.isArray(result.data) ? result.data : []);
 
     }
 
@@ -7422,10 +7429,11 @@ async function getDailyRevenue() {
 
       let dailyRevenue = 0;
 
+      // BUG FIX: /sale/get pagination formatiga mos — { sales: [...] }.
       const rawSales =
-        Array.isArray(result.data)
-          ? result.data
-          : [];
+        Array.isArray(result.data?.sales)
+          ? result.data.sales
+          : (Array.isArray(result.data) ? result.data : []);
 
       rawSales.forEach(sale => {
 
@@ -8693,4 +8701,4 @@ async function loadProfileNew() {
 
 window.loadProfileNew = loadProfileNew;
 // ✅ FIX 3b: Ikkinchi loadProfileNew() o'chirildi — birinchisini override qilar edi
-// va mavjud bo'lmagan updateProfileStats() → ReferenceError berardi.  
+// va mavjud bo'lmagan updateProfileStats() → ReferenceError berardi.
