@@ -249,19 +249,29 @@ body {
 
 /* Counter text */
 .counter {
-  font-size: 2.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: #1e293b;
   line-height: 1.2;
   margin: 0.5rem 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  gap: 6px;
 }
 
 .daily-c {
-  font-size: 2.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: #1e293b;
   line-height: 1.2;
   margin: 0.5rem 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  gap: 6px;
 }
 
 /* Counter change text */
@@ -285,11 +295,13 @@ body {
 }
 
 /* Small UZS text */
-.counter small {
-  font-size: 0.6em;
+.counter small,
+.daily-c small {
+  font-size: 0.55em;
   color: #94a3b8;
-  font-weight: 400;
-  margin-left: 4px;
+  font-weight: 500;
+  margin-left: 0;
+  white-space: nowrap;
 }
 
 /* savdo counter */
@@ -404,8 +416,9 @@ h3 small {
   font-size: 0.55em;
   color: #94a3b8;
   font-weight: 400;
-  margin-left: 4px;
+  margin-left: 0;
   opacity: 0.9;
+  white-space: nowrap;
 }
 
 /* Animation for counters */
@@ -3182,7 +3195,7 @@ body {
   .daily-c,
   .tranzik-text,
   .daily-counter {
-    font-size: clamp(1.8rem, 6vw, 2.2rem);
+    font-size: clamp(1.3rem, 5vw, 1.6rem);
   }
 
   .counter-smal {
@@ -3203,7 +3216,7 @@ body {
   .daily-c,
   .tranzik-text,
   .daily-counter {
-    font-size: clamp(1.6rem, 7vw, 2rem);
+    font-size: clamp(1.15rem, 5.5vw, 1.4rem);
   }
 }
 
