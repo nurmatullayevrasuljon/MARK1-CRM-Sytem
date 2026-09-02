@@ -1070,6 +1070,11 @@
             selling_price: data.selling_price,
             quantity: data.quantity,
             minimum_quantity: data.minimum_quantity,
+            // BUG FIX: "unit" shu ro'yxatda yo'q edi, shuning uchun
+            // createProduct'da ishlagan "kg" tanlovi updateProduct orqali
+            // backendga umuman yetib bormasdi — eski mahsulotni tahrirlab
+            // "kg" qilishga urinilganda hech narsa o'zgarmasdi.
+            unit: data.unit,
             images: data.images || []
           }
         );
