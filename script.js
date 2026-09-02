@@ -525,7 +525,7 @@ function mapApiProduct(product) {
     stock: quantity,
     minStock: Number(product.minimum_quantity) || 0,
     initialStock: Math.max(Number(existing.initialStock) || 0, quantity),
-    unit: "dona",
+    unit: product.unit || "dona",
     isLowStock: quantity <= (Number(product.minimum_quantity) || 0),
     createdAt: product.createdAt || product.created_at || null
   };
@@ -1473,12 +1473,18 @@ if (productForm) {
         }
       }
 
+      // BUG FIX: "unit" ("dona"/"kg") payload'da umuman yuborilmasdi —
+      // shuning uchun backend (endi unit maydoniga ega bo'lgach ham) uni
+      // hech qachon olmasdi va standart "dona"ni saqlab qolaverardi.
+      const unitValue = productUnit.value === "ta" ? "dona" : productUnit.value;
+
       const payload = {
         product_name: productName.value.trim(),
         category_id: categoryId,
         purchase_price: costPriceValue,
         selling_price: salePriceValue,
-        quantity: stockValue
+        quantity: stockValue,
+        unit: unitValue
       };
 
       if (imageUrl) {
@@ -2249,7 +2255,14 @@ async function apiLoadSales() {
               : sale.status,
 
           paymentType:
-            "cash",
+            // BUG FIX: bu qator har doim "cash" deb hardcode qilingan edi,
+            // backend sale.paid_by_cash / sale.paid_by_card qiymatlariga
+            // umuman qaralmasdi — shu sabab karta bilan sotilgan mahsulotlar
+            // ham tranzaksiya jadvalida doim "Naqd" deb chiqardi.
+            Number(sale.paid_by_card) > 0 &&
+            Number(sale.paid_by_card) >= Number(sale.paid_by_cash)
+              ? "card"
+              : "cash",
 
           date:
             sale.createdAt ||
