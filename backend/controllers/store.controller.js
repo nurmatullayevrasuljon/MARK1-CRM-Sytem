@@ -12,7 +12,21 @@ exports.signup = async (req, res) => {
   try {
     const { ceo_name, ceo_phone, store_name, password } = req.body;
     const existingStore = await Store.findOne({ ceo_phone });
-    if (existingStore) {
+
+    // BUG FIX: avval faqat "existingStore bor-yo'qligi" tekshirilardi, hisob
+    // tasdiqlangan (otp === null) yoki hali tasdiqlanmagan (otp !== null,
+    // ya'ni foydalanuvchi SMS kodni hech qachon kiritmagan) ekani farqlanmasdi.
+    // Natijada bir marta signup qilib, OTP'ni tasdiqlamagan (masalan sahifani
+    // yopib yuborgan yoki avvalgi SMS xatoligi tufayli jarayon yarim qolgan)
+    // foydalanuvchi o'sha raqam bilan BOSHQA HECH QACHON ro'yxatdan o'ta
+    // olmasdi — garchi hisob hech qachon faollashtirilmagan bo'lsa ham.
+    //
+    // Endi: agar mavjud yozuv TASDIQLANGAN bo'lsa (otp === null) — haqiqatan
+    // ham band, xato qaytariladi. Agar hali TASDIQLANMAGAN bo'lsa (otp !==
+    // null) — bu eski, tugallanmagan urinish deb hisoblanadi va shu yozuv
+    // yangi ma'lumotlar (parol, OTP) bilan qayta ishlatiladi (yangi hujjat
+    // yaratilmaydi, mavjudi yangilanadi).
+    if (existingStore && existingStore.otp === null) {
       return res.status(400).json({
         message: "Ushbu telefon raqam bilan avval ro'yhatdan o'tilgan",
       });
@@ -44,14 +58,24 @@ exports.signup = async (req, res) => {
         .json({ message: `Sms yuborishda xatolik: ${result.error}` });
     }
 
-    await Store.create({
-      ceo_name,
-      ceo_phone,
-      store_name,
-      password: hashedPassword,
-      otp,
-      otp_expires_at,
-    });
+    if (existingStore) {
+      // Tasdiqlanmagan eski yozuvni yangi ma'lumotlar bilan yangilaymiz.
+      existingStore.ceo_name = ceo_name;
+      existingStore.store_name = store_name;
+      existingStore.password = hashedPassword;
+      existingStore.otp = otp;
+      existingStore.otp_expires_at = otp_expires_at;
+      await existingStore.save();
+    } else {
+      await Store.create({
+        ceo_name,
+        ceo_phone,
+        store_name,
+        password: hashedPassword,
+        otp,
+        otp_expires_at,
+      });
+    }
     return res.status(200).json({
       message: "Hisob yaratildi, hisobni tasdiqlashingiz mumkin",
       verify_data: { ceo_phone, otp_expires_at },
