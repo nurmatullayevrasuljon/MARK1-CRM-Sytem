@@ -20,6 +20,13 @@ const ProductSchema = new mongoose.Schema(
     purchase_price: { type: Number, default: 0 },
     selling_price: { type: Number, default: 0 },
     quantity: { type: Number, default: 0 },
+
+    unit: {
+      type: String,
+      enum: ["dona", "kg"],
+      default: "dona",
+    },
+
     minimum_quantity: { type: Number, default: 0 },
     images: {
       type: [String],
