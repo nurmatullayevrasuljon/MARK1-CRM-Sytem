@@ -2,6 +2,7 @@ const cron = require("node-cron");
 const { DateTime } = require("luxon");
 const sendSms = require("../utils/sms.util");
 const Sale = require("../models/sale.model");
+const formatNumber = require("../utils/number.util");
 
 async function sendReminders() {
   const tomorrow = DateTime.now().setZone("Asia/Tashkent").plus({ days: 1 });
@@ -46,7 +47,7 @@ async function sendReminders() {
   console.log(`[SMS reminder] ${debts.length} ta qarzga SMS yuboriladi`);
 
   for (const debt of debts) {
-    const message = `MARK1: Hurmatli ${debt.client.client_name}, sizning ${debt.store.store_name} oldidagi ${debt.total_remaining} so'mlik qarzingizning to'lov muddati ertaga. Iltimos, to'lovni o'z vaqtida amalga oshiring. Murojaat uchun: ${debt.store.ceo_phone}`;
+    const message = `Hurmatli ${debt.client.client_name}, sizning ${debt.store.store_name} oldidagi ${formatNumber(debt.total_remaining)} so'm qarzingizni to'lash vaqti ertaga keladi. Iltimos, o'z vaqtida to'lang.`;
 
     const result = await sendSms(debt.client.client_phone, message);
 
