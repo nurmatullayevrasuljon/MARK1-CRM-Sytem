@@ -747,6 +747,9 @@ function mapApiDebtor(debtor) {
   return {
     id: debtor._id || debtor.id,
     saleId: debtor._id || debtor.id,
+    // YANGI: mijozning haqiqiy Client ID'si — "Sotish" sahifasidagi
+    // "Qarzga sotish" oynasida mijozni avtomatik tanlash uchun kerak.
+    clientId: client?._id || null,
     // BUG FIX: backend Client modeli client_name/client_phone maydonlarini
     // ishlatadi (full_name/name/phone emas — Client Schema'da bunday
     // maydonlar yo'q). Eski nomlar bilan bu doim "Noma'lum mijoz" va bo'sh
@@ -2264,6 +2267,11 @@ async function apiLoadSales() {
               ? "card"
               : "cash",
 
+          // YANGI: qoldiq qarz miqdori — tranzaksiya jadvalida "Qarz"
+          // statusini ko'rsatish uchun (mavjud "status" maydoniga tegilmadi).
+          remaining:
+            Number(sale.total_remaining) || 0,
+
           date:
             sale.createdAt ||
             sale.updatedAt ||
@@ -2539,6 +2547,36 @@ async function openDebtSaleModal() {
 
   await loadClientsIntoDebtSaleModal();
 
+  // YANGI: agar Qarzdorlar bo'limidan "Qarz qo'shish" orqali kelingan bo'lsa,
+  // o'sha mijozni ro'yxatda avtomatik tanlaymiz.
+  if (window.pendingDebtSaleClientId && debtSaleClientSelect) {
+    const matchingOption = Array.from(debtSaleClientSelect.options)
+      .find(opt => opt.value === window.pendingDebtSaleClientId);
+
+    if (matchingOption) {
+      debtSaleClientSelect.value = window.pendingDebtSaleClientId;
+    }
+
+    window.pendingDebtSaleClientId = null;
+    window.pendingDebtSaleClientLabel = null;
+  }
+
+  // YANGI: agar Qarzdorlar bo'limidan "+ Yangi qarzdor qo'shish" orqali
+  // kelingan bo'lsa, "+ Yangi mijoz qo'shish"ni avtomatik tanlab, ism/telefonni
+  // oldindan to'ldiramiz.
+  if (window.pendingDebtSaleNewClientName && debtSaleClientSelect) {
+    debtSaleClientSelect.value = "__new__";
+    toggleDebtSaleNewClientFields();
+
+    document.getElementById("debtSaleNewClientName").value =
+      window.pendingDebtSaleNewClientName;
+    document.getElementById("debtSaleNewClientPhone").value =
+      window.pendingDebtSaleNewClientPhone || "";
+
+    window.pendingDebtSaleNewClientName = null;
+    window.pendingDebtSaleNewClientPhone = null;
+  }
+
   if (debtSaleModal) {
     debtSaleModal.classList.add("show");
   }
@@ -2655,6 +2693,10 @@ async function handleDebtSaleSubmit(event) {
 
     await apiLoadProducts();
     await apiLoadSales();
+    // BUG FIX: bu yerda apiLoadDebtors() chaqirilmagan edi, shuning uchun
+    // yangi yaratilgan qarz Qarzdorlar bo'limida sahifa qayta yuklanmaguncha
+    // ko'rinmasdi.
+    await apiLoadDebtors();
 
     if (typeof DashboardStatisticsManager !== 'undefined') {
       DashboardStatisticsManager.init();
@@ -3198,9 +3240,11 @@ function renderTransactions(apiTransactions) {
         </td>
         <td data-label="To'lov">${paymentBadge}</td>
         <td data-label="Holat">
-          <span class="status-badge status-sold">
-            <i class="bi bi-check-circle-fill"></i> Sotildi
-          </span>
+          ${
+            (Number(s.remaining) || 0) > 0
+              ? `<span class="status-badge status-debt"><i class="bi bi-exclamation-circle-fill"></i> Qarz</span>`
+              : `<span class="status-badge status-sold"><i class="bi bi-check-circle-fill"></i> Sotildi</span>`
+          }
         </td>
       </tr>
     `;
@@ -3836,15 +3880,26 @@ async function handleAdjustDebt(event) {
     // OFFLINE DATA MODE END
 
     if (type === "add") {
-      // ⚠️ Yangi backend'da qarzni mahsulot/sotuvsiz, ixtiyoriy summa bilan
-      // to'g'ridan-to'g'ri "qo'shish" imkoni yo'q — backendda "qarz" alohida
-      // obyekt emas, balki total_remaining > 0 bo'lgan Sale hisoblanadi.
-      // Shuning uchun bu amalni backendga yubormaymiz (404 bo'lardi);
-      // buning o'rniga foydalanuvchini Sotish sahifasiga yo'naltiramiz.
-      alert(
-        "Yangi backend'da qarzni alohida qo'shib bo'lmaydi — qarz faqat Sotish sahifasida " +
-        "mijoz tanlab, to'liq to'lovsiz (yoki qisman to'lov bilan) sotuv amalga oshirilganda avtomatik yaratiladi. " +
-        "Iltimos, \"Sotish\" bo'limidan foydalaning."
+      // BUG FIX: avval bu yerda faqat alert chiqarib to'xtatilardi (dead-end).
+      // Endi haqiqatan ishlaydigan yagona yo'lga — "Sotish" sahifasidagi
+      // "Qarzga sotish" oynasiga — mijozni AVTOMATIK tanlangan holda
+      // yo'naltiradi. Backend arxitekturasi shuni talab qiladi: qarz faqat
+      // mahsulot bilan bog'liq Sale orqali yaratiladi, shuning uchun bu yerda
+      // faqat mijozni tayyorlab, foydalanuvchini u yerga olib boramiz.
+      closeAdjustModal();
+
+      window.pendingDebtSaleClientId = debtor.clientId || null;
+      window.pendingDebtSaleClientLabel = debtor.phone
+        ? `${debtor.name} (${debtor.phone})`
+        : debtor.name;
+
+      if (typeof openPage === "function") {
+        openPage("selling", "Sotish");
+      }
+
+      showSaleAlert(
+        `ℹ️ ${debtor.name} uchun qarz qo'shish: mahsulot va miqdorni tanlab, "Qarzga sotish" tugmasini bosing — mijoz avtomatik tanlangan bo'ladi.`,
+        "success"
       );
       return;
     } else {
@@ -3937,15 +3992,22 @@ async function handleSubmit(event) {
     }
     // OFFLINE DATA MODE END
 
-    // ⚠️ Yangi backend'da qarzni mahsulot/sotuvsiz, ixtiyoriy summa bilan
-    // to'g'ridan-to'g'ri "qo'shish" imkoni yo'q — backendda "qarz" alohida
-    // obyekt emas, balki total_remaining > 0 bo'lgan Sale hisoblanadi.
-    // Shuning uchun bu amalni backendga yubormaymiz (404 bo'lardi);
-    // buning o'rniga foydalanuvchini Sotish sahifasiga yo'naltiramiz.
-    alert(
-      "Yangi backend'da qarzni alohida qo'shib bo'lmaydi — qarz faqat Sotish sahifasida " +
-      "mijoz tanlab, to'liq to'lovsiz (yoki qisman to'lov bilan) sotuv amalga oshirilganda avtomatik yaratiladi. " +
-      "Iltimos, \"Sotish\" bo'limidan foydalaning."
+    // BUG FIX: avval bu yerda faqat alert chiqarib to'xtatilardi (dead-end).
+    // Endi kiritilgan ism/telefon bilan "Sotish" sahifasidagi "Qarzga
+    // sotish" oynasiga yo'naltiradi — u yerda "+ Yangi mijoz qo'shish"
+    // avtomatik tanlanadi va ism/telefon oldindan to'ldirilgan bo'ladi.
+    closeModal();
+
+    window.pendingDebtSaleNewClientName = newDebtor.name;
+    window.pendingDebtSaleNewClientPhone = newDebtor.phone.replace(/^\+998/, "");
+
+    if (typeof openPage === "function") {
+      openPage("selling", "Sotish");
+    }
+
+    showSaleAlert(
+      `ℹ️ ${newDebtor.name} uchun: mahsulot va miqdorni tanlab, "Qarzga sotish" tugmasini bosing — mijoz ma'lumotlari oldindan to'ldirilgan bo'ladi.`,
+      "success"
     );
     return;
   } catch (error) {

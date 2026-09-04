@@ -1117,6 +1117,18 @@ h3 small {
   font-size: 0.95rem;
 }
 
+/* YANGI: Qarzga sotilgan tranzaksiyalar uchun, .status-sold bilan bir xil
+   shaklda, lekin ogohlantiruvchi rang bilan (mavjud stillarga tegilmadi) */
+.status-debt {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fcd34d;
+}
+
+.status-debt i {
+  font-size: 0.95rem;
+}
+
 /* Empty State */
 .empty-state {
   text-align: center;
