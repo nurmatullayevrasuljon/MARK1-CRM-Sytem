@@ -2477,6 +2477,201 @@ if (addSaleCard) {
   });
 }
 
+// ===============================================
+// YANGI: QARZGA SOTISH (mavjud handleSale/Naqd/Karta
+// oqimiga TEGILMAGAN, butunlay alohida qo'shimcha)
+// ===============================================
+
+const debtSaleModal = document.getElementById("debtSaleModal");
+const debtSaleClientSelect = document.getElementById("debtSaleClientSelect");
+
+function toggleDebtSaleNewClientFields() {
+  const fields = document.getElementById("debtSaleNewClientFields");
+  if (!fields || !debtSaleClientSelect) return;
+  fields.style.display = debtSaleClientSelect.value === "__new__" ? "block" : "none";
+}
+
+async function loadClientsIntoDebtSaleModal() {
+  if (!debtSaleClientSelect) return;
+
+  while (debtSaleClientSelect.options.length > 2) {
+    debtSaleClientSelect.remove(2);
+  }
+
+  try {
+    const result = await AuthSystem.getClients();
+    const clients = Array.isArray(result?.data) ? result.data : [];
+
+    clients.forEach(client => {
+      const option = document.createElement("option");
+      option.value = client._id;
+      option.textContent = client.client_phone
+        ? `${client.client_name} (${client.client_phone})`
+        : client.client_name;
+      debtSaleClientSelect.appendChild(option);
+    });
+  } catch (error) {
+    console.error("❌ MIJOZLARNI YUKLASHDA XATO:", error);
+  }
+}
+
+async function openDebtSaleModal() {
+  const product = products.find(p => p.id == saleProduct.value);
+  if (!product) {
+    showSaleAlert("❌ Mahsulot tanlanmagan!", "error");
+    return;
+  }
+
+  const qty = parseFloat(saleQty.value);
+  if (isNaN(qty) || qty <= 0) {
+    showSaleAlert("❌ Miqdorni to'g'ri kiriting!", "error");
+    saleQty.focus();
+    return;
+  }
+
+  if (qty > product.stock) {
+    showSaleAlert(`❌ Yetarli mahsulot yo'q! (Mavjud: ${product.stock} ${product.unit})`, "error");
+    return;
+  }
+
+  document.getElementById("debtSaleForm").reset();
+  toggleDebtSaleNewClientFields();
+
+  await loadClientsIntoDebtSaleModal();
+
+  if (debtSaleModal) {
+    debtSaleModal.classList.add("show");
+  }
+}
+
+function closeDebtSaleModal() {
+  if (debtSaleModal) {
+    debtSaleModal.classList.remove("show");
+  }
+}
+
+async function handleDebtSaleSubmit(event) {
+  event.preventDefault();
+
+  const product = products.find(p => p.id == saleProduct.value);
+  if (!product) {
+    showSaleAlert("❌ Mahsulot tanlanmagan!", "error");
+    return;
+  }
+
+  const qty = parseFloat(saleQty.value);
+  if (isNaN(qty) || qty <= 0) {
+    showSaleAlert("❌ Miqdorni to'g'ri kiriting!", "error");
+    return;
+  }
+
+  if (qty > product.stock) {
+    showSaleAlert(`❌ Yetarli mahsulot yo'q! (Mavjud: ${product.stock} ${product.unit})`, "error");
+    return;
+  }
+
+  const totalAmount = product.price * qty;
+
+  let clientId = debtSaleClientSelect.value;
+
+  if (!clientId) {
+    showSaleAlert("❌ Mijozni tanlang yoki yangi mijoz qo'shing!", "error");
+    return;
+  }
+
+  if (clientId === "__new__") {
+    const newName = document.getElementById("debtSaleNewClientName").value.trim();
+    const newPhone = document.getElementById("debtSaleNewClientPhone").value.trim();
+
+    if (!newName) {
+      showSaleAlert("❌ Yangi mijoz ismini kiriting!", "error");
+      return;
+    }
+
+    const clientResult = await AuthSystem.createClient({
+      client_name: newName,
+      client_phone: newPhone || undefined
+    });
+
+    if (!clientResult || !clientResult.success) {
+      showSaleAlert(
+        clientResult?.backendMessage || "❌ Mijoz qo'shilmadi!",
+        "error"
+      );
+      return;
+    }
+
+    clientId = clientResult.data?.client?._id;
+
+    if (!clientId) {
+      showSaleAlert("❌ Mijoz yaratildi, lekin ID olinmadi!", "error");
+      return;
+    }
+  }
+
+  let paidAmount = parseFloat(document.getElementById("debtSalePaidAmount").value) || 0;
+
+  if (paidAmount < 0) {
+    paidAmount = 0;
+  }
+
+  if (paidAmount > totalAmount) {
+    paidAmount = totalAmount;
+  }
+
+  const paymentTypeInput = document.querySelector('input[name="debtSalePaymentType"]:checked');
+  const paymentType = paymentTypeInput ? paymentTypeInput.value : "cash";
+
+  const dueDateValue = document.getElementById("debtSaleDueDate").value;
+
+  try {
+    const result = await AuthSystem.createSale({
+      products: [
+        {
+          product_id: product.id,
+          purchase_price: product.costPrice,
+          selling_price: product.price,
+          quantity: qty
+        }
+      ],
+      note: currentSaleSessionId.toString(),
+      client_id: clientId,
+      due_date: dueDateValue ? new Date(dueDateValue).toISOString() : undefined,
+      paid_by_cash: paymentType === "cash" ? paidAmount : 0,
+      paid_by_card: paymentType === "card" ? paidAmount : 0
+    });
+
+    if (!result || !result.success) {
+      showSaleAlert(
+        result?.backendMessage || "❌ Sotuv amalga oshirilmadi!",
+        "error"
+      );
+      return;
+    }
+
+    showSaleAlert(`✅ ${product.name} qarzga sotildi!`, "success");
+    closeDebtSaleModal();
+    saleQty.value = "";
+
+    await apiLoadProducts();
+    await apiLoadSales();
+
+    if (typeof DashboardStatisticsManager !== 'undefined') {
+      DashboardStatisticsManager.init();
+    }
+  } catch (error) {
+    console.error(error);
+    showSaleAlert("❌ Sotuv amalga oshirilmadi!", "error");
+  }
+}
+
+const addSaleDebt = document.getElementById("addSaleDebt");
+if (addSaleDebt) {
+  addSaleDebt.addEventListener("click", () => {
+    openDebtSaleModal();
+  });
+}
+
 function renderSales() {
   if (!salesTable || !totalSum) return;
 
