@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Client = require("../models/client.model");
 
 exports.createClient = async (req, res) => {
@@ -141,12 +142,19 @@ exports.getClients = async (req, res) => {
     const { store_id } = req.user;
     const { client_id, client_name, client_phone } = req.query;
 
+    // BUG FIX: aggregate() Mongoose'ning avtomatik tur o'girishidan
+    // (string -> ObjectId) foydalanmaydi. req.user.store_id JWT'dan matn
+    // sifatida keladi, bazada esa ObjectId sifatida saqlangan — shu sabab
+    // $match hech qachon mos kelmasdi va bu funksiya har doim bo'sh massiv
+    // qaytarardi, garchi mijozlar create/update/delete orqali to'g'ri
+    // saqlangan bo'lsa ham (ular oddiy findOne/findOneAndUpdate ishlatadi,
+    // ular avtomatik tur o'giradi).
     const filter = {
-      store_id,
+      store_id: new mongoose.Types.ObjectId(store_id),
     };
 
     if (client_id) {
-      filter._id = client_id;
+      filter._id = new mongoose.Types.ObjectId(client_id);
     }
 
     if (client_name) {
@@ -184,7 +192,11 @@ exports.getClients = async (req, res) => {
                       $eq: ["$store_id", "$$storeId"],
                     },
                     {
-                      $gt: ["$remaining_amount", 0],
+                      // BUG FIX: Sale modelida bu maydon "total_remaining"
+                      // deb ataladi ("remaining_amount" emas). Noto'g'ri nom
+                      // bilan bu shart hech qachon rost bo'lmasdi, shuning
+                      // uchun mijozning total_debt'i har doim 0 chiqardi.
+                      $gt: ["$total_remaining", 0],
                     },
                   ],
                 },
@@ -194,7 +206,7 @@ exports.getClients = async (req, res) => {
               $group: {
                 _id: null,
                 total_debt: {
-                  $sum: "$remaining_amount",
+                  $sum: "$total_remaining",
                 },
               },
             },
