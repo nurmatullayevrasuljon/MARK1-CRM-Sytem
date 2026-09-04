@@ -4131,16 +4131,38 @@ async function updateDebtor(id, data) {
     }
     // OFFLINE DATA MODE END
 
-    // ⚠️ Yangi backend'da mavjud Sale (qarz)ning mijoz ismi/telefoni/muddatini
-    // alohida tahrirlash imkoni yo'q — sale.routes.js'da faqat create/cancel/
-    // return/payment/get bor, umumiy "update" yo'q. Shuning uchun bu amalni
-    // backendga yubormaymiz (404 bo'lardi).
-    alert(
-      "Yangi backend'da mavjud qarz (sotuv) ma'lumotlarini tahrirlash imkoni hali yo'q — " +
-      "faqat to'lov qabul qilish (\"Qarzni kamaytirish\") yoki uni butunlay bekor qilish " +
-      "(\"O'chirish\") mumkin."
+    // BUG FIX: avval bu yerda faqat alert chiqarib to'xtatilardi, garchi
+    // mijozning ismi/telefonini o'zgartirish uchun backend'da haqiqatan
+    // mavjud endpoint (/client/update) bo'lsa ham. Sale'ning o'zidagi
+    // summasi/muddatini o'zgartirish uchun HAQIQATAN endpoint yo'q
+    // (sale.routes.js'da faqat create/cancel/return/payment/get bor) —
+    // shu qism haqiqatan ham qo'llab-quvvatlanmaydi, lekin ism/telefonni
+    // endi to'g'ridan-to'g'ri Client orqali yangilaymiz.
+    const debtor = debtors.find(d => d.id === id);
+
+    if (!debtor || !debtor.clientId) {
+      alert(
+        "Bu qarzdorning mijoz ma'lumotini tahrirlab bo'lmaydi (mijoz ID topilmadi)."
+      );
+      closeEditDebtorModal();
+      return;
+    }
+
+    const clientResult = await AuthSystem.updateClient(debtor.clientId, {
+      client_name: data.name,
+      client_phone: data.phone.replace(/^\+998/, "")
+    });
+
+    if (!clientResult || !clientResult.success) {
+      alert(clientResult?.backendMessage || "Mijoz ma'lumotlarini yangilashda xatolik yuz berdi");
+      return;
+    }
+
+    showSuccessMessage(
+      `✅ ${data.name} — ism va telefon yangilandi. (Qarz summasi va muddatini o'zgartirish uchun hozircha backend imkoniyati yo'q — faqat "Qarzni kamaytirish" yoki "O'chirish" mumkin.)`
     );
     closeEditDebtorModal();
+    await apiLoadDebtors();
   } catch (e) {
     console.error("❌ ERROR:", e?.response?.status, e?.response?.data || e.message);
     console.log("━━━━━━━━━━━━━━━━━━━━━━");
@@ -4179,7 +4201,11 @@ function closeEditDebtorModal() {
 async function handleEditDebtorSubmit(event) {
   event.preventDefault();
 
-  const id = parseInt(document.getElementById("editDebtorId").value);
+  // BUG FIX: parseInt(id) MongoDB ID'sini ("68922f5e...") buzib, faqat
+  // boshidagi raqamlarni ("68922") olardi — shu sabab "Tahrirlash" formasi
+  // hech qachon to'g'ri qarzdorni topa olmasdi. ID — matn (string), uni
+  // raqamga aylantirish shart emas.
+  const id = document.getElementById("editDebtorId").value;
   const name = document.getElementById("editDebtorName").value.trim();
   const phone = normalizeDebtPhone(document.getElementById("editDebtorPhone").value);
   const originalAmount = parseFloat(document.getElementById("editDebtAmount").value);
@@ -4657,10 +4683,10 @@ function renderDebtors() {
         </td>
         <td data-label="Amallar">
           <div class="action-buttons-grid">
-            <button class="action-btn action-btn-call" onclick="contactDebtor(${d.id})" title="Qo'ng'iroq qilish">
+            <button class="action-btn action-btn-call" onclick="contactDebtor('${d.id}')" title="Qo'ng'iroq qilish">
               <i class="bi bi-telephone-fill"></i>
             </button>
-            <button class="action-btn action-btn-sms" onclick="openSmsModal(${d.id})" title="SMS yuborish">
+            <button class="action-btn action-btn-sms" onclick="openSmsModal('${d.id}')" title="SMS yuborish">
               <i class="bi bi-chat-dots-fill"></i>
             </button>
             <button class="action-btn action-btn-add" onclick="openAdjustModal('${d.id}', 'add')" title="Qarz qo'shish">
@@ -4669,7 +4695,7 @@ function renderDebtors() {
             <button class="action-btn action-btn-reduce" onclick="openAdjustModal('${d.id}', 'reduce')" title="To'lov qabul qilish">
               <i class="bi bi-dash-circle-fill"></i>
             </button>
-            <button class="action-btn action-btn-edit" onclick="openEditDebtorModal(${d.id})" title="Tahrirlash" style="background:#f59e0b; color:#fff;">
+            <button class="action-btn action-btn-edit" onclick="openEditDebtorModal('${d.id}')" title="Tahrirlash" style="background:#f59e0b; color:#fff;">
               <i class="bi bi-pencil-fill"></i>
             </button>
             <button class="action-btn action-btn-delete" onclick="deleteDebtor('${d.id}')" title="O'chirish">
