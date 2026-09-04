@@ -4142,7 +4142,10 @@ async function updateDebtor(id, data) {
 
     if (!debtor || !debtor.clientId) {
       alert(
-        "Bu qarzdorning mijoz ma'lumotini tahrirlab bo'lmaydi (mijoz ID topilmadi)."
+        "Bu qarzning mijozi tizimda alohida ro'yxatdan o'tmagan (eski, " +
+        "\"Qarzga sotish\" funksiyasi qo'shilishidan oldingi test yozuvi bo'lishi mumkin) " +
+        "— shuning uchun ism/telefonini tahrirlab bo'lmaydi. Iltimos, buni o'chirib, " +
+        "\"Sotish\" sahifasida \"Qarzga sotish\" orqali qaytadan kiriting."
       );
       closeEditDebtorModal();
       return;
