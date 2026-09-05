@@ -298,3 +298,59 @@
  *       500:
  *         description: Internal server error
  */
+
+/**
+ * @swagger
+ * /sale/remind:
+ *   post:
+ *     summary: Qarzdorlikka qo'lda eslatma (SMS) yuborish
+ *     description: Belgilangan sotuv bo'yicha xaridorga qarzdorligi haqida qo'lda SMS eslatma yuboriladi.
+ *     tags: [Sale]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: sale_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Eslatma yuboriladigan sotuvning ID raqami
+ *     responses:
+ *       200:
+ *         description: SMS muvaffaqiyatli yuborildi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Sms muvaffaqiyatli yuborildi
+ *                 client:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       example: "68922f5e7d82d8c2d5e4c123"
+ *                     client_name:
+ *                       type: string
+ *                       example: "Aziz Karimov"
+ *                     client_phone:
+ *                       type: string
+ *                       example: "+998901234567"
+ *                 sms_message:
+ *                   type: string
+ *                   example: "Hurmatli Aziz Karimov, sizning Do'kon nomi oldidagi 30 000 so'm qarzingizni to'lash vaqti ertaga keladi. Iltimos, o'z vaqtida to'lang."
+ *       400:
+ *         description: Sotuv topilmadi, xaridor biriktirilmagan, qarzdorlik yo'q, telefon raqam noto'g'ri yoki SMS yuborishda xatolik
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Server xatoligi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */

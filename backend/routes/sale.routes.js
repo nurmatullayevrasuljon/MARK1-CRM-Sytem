@@ -6,6 +6,7 @@ const {
   addPayment,
   getSales,
   exportSales,
+  sendManualReminder,
 } = require("../controllers/sale.controller");
 const router = express.Router();
 
@@ -15,5 +16,6 @@ router.put("/return", returnSale);
 router.post("/payment/add", addPayment);
 router.get("/get", getSales);
 router.get("/export", exportSales);
+router.post("/remind", sendManualReminder); // ?sale_id=ObjectId
 
 module.exports = router;

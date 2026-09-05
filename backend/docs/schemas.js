@@ -1037,47 +1037,56 @@ module.exports = {
       },
     },
 
-    CreateSaleInput: {
-      type: "object",
-      required: ["products"],
-      properties: {
-        products: {
-          type: "array",
-          items: {
-            $ref: "#/components/schemas/SaleProductInput",
-          },
-        },
-        paid_by_cash: {
-          type: "number",
-          default: 0,
-          description: "Naqd to'langan summa",
-          example: 10000,
-        },
-        paid_by_card: {
-          type: "number",
-          default: 0,
-          description: "Karta orqali to'langan summa",
-          example: 0,
-        },
-        client_id: {
-          type: "string",
-          nullable: true,
-          example: "68922f5e7d82d8c2d5e4c123",
-        },
-        due_date: {
-          type: "string",
-          format: "date-time",
-          nullable: true,
-          description: "Qarz uchun to'lov muddati",
-          example: "2026-09-05T00:00:00.000Z",
-        },
-        note: {
-          type: "string",
-          nullable: true,
-          example: "Chegirma bilan sotildi",
-        },
+CreateSaleInput: {
+  type: "object",
+  required: ["products"],
+  properties: {
+    products: {
+      type: "array",
+      items: {
+        $ref: "#/components/schemas/SaleProductInput",
       },
+      description:
+        "Mahsulotlar ro'yxati. opening_record berilgan bo'lsa, bu maydon e'tiborga olinmaydi va bo'sh massiv sifatida saqlanadi",
     },
+    paid_by_cash: {
+      type: "number",
+      default: 0,
+      description: "Naqd to'langan summa",
+      example: 10000,
+    },
+    paid_by_card: {
+      type: "number",
+      default: 0,
+      description: "Karta orqali to'langan summa",
+      example: 0,
+    },
+    client_id: {
+      type: "string",
+      nullable: true,
+      example: "68922f5e7d82d8c2d5e4c123",
+    },
+    due_date: {
+      type: "string",
+      format: "date-time",
+      nullable: true,
+      description: "Qarz uchun to'lov muddati",
+      example: "2026-09-05T00:00:00.000Z",
+    },
+    note: {
+      type: "string",
+      nullable: true,
+      example: "Chegirma bilan sotildi",
+    },
+    opening_record: {
+      type: "number",
+      default: 0,
+      description:
+        "Eski tizimdan ko'chirilgan boshlang'ich qarz summasi (Opening Balance). 0 dan katta bo'lsa, sotuv oddiy mahsulot-sotuv sifatida emas, balki faqat qarz yozuvi sifatida yaratiladi (products bo'sh, total_price va total_remaining shu qiymatga teng bo'ladi)",
+      example: 150000,
+    },
+  },
+},
 
     AddPaymentInput: {
       type: "object",

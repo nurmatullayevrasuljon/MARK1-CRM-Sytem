@@ -3,6 +3,7 @@ const Sale = require("../models/sale.model");
 const Product = require("../models/product.model");
 const parseDate = require("../utils/date.util");
 const ExcelJS = require("exceljs");
+const sendSms = require("../utils/sms.util");
 
 exports.createSale = async (req, res) => {
   const session = await mongoose.startSession();
@@ -17,6 +18,7 @@ exports.createSale = async (req, res) => {
       due_date = null,
       paid_by_cash = 0,
       paid_by_card = 0,
+      opening_record = 0,
     } = req.body;
     const { store_id } = req.user;
 
@@ -24,77 +26,101 @@ exports.createSale = async (req, res) => {
       throw new Error("To'lov qiymatlari manfiy bo'lmasligi kerak");
     }
 
-    let saleProducts = [];
-    let total_price = 0;
-    let total_purchase = 0;
-    const total_paid = paid_by_card + paid_by_cash;
+    let sale;
 
-    for (const item of products) {
-      const product = await Product.findOne({
-        _id: item.product_id,
+    if (opening_record > 0) {
+      // Eski qarzni POSga ko'chirish holati
+      sale = new Sale({
         store_id,
-      }).session(session);
+        client_id,
+        products: [],
+        note,
+        total_purchase: 0,
+        total_price: opening_record,
+        total_paid: 0,
+        total_remaining: opening_record,
+        paid_by_cash: 0,
+        paid_by_card: 0,
+        due_date,
+        payments: [],
+        sms_sent: true,
+        status: "active",
+      });
 
-      if (!product) {
-        throw new Error("Mahsulot topilmadi");
+      await sale.save({ session });
+    } else {
+      let saleProducts = [];
+      let total_price = 0;
+      let total_purchase = 0;
+      const total_paid = paid_by_card + paid_by_cash;
+
+      for (const item of products) {
+        const product = await Product.findOne({
+          _id: item.product_id,
+          store_id,
+        }).session(session);
+
+        if (!product) {
+          throw new Error("Mahsulot topilmadi");
+        }
+
+        if (product.quantity < item.quantity) {
+          throw new Error(
+            `${product.product_name} mahsulotidan omborda yetarli miqdor mavjud emas`,
+          );
+        }
+
+        product.quantity -= item.quantity;
+        await product.save({ session });
+
+        saleProducts.push({
+          product_id: product._id,
+          purchase_price: item.purchase_price,
+          selling_price: item.selling_price,
+          quantity: item.quantity,
+        });
+
+        total_price += item.selling_price * item.quantity;
+        total_purchase += item.purchase_price * item.quantity;
       }
 
-      if (product.quantity < item.quantity) {
-        throw new Error(
-          `${product.product_name} mahsulotidan omborda yetarli miqdor mavjud emas`,
-        );
+      const total_remaining = total_price - total_paid;
+
+      const payments = [];
+
+      if (paid_by_cash > 0) {
+        payments.push({
+          amount: paid_by_cash,
+          payment_method: "cash",
+          paid_at: new Date(),
+        });
       }
 
-      product.quantity -= item.quantity;
-      await product.save({ session });
+      if (paid_by_card > 0) {
+        payments.push({
+          amount: paid_by_card,
+          payment_method: "card",
+          paid_at: new Date(),
+        });
+      }
 
-      saleProducts.push({
-        product_id: product._id,
-        purchase_price: item.purchase_price,
-        selling_price: item.selling_price,
-        quantity: item.quantity,
+      sale = new Sale({
+        store_id,
+        client_id,
+        products: saleProducts,
+        note,
+        total_purchase,
+        total_price,
+        total_paid,
+        total_remaining,
+        paid_by_cash,
+        paid_by_card,
+        due_date,
+        payments,
       });
 
-      total_price += item.selling_price * item.quantity;
-      total_purchase += item.purchase_price * item.quantity;
+      await sale.save({ session });
     }
-
-    const total_remaining = total_price - total_paid;
-
-    const payments = [];
-
-    if (paid_by_cash > 0) {
-      payments.push({
-        amount: paid_by_cash,
-        payment_method: "cash",
-        paid_at: new Date(),
-      });
-    }
-
-    if (paid_by_card > 0) {
-      payments.push({
-        amount: paid_by_card,
-        payment_method: "card",
-        paid_at: new Date(),
-      });
-    }
-
-    const sale = new Sale({
-      store_id,
-      client_id,
-      products: saleProducts,
-      note,
-      total_purchase,
-      total_price,
-      total_paid,
-      total_remaining,
-      paid_by_cash,
-      paid_by_card,
-      due_date,
-      payments,
-    });
-
-    await sale.save({ session });
 
     await session.commitTransaction();
 
@@ -410,6 +436,55 @@ exports.getSales = async (req, res) => {
     return res.status(500).json({
       message: err.message,
     });
+  }
+};
+
+exports.sendManualReminder = async (req, res) => {
+  try {
+    const { sale_id } = req.query;
+    const { store_id } = req.user;
+    const sale = await Sale.findOne({ _id: sale_id, store_id }).populate([
+      { path: "client_id", select: "client_phone client_name" },
+      { path: "store_id", select: "store_name" },
+    ]);
+    if (!sale) {
+      return res.status(400).json({ message: "Sotuv mavjud emas" });
+    }
+    if (!sale.client_id) {
+      return res.status(400).json({
+        message: "Ushbu sotuvda xaridor biriktirilmagan",
+      });
+    }
+    if (sale.total_remaining === 0) {
+      return res
+        .status(400)
+        .json({ message: "Ushbu sotuvda qarzdorlik mavjud emas" });
+    }
+    if (!sale.client_id.client_phone) {
+      return res.status(400).json({
+        message: "Ushbu sotuvning xaridorida yaroqli telefon raqam mavjud emas",
+      });
+    }
+
+    const message = `Hurmatli ${sale.client_id.client_name}, sizning ${sale.store_id.store_name} oldidagi ${formatNumber(sale.total_remaining)} so'm qarzingizni to'lash vaqti ertaga keladi. Iltimos, o'z vaqtida to'lang.`;
+
+    const result = await sendSms(sale.client_id.client_phone, message);
+
+    if (result.success) {
+      return res.status(200).json({
+        message: "Sms muvaffaqiyatli yuborildi",
+        client: sale.client_id,
+        sms_message: message,
+      });
+    } else {
+      return res.status(400).json({
+        message: "Sms yuborishda xatolik",
+        error: result?.error,
+      });
+    }
+  } catch (err) {
+    console.log(err.message);
+    return res.status(500).json({ message: err.message });
   }
 };
 
