@@ -747,6 +747,9 @@ function mapApiDebtor(debtor) {
   return {
     id: debtor._id || debtor.id,
     saleId: debtor._id || debtor.id,
+    // YANGI: mijozning haqiqiy Client ID'si — "Sotish" sahifasidagi
+    // "Qarzga sotish" oynasida mijozni avtomatik tanlash uchun kerak.
+    clientId: client?._id || null,
     // BUG FIX: backend Client modeli client_name/client_phone maydonlarini
     // ishlatadi (full_name/name/phone emas — Client Schema'da bunday
     // maydonlar yo'q). Eski nomlar bilan bu doim "Noma'lum mijoz" va bo'sh
@@ -2264,6 +2267,11 @@ async function apiLoadSales() {
               ? "card"
               : "cash",
 
+          // YANGI: qoldiq qarz miqdori — tranzaksiya jadvalida "Qarz"
+          // statusini ko'rsatish uchun (mavjud "status" maydoniga tegilmadi).
+          remaining:
+            Number(sale.total_remaining) || 0,
+
           date:
             sale.createdAt ||
             sale.updatedAt ||
@@ -2474,6 +2482,235 @@ const addSaleCard = document.getElementById("addSaleCard");
 if (addSaleCard) {
   addSaleCard.addEventListener("click", () => {
     handleSale("card");
+  });
+}
+
+// ===============================================
+// YANGI: QARZGA SOTISH (mavjud handleSale/Naqd/Karta
+// oqimiga TEGILMAGAN, butunlay alohida qo'shimcha)
+// ===============================================
+
+const debtSaleModal = document.getElementById("debtSaleModal");
+const debtSaleClientSelect = document.getElementById("debtSaleClientSelect");
+
+function toggleDebtSaleNewClientFields() {
+  const fields = document.getElementById("debtSaleNewClientFields");
+  if (!fields || !debtSaleClientSelect) return;
+  fields.style.display = debtSaleClientSelect.value === "__new__" ? "block" : "none";
+}
+
+async function loadClientsIntoDebtSaleModal() {
+  if (!debtSaleClientSelect) return;
+
+  while (debtSaleClientSelect.options.length > 2) {
+    debtSaleClientSelect.remove(2);
+  }
+
+  try {
+    const result = await AuthSystem.getClients();
+    const clients = Array.isArray(result?.data) ? result.data : [];
+
+    clients.forEach(client => {
+      const option = document.createElement("option");
+      option.value = client._id;
+      option.textContent = client.client_phone
+        ? `${client.client_name} (${client.client_phone})`
+        : client.client_name;
+      debtSaleClientSelect.appendChild(option);
+    });
+  } catch (error) {
+    console.error("❌ MIJOZLARNI YUKLASHDA XATO:", error);
+  }
+}
+
+async function openDebtSaleModal() {
+  const product = products.find(p => p.id == saleProduct.value);
+  if (!product) {
+    showSaleAlert("❌ Mahsulot tanlanmagan!", "error");
+    return;
+  }
+
+  const qty = parseFloat(saleQty.value);
+  if (isNaN(qty) || qty <= 0) {
+    showSaleAlert("❌ Miqdorni to'g'ri kiriting!", "error");
+    saleQty.focus();
+    return;
+  }
+
+  if (qty > product.stock) {
+    showSaleAlert(`❌ Yetarli mahsulot yo'q! (Mavjud: ${product.stock} ${product.unit})`, "error");
+    return;
+  }
+
+  document.getElementById("debtSaleForm").reset();
+  toggleDebtSaleNewClientFields();
+
+  await loadClientsIntoDebtSaleModal();
+
+  // YANGI: agar Qarzdorlar bo'limidan "Qarz qo'shish" orqali kelingan bo'lsa,
+  // o'sha mijozni ro'yxatda avtomatik tanlaymiz.
+  if (window.pendingDebtSaleClientId && debtSaleClientSelect) {
+    const matchingOption = Array.from(debtSaleClientSelect.options)
+      .find(opt => opt.value === window.pendingDebtSaleClientId);
+
+    if (matchingOption) {
+      debtSaleClientSelect.value = window.pendingDebtSaleClientId;
+    }
+
+    window.pendingDebtSaleClientId = null;
+    window.pendingDebtSaleClientLabel = null;
+  }
+
+  // YANGI: agar Qarzdorlar bo'limidan "+ Yangi qarzdor qo'shish" orqali
+  // kelingan bo'lsa, "+ Yangi mijoz qo'shish"ni avtomatik tanlab, ism/telefonni
+  // oldindan to'ldiramiz.
+  if (window.pendingDebtSaleNewClientName && debtSaleClientSelect) {
+    debtSaleClientSelect.value = "__new__";
+    toggleDebtSaleNewClientFields();
+
+    document.getElementById("debtSaleNewClientName").value =
+      window.pendingDebtSaleNewClientName;
+    document.getElementById("debtSaleNewClientPhone").value =
+      window.pendingDebtSaleNewClientPhone || "";
+
+    window.pendingDebtSaleNewClientName = null;
+    window.pendingDebtSaleNewClientPhone = null;
+  }
+
+  if (debtSaleModal) {
+    debtSaleModal.classList.add("show");
+  }
+}
+
+function closeDebtSaleModal() {
+  if (debtSaleModal) {
+    debtSaleModal.classList.remove("show");
+  }
+}
+
+async function handleDebtSaleSubmit(event) {
+  event.preventDefault();
+
+  const product = products.find(p => p.id == saleProduct.value);
+  if (!product) {
+    showSaleAlert("❌ Mahsulot tanlanmagan!", "error");
+    return;
+  }
+
+  const qty = parseFloat(saleQty.value);
+  if (isNaN(qty) || qty <= 0) {
+    showSaleAlert("❌ Miqdorni to'g'ri kiriting!", "error");
+    return;
+  }
+
+  if (qty > product.stock) {
+    showSaleAlert(`❌ Yetarli mahsulot yo'q! (Mavjud: ${product.stock} ${product.unit})`, "error");
+    return;
+  }
+
+  const totalAmount = product.price * qty;
+
+  let clientId = debtSaleClientSelect.value;
+
+  if (!clientId) {
+    showSaleAlert("❌ Mijozni tanlang yoki yangi mijoz qo'shing!", "error");
+    return;
+  }
+
+  if (clientId === "__new__") {
+    const newName = document.getElementById("debtSaleNewClientName").value.trim();
+    const newPhone = document.getElementById("debtSaleNewClientPhone").value.trim();
+
+    if (!newName) {
+      showSaleAlert("❌ Yangi mijoz ismini kiriting!", "error");
+      return;
+    }
+
+    const clientResult = await AuthSystem.createClient({
+      client_name: newName,
+      client_phone: newPhone || undefined
+    });
+
+    if (!clientResult || !clientResult.success) {
+      showSaleAlert(
+        clientResult?.backendMessage || "❌ Mijoz qo'shilmadi!",
+        "error"
+      );
+      return;
+    }
+
+    clientId = clientResult.data?.client?._id;
+
+    if (!clientId) {
+      showSaleAlert("❌ Mijoz yaratildi, lekin ID olinmadi!", "error");
+      return;
+    }
+  }
+
+  let paidAmount = parseFloat(document.getElementById("debtSalePaidAmount").value) || 0;
+
+  if (paidAmount < 0) {
+    paidAmount = 0;
+  }
+
+  if (paidAmount > totalAmount) {
+    paidAmount = totalAmount;
+  }
+
+  const paymentTypeInput = document.querySelector('input[name="debtSalePaymentType"]:checked');
+  const paymentType = paymentTypeInput ? paymentTypeInput.value : "cash";
+
+  const dueDateValue = document.getElementById("debtSaleDueDate").value;
+
+  try {
+    const result = await AuthSystem.createSale({
+      products: [
+        {
+          product_id: product.id,
+          purchase_price: product.costPrice,
+          selling_price: product.price,
+          quantity: qty
+        }
+      ],
+      note: currentSaleSessionId.toString(),
+      client_id: clientId,
+      due_date: dueDateValue ? new Date(dueDateValue).toISOString() : undefined,
+      paid_by_cash: paymentType === "cash" ? paidAmount : 0,
+      paid_by_card: paymentType === "card" ? paidAmount : 0
+    });
+
+    if (!result || !result.success) {
+      showSaleAlert(
+        result?.backendMessage || "❌ Sotuv amalga oshirilmadi!",
+        "error"
+      );
+      return;
+    }
+
+    showSaleAlert(`✅ ${product.name} qarzga sotildi!`, "success");
+    closeDebtSaleModal();
+    saleQty.value = "";
+
+    await apiLoadProducts();
+    await apiLoadSales();
+    // BUG FIX: bu yerda apiLoadDebtors() chaqirilmagan edi, shuning uchun
+    // yangi yaratilgan qarz Qarzdorlar bo'limida sahifa qayta yuklanmaguncha
+    // ko'rinmasdi.
+    await apiLoadDebtors();
+
+    if (typeof DashboardStatisticsManager !== 'undefined') {
+      DashboardStatisticsManager.init();
+    }
+  } catch (error) {
+    console.error(error);
+    showSaleAlert("❌ Sotuv amalga oshirilmadi!", "error");
+  }
+}
+
+const addSaleDebt = document.getElementById("addSaleDebt");
+if (addSaleDebt) {
+  addSaleDebt.addEventListener("click", () => {
+    openDebtSaleModal();
   });
 }
 
@@ -3003,9 +3240,11 @@ function renderTransactions(apiTransactions) {
         </td>
         <td data-label="To'lov">${paymentBadge}</td>
         <td data-label="Holat">
-          <span class="status-badge status-sold">
-            <i class="bi bi-check-circle-fill"></i> Sotildi
-          </span>
+          ${
+            (Number(s.remaining) || 0) > 0
+              ? `<span class="status-badge status-debt"><i class="bi bi-exclamation-circle-fill"></i> Qarz</span>`
+              : `<span class="status-badge status-sold"><i class="bi bi-check-circle-fill"></i> Sotildi</span>`
+          }
         </td>
       </tr>
     `;
@@ -3641,15 +3880,26 @@ async function handleAdjustDebt(event) {
     // OFFLINE DATA MODE END
 
     if (type === "add") {
-      // ⚠️ Yangi backend'da qarzni mahsulot/sotuvsiz, ixtiyoriy summa bilan
-      // to'g'ridan-to'g'ri "qo'shish" imkoni yo'q — backendda "qarz" alohida
-      // obyekt emas, balki total_remaining > 0 bo'lgan Sale hisoblanadi.
-      // Shuning uchun bu amalni backendga yubormaymiz (404 bo'lardi);
-      // buning o'rniga foydalanuvchini Sotish sahifasiga yo'naltiramiz.
-      alert(
-        "Yangi backend'da qarzni alohida qo'shib bo'lmaydi — qarz faqat Sotish sahifasida " +
-        "mijoz tanlab, to'liq to'lovsiz (yoki qisman to'lov bilan) sotuv amalga oshirilganda avtomatik yaratiladi. " +
-        "Iltimos, \"Sotish\" bo'limidan foydalaning."
+      // BUG FIX: avval bu yerda faqat alert chiqarib to'xtatilardi (dead-end).
+      // Endi haqiqatan ishlaydigan yagona yo'lga — "Sotish" sahifasidagi
+      // "Qarzga sotish" oynasiga — mijozni AVTOMATIK tanlangan holda
+      // yo'naltiradi. Backend arxitekturasi shuni talab qiladi: qarz faqat
+      // mahsulot bilan bog'liq Sale orqali yaratiladi, shuning uchun bu yerda
+      // faqat mijozni tayyorlab, foydalanuvchini u yerga olib boramiz.
+      closeAdjustModal();
+
+      window.pendingDebtSaleClientId = debtor.clientId || null;
+      window.pendingDebtSaleClientLabel = debtor.phone
+        ? `${debtor.name} (${debtor.phone})`
+        : debtor.name;
+
+      if (typeof openPage === "function") {
+        openPage("selling", "Sotish");
+      }
+
+      showSaleAlert(
+        `ℹ️ ${debtor.name} uchun qarz qo'shish: mahsulot va miqdorni tanlab, "Qarzga sotish" tugmasini bosing — mijoz avtomatik tanlangan bo'ladi.`,
+        "success"
       );
       return;
     } else {
@@ -3742,15 +3992,22 @@ async function handleSubmit(event) {
     }
     // OFFLINE DATA MODE END
 
-    // ⚠️ Yangi backend'da qarzni mahsulot/sotuvsiz, ixtiyoriy summa bilan
-    // to'g'ridan-to'g'ri "qo'shish" imkoni yo'q — backendda "qarz" alohida
-    // obyekt emas, balki total_remaining > 0 bo'lgan Sale hisoblanadi.
-    // Shuning uchun bu amalni backendga yubormaymiz (404 bo'lardi);
-    // buning o'rniga foydalanuvchini Sotish sahifasiga yo'naltiramiz.
-    alert(
-      "Yangi backend'da qarzni alohida qo'shib bo'lmaydi — qarz faqat Sotish sahifasida " +
-      "mijoz tanlab, to'liq to'lovsiz (yoki qisman to'lov bilan) sotuv amalga oshirilganda avtomatik yaratiladi. " +
-      "Iltimos, \"Sotish\" bo'limidan foydalaning."
+    // BUG FIX: avval bu yerda faqat alert chiqarib to'xtatilardi (dead-end).
+    // Endi kiritilgan ism/telefon bilan "Sotish" sahifasidagi "Qarzga
+    // sotish" oynasiga yo'naltiradi — u yerda "+ Yangi mijoz qo'shish"
+    // avtomatik tanlanadi va ism/telefon oldindan to'ldirilgan bo'ladi.
+    closeModal();
+
+    window.pendingDebtSaleNewClientName = newDebtor.name;
+    window.pendingDebtSaleNewClientPhone = newDebtor.phone.replace(/^\+998/, "");
+
+    if (typeof openPage === "function") {
+      openPage("selling", "Sotish");
+    }
+
+    showSaleAlert(
+      `ℹ️ ${newDebtor.name} uchun: mahsulot va miqdorni tanlab, "Qarzga sotish" tugmasini bosing — mijoz ma'lumotlari oldindan to'ldirilgan bo'ladi.`,
+      "success"
     );
     return;
   } catch (error) {
@@ -3874,16 +4131,41 @@ async function updateDebtor(id, data) {
     }
     // OFFLINE DATA MODE END
 
-    // ⚠️ Yangi backend'da mavjud Sale (qarz)ning mijoz ismi/telefoni/muddatini
-    // alohida tahrirlash imkoni yo'q — sale.routes.js'da faqat create/cancel/
-    // return/payment/get bor, umumiy "update" yo'q. Shuning uchun bu amalni
-    // backendga yubormaymiz (404 bo'lardi).
-    alert(
-      "Yangi backend'da mavjud qarz (sotuv) ma'lumotlarini tahrirlash imkoni hali yo'q — " +
-      "faqat to'lov qabul qilish (\"Qarzni kamaytirish\") yoki uni butunlay bekor qilish " +
-      "(\"O'chirish\") mumkin."
+    // BUG FIX: avval bu yerda faqat alert chiqarib to'xtatilardi, garchi
+    // mijozning ismi/telefonini o'zgartirish uchun backend'da haqiqatan
+    // mavjud endpoint (/client/update) bo'lsa ham. Sale'ning o'zidagi
+    // summasi/muddatini o'zgartirish uchun HAQIQATAN endpoint yo'q
+    // (sale.routes.js'da faqat create/cancel/return/payment/get bor) —
+    // shu qism haqiqatan ham qo'llab-quvvatlanmaydi, lekin ism/telefonni
+    // endi to'g'ridan-to'g'ri Client orqali yangilaymiz.
+    const debtor = debtors.find(d => d.id === id);
+
+    if (!debtor || !debtor.clientId) {
+      alert(
+        "Bu qarzning mijozi tizimda alohida ro'yxatdan o'tmagan (eski, " +
+        "\"Qarzga sotish\" funksiyasi qo'shilishidan oldingi test yozuvi bo'lishi mumkin) " +
+        "— shuning uchun ism/telefonini tahrirlab bo'lmaydi. Iltimos, buni o'chirib, " +
+        "\"Sotish\" sahifasida \"Qarzga sotish\" orqali qaytadan kiriting."
+      );
+      closeEditDebtorModal();
+      return;
+    }
+
+    const clientResult = await AuthSystem.updateClient(debtor.clientId, {
+      client_name: data.name,
+      client_phone: data.phone.replace(/^\+998/, "")
+    });
+
+    if (!clientResult || !clientResult.success) {
+      alert(clientResult?.backendMessage || "Mijoz ma'lumotlarini yangilashda xatolik yuz berdi");
+      return;
+    }
+
+    showSuccessMessage(
+      `✅ ${data.name} — ism va telefon yangilandi. (Qarz summasi va muddatini o'zgartirish uchun hozircha backend imkoniyati yo'q — faqat "Qarzni kamaytirish" yoki "O'chirish" mumkin.)`
     );
     closeEditDebtorModal();
+    await apiLoadDebtors();
   } catch (e) {
     console.error("❌ ERROR:", e?.response?.status, e?.response?.data || e.message);
     console.log("━━━━━━━━━━━━━━━━━━━━━━");
@@ -3922,7 +4204,11 @@ function closeEditDebtorModal() {
 async function handleEditDebtorSubmit(event) {
   event.preventDefault();
 
-  const id = parseInt(document.getElementById("editDebtorId").value);
+  // BUG FIX: parseInt(id) MongoDB ID'sini ("68922f5e...") buzib, faqat
+  // boshidagi raqamlarni ("68922") olardi — shu sabab "Tahrirlash" formasi
+  // hech qachon to'g'ri qarzdorni topa olmasdi. ID — matn (string), uni
+  // raqamga aylantirish shart emas.
+  const id = document.getElementById("editDebtorId").value;
   const name = document.getElementById("editDebtorName").value.trim();
   const phone = normalizeDebtPhone(document.getElementById("editDebtorPhone").value);
   const originalAmount = parseFloat(document.getElementById("editDebtAmount").value);
@@ -3951,20 +4237,23 @@ function openSmsModal(id) {
   if (!debtor) return;
 
   currentSmsDebtorId = id;
-  const daysLeft = -getDaysOverdue(debtor.returnDate);
+  // BUG FIX: due_date bo'lmasa (ixtiyoriy maydon), getDaysOverdue(null)
+  // 1970-yilga nisbatan hisoblab, mantiqsiz katta son qaytarardi.
+  const hasReturnDate = !!debtor.returnDate;
+  const daysLeft = hasReturnDate ? -getDaysOverdue(debtor.returnDate) : null;
 
   let smsMessage = `Hurmatli ${debtor.name}!\n\n`;
 
   if (daysLeft === 1) {
     smsMessage += `⚠️ ESLATMA: Ertaga to'lov muddati!\n\n`;
-  } else if (daysLeft < 0) {
+  } else if (daysLeft !== null && daysLeft < 0) {
     smsMessage += `🚨 MUHIM: To'lov muddati ${Math.abs(daysLeft)} kun oldin o'tgan!\n\n`;
   } else if (daysLeft === 0) {
     smsMessage += `🔴 DIQQAT: Bugun to'lov muddati!\n\n`;
   }
 
   smsMessage += `Qarzingiz: ${debtor.amount.toLocaleString()} so'm\n`;
-  smsMessage += `To'lov sanasi: ${formatDate(debtor.returnDate)}\n\n`;
+  smsMessage += `To'lov sanasi: ${hasReturnDate ? formatDate(debtor.returnDate) : "belgilanmagan"}\n\n`;
   smsMessage += `Iltimos, imkon qadar tezroq to'lovni amalga oshiring.\n\n`;
   smsMessage += `Hurmat bilan,\nBoshqaruv jamoasi`;
 
@@ -4314,11 +4603,20 @@ function renderDebtors() {
   }
 
   tbody.innerHTML = filtered.map(d => {
-    const status = getStatus(d.returnDate);
-    const daysLeft = -getDaysOverdue(d.returnDate);
-    const daysOverdue = getDaysOverdue(d.returnDate);
+    // BUG FIX: "Qaytarish muddati" ixtiyoriy maydon (Sotish sahifasidagi
+    // "Qarzga sotish"da bo'sh qoldirilishi mumkin). Muddat bo'lmasa,
+    // toLocalDate(null) -> new Date(null) -> 01.01.1970 (Unix epoch)
+    // qaytarardi, natijada "20700 kun kechikdi" kabi mantiqsiz matn
+    // chiqardi. Endi bunday holatda alohida, tushunarli holat ko'rsatiladi.
+    const hasReturnDate = !!d.returnDate;
+    const status = hasReturnDate
+      ? getStatus(d.returnDate)
+      : { class: 'normal', text: 'Muddatsiz', days: 0 };
+    const daysLeft = hasReturnDate ? -getDaysOverdue(d.returnDate) : 0;
+    const daysOverdue = hasReturnDate ? getDaysOverdue(d.returnDate) : 0;
 
-    let overdueText = daysOverdue > 0 ? `${daysOverdue} kun kechikdi` :
+    let overdueText = !hasReturnDate ? "Muddat belgilanmagan" :
+      daysOverdue > 0 ? `${daysOverdue} kun kechikdi` :
       daysOverdue === 0 ? 'Bugun' : `${Math.abs(daysOverdue)} kun qoldi`;
 
     const today = getToday();
@@ -4391,7 +4689,7 @@ function renderDebtors() {
         </td>
         <td data-label="Qaytarish sanasi">
           <div style="display:flex; flex-direction:column;font-size:0.9rem; gap:4px;">
-            <strong>${formatDate(d.returnDate)}</strong>
+            <strong>${hasReturnDate ? formatDate(d.returnDate) : "—"}</strong>
             <span class="status-badge ${status.class}">${overdueText}</span>
           </div>
         </td>
@@ -4400,10 +4698,10 @@ function renderDebtors() {
         </td>
         <td data-label="Amallar">
           <div class="action-buttons-grid">
-            <button class="action-btn action-btn-call" onclick="contactDebtor(${d.id})" title="Qo'ng'iroq qilish">
+            <button class="action-btn action-btn-call" onclick="contactDebtor('${d.id}')" title="Qo'ng'iroq qilish">
               <i class="bi bi-telephone-fill"></i>
             </button>
-            <button class="action-btn action-btn-sms" onclick="openSmsModal(${d.id})" title="SMS yuborish">
+            <button class="action-btn action-btn-sms" onclick="openSmsModal('${d.id}')" title="SMS yuborish">
               <i class="bi bi-chat-dots-fill"></i>
             </button>
             <button class="action-btn action-btn-add" onclick="openAdjustModal('${d.id}', 'add')" title="Qarz qo'shish">
@@ -4412,7 +4710,7 @@ function renderDebtors() {
             <button class="action-btn action-btn-reduce" onclick="openAdjustModal('${d.id}', 'reduce')" title="To'lov qabul qilish">
               <i class="bi bi-dash-circle-fill"></i>
             </button>
-            <button class="action-btn action-btn-edit" onclick="openEditDebtorModal(${d.id})" title="Tahrirlash" style="background:#f59e0b; color:#fff;">
+            <button class="action-btn action-btn-edit" onclick="openEditDebtorModal('${d.id}')" title="Tahrirlash" style="background:#f59e0b; color:#fff;">
               <i class="bi bi-pencil-fill"></i>
             </button>
             <button class="action-btn action-btn-delete" onclick="deleteDebtor('${d.id}')" title="O'chirish">

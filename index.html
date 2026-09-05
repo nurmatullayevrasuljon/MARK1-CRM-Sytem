@@ -368,6 +368,61 @@
               </div>
             </div>
 
+            <!-- YANGI: Qarzga sotish tugmasi (mavjud Naqd/Karta oqimiga tegilmadi, alohida qo'shildi) -->
+            <div class="row mt-2">
+              <div class="col-12 text-right">
+                <button class="btn btn-warning btn-sm" id="addSaleDebt" title="Qarzga yoki qisman to'lov bilan sotish">
+                  🧾 Qarzga sotish
+                </button>
+              </div>
+            </div>
+
+            <!-- YANGI: Qarzga sotish modali -->
+            <div class="modal-debtors" id="debtSaleModal">
+              <div class="modal-debtors-content">
+                <div class="modal-debtors-header">
+                  <h2>Qarzga sotish</h2>
+                  <button class="close-modal-debtors" onclick="closeDebtSaleModal()">&times;</button>
+                </div>
+                <form id="debtSaleForm" onsubmit="handleDebtSaleSubmit(event)">
+                  <div class="form-group">
+                    <label for="debtSaleClientSelect">Mijoz *</label>
+                    <select id="debtSaleClientSelect" class="form-control" required onchange="toggleDebtSaleNewClientFields()">
+                      <option value="">— Mijozni tanlang —</option>
+                      <option value="__new__">+ Yangi mijoz qo'shish</option>
+                    </select>
+                  </div>
+                  <div id="debtSaleNewClientFields" style="display:none;">
+                    <div class="form-group">
+                      <label for="debtSaleNewClientName">Yangi mijoz ismi *</label>
+                      <input type="text" id="debtSaleNewClientName" placeholder="Davron Kabulov">
+                    </div>
+                    <div class="form-group">
+                      <label for="debtSaleNewClientPhone">Telefon raqami</label>
+                      <input type="tel" id="debtSaleNewClientPhone" placeholder="901234567" maxlength="9">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="debtSalePaidAmount">Hozir to'langan summa (so'm)</label>
+                    <input type="number" id="debtSalePaidAmount" step="1" min="0" value="0" placeholder="0">
+                    <small class="text-muted">Qoldiq avtomatik qarz sifatida yoziladi. To'liq qarzga sotish uchun 0 qoldiring.</small>
+                  </div>
+                  <div class="form-group" id="debtSalePaymentTypeGroup" style="display:none;">
+                    <label>To'langan summaning turi</label><br>
+                    <label class="mr-3"><input type="radio" name="debtSalePaymentType" value="cash" checked> 💵 Naqd</label>
+                    <label><input type="radio" name="debtSalePaymentType" value="card"> 💳 Karta</label>
+                  </div>
+                  <div class="form-group">
+                    <label for="debtSaleDueDate">Qaytarish muddati</label>
+                    <input type="date" id="debtSaleDueDate">
+                  </div>
+                  <button type="submit" class="btn-submit">
+                    <i class="bi bi-check-circle"></i> Qarzga sotish
+                  </button>
+                </form>
+              </div>
+            </div>
+
             <hr class="my-4">
 
             <!-- Bugungi sotilgan mahsulotlar jadvali -->
@@ -688,6 +743,45 @@
             </form>
           </div>
         </div>
+
+        <!-- YANGI: Qarzdorni tahrirlash oynasi (avval HTML'i umuman yo'q edi,
+             shuning uchun "Tahrirlash" tugmasi hech qachon ishlamagan) -->
+        <div class="modal-debtors" id="editDebtorModal">
+          <div class="modal-debtors-content">
+            <div class="modal-debtors-header">
+              <h2>Qarzdorni tahrirlash</h2>
+              <button class="close-modal-debtors" onclick="closeEditDebtorModal()">&times;</button>
+            </div>
+            <form id="editDebtorForm" onsubmit="handleEditDebtorSubmit(event)">
+              <input type="hidden" id="editDebtorId">
+              <div class="form-group">
+                <label for="editDebtorName">Ism *</label>
+                <input type="text" id="editDebtorName" required>
+              </div>
+              <div class="form-group">
+                <label for="editDebtorPhone">Telefon raqami *</label>
+                <input type="tel" id="editDebtorPhone" required>
+              </div>
+              <div class="form-group">
+                <label>Qarz summasi</label>
+                <input type="number" id="editDebtAmount" readonly>
+                <small class="text-muted">Summani o'zgartirish uchun "To'lov qabul qilish" tugmasidan foydalaning.</small>
+              </div>
+              <div class="form-group">
+                <label>Qarz sanasi</label>
+                <input type="date" id="editDebtDate" readonly>
+              </div>
+              <div class="form-group">
+                <label>Qaytarish muddati</label>
+                <input type="date" id="editReturnDate" readonly>
+              </div>
+              <input type="hidden" id="editDebtNotes">
+              <button type="submit" class="btn-submit">
+                <i class="bi bi-check-circle"></i> Saqlash
+              </button>
+            </form>
+          </div>
+        </div>
       </section>
 
       <!-- SETTINGS -->
@@ -981,14 +1075,14 @@
                   <!-- COST PRICE (Kelgan narxi) -->
                   <div class="col-md-5 mb-3">
                     <label class="font-weight-bold">Kelgan narxi * <small class="text-muted">(UZS)</small></label>
-                    <input type="number" id="productCostPrice" class="form-control" required placeholder="50 000" min="0"
+                    <input type="number" id="productCostPrice" class="form-control" required placeholder="50000" min="0"
                       oninput="calculateProfitPreview()">
                   </div>
 
                   <!-- SALE PRICE (Sotish narxi) -->
                   <div class="col-md-5 mb-3">
                     <label class="font-weight-bold">Sotish narxi * <small class="text-muted">(UZS)</small></label>
-                    <input type="number" id="productPrice" class="form-control" required placeholder="75 000" min="0"
+                    <input type="number" id="productPrice" class="form-control" required placeholder="75000" min="0"
                       oninput="calculateProfitPreview()">
                   </div>
 
@@ -1084,8 +1178,8 @@
   <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> -->
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="auth.js"></script>
-  <script src="index.js?v=1783512488" defer></script>
-  <script src="script.js?v=1783512488" defer></script>
+  <script src="index.js?v=1788600000" defer></script>
+  <script src="script.js?v=1788600000" defer></script>
   <script defer>
     if (!sessionStorage.getItem("visited")) {
       sessionStorage.setItem("visited", "true");
