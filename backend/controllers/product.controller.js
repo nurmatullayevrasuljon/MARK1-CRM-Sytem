@@ -5,6 +5,56 @@ exports.createProduct = async (req, res) => {
   try {
     let { product_barcode } = req.body;
 
+    // BUG FIX: bir xil nomli mahsulot bir necha marta kiritilsa, har safar
+    // ALOHIDA hujjat yaratilar edi — chunki shtrix-kod tekshiruvi faqat
+    // foydalanuvchi o'zi shtrix-kod kiritganda ishlaydi, avtomatik
+    // generatsiya qilinganda esa har safar BOSHQACHA (vaqt+tasodifiy son)
+    // bo'lgani uchun hech qachon mos kelmasdi. Endi mahsulot qo'shishdan
+    // oldin xuddi shu nom (katta-kichik harfga qaramay) + xuddi shu
+    // kategoriya bo'yicha mavjud mahsulot borligini tekshiramiz — bo'lsa,
+    // yangi hujjat yaratmasdan, MAVJUDINING miqdorini oshiramiz (qayta
+    // kirim/restock), narxlarini esa yangi kiritilgan qiymatga yangilaymiz.
+    if (req.body.product_name && req.body.category_id) {
+      const duplicateProduct = await Product.findOne({
+        store_id: req.user.store_id,
+        category_id: req.body.category_id,
+        product_name: {
+          $regex: `^${req.body.product_name.trim()}$`,
+          $options: "i",
+        },
+      });
+
+      if (duplicateProduct) {
+        const addedQuantity = Number(req.body.quantity) || 0;
+
+        duplicateProduct.quantity =
+          (Number(duplicateProduct.quantity) || 0) + addedQuantity;
+
+        if (req.body.purchase_price !== undefined) {
+          duplicateProduct.purchase_price = req.body.purchase_price;
+        }
+        if (req.body.selling_price !== undefined) {
+          duplicateProduct.selling_price = req.body.selling_price;
+        }
+        if (req.body.minimum_quantity !== undefined) {
+          duplicateProduct.minimum_quantity = req.body.minimum_quantity;
+        }
+        if (req.body.unit !== undefined) {
+          duplicateProduct.unit = req.body.unit;
+        }
+        if (req.body.images && req.body.images.length) {
+          duplicateProduct.images = req.body.images;
+        }
+
+        await duplicateProduct.save();
+
+        return res.status(200).json({
+          message: `"${duplicateProduct.product_name}" mahsuloti allaqachon mavjud edi — miqdori ${addedQuantity} ga oshirildi`,
+          product: duplicateProduct,
+        });
+      }
+    }
+
     // Shtrix-kod frontend tomonidan yuborilmasa, avtomatik generatsiya qilamiz
     if (!product_barcode) {
       product_barcode = `AUTO-${Date.now()}-${Math.floor(

@@ -4237,20 +4237,23 @@ function openSmsModal(id) {
   if (!debtor) return;
 
   currentSmsDebtorId = id;
-  const daysLeft = -getDaysOverdue(debtor.returnDate);
+  // BUG FIX: due_date bo'lmasa (ixtiyoriy maydon), getDaysOverdue(null)
+  // 1970-yilga nisbatan hisoblab, mantiqsiz katta son qaytarardi.
+  const hasReturnDate = !!debtor.returnDate;
+  const daysLeft = hasReturnDate ? -getDaysOverdue(debtor.returnDate) : null;
 
   let smsMessage = `Hurmatli ${debtor.name}!\n\n`;
 
   if (daysLeft === 1) {
     smsMessage += `⚠️ ESLATMA: Ertaga to'lov muddati!\n\n`;
-  } else if (daysLeft < 0) {
+  } else if (daysLeft !== null && daysLeft < 0) {
     smsMessage += `🚨 MUHIM: To'lov muddati ${Math.abs(daysLeft)} kun oldin o'tgan!\n\n`;
   } else if (daysLeft === 0) {
     smsMessage += `🔴 DIQQAT: Bugun to'lov muddati!\n\n`;
   }
 
   smsMessage += `Qarzingiz: ${debtor.amount.toLocaleString()} so'm\n`;
-  smsMessage += `To'lov sanasi: ${formatDate(debtor.returnDate)}\n\n`;
+  smsMessage += `To'lov sanasi: ${hasReturnDate ? formatDate(debtor.returnDate) : "belgilanmagan"}\n\n`;
   smsMessage += `Iltimos, imkon qadar tezroq to'lovni amalga oshiring.\n\n`;
   smsMessage += `Hurmat bilan,\nBoshqaruv jamoasi`;
 
@@ -4600,11 +4603,20 @@ function renderDebtors() {
   }
 
   tbody.innerHTML = filtered.map(d => {
-    const status = getStatus(d.returnDate);
-    const daysLeft = -getDaysOverdue(d.returnDate);
-    const daysOverdue = getDaysOverdue(d.returnDate);
+    // BUG FIX: "Qaytarish muddati" ixtiyoriy maydon (Sotish sahifasidagi
+    // "Qarzga sotish"da bo'sh qoldirilishi mumkin). Muddat bo'lmasa,
+    // toLocalDate(null) -> new Date(null) -> 01.01.1970 (Unix epoch)
+    // qaytarardi, natijada "20700 kun kechikdi" kabi mantiqsiz matn
+    // chiqardi. Endi bunday holatda alohida, tushunarli holat ko'rsatiladi.
+    const hasReturnDate = !!d.returnDate;
+    const status = hasReturnDate
+      ? getStatus(d.returnDate)
+      : { class: 'normal', text: 'Muddatsiz', days: 0 };
+    const daysLeft = hasReturnDate ? -getDaysOverdue(d.returnDate) : 0;
+    const daysOverdue = hasReturnDate ? getDaysOverdue(d.returnDate) : 0;
 
-    let overdueText = daysOverdue > 0 ? `${daysOverdue} kun kechikdi` :
+    let overdueText = !hasReturnDate ? "Muddat belgilanmagan" :
+      daysOverdue > 0 ? `${daysOverdue} kun kechikdi` :
       daysOverdue === 0 ? 'Bugun' : `${Math.abs(daysOverdue)} kun qoldi`;
 
     const today = getToday();
@@ -4677,7 +4689,7 @@ function renderDebtors() {
         </td>
         <td data-label="Qaytarish sanasi">
           <div style="display:flex; flex-direction:column;font-size:0.9rem; gap:4px;">
-            <strong>${formatDate(d.returnDate)}</strong>
+            <strong>${hasReturnDate ? formatDate(d.returnDate) : "—"}</strong>
             <span class="status-badge ${status.class}">${overdueText}</span>
           </div>
         </td>
