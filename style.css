@@ -3261,13 +3261,18 @@ body {
     justify-content: center !important;
   }
 
+  /* BUG FIX: "width: 400px !important" 400px'dan tor har qanday ekranda
+     (masalan 360-375px'li telefonlar) kartani ekrandan toshib chiqarardi —
+     matn/rasm kesilib qolardi. Endi karta konteyner kengligiga moslashadi,
+     hech qanday ekranda toshib chiqmaydi. */
   #productTable tr {
-    width: 400px !important;
+    width: 100% !important;
+    max-width: 100%;
+    box-sizing: border-box;
     display: block;
     background: #fff;
-    margin-bottom: 14px;
+    margin: 0 0 14px 0;
     border-radius: 14px;
-    margin-left: 12px;
     padding: 14px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
     border: 1px solid #f1f5f9;
@@ -3275,12 +3280,24 @@ body {
 
   #productTable td {
     width: 100% !important;
+    max-width: 100%;
+    box-sizing: border-box;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     padding: 8px 0;
     font-size: 13px;
     border: none;
+  }
+
+  /* BUG FIX: uzun mahsulot nomi/kategoriya matni ham konteynerdan
+     chiqmasdan, kerak bo'lsa keyingi qatorga o'ralib tursin. */
+  #productTable td > *:not(img) {
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    text-align: right;
   }
 
   #productTable td::before {
