@@ -684,6 +684,42 @@
         return result;
       }
     },
+    // POST /sale/remind?sale_id=... — Qarzdorlikka qo'lda SMS eslatma
+    // yuborish. Backend xabar matnini O'ZI generatsiya qiladi (frontend
+    // hech qanday matn yubormaydi) va yuborilgan matnni javobda qaytaradi
+    // ({ message, client, sms_message }).
+    remindSaleDebt: async function (saleId) {
+      console.log("========== REMIND SALE (SMS) ==========");
+      console.log("SALE ID:", saleId);
+
+      try {
+        const res = await crmApi.post(
+          `/sale/remind?sale_id=${encodeURIComponent(saleId)}`
+        );
+
+        console.log("SUCCESS:", true);
+        console.log("STATUS:", res.status);
+        console.log("RESPONSE:", res.data);
+
+        return {
+          success: true,
+          status: res.status,
+          data: res.data
+        };
+      } catch (error) {
+        const result = describeError(error, "remindSaleDebt /sale/remind");
+
+        console.log("SUCCESS:", false);
+        console.log("STATUS:", result.status);
+
+        console.error(
+          "❌ REMIND SALE (SMS) — XATO:",
+          result.backendMessage || result.responseData
+        );
+
+        return result;
+      }
+    },
     getSales: async function (params = {}) {
       console.log("========== GET SALES ==========");
 

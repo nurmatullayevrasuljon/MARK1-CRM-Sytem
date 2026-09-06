@@ -4311,16 +4311,69 @@ async function sendSms(event) {
   const debtor = debtors.find(d => d.id === currentSmsDebtorId);
   if (!debtor) return;
 
-  // ⚠️ Yangi backend'da SMS yuborish uchun umuman route yo'q (SMS provayder
-  // integratsiyasi hali qo'shilmagan). Eski /api/v1/debtors/{id}/sms-reminder
-  // doim 404 qaytarardi va foydalanuvchi buni "SMS yuborildi" deb noto'g'ri
-  // tushunardi (chunki xato faqat konsolda ko'rinardi). Endi buning o'rniga
-  // ochiq-oydin xabar beramiz — soxta so'rov yubormaymiz.
-  alert(
-    "SMS yuborish funksiyasi hali backend'da ulanmagan (SMS provayder integratsiyasi yo'q). " +
-    "Bu funksiya ishlashi uchun backend tomonda alohida SMS route qo'shilishi kerak."
-  );
-  closeSmsModal();
+  // ✅ Backend'da endi POST /sale/remind?sale_id=... mavjud. Bu endpoint
+  // xabar matnini O'ZI generatsiya qiladi — biz faqat sale_id yuboramiz.
+  // debtor.saleId — mapApiDebtor() orqali sotuv hujjatining _id'siga teng
+  // qilib o'rnatilgan (addPayment/cancelSale'da ham xuddi shu ishlatiladi).
+  const saleId = debtor.saleId || debtor.id;
+
+  const submitBtn = document.querySelector('#smsForm button[type="submit"]');
+  const originalBtnHtml = submitBtn ? submitBtn.innerHTML : "";
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = "Yuborilmoqda...";
+  }
+
+  try {
+    const result = await AuthSystem.remindSaleDebt(saleId);
+
+    if (result && result.success) {
+      // Backend haqiqatda nima yuborganini ko'rsatamiz (namuna matn emas).
+      const realMessage = result.data?.sms_message;
+      if (realMessage) {
+        const previewEl = document.getElementById('smsPreview');
+        const textareaEl = document.getElementById('smsMessage');
+        if (previewEl) previewEl.textContent = realMessage;
+        if (textareaEl) textareaEl.value = realMessage;
+      }
+
+      const clientName = result.data?.client?.client_name || debtor.name;
+      showSuccessMessage(`📱 ${clientName}ga SMS muvaffaqiyatli yuborildi!`);
+
+      // Tarixga yozib qo'yamiz (mavjud smsHistory mexanizmi orqali) —
+      // faqat ko'rsatish/hisobot uchun, backend allaqachon jo'natgan.
+      smsHistory.push({
+        id: Date.now(),
+        debtorId: debtor.id,
+        debtorName: clientName,
+        phone: result.data?.client?.client_phone || debtor.phone,
+        message: realMessage || "",
+        date: getCurrentLocalDateTime(),
+        type: 'manual_reminder',
+        status: 'sent'
+      });
+      saveSmsHistory();
+      if (typeof renderSmsHistory === "function") {
+        renderSmsHistory();
+      }
+
+      closeSmsModal();
+    } else {
+      alert(
+        (result && result.message) ||
+        "SMS yuborishda xatolik yuz berdi. Qaytadan urinib ko'ring."
+      );
+    }
+  } catch (err) {
+    console.error(err);
+    alert("SMS yuborishda xatolik yuz berdi. Internet aloqasini tekshiring.");
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnHtml;
+    }
+  }
 }
 
 function sendAutoSms(debtor) {
