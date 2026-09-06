@@ -4189,7 +4189,14 @@ async function updateDebtor(id, data) {
 
     const clientResult = await AuthSystem.updateClient(debtor.clientId, {
       client_name: data.name,
-      client_phone: data.phone.replace(/^\+998/, "")
+      // BUG FIX: avval bu yerda "+998" prefiksi kesib tashlanardi
+      // (masalan "+998965655656" -> "965655656"), backend esa buni
+      // to'liq raqam sifatida saqlab qo'yardi. Natijada keyinchalik SMS
+      // yuborilganda provider "965655656" kabi noto'g'ri (mamlakat kodi
+      // yo'q) raqamni qabul qilmay, "SMS yuborishda xatolik" bilan
+      // qaytarardi. createClient() funksiyasida ham telefon +998 bilan
+      // TO'LIQ holda yuboriladi (2634-qator) — shu bilan izchil qildik.
+      client_phone: data.phone
     });
 
     if (!clientResult || !clientResult.success) {
