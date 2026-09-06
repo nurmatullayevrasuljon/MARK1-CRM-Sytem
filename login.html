@@ -8,6 +8,146 @@
     <link rel="shortcut icon" href="img/b-logo2.png" type="image/x-icon">
     <link rel="stylesheet" href="main.css">
     <link rel="stylesheet" href="vendor/css/bootstrap.css">
+    <style>
+        /* ============================================================
+           PAROLNI TIKLASH OYNASI (forgot password) — faqat shu sahifaga
+           tegishli, boshqa hech qanday umumiy klassni o'zgartirmaydi.
+           ============================================================ */
+        .fp-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .fp-overlay.show {
+            display: flex;
+        }
+
+        .fp-box {
+            background: #fff;
+            border-radius: 20px;
+            padding: 28px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+            position: relative;
+        }
+
+        .fp-close {
+            position: absolute;
+            top: 14px;
+            right: 18px;
+            border: none;
+            background: none;
+            font-size: 22px;
+            line-height: 1;
+            color: #6b7280;
+            cursor: pointer;
+        }
+
+        .fp-title {
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .fp-subtitle {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .fp-error {
+            color: #dc2626;
+            font-size: 13px;
+            margin: -8px 0 14px;
+            display: none;
+        }
+
+        .fp-error.show {
+            display: block;
+        }
+
+        .fp-success-icon {
+            font-size: 42px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .fp-resend {
+            display: block;
+            text-align: center;
+            margin-top: 14px;
+            font-size: 13px;
+        }
+
+        .fp-back {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .fp-step {
+            display: none;
+        }
+
+        .fp-step.active {
+            display: block;
+        }
+
+        /* ============================================================
+           PAROL KO'RSATISH/YASHIRISH TUGMASI (show/hide password)
+           Faqat shu sahifaga tegishli, umumiy klasslarga tegmaydi.
+           ============================================================ */
+        .pw-field-wrap {
+            position: relative;
+        }
+
+        .pw-field-wrap input {
+            padding-right: 44px !important;
+        }
+
+        .pw-toggle-btn {
+            position: absolute;
+            top: 50%;
+            right: 6px;
+            transform: translateY(-50%);
+            border: none;
+            background: none;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            color: #6b7280;
+        }
+
+        .pw-toggle-btn:focus {
+            outline: none;
+        }
+
+        /* Kichik ekranlarda (telefon) qutini va bo'shliqlarni siqib qo'yamiz,
+           loyihadagi mavjud 575px breakpoint bilan bir xil naqsh. */
+        @media (max-width: 575px) {
+            .fp-box {
+                padding: 20px;
+                border-radius: 16px;
+            }
+        }
+
+        /* Edge brauzerining o'zining "parolni ko'rsatish" ko'z belgisini
+           yashiramiz — aks holda bizning 👁 tugmamiz bilan ustma-ust tushib
+           ikkita belgi ko'rinib qolardi. */
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none;
+        }
+    </style>
 </head>
 
 <body>
@@ -59,8 +199,11 @@
 
                     <div class="form-group">
                         <label for="password">Parol</label>
-                        <input id="password" type="password" class="form-control rounded-pill"
-                            placeholder="Parolingizni kiriting" required minlength="6">
+                        <div class="pw-field-wrap">
+                            <input id="password" type="password" class="form-control rounded-pill"
+                                placeholder="Parolingizni kiriting" required minlength="6">
+                            <button type="button" class="pw-toggle-btn" data-pw-toggle="password" aria-label="Parolni ko'rsatish">👁</button>
+                        </div>
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -68,7 +211,7 @@
                             <input type="checkbox" id="remember">
                             <label for="remember" class="small mb-0">Meni eslaysizmi</label>
                         </div>
-                        <a href="#" class="small">Parolni unutdingizmi?</a>
+                        <a href="#" id="forgotPasswordLink" class="small">Parolni unutdingizmi?</a>
                     </div>
 
                     <button id="loginBtn" type="submit" class="btn btn-login w-100" disabled>
@@ -80,6 +223,75 @@
                         <a href="signup.html" class="auth-link font-weight-bold">Bu yerda ro'yxatdan o'ting</a>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         PAROLNI TIKLASH OYNASI (forgot password) — 3 bosqich:
+         1) telefon kiritish -> kod so'rash
+         2) kod + yangi parol kiritish -> tasdiqlash
+         3) muvaffaqiyat xabari
+         ============================================================ -->
+    <div class="fp-overlay" id="fpOverlay">
+        <div class="fp-box">
+            <button type="button" class="fp-close" id="fpCloseBtn" aria-label="Yopish">&times;</button>
+
+            <!-- STEP 1: telefon -->
+            <div class="fp-step active" id="fpStep1">
+                <h5 class="fp-title">Parolni tiklash</h5>
+                <p class="fp-subtitle">Ro'yxatdan o'tgan telefon raqamingizni kiriting, sizga tasdiqlash kodi yuboriladi.</p>
+
+                <div class="fp-error" id="fpStep1Error"></div>
+
+                <div class="form-group">
+                    <label for="fpPhoneInput">Telefon raqam</label>
+                    <input id="fpPhoneInput" type="tel" class="form-control rounded-pill" placeholder="+998901234567">
+                </div>
+
+                <button type="button" id="fpSendCodeBtn" class="btn btn-login w-100 mt-2">Kod yuborish</button>
+            </div>
+
+            <!-- STEP 2: kod + yangi parol -->
+            <div class="fp-step" id="fpStep2">
+                <h5 class="fp-title">Tasdiqlash kodi</h5>
+                <p class="fp-subtitle" id="fpStep2Subtitle">Telefoningizga yuborilgan kodni va yangi parolni kiriting.</p>
+
+                <div class="fp-error" id="fpStep2Error"></div>
+
+                <div class="form-group">
+                    <label for="fpOtpInput">Tasdiqlash kodi</label>
+                    <input id="fpOtpInput" type="text" inputmode="numeric" class="form-control rounded-pill" placeholder="Kodni kiriting">
+                </div>
+
+                <div class="form-group">
+                    <label for="fpNewPassword">Yangi parol</label>
+                    <div class="pw-field-wrap">
+                        <input id="fpNewPassword" type="password" class="form-control rounded-pill" placeholder="Kamida 6 ta belgi" minlength="6">
+                        <button type="button" class="pw-toggle-btn" data-pw-toggle="fpNewPassword" aria-label="Parolni ko'rsatish">👁</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="fpNewPasswordConfirm">Yangi parolni takrorlang</label>
+                    <div class="pw-field-wrap">
+                        <input id="fpNewPasswordConfirm" type="password" class="form-control rounded-pill" placeholder="Parolni qayta kiriting" minlength="6">
+                        <button type="button" class="pw-toggle-btn" data-pw-toggle="fpNewPasswordConfirm" aria-label="Parolni ko'rsatish">👁</button>
+                    </div>
+                </div>
+
+                <button type="button" id="fpResetBtn" class="btn btn-login w-100 mt-2">Parolni tiklash</button>
+
+                <a href="#" id="fpResendLink" class="fp-resend">Kodni qayta yuborish</a>
+                <a href="#" id="fpBackLink" class="fp-back">&larr; Telefon raqamini o'zgartirish</a>
+            </div>
+
+            <!-- STEP 3: muvaffaqiyat -->
+            <div class="fp-step" id="fpStep3">
+                <div class="fp-success-icon">✅</div>
+                <h5 class="fp-title text-center">Parol muvaffaqiyatli yangilandi</h5>
+                <p class="fp-subtitle text-center">Endi yangi parolingiz bilan tizimga kirishingiz mumkin.</p>
+                <button type="button" id="fpDoneBtn" class="btn btn-login w-100 mt-2">Tizimga kirish</button>
             </div>
         </div>
     </div>

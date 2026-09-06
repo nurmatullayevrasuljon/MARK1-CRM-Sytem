@@ -530,6 +530,249 @@
     checkForm();
   }
 
+  // ==========================================================
+  // PAROLNI TIKLASH OYNASI (forgot password)
+  // Faqat login.html sahifasida ishlaydi. Kerakli elementlar topilmasa
+  // (masalan boshqa sahifada), funksiya darhol to'xtaydi — hech qanday
+  // boshqa narsaga ta'sir qilmaydi.
+  // ==========================================================
+
+  function initForgotPasswordModal() {
+    var overlay = $("fpOverlay");
+    if (!overlay) return;
+
+    var openLink = $("forgotPasswordLink");
+    var closeBtn = $("fpCloseBtn");
+
+    var step1 = $("fpStep1");
+    var step2 = $("fpStep2");
+    var step3 = $("fpStep3");
+
+    var phoneInput = $("fpPhoneInput");
+    var step1Error = $("fpStep1Error");
+    var sendCodeBtn = $("fpSendCodeBtn");
+
+    var step2Subtitle = $("fpStep2Subtitle");
+    var otpInput = $("fpOtpInput");
+    var newPasswordInput = $("fpNewPassword");
+    var newPasswordConfirmInput = $("fpNewPasswordConfirm");
+    var step2Error = $("fpStep2Error");
+    var resetBtn = $("fpResetBtn");
+    var resendLink = $("fpResendLink");
+    var backLink = $("fpBackLink");
+
+    var doneBtn = $("fpDoneBtn");
+
+    // Joriy oqim davomida ishlatiladigan telefon raqami
+    var currentPhone = "";
+
+    function showStep(step) {
+      [step1, step2, step3].forEach(function (el) {
+        if (el) el.classList.remove("active");
+      });
+      if (step) step.classList.add("active");
+    }
+
+    function showError(el, message) {
+      if (!el) return;
+      el.textContent = message;
+      el.classList.add("show");
+    }
+
+    function hideError(el) {
+      if (!el) return;
+      el.textContent = "";
+      el.classList.remove("show");
+    }
+
+    function resetModalState() {
+      currentPhone = "";
+      if (phoneInput) phoneInput.value = "+998";
+      if (otpInput) otpInput.value = "";
+      if (newPasswordInput) newPasswordInput.value = "";
+      if (newPasswordConfirmInput) newPasswordConfirmInput.value = "";
+      hideError(step1Error);
+      hideError(step2Error);
+      showStep(step1);
+    }
+
+    function openModal() {
+      resetModalState();
+      overlay.classList.add("show");
+    }
+
+    function closeModal() {
+      overlay.classList.remove("show");
+    }
+
+    if (openLink) {
+      openLink.addEventListener("click", function (e) {
+        e.preventDefault();
+        openModal();
+      });
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", closeModal);
+    }
+
+    // Overlay foniga bosilsa ham yopiladi (ichidagi qutichaga bosilsa yopilmaydi)
+    overlay.addEventListener("click", function (e) {
+      if (e.target === overlay) closeModal();
+    });
+
+    if (phoneInput) {
+      phoneInput.addEventListener("input", function () {
+        phoneInput.value = normalizeUzPhoneInput(phoneInput.value);
+      });
+    }
+
+    // -----------------------------------------------------------
+    // 1-BOSQICH: kod so'rash
+    // -----------------------------------------------------------
+    async function requestCode() {
+      hideError(step1Error);
+
+      var phone = phoneInput ? phoneInput.value.trim() : "";
+
+      if (!isValidPhone(phone)) {
+        showError(step1Error, "Telefon raqamni to'g'ri kiriting (+998901234567).");
+        return;
+      }
+
+      var Auth = getAuth();
+      if (!Auth || typeof Auth.forgotPassword !== "function") {
+        showError(step1Error, "Tizim xatoligi: AuthSystem topilmadi.");
+        return;
+      }
+
+      var originalText = sendCodeBtn.textContent;
+      sendCodeBtn.disabled = true;
+      sendCodeBtn.textContent = "Yuborilmoqda...";
+
+      try {
+        var result = await Auth.forgotPassword(phone);
+
+        if (result && result.success) {
+          currentPhone = phone;
+          if (step2Subtitle) {
+            step2Subtitle.textContent = phone + " raqamiga yuborilgan kodni va yangi parolni kiriting.";
+          }
+          showStep(step2);
+        } else {
+          showError(
+            step1Error,
+            (result && result.message) || "Kod yuborishda xatolik yuz berdi. Qaytadan urinib ko'ring."
+          );
+        }
+      } catch (err) {
+        console.error(err);
+        showError(step1Error, "Kod yuborishda xatolik yuz berdi. Internet aloqasini tekshiring.");
+      } finally {
+        sendCodeBtn.disabled = false;
+        sendCodeBtn.textContent = originalText;
+      }
+    }
+
+    if (sendCodeBtn) {
+      sendCodeBtn.addEventListener("click", requestCode);
+    }
+
+    // -----------------------------------------------------------
+    // 2-BOSQICH: kod + yangi parol bilan tasdiqlash
+    // -----------------------------------------------------------
+    async function confirmReset() {
+      hideError(step2Error);
+
+      var code = otpInput ? otpInput.value.trim() : "";
+      var newPassword = newPasswordInput ? newPasswordInput.value : "";
+      var newPasswordConfirm = newPasswordConfirmInput ? newPasswordConfirmInput.value : "";
+
+      if (!code) {
+        showError(step2Error, "Tasdiqlash kodini kiriting.");
+        return;
+      }
+
+      if (!newPassword || newPassword.length < 6) {
+        showError(step2Error, "Yangi parol kamida 6 ta belgidan iborat bo'lishi kerak.");
+        return;
+      }
+
+      if (newPassword !== newPasswordConfirm) {
+        showError(step2Error, "Parollar bir-biriga mos kelmadi.");
+        return;
+      }
+
+      var Auth = getAuth();
+      if (!Auth || typeof Auth.resetPassword !== "function") {
+        showError(step2Error, "Tizim xatoligi: AuthSystem topilmadi.");
+        return;
+      }
+
+      var originalText = resetBtn.textContent;
+      resetBtn.disabled = true;
+      resetBtn.textContent = "Yuborilmoqda...";
+
+      try {
+        var result = await Auth.resetPassword({
+          phone: currentPhone,
+          code: code,
+          newPassword: newPassword
+        });
+
+        if (result && result.success) {
+          showStep(step3);
+
+          // Login formasiga telefon raqamini avtomatik to'ldirib qo'yamiz —
+          // foydalanuvchi qayta yozmasin.
+          var loginInput = $("loginInput");
+          var phoneTabEl = $("phoneTab");
+          if (loginInput && phoneTabEl) {
+            phoneTabEl.click();
+            loginInput.value = currentPhone;
+          }
+        } else {
+          showError(
+            step2Error,
+            (result && result.message) || "Kod noto'g'ri yoki muddati o'tgan. Qaytadan urinib ko'ring."
+          );
+        }
+      } catch (err) {
+        console.error(err);
+        showError(step2Error, "Xatolik yuz berdi. Internet aloqasini tekshiring.");
+      } finally {
+        resetBtn.disabled = false;
+        resetBtn.textContent = originalText;
+      }
+    }
+
+    if (resetBtn) {
+      resetBtn.addEventListener("click", confirmReset);
+    }
+
+    if (resendLink) {
+      resendLink.addEventListener("click", function (e) {
+        e.preventDefault();
+        if (currentPhone) {
+          phoneInput.value = currentPhone;
+        }
+        requestCode();
+      });
+    }
+
+    if (backLink) {
+      backLink.addEventListener("click", function (e) {
+        e.preventDefault();
+        hideError(step2Error);
+        showStep(step1);
+      });
+    }
+
+    if (doneBtn) {
+      doneBtn.addEventListener("click", closeModal);
+    }
+  }
+
   // NOTE: initSecurityTab() bu yerdan olib tashlandi.
   // script.js IIFE ichida to'liqroq versiyasi mavjud (DOMContentLoaded ga ulangan).
   // Ikkita versiya bir vaqtda changePasswordBtn ga ikkita listener qo'shar edi.
@@ -730,6 +973,7 @@
 
     if (Page.isLogin()) {
       initLoginPage();
+      initForgotPasswordModal();
       return;
     }
 
@@ -742,11 +986,39 @@
   }
 
   // ==========================================================
+  // PAROLNI KO'RSATISH / YASHIRISH (show/hide password)
+  // Sahifadagi barcha [data-pw-toggle] tugmalari uchun umumiy ishlaydi.
+  // Hech qanday tugma topilmasa, hech narsa qilmaydi.
+  // ==========================================================
+
+  function initPasswordToggles() {
+    var toggles = $qa("[data-pw-toggle]");
+    if (!toggles || !toggles.length) return;
+
+    toggles.forEach(function (btn) {
+      var targetId = btn.getAttribute("data-pw-toggle");
+      var input = targetId ? $(targetId) : null;
+      if (!input) return;
+
+      btn.addEventListener("click", function () {
+        var isHidden = input.type === "password";
+        input.type = isHidden ? "text" : "password";
+        btn.textContent = isHidden ? "🙈" : "👁";
+        btn.setAttribute(
+          "aria-label",
+          isHidden ? "Parolni yashirish" : "Parolni ko'rsatish"
+        );
+      });
+    });
+  }
+
+  // ==========================================================
   // BOOT
   // ==========================================================
 
   document.addEventListener("DOMContentLoaded", function () {
     Transition.init();
+    initPasswordToggles();
     route();
   });
 
