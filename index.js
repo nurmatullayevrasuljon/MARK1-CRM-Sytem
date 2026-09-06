@@ -594,6 +594,21 @@
       hideError(step1Error);
       hideError(step2Error);
       showStep(step1);
+
+      // Oyna qayta ochilganda, oldingi "qayta yuborish" hisoblagichi
+      // (agar ishlab turgan bo'lsa) to'xtatiladi va tugma asl holatiga
+      // qaytariladi — aks holda eski taymer fonda ishlab, keyingi safar
+      // tugmani chalkash holatga keltirib qo'yishi mumkin edi.
+      if (resendCooldownTimer) {
+        clearInterval(resendCooldownTimer);
+        resendCooldownTimer = null;
+      }
+      if (resendLink) {
+        resendLink.classList.remove("disabled");
+        resendLink.style.pointerEvents = "";
+        resendLink.style.opacity = "";
+        resendLink.textContent = "Kodni qayta yuborish";
+      }
     }
 
     function openModal() {
@@ -646,9 +661,21 @@
         return;
       }
 
-      var originalText = sendCodeBtn.textContent;
+      // MUHIM: bu funksiya HAM "Kod yuborish" (1-bosqich) tugmasidan,
+      // HAM "Kodni qayta yuborish" havolasidan chaqiriladi. Ikkalasini
+      // ham darhol band qilib qo'yamiz — aks holda foydalanuvchi ikkala
+      // tugmani ketma-ket bir necha marta bossa, bir nechta SMS pullik
+      // xabar ketib qolishi mumkin edi.
+      var originalBtnText = sendCodeBtn.textContent;
       sendCodeBtn.disabled = true;
       sendCodeBtn.textContent = "Yuborilmoqda...";
+
+      var resendWasEnabled = resendLink && !resendLink.classList.contains("disabled");
+      if (resendLink) {
+        resendLink.classList.add("disabled");
+        resendLink.style.pointerEvents = "none";
+        resendLink.style.opacity = "0.5";
+      }
 
       try {
         var result = await Auth.forgotPassword(phone);
@@ -659,19 +686,70 @@
             step2Subtitle.textContent = phone + " raqamiga yuborilgan kodni va yangi parolni kiriting.";
           }
           showStep(step2);
+          startResendCooldown(30);
         } else {
           showError(
             step1Error,
             (result && result.message) || "Kod yuborishda xatolik yuz berdi. Qaytadan urinib ko'ring."
           );
+          // Xatolik bo'lsa, darhol qayta urinishga ruxsat beramiz.
+          if (resendLink && resendWasEnabled) {
+            resendLink.classList.remove("disabled");
+            resendLink.style.pointerEvents = "";
+            resendLink.style.opacity = "";
+          }
         }
       } catch (err) {
         console.error(err);
         showError(step1Error, "Kod yuborishda xatolik yuz berdi. Internet aloqasini tekshiring.");
+        if (resendLink && resendWasEnabled) {
+          resendLink.classList.remove("disabled");
+          resendLink.style.pointerEvents = "";
+          resendLink.style.opacity = "";
+        }
       } finally {
         sendCodeBtn.disabled = false;
-        sendCodeBtn.textContent = originalText;
+        sendCodeBtn.textContent = originalBtnText;
       }
+    }
+
+    // -----------------------------------------------------------
+    // "Qayta yuborish" havolasini vaqtincha bloklab, orqaga sanoq
+    // ko'rsatadi (masalan 30, 29, 28... soniya). Bu — foydalanuvchi
+    // bir nechta pullik SMS'ni tasodifan ketma-ket yubormasligi uchun.
+    // -----------------------------------------------------------
+    var resendCooldownTimer = null;
+
+    function startResendCooldown(seconds) {
+      if (!resendLink) return;
+
+      if (resendCooldownTimer) {
+        clearInterval(resendCooldownTimer);
+        resendCooldownTimer = null;
+      }
+
+      var remaining = seconds;
+      var originalLabel = "Kodni qayta yuborish";
+
+      resendLink.classList.add("disabled");
+      resendLink.style.pointerEvents = "none";
+      resendLink.style.opacity = "0.5";
+      resendLink.textContent = originalLabel + " (" + remaining + "s)";
+
+      resendCooldownTimer = setInterval(function () {
+        remaining -= 1;
+
+        if (remaining <= 0) {
+          clearInterval(resendCooldownTimer);
+          resendCooldownTimer = null;
+          resendLink.classList.remove("disabled");
+          resendLink.style.pointerEvents = "";
+          resendLink.style.opacity = "";
+          resendLink.textContent = originalLabel;
+        } else {
+          resendLink.textContent = originalLabel + " (" + remaining + "s)";
+        }
+      }, 1000);
     }
 
     if (sendCodeBtn) {
