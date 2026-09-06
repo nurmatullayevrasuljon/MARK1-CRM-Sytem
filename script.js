@@ -2343,11 +2343,16 @@ async function apiLoadSales() {
     }
 
     // CHARTNI ENG OXIRIDA YANGILAYMIZ
+    // TEZLASHTIRISH: rawSales shu funksiyada yuqorida allaqachon
+    // /sale/get orqali olingan — uni qayta ishlatamiz, shu bilan
+    // updateCharts() ichidagi getDailyRevenue/getWeeklyTrend endi
+    // /sale/get'ga QAYTADAN so'rov yubormaydi (avval har bir sotuvdan
+    // keyin bir xil ma'lumot uchun 3 marta so'rov ketardi).
     if (
       typeof updateCharts ===
       "function"
     ) {
-      await updateCharts();
+      await updateCharts(rawSales);
     }
 
     console.log(
@@ -3321,7 +3326,7 @@ document.querySelectorAll(".counter").forEach(counter => {
 /* ===============================================
    ✅ CHARTS (REAL DATA + AUTO UPDATE)
 =============================================== */
-async function updateCharts() {
+async function updateCharts(cachedRawSales) {
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("📊 UPDATING DASHBOARD CHARTS");
@@ -3338,11 +3343,42 @@ async function updateCharts() {
     }
 
     // ===============================================
+    // TEZLASHTIRISH: agar chaqiruvchi sotuvlarni oldindan bermagan bo'lsa
+    // (masalan sahifa birinchi ochilganda), ularni shu yerda BIR MARTA
+    // o'zimiz olamiz va ikkalasiga (kunlik + haftalik) beramiz. Aks holda
+    // getDailyRevenue va getWeeklyTrend har biri ALOHIDA /sale/get
+    // so'rovi yuborib, bir xil ma'lumot uchun 2 marta kutish kerak bo'lardi.
+    // ===============================================
+
+    let sourceRawSales = cachedRawSales;
+
+    if (
+      !Array.isArray(sourceRawSales) &&
+      !OFFLINE_DATA_MODE
+    ) {
+
+      const result = await AuthSystem.getSales({
+        status: "active",
+        sort_order: "descending"
+      });
+
+      if (result && result.success) {
+
+        sourceRawSales =
+          Array.isArray(result.data?.sales)
+            ? result.data.sales
+            : (Array.isArray(result.data) ? result.data : []);
+
+      }
+
+    }
+
+    // ===============================================
     // DAILY
     // ===============================================
 
     const dailyData =
-      await getDailyRevenue();
+      await getDailyRevenue(sourceRawSales);
 
     const dailySales =
       Number(
@@ -3354,7 +3390,7 @@ async function updateCharts() {
     // ===============================================
 
     const trendData =
-      await getWeeklyTrend();
+      await getWeeklyTrend(sourceRawSales);
 
     const safeTrend =
       Array.isArray(trendData)
@@ -7484,7 +7520,7 @@ window.getDashboardStatistics = getDashboardStatistics;
 //   }
 // }
 
-async function getWeeklyTrend() {
+async function getWeeklyTrend(cachedRawSales) {
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("📈 WEEKLY TREND");
@@ -7497,7 +7533,14 @@ async function getWeeklyTrend() {
     // ONLINE
     // ===============================================
 
-    if (!OFFLINE_DATA_MODE) {
+    // TEZLASHTIRISH: agar chaqiruvchi (masalan apiLoadSales) sotuvlar
+    // ro'yxatini ALLAQACHON /sale/get orqali olgan bo'lsa, o'shani qayta
+    // ishlatamiz — getDailyRevenue()dagi kabi bir xil sabab bilan (bitta
+    // amaldan keyin /sale/get bir necha marta takrorlanmasin). Parametr
+    // berilmasa, eski xatti-harakat (o'zi so'rov yuboradi) saqlanadi.
+    const hasCachedSales = Array.isArray(cachedRawSales);
+
+    if (!OFFLINE_DATA_MODE && !hasCachedSales) {
 
       result = await AuthSystem.getSales({
         status: "active",
@@ -7535,6 +7578,10 @@ async function getWeeklyTrend() {
       sourceSales = Array.isArray(sales)
         ? sales
         : [];
+
+    } else if (hasCachedSales) {
+
+      sourceSales = cachedRawSales;
 
     } else {
 
@@ -7695,7 +7742,7 @@ async function getWeeklyTrend() {
   }
 }
 
-async function getDailyRevenue() {
+async function getDailyRevenue(cachedRawSales) {
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("📊 DAILY REVENUE");
@@ -7708,43 +7755,59 @@ async function getDailyRevenue() {
 
     if (!OFFLINE_DATA_MODE) {
 
-      const result =
-        await AuthSystem.getSales({
-          status: "active",
-          sort_order: "descending"
-        });
+      // TEZLASHTIRISH: agar chaqiruvchi (masalan apiLoadSales) sotuvlar
+      // ro'yxatini ALLAQACHON /sale/get orqali olgan bo'lsa, o'shani qayta
+      // ishlatamiz. Aks holda har chaqiriqda bir xil ma'lumot uchun yana
+      // bir tarmoq so'rovi yuborilib, sahifani sekinlashtirardi (bitta
+      // sotuvdan keyin /sale/get 3 marta takrorlanardi). Parametr
+      // berilmasa, eski xatti-harakat (o'zi so'rov yuboradi) saqlanadi —
+      // shu funksiyani boshqa joydan alohida chaqirish ham buzilmaydi.
+      let rawSales;
 
-      console.log(
-        "📥 DAILY SALES API:",
-        result
-      );
+      if (Array.isArray(cachedRawSales)) {
 
-      if (
-        !result ||
-        !result.success
-      ) {
+        rawSales = cachedRawSales;
 
-        console.error(
-          "❌ DAILY SALES API ERROR:",
-          result?.backendMessage ||
-          result?.responseData
+      } else {
+
+        const result =
+          await AuthSystem.getSales({
+            status: "active",
+            sort_order: "descending"
+          });
+
+        console.log(
+          "📥 DAILY SALES API:",
+          result
         );
 
-        return {
-          daily_revenue: 0
-        };
+        if (
+          !result ||
+          !result.success
+        ) {
+
+          console.error(
+            "❌ DAILY SALES API ERROR:",
+            result?.backendMessage ||
+            result?.responseData
+          );
+
+          return {
+            daily_revenue: 0
+          };
+        }
+
+        // BUG FIX: /sale/get pagination formatiga mos — { sales: [...] }.
+        rawSales =
+          Array.isArray(result.data?.sales)
+            ? result.data.sales
+            : (Array.isArray(result.data) ? result.data : []);
       }
 
       const today =
         getToday();
 
       let dailyRevenue = 0;
-
-      // BUG FIX: /sale/get pagination formatiga mos — { sales: [...] }.
-      const rawSales =
-        Array.isArray(result.data?.sales)
-          ? result.data.sales
-          : (Array.isArray(result.data) ? result.data : []);
 
       rawSales.forEach(sale => {
 
