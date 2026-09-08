@@ -13,7 +13,7 @@ exports.signup = async (req, res) => {
     const { ceo_name, ceo_phone, store_name, password } = req.body;
     const existingStore = await Store.findOne({ ceo_phone });
 
-    if (existingStore && existingStore.otp === null) {
+    if (existingStore) {
       return res.status(400).json({
         message: "Ushbu telefon raqam bilan avval ro'yhatdan o'tilgan",
       });
