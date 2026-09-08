@@ -173,6 +173,7 @@
  *       - Store Auth
  *     summary: Login store
  *     operationId: storeSignin
+ *
  *     description: |
  *       Login to the store account.
  *
@@ -568,4 +569,44 @@
  *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               message: Internal server error
+ */
+
+/**
+ * @swagger
+ * /user/store/resend-otp:
+ *   post:
+ *     tags:
+ *       - Store Auth
+ *     summary: Resend OTP code
+ *     description: Resends a new OTP verification code to an existing, unverified store's phone number.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ResendOtp'
+ *     responses:
+ *       200:
+ *         description: OTP resent successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "OTP kod qayta yuborildi"
+ *                 verify_data:
+ *                   type: object
+ *                   properties:
+ *                     ceo_phone:
+ *                       type: string
+ *                       example: "901234567"
+ *                     otp_expires_at:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Store not found, or already verified, or SMS sending failed.
+ *       500:
+ *         description: Internal server error.
  */

@@ -5,15 +5,6 @@ exports.createProduct = async (req, res) => {
   try {
     let { product_barcode } = req.body;
 
-    // BUG FIX: bir xil nomli mahsulot bir necha marta kiritilsa, har safar
-    // ALOHIDA hujjat yaratilar edi — chunki shtrix-kod tekshiruvi faqat
-    // foydalanuvchi o'zi shtrix-kod kiritganda ishlaydi, avtomatik
-    // generatsiya qilinganda esa har safar BOSHQACHA (vaqt+tasodifiy son)
-    // bo'lgani uchun hech qachon mos kelmasdi. Endi mahsulot qo'shishdan
-    // oldin xuddi shu nom (katta-kichik harfga qaramay) + xuddi shu
-    // kategoriya bo'yicha mavjud mahsulot borligini tekshiramiz — bo'lsa,
-    // yangi hujjat yaratmasdan, MAVJUDINING miqdorini oshiramiz (qayta
-    // kirim/restock), narxlarini esa yangi kiritilgan qiymatga yangilaymiz.
     if (req.body.product_name && req.body.category_id) {
       const duplicateProduct = await Product.findOne({
         store_id: req.user.store_id,
@@ -55,7 +46,6 @@ exports.createProduct = async (req, res) => {
       }
     }
 
-    // Shtrix-kod frontend tomonidan yuborilmasa, avtomatik generatsiya qilamiz
     if (!product_barcode) {
       product_barcode = `AUTO-${Date.now()}-${Math.floor(
         Math.random() * 10000,
