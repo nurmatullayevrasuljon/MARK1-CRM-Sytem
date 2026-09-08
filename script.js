@@ -2343,11 +2343,16 @@ async function apiLoadSales() {
     }
 
     // CHARTNI ENG OXIRIDA YANGILAYMIZ
+    // TEZLASHTIRISH: rawSales shu funksiyada yuqorida allaqachon
+    // /sale/get orqali olingan — uni qayta ishlatamiz, shu bilan
+    // updateCharts() ichidagi getDailyRevenue/getWeeklyTrend endi
+    // /sale/get'ga QAYTADAN so'rov yubormaydi (avval har bir sotuvdan
+    // keyin bir xil ma'lumot uchun 3 marta so'rov ketardi).
     if (
       typeof updateCharts ===
       "function"
     ) {
-      await updateCharts();
+      await updateCharts(rawSales);
     }
 
     console.log(
@@ -3321,7 +3326,7 @@ document.querySelectorAll(".counter").forEach(counter => {
 /* ===============================================
    ✅ CHARTS (REAL DATA + AUTO UPDATE)
 =============================================== */
-async function updateCharts() {
+async function updateCharts(cachedRawSales) {
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("📊 UPDATING DASHBOARD CHARTS");
@@ -3338,11 +3343,42 @@ async function updateCharts() {
     }
 
     // ===============================================
+    // TEZLASHTIRISH: agar chaqiruvchi sotuvlarni oldindan bermagan bo'lsa
+    // (masalan sahifa birinchi ochilganda), ularni shu yerda BIR MARTA
+    // o'zimiz olamiz va ikkalasiga (kunlik + haftalik) beramiz. Aks holda
+    // getDailyRevenue va getWeeklyTrend har biri ALOHIDA /sale/get
+    // so'rovi yuborib, bir xil ma'lumot uchun 2 marta kutish kerak bo'lardi.
+    // ===============================================
+
+    let sourceRawSales = cachedRawSales;
+
+    if (
+      !Array.isArray(sourceRawSales) &&
+      !OFFLINE_DATA_MODE
+    ) {
+
+      const result = await AuthSystem.getSales({
+        status: "active",
+        sort_order: "descending"
+      });
+
+      if (result && result.success) {
+
+        sourceRawSales =
+          Array.isArray(result.data?.sales)
+            ? result.data.sales
+            : (Array.isArray(result.data) ? result.data : []);
+
+      }
+
+    }
+
+    // ===============================================
     // DAILY
     // ===============================================
 
     const dailyData =
-      await getDailyRevenue();
+      await getDailyRevenue(sourceRawSales);
 
     const dailySales =
       Number(
@@ -3354,7 +3390,7 @@ async function updateCharts() {
     // ===============================================
 
     const trendData =
-      await getWeeklyTrend();
+      await getWeeklyTrend(sourceRawSales);
 
     const safeTrend =
       Array.isArray(trendData)
@@ -4153,7 +4189,14 @@ async function updateDebtor(id, data) {
 
     const clientResult = await AuthSystem.updateClient(debtor.clientId, {
       client_name: data.name,
-      client_phone: data.phone.replace(/^\+998/, "")
+      // BUG FIX: avval bu yerda "+998" prefiksi kesib tashlanardi
+      // (masalan "+998965655656" -> "965655656"), backend esa buni
+      // to'liq raqam sifatida saqlab qo'yardi. Natijada keyinchalik SMS
+      // yuborilganda provider "965655656" kabi noto'g'ri (mamlakat kodi
+      // yo'q) raqamni qabul qilmay, "SMS yuborishda xatolik" bilan
+      // qaytarardi. createClient() funksiyasida ham telefon +998 bilan
+      // TO'LIQ holda yuboriladi (2634-qator) — shu bilan izchil qildik.
+      client_phone: data.phone
     });
 
     if (!clientResult || !clientResult.success) {
@@ -4275,16 +4318,69 @@ async function sendSms(event) {
   const debtor = debtors.find(d => d.id === currentSmsDebtorId);
   if (!debtor) return;
 
-  // ⚠️ Yangi backend'da SMS yuborish uchun umuman route yo'q (SMS provayder
-  // integratsiyasi hali qo'shilmagan). Eski /api/v1/debtors/{id}/sms-reminder
-  // doim 404 qaytarardi va foydalanuvchi buni "SMS yuborildi" deb noto'g'ri
-  // tushunardi (chunki xato faqat konsolda ko'rinardi). Endi buning o'rniga
-  // ochiq-oydin xabar beramiz — soxta so'rov yubormaymiz.
-  alert(
-    "SMS yuborish funksiyasi hali backend'da ulanmagan (SMS provayder integratsiyasi yo'q). " +
-    "Bu funksiya ishlashi uchun backend tomonda alohida SMS route qo'shilishi kerak."
-  );
-  closeSmsModal();
+  // ✅ Backend'da endi POST /sale/remind?sale_id=... mavjud. Bu endpoint
+  // xabar matnini O'ZI generatsiya qiladi — biz faqat sale_id yuboramiz.
+  // debtor.saleId — mapApiDebtor() orqali sotuv hujjatining _id'siga teng
+  // qilib o'rnatilgan (addPayment/cancelSale'da ham xuddi shu ishlatiladi).
+  const saleId = debtor.saleId || debtor.id;
+
+  const submitBtn = document.querySelector('#smsForm button[type="submit"]');
+  const originalBtnHtml = submitBtn ? submitBtn.innerHTML : "";
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = "Yuborilmoqda...";
+  }
+
+  try {
+    const result = await AuthSystem.remindSaleDebt(saleId);
+
+    if (result && result.success) {
+      // Backend haqiqatda nima yuborganini ko'rsatamiz (namuna matn emas).
+      const realMessage = result.data?.sms_message;
+      if (realMessage) {
+        const previewEl = document.getElementById('smsPreview');
+        const textareaEl = document.getElementById('smsMessage');
+        if (previewEl) previewEl.textContent = realMessage;
+        if (textareaEl) textareaEl.value = realMessage;
+      }
+
+      const clientName = result.data?.client?.client_name || debtor.name;
+      showSuccessMessage(`📱 ${clientName}ga SMS muvaffaqiyatli yuborildi!`);
+
+      // Tarixga yozib qo'yamiz (mavjud smsHistory mexanizmi orqali) —
+      // faqat ko'rsatish/hisobot uchun, backend allaqachon jo'natgan.
+      smsHistory.push({
+        id: Date.now(),
+        debtorId: debtor.id,
+        debtorName: clientName,
+        phone: result.data?.client?.client_phone || debtor.phone,
+        message: realMessage || "",
+        date: getCurrentLocalDateTime(),
+        type: 'manual_reminder',
+        status: 'sent'
+      });
+      saveSmsHistory();
+      if (typeof renderSmsHistory === "function") {
+        renderSmsHistory();
+      }
+
+      closeSmsModal();
+    } else {
+      alert(
+        (result && result.message) ||
+        "SMS yuborishda xatolik yuz berdi. Qaytadan urinib ko'ring."
+      );
+    }
+  } catch (err) {
+    console.error(err);
+    alert("SMS yuborishda xatolik yuz berdi. Internet aloqasini tekshiring.");
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnHtml;
+    }
+  }
 }
 
 function sendAutoSms(debtor) {
@@ -7484,7 +7580,7 @@ window.getDashboardStatistics = getDashboardStatistics;
 //   }
 // }
 
-async function getWeeklyTrend() {
+async function getWeeklyTrend(cachedRawSales) {
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("📈 WEEKLY TREND");
@@ -7497,7 +7593,14 @@ async function getWeeklyTrend() {
     // ONLINE
     // ===============================================
 
-    if (!OFFLINE_DATA_MODE) {
+    // TEZLASHTIRISH: agar chaqiruvchi (masalan apiLoadSales) sotuvlar
+    // ro'yxatini ALLAQACHON /sale/get orqali olgan bo'lsa, o'shani qayta
+    // ishlatamiz — getDailyRevenue()dagi kabi bir xil sabab bilan (bitta
+    // amaldan keyin /sale/get bir necha marta takrorlanmasin). Parametr
+    // berilmasa, eski xatti-harakat (o'zi so'rov yuboradi) saqlanadi.
+    const hasCachedSales = Array.isArray(cachedRawSales);
+
+    if (!OFFLINE_DATA_MODE && !hasCachedSales) {
 
       result = await AuthSystem.getSales({
         status: "active",
@@ -7535,6 +7638,10 @@ async function getWeeklyTrend() {
       sourceSales = Array.isArray(sales)
         ? sales
         : [];
+
+    } else if (hasCachedSales) {
+
+      sourceSales = cachedRawSales;
 
     } else {
 
@@ -7695,7 +7802,7 @@ async function getWeeklyTrend() {
   }
 }
 
-async function getDailyRevenue() {
+async function getDailyRevenue(cachedRawSales) {
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("📊 DAILY REVENUE");
@@ -7708,43 +7815,59 @@ async function getDailyRevenue() {
 
     if (!OFFLINE_DATA_MODE) {
 
-      const result =
-        await AuthSystem.getSales({
-          status: "active",
-          sort_order: "descending"
-        });
+      // TEZLASHTIRISH: agar chaqiruvchi (masalan apiLoadSales) sotuvlar
+      // ro'yxatini ALLAQACHON /sale/get orqali olgan bo'lsa, o'shani qayta
+      // ishlatamiz. Aks holda har chaqiriqda bir xil ma'lumot uchun yana
+      // bir tarmoq so'rovi yuborilib, sahifani sekinlashtirardi (bitta
+      // sotuvdan keyin /sale/get 3 marta takrorlanardi). Parametr
+      // berilmasa, eski xatti-harakat (o'zi so'rov yuboradi) saqlanadi —
+      // shu funksiyani boshqa joydan alohida chaqirish ham buzilmaydi.
+      let rawSales;
 
-      console.log(
-        "📥 DAILY SALES API:",
-        result
-      );
+      if (Array.isArray(cachedRawSales)) {
 
-      if (
-        !result ||
-        !result.success
-      ) {
+        rawSales = cachedRawSales;
 
-        console.error(
-          "❌ DAILY SALES API ERROR:",
-          result?.backendMessage ||
-          result?.responseData
+      } else {
+
+        const result =
+          await AuthSystem.getSales({
+            status: "active",
+            sort_order: "descending"
+          });
+
+        console.log(
+          "📥 DAILY SALES API:",
+          result
         );
 
-        return {
-          daily_revenue: 0
-        };
+        if (
+          !result ||
+          !result.success
+        ) {
+
+          console.error(
+            "❌ DAILY SALES API ERROR:",
+            result?.backendMessage ||
+            result?.responseData
+          );
+
+          return {
+            daily_revenue: 0
+          };
+        }
+
+        // BUG FIX: /sale/get pagination formatiga mos — { sales: [...] }.
+        rawSales =
+          Array.isArray(result.data?.sales)
+            ? result.data.sales
+            : (Array.isArray(result.data) ? result.data : []);
       }
 
       const today =
         getToday();
 
       let dailyRevenue = 0;
-
-      // BUG FIX: /sale/get pagination formatiga mos — { sales: [...] }.
-      const rawSales =
-        Array.isArray(result.data?.sales)
-          ? result.data.sales
-          : (Array.isArray(result.data) ? result.data : []);
 
       rawSales.forEach(sale => {
 
