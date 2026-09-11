@@ -279,8 +279,25 @@
             width: 100%;
         }
 
+        .mk-logo {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
         .mk-logo img {
-            height: 32px;
+            /* BUG FIX: asl logo fayli katta oq bo'shliqli kvadrat tuvalda
+               edi (1280x1280), shu sababli 32px balandlikda matn deyarli
+               ko'rinmay qolardi. Endi bo'sh joylari kesilgan yangi fayl
+               (mark1-logo-navbar.png) ishlatilyapti va balandligi
+               navbar (72px) ichiga to'liq va aniq sig'adigan qilib
+               oshirildi. Faqat "height" berilgani uchun brauzer eni
+               (width) ni avtomatik, asl nisbatni buzmasdan hisoblaydi —
+               shuning uchun alohida responsive/media-query sozlash
+               kerak emas, barcha ekran o'lchamlarida to'g'ri ko'rinadi.
+            */
+            height: 42px;
+            width: auto;
             display: block;
         }
 
@@ -1393,7 +1410,7 @@
     <nav id="navbar">
         <div class="mk-wrap">
             <a href="#" class="mk-logo">
-                <img src="img/b logo.jpg" alt="MARK1">
+                <img src="img/mark1-logo-navbar.png" alt="MARK1">
             </a>
 
             <ul class="nav-links mk-nav-links">
