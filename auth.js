@@ -126,16 +126,6 @@
     withCredentials: true // refresh token cookie backendga avtomatik boradi
   });
 
-  // Har bir requestga Access Token qo'shiladi (agar mavjud bo'lsa)
-  crmApi.interceptors.request.use(config => {
-    const token = getAccessToken();
-    if (token) {
-      config.headers = config.headers || {};
-      config.headers.Authorization = "Bearer " + token;
-    }
-    return config;
-  });
-
   // 401 -> refresh -> qayta urinish (faqat AUTH bo'lmagan requestlar uchun)
   let isRefreshing = false;
   let waitQueue = [];
@@ -167,6 +157,108 @@
     setSession(newAccess, role, getCurrentUserRaw(), isRemembered());
     return newAccess;
   }
+
+  // ---------- JWT MUDDATINI OLDINDAN TEKSHIRISH ----------
+  // MUAMMO: sahifa ochilganda bir nechta joy (dashboard, statistika,
+  // sotuvlar va h.k.) bir vaqtda API so'rov yuboradi. Agar token allaqachon
+  // eskirgan bo'lsa, ULARNING HAMMASI 401 bilan qaytadi, konsolda qizil
+  // xatolar to'planadi, va har biri alohida-alohida "refresh -> qayta
+  // urinish" bosqichidan o'tadi (funksional jihatdan ishlaydi, lekin
+  // sekinroq va chalkash ko'rinadi).
+  //
+  // YECHIM: har bir so'rov yuborilishidan OLDIN tokenning muddati tez orada
+  // tugashini (yoki allaqachon tuganganini) mahalliy ravishda (server bilan
+  // gaplashmasdan, JWT ichidagi "exp" maydonini o'qib) tekshiramiz. Agar
+  // eskirgan bo'lsa, so'rov yuborilishidan OLDIN token yangilanadi — shu
+  // orqali 401 umuman sodir bo'lmaydi. Bir nechta so'rov bir vaqtda kelsa
+  // ham, faqat BITTA refresh so'rovi yuboriladi (waitQueue orqali).
+  function decodeJwtPayload(token) {
+    try {
+      const parts = String(token).split(".");
+      if (parts.length !== 3) return null;
+
+      let base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      while (base64.length % 4) base64 += "=";
+
+      const json = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      );
+
+      return JSON.parse(json);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function isTokenExpiringSoon(token, bufferSeconds = 15) {
+    const payload = decodeJwtPayload(token);
+
+    // "exp" o'qib bo'lmasa, xavfsizlik uchun "hali yaroqli" deb hisoblaymiz
+    // — aks holda har bir so'rovda keraksiz refresh urinishi bo'lardi.
+    if (!payload || typeof payload.exp !== "number") {
+      return false;
+    }
+
+    const nowSeconds = Date.now() / 1000;
+    return payload.exp - nowSeconds <= bufferSeconds;
+  }
+
+  async function ensureFreshToken() {
+    const token = getAccessToken();
+
+    // Tizimga kirilmagan — qilishga hech narsa yo'q.
+    if (!token) return null;
+
+    if (!isTokenExpiringSoon(token)) {
+      return token;
+    }
+
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        waitQueue.push({ resolve, reject });
+      });
+    }
+
+    isRefreshing = true;
+
+    try {
+      const newToken = await performRefresh();
+      waitQueue.forEach(p => p.resolve(newToken));
+      waitQueue = [];
+      return newToken;
+    } catch (err) {
+      waitQueue.forEach(p => p.reject(err));
+      waitQueue = [];
+
+      // Proaktiv yangilash muvaffaqiyatsiz bo'lsa ham, so'rovni to'xtatib
+      // qo'ymaymiz — eski tokenni qaytaramiz. So'rov baribir yuboriladi;
+      // agar u ham 401 bersa, pastdagi REACTIVE mexanizm (response
+      // interceptor) ishga tushib, yana bir bor to'g'irlashga harakat
+      // qiladi (yoki chindan ham sessiya tugagan bo'lsa, logout qiladi).
+      return getAccessToken();
+    } finally {
+      isRefreshing = false;
+    }
+  }
+
+  // Har bir requestga Access Token qo'shiladi (agar mavjud bo'lsa).
+  // AUTH endpointlar (login/signup/refresh) uchun proaktiv tekshiruv
+  // ISHLATILMAYDI — aks holda cheksiz tsikl (refresh o'zini refresh
+  // qilishga urinishi) yuzaga kelardi.
+  crmApi.interceptors.request.use(async config => {
+    const token = isAuthEndpoint(config.url)
+      ? getAccessToken()
+      : await ensureFreshToken();
+
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = "Bearer " + token;
+    }
+    return config;
+  });
 
   crmApi.interceptors.response.use(
     res => res,
