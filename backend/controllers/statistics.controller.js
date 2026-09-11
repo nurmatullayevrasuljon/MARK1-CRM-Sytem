@@ -721,20 +721,21 @@ exports.getStatistics = async (req, res) => {
           // KECHA
           // ===================================================
 
+         // Kechagi sotuv
           yesterday: [
             {
               $match: {
                 createdAt: {
-                  $gte: yesterdayStart,
-                  $lt: yesterdayEnd,
+                  $gte: new Date(
+                    todayStart.getTime() - 24 * 60 * 60 * 1000
+                  ),
+                  $lt: todayStart,
                 },
               },
             },
-
             {
               $group: {
                 _id: null,
-
                 revenue: {
                   $sum: "$total_price",
                 },
@@ -824,6 +825,13 @@ exports.getStatistics = async (req, res) => {
 
     const yesterdaySales =
       stats.yesterday[0]?.revenue || 0;
+
+    let dailySalesChange = 0;
+
+    if (yesterdaySales > 0) {
+      dailySalesChange =
+        ((dailySales - yesterdaySales) / yesterdaySales) * 100;
+    }
 
     const monthlyProfit =
       stats.currentMonth[0]?.profit || 0;
