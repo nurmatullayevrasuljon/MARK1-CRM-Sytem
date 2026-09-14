@@ -1,579 +1,37 @@
-// const Sale = require("../models/sale.model");
-// const Product = require("../models/product.model");
-// const { default: mongoose } = require("mongoose");
-// const {
-//   getTashkentDateParts,
-//   tashkentMidnight,
-// } = require("../utils/time.util");
-
-// exports.getStatistics = async (req, res) => {
-//   try {
-//     const store_id = req.user.store_id;
-
-//     // O'zbekiston (Toshkent, UTC+5) vaqti bo'yicha bugungi sanani aniqlash
-//     const now = new Date();
-
-//     const { year, month, day } = getTashkentDateParts(now);
-
-//     const todayStart = tashkentMidnight(year, month, day);
-//     const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-//     const currentMonthStart = tashkentMidnight(year, month, 1);
-//     const nextMonthStart = tashkentMidnight(
-//       month === 12 ? year + 1 : year,
-//       month === 12 ? 1 : month + 1,
-//       1,
-//     );
-//     const previousMonthStart =
-//       month === 1
-//         ? tashkentMidnight(year - 1, 12, 1)
-//         : tashkentMidnight(year, month - 1, 1);
-//     const previousMonthEnd = currentMonthStart;
-
-//     // =========================================
-//     // SALES STATISTICS
-//     // =========================================
-
-//     const salesStats = await Sale.aggregate([
-//       {
-//         $match: {
-//           store_id: new mongoose.Types.ObjectId(store_id),
-//           status: "active",
-//         },
-//       },
-//       {
-//         $facet: {
-//           // Bu oy
-//           currentMonth: [
-//             {
-//               $match: {
-//                 createdAt: {
-//                   $gte: currentMonthStart,
-//                   $lt: nextMonthStart,
-//                 },
-//               },
-//             },
-//             {
-//               $group: {
-//                 _id: null,
-//                 revenue: { $sum: "$total_price" },
-//                 profit: {
-//                   $sum: {
-//                     $subtract: ["$total_price", "$total_purchase"],
-//                   },
-//                 },
-//                 cash_sale_revenue: {
-//                   $sum: {
-//                     $cond: [
-//                       { $eq: ["$total_remaining", 0] },
-//                       "$paid_by_cash",
-//                       0,
-//                     ],
-//                   },
-//                 },
-//                 card_sale_revenue: {
-//                   $sum: {
-//                     $cond: [
-//                       { $eq: ["$total_remaining", 0] },
-//                       "$paid_by_card",
-//                       0,
-//                     ],
-//                   },
-//                 },
-//               },
-//             },
-//           ],
-
-//           // O'tgan oy
-//           previousMonth: [
-//             {
-//               $match: {
-//                 createdAt: {
-//                   $gte: previousMonthStart,
-//                   $lt: previousMonthEnd,
-//                 },
-//               },
-//             },
-//             {
-//               $group: {
-//                 _id: null,
-//                 revenue: { $sum: "$total_price" },
-//               },
-//             },
-//           ],
-
-//           // Bugungi sotuv
-//           today: [
-//             {
-//               $match: {
-//                 createdAt: {
-//                   $gte: todayStart,
-//                   $lt: tomorrowStart,
-//                 },
-//               },
-//             },
-//             {
-//               $group: {
-//                 _id: null,
-//                 revenue: { $sum: "$total_price" },
-//                 cash_sale_revenue: {
-//                   $sum: {
-//                     $cond: [
-//                       { $eq: ["$total_remaining", 0] },
-//                       "$paid_by_cash",
-//                       0,
-//                     ],
-//                   },
-//                 },
-//                 card_sale_revenue: {
-//                   $sum: {
-//                     $cond: [
-//                       { $eq: ["$total_remaining", 0] },
-//                       "$paid_by_card",
-//                       0,
-//                     ],
-//                   },
-//                 },
-//               },
-//             },
-//           ],
-
-//           // Kechagi sotuv
-//           yesterday: [
-//             {
-//               $match: {
-//                 createdAt: {
-//                   $gte: new Date(year, month, day - 1),
-//                   $lt: todayStart,
-//                 },
-//               },
-//             },
-//             {
-//               $group: {
-//                 _id: null,
-//                 revenue: { $sum: "$total_price" },
-//               },
-//             },
-//           ],
-
-//           // Hozirgi qarzdorlik
-//           overdue: [
-//             {
-//               $match: {
-//                 total_remaining: { $gt: 0 },
-//                 due_date: { $ne: null },
-//               },
-//             },
-//             {
-//               $match: {
-//                 $expr: {
-//                   $lt: [
-//                     {
-//                       $dateTrunc: {
-//                         date: "$due_date",
-//                         unit: "day",
-//                         timezone: "Asia/Tashkent",
-//                       },
-//                     },
-//                     todayStart,
-//                   ],
-//                 },
-//               },
-//             },
-//             {
-//               $group: {
-//                 _id: null,
-//                 total: { $sum: "$total_remaining" },
-//                 count: { $sum: 1 },
-//               },
-//             },
-//           ],
-//         },
-//       },
-//     ]);
-
-//     const stats = salesStats[0];
-
-//     const monthlyRevenue = stats.currentMonth[0]?.revenue || 0;
-
-//     const monthlyCashSaleRevenue =
-//       stats.currentMonth[0]?.cash_sale_revenue || 0;
-
-//     const monthlyCardSaleRevenue =
-//       stats.currentMonth[0]?.card_sale_revenue || 0;
-
-//     const previousMonthlyRevenue = stats.previousMonth[0]?.revenue || 0;
-
-//     const dailySales = stats.today[0]?.revenue || 0;
-
-//     const dailyCashSaleRevenue = stats.today[0]?.cash_sale_revenue || 0;
-
-//     const dailyCardSaleRevenue = stats.today[0]?.card_sale_revenue || 0;
-
-//     const yesterdaySales = stats.yesterday[0]?.revenue || 0;
-
-//     const monthlyProfit = stats.currentMonth[0]?.profit || 0;
-
-//     const overduePayments = stats.overdue[0]?.total || 0;
-
-//     const overdueCount = stats.overdue[0]?.count || 0;
-
-//     // =========================================
-//     // MONTHLY REVENUE GROWTH
-//     // =========================================
-
-//     let monthlyRevenueGrowth = 0;
-
-//     if (previousMonthlyRevenue > 0) {
-//       monthlyRevenueGrowth =
-//         ((monthlyRevenue - previousMonthlyRevenue) / previousMonthlyRevenue) *
-//         100;
-//     }
-
-//     // =========================================
-//     // DAILY SALES CHANGE
-//     // =========================================
-
-//     let dailySalesChange = 0;
-
-//     if (yesterdaySales > 0) {
-//       dailySalesChange = ((dailySales - yesterdaySales) / yesterdaySales) * 100;
-//     }
-
-//     // =========================================
-//     // INVENTORY BALANCE
-//     // =========================================
-
-//     const inventoryStats = await Product.aggregate([
-//       {
-//         $match: {
-//           store_id: new mongoose.Types.ObjectId(store_id),
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: null,
-//           balance: {
-//             $sum: {
-//               $multiply: ["$purchase_price", "$quantity"],
-//             },
-//           },
-//         },
-//       },
-//     ]);
-
-//     const inventoryBalance = inventoryStats[0]?.balance || 0;
-
-//     // =========================================
-//     // LOW STOCK
-//     // =========================================
-
-//     const lowStockCount = await Product.countDocuments({
-//       store_id: new mongoose.Types.ObjectId(store_id),
-//       $expr: {
-//         $lte: ["$quantity", "$minimum_quantity"],
-//       },
-//     });
-
-//     // =========================================
-//     // RESPONSE
-//     // =========================================
-
-//     return res.status(200).json({
-//       monthly_revenue: monthlyRevenue,
-
-//       monthly_revenue_growth: Number(monthlyRevenueGrowth.toFixed(2)),
-
-//       monthly_cash_sale_revenue: monthlyCashSaleRevenue,
-
-//       monthly_card_sale_revenue: monthlyCardSaleRevenue,
-
-//       daily_sales: dailySales,
-
-//       daily_sales_change: Number(dailySalesChange.toFixed(2)),
-
-//       daily_cash_sale_revenue: dailyCashSaleRevenue,
-
-//       daily_card_sale_revenue: dailyCardSaleRevenue,
-
-//       monthly_profit: monthlyProfit,
-
-//       inventory_balance: inventoryBalance,
-
-//       overdue_payments: overduePayments,
-
-//       overdue_count: overdueCount,
-
-//       low_stock_count: lowStockCount,
-//     });
-//   } catch (err) {
-//     console.log(err.message);
-
-//     return res.status(500).json({
-//       message: err.message,
-//     });
-//   }
-// };
-
-// exports.getDailyRevenue = async (req, res) => {
-//   try {
-//     const store_id = req.user.store_id;
-
-//     const now = new Date();
-
-//     const { year, month, day } = getTashkentDateParts(now);
-
-//     const todayStart = tashkentMidnight(year, month, day);
-//     const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-
-//     const result = await Sale.aggregate([
-//       {
-//         $match: {
-//           store_id: new mongoose.Types.ObjectId(store_id),
-//           status: "active",
-//           createdAt: {
-//             $gte: todayStart,
-//             $lt: tomorrowStart,
-//           },
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: null,
-
-//           revenue: {
-//             $sum: "$total_price",
-//           },
-
-//           cash_sale_revenue: {
-//             $sum: "$paid_by_cash",
-//           },
-
-//           card_sale_revenue: {
-//             $sum: "$paid_by_card",
-//           },
-//         },
-//       },
-//     ]);
-
-//     const dailyRevenue = result[0]?.revenue || 0;
-
-//     const cashSaleRevenue = result[0]?.cash_sale_revenue || 0;
-
-//     const cardSaleRevenue = result[0]?.card_sale_revenue || 0;
-
-//     return res.status(200).json({
-//       daily_revenue: dailyRevenue,
-//       cash_sale_revenue: cashSaleRevenue,
-//       card_sale_revenue: cardSaleRevenue,
-//     });
-//   } catch (err) {
-//     console.log(err.message);
-
-//     return res.status(500).json({
-//       message: err.message,
-//     });
-//   }
-// };
-
-// exports.getWeeklyTrend = async (req, res) => {
-//   try {
-//     const store_id = req.user.store_id;
-
-//     const now = new Date();
-
-//     const { year, month, day } = getTashkentDateParts(now);
-
-//     const todayStart = tashkentMidnight(year, month, day);
-//     const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-
-//     // 0 = Sunday
-//     // 1 = Monday
-//     // ...
-//     // 6 = Saturday
-//     const dayOfWeek = new Date(
-//       `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
-//         2,
-//         "0",
-//       )}T12:00:00+05:00`,
-//     ).getDay();
-
-//     // Monday = 0, Tuesday = 1, ..., Sunday = 6
-//     const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-
-//     // Shu haftaning dushanbasi
-//     const weekStart = new Date(
-//       todayStart.getTime() - daysFromMonday * 24 * 60 * 60 * 1000,
-//     );
-
-//     // Haftaning oxirigacha
-//     const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-//     const result = await Sale.aggregate([
-//       {
-//         $match: {
-//           store_id: new mongoose.Types.ObjectId(store_id),
-//           status: "active",
-//           createdAt: {
-//             $gte: weekStart,
-//             $lt: weekEnd,
-//           },
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: {
-//             $dateToString: {
-//               format: "%Y-%m-%d",
-//               date: "$createdAt",
-//               timezone: "Asia/Tashkent",
-//             },
-//           },
-//           revenue: {
-//             $sum: "$total_price",
-//           },
-//           cash_sale_revenue: {
-//             $sum: {
-//               $cond: [{ $eq: ["$total_remaining", 0] }, "$paid_by_cash", 0],
-//             },
-//           },
-//           card_sale_revenue: {
-//             $sum: {
-//               $cond: [{ $eq: ["$total_remaining", 0] }, "$paid_by_card", 0],
-//             },
-//           },
-//         },
-//       },
-//     ]);
-
-//     const revenueByDate = {};
-
-//     for (const item of result) {
-//       revenueByDate[item._id] = {
-//         total_revenue: item.revenue,
-//         cash_sale_revenue: item.cash_sale_revenue,
-//         card_sale_revenue: item.card_sale_revenue,
-//       };
-//     }
-
-//     const dayNames = [
-//       "monday",
-//       "tuesday",
-//       "wednesday",
-//       "thursday",
-//       "friday",
-//       "saturday",
-//       "sunday",
-//     ];
-
-//     const weeklyTrend = {};
-
-//     // DOIM 7 kun
-//     for (let i = 0; i < 7; i++) {
-//       const date = new Date(weekStart.getTime() + i * 24 * 60 * 60 * 1000);
-
-//       const dateParts = getTashkentDateParts(date);
-
-//       const dateKey =
-//         `${dateParts.year}-` +
-//         `${String(dateParts.month).padStart(2, "0")}-` +
-//         `${String(dateParts.day).padStart(2, "0")}`;
-
-//       weeklyTrend[dayNames[i]] = revenueByDate[dateKey] || {
-//         total_revenue: 0,
-//         cash_sale_revenue: 0,
-//         card_sale_revenue: 0,
-//       };
-//     }
-
-//     return res.status(200).json(weeklyTrend);
-//   } catch (err) {
-//     console.log(err.message);
-
-//     return res.status(500).json({
-//       message: err.message,
-//     });
-//   }
-// };
 const Sale = require("../models/sale.model");
 const Product = require("../models/product.model");
 const { default: mongoose } = require("mongoose");
-
 const {
   getTashkentDateParts,
   tashkentMidnight,
 } = require("../utils/time.util");
 
-
-// ============================================================
-// GET FULL STATISTICS
-// ============================================================
-
 exports.getStatistics = async (req, res) => {
   try {
     const store_id = req.user.store_id;
 
-    // =========================================================
-    // TASHKENT TIME
-    // =========================================================
-
+    // O'zbekiston (Toshkent, UTC+5) vaqti bo'yicha bugungi sanani aniqlash
     const now = new Date();
 
     const { year, month, day } = getTashkentDateParts(now);
 
-    // Bugungi kun boshlanishi — Asia/Tashkent
     const todayStart = tashkentMidnight(year, month, day);
-
-    // Ertangi kun boshlanishi
-    const tomorrowStart = new Date(
-      todayStart.getTime() + 24 * 60 * 60 * 1000
-    );
-
-    // Joriy oy boshlanishi
+    const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
     const currentMonthStart = tashkentMidnight(year, month, 1);
-
-    // Keyingi oy boshlanishi
     const nextMonthStart = tashkentMidnight(
       month === 12 ? year + 1 : year,
       month === 12 ? 1 : month + 1,
-      1
+      1,
     );
-
-    // O'tgan oy boshlanishi
     const previousMonthStart =
       month === 1
         ? tashkentMidnight(year - 1, 12, 1)
         : tashkentMidnight(year, month - 1, 1);
-
-    // O'tgan oy oxiri = joriy oy boshlanishi
     const previousMonthEnd = currentMonthStart;
 
-    // =========================================================
-    // KECHA BOSHLANISHI
-    // =========================================================
-    //
-    // MUHIM:
-    // new Date(year, month, day - 1) ishlatilmaydi.
-    //
-    // Sababi JavaScript Date constructorida month 0-11,
-    // bizning getTashkentDateParts() esa month 1-12 qaytaradi.
-    //
-    // Eng xavfsiz usul:
-    // bugungi Tashkent midnight'dan 24 soat orqaga qaytish.
-    //
-    // Bu quyidagilarni ham to'g'ri ishlatadi:
-    // 1-yanvar -> 31-dekabr
-    // 1-kun -> oldingi oyning oxirgi kuni
-    // =========================================================
-
-    const yesterdayStart = new Date(
-      todayStart.getTime() - 24 * 60 * 60 * 1000
-    );
-
-    const yesterdayEnd = todayStart;
-
-    // =========================================================
+    // =========================================
     // SALES STATISTICS
-    // =========================================================
+    // =========================================
 
     const salesStats = await Sale.aggregate([
       {
@@ -582,13 +40,9 @@ exports.getStatistics = async (req, res) => {
           status: "active",
         },
       },
-
       {
         $facet: {
-          // ===================================================
-          // BU OY
-          // ===================================================
-
+          // Bu oy
           currentMonth: [
             {
               $match: {
@@ -598,42 +52,28 @@ exports.getStatistics = async (req, res) => {
                 },
               },
             },
-
             {
               $group: {
                 _id: null,
-
-                revenue: {
-                  $sum: "$total_price",
-                },
-
+                revenue: { $sum: "$total_price" },
                 profit: {
                   $sum: {
-                    $subtract: [
-                      "$total_price",
-                      "$total_purchase",
-                    ],
+                    $subtract: ["$total_price", "$total_purchase"],
                   },
                 },
-
                 cash_sale_revenue: {
                   $sum: {
                     $cond: [
-                      {
-                        $eq: ["$total_remaining", 0],
-                      },
+                      { $eq: ["$total_remaining", 0] },
                       "$paid_by_cash",
                       0,
                     ],
                   },
                 },
-
                 card_sale_revenue: {
                   $sum: {
                     $cond: [
-                      {
-                        $eq: ["$total_remaining", 0],
-                      },
+                      { $eq: ["$total_remaining", 0] },
                       "$paid_by_card",
                       0,
                     ],
@@ -643,10 +83,7 @@ exports.getStatistics = async (req, res) => {
             },
           ],
 
-          // ===================================================
-          // O'TGAN OY
-          // ===================================================
-
+          // O'tgan oy
           previousMonth: [
             {
               $match: {
@@ -656,22 +93,15 @@ exports.getStatistics = async (req, res) => {
                 },
               },
             },
-
             {
               $group: {
                 _id: null,
-
-                revenue: {
-                  $sum: "$total_price",
-                },
+                revenue: { $sum: "$total_price" },
               },
             },
           ],
 
-          // ===================================================
-          // BUGUN
-          // ===================================================
-
+          // Bugungi sotuv
           today: [
             {
               $match: {
@@ -681,33 +111,23 @@ exports.getStatistics = async (req, res) => {
                 },
               },
             },
-
             {
               $group: {
                 _id: null,
-
-                revenue: {
-                  $sum: "$total_price",
-                },
-
+                revenue: { $sum: "$total_price" },
                 cash_sale_revenue: {
                   $sum: {
                     $cond: [
-                      {
-                        $eq: ["$total_remaining", 0],
-                      },
+                      { $eq: ["$total_remaining", 0] },
                       "$paid_by_cash",
                       0,
                     ],
                   },
                 },
-
                 card_sale_revenue: {
                   $sum: {
                     $cond: [
-                      {
-                        $eq: ["$total_remaining", 0],
-                      },
+                      { $eq: ["$total_remaining", 0] },
                       "$paid_by_card",
                       0,
                     ],
@@ -717,18 +137,12 @@ exports.getStatistics = async (req, res) => {
             },
           ],
 
-          // ===================================================
-          // KECHA
-          // ===================================================
-
-         // Kechagi sotuv
+          // Kechagi sotuv
           yesterday: [
             {
               $match: {
                 createdAt: {
-                  $gte: new Date(
-                    todayStart.getTime() - 24 * 60 * 60 * 1000
-                  ),
+                  $gte: new Date(year, month, day - 1),
                   $lt: todayStart,
                 },
               },
@@ -736,30 +150,19 @@ exports.getStatistics = async (req, res) => {
             {
               $group: {
                 _id: null,
-                revenue: {
-                  $sum: "$total_price",
-                },
+                revenue: { $sum: "$total_price" },
               },
             },
           ],
 
-          // ===================================================
-          // QARZDORLIK
-          // ===================================================
-
+          // Hozirgi qarzdorlik
           overdue: [
             {
               $match: {
-                total_remaining: {
-                  $gt: 0,
-                },
-
-                due_date: {
-                  $ne: null,
-                },
+                total_remaining: { $gt: 0 },
+                due_date: { $ne: null },
               },
             },
-
             {
               $match: {
                 $expr: {
@@ -771,24 +174,16 @@ exports.getStatistics = async (req, res) => {
                         timezone: "Asia/Tashkent",
                       },
                     },
-
                     todayStart,
                   ],
                 },
               },
             },
-
             {
               $group: {
                 _id: null,
-
-                total: {
-                  $sum: "$total_remaining",
-                },
-
-                count: {
-                  $sum: 1,
-                },
+                total: { $sum: "$total_remaining" },
+                count: { $sum: 1 },
               },
             },
           ],
@@ -798,12 +193,7 @@ exports.getStatistics = async (req, res) => {
 
     const stats = salesStats[0];
 
-    // =========================================================
-    // VALUES
-    // =========================================================
-
-    const monthlyRevenue =
-      stats.currentMonth[0]?.revenue || 0;
+    const monthlyRevenue = stats.currentMonth[0]?.revenue || 0;
 
     const monthlyCashSaleRevenue =
       stats.currentMonth[0]?.cash_sale_revenue || 0;
@@ -811,79 +201,47 @@ exports.getStatistics = async (req, res) => {
     const monthlyCardSaleRevenue =
       stats.currentMonth[0]?.card_sale_revenue || 0;
 
-    const previousMonthlyRevenue =
-      stats.previousMonth[0]?.revenue || 0;
+    const previousMonthlyRevenue = stats.previousMonth[0]?.revenue || 0;
 
-    const dailySales =
-      stats.today[0]?.revenue || 0;
+    const dailySales = stats.today[0]?.revenue || 0;
 
-    const dailyCashSaleRevenue =
-      stats.today[0]?.cash_sale_revenue || 0;
+    const dailyCashSaleRevenue = stats.today[0]?.cash_sale_revenue || 0;
 
-    const dailyCardSaleRevenue =
-      stats.today[0]?.card_sale_revenue || 0;
+    const dailyCardSaleRevenue = stats.today[0]?.card_sale_revenue || 0;
 
-    const yesterdaySales =
-      stats.yesterday[0]?.revenue || 0;
+    const yesterdaySales = stats.yesterday[0]?.revenue || 0;
 
-    let dailySalesChange = 0;
+    const monthlyProfit = stats.currentMonth[0]?.profit || 0;
 
-    if (yesterdaySales > 0) {
-      dailySalesChange =
-        ((dailySales - yesterdaySales) / yesterdaySales) * 100;
-    }
+    const overduePayments = stats.overdue[0]?.total || 0;
 
-    const monthlyProfit =
-      stats.currentMonth[0]?.profit || 0;
+    const overdueCount = stats.overdue[0]?.count || 0;
 
-    const overduePayments =
-      stats.overdue[0]?.total || 0;
-
-    const overdueCount =
-      stats.overdue[0]?.count || 0;
-
-    // =========================================================
+    // =========================================
     // MONTHLY REVENUE GROWTH
-    // =========================================================
+    // =========================================
 
     let monthlyRevenueGrowth = 0;
 
     if (previousMonthlyRevenue > 0) {
       monthlyRevenueGrowth =
-        ((monthlyRevenue - previousMonthlyRevenue) /
-          previousMonthlyRevenue) *
+        ((monthlyRevenue - previousMonthlyRevenue) / previousMonthlyRevenue) *
         100;
     }
 
-    // =========================================================
+    // =========================================
     // DAILY SALES CHANGE
-    // =========================================================
-    //
-    // BUGUN vs KECHA
-    //
-    // Masalan:
-    // Kecha = 29
-    // Bugun = 87
-    //
-    // (87 - 29) / 29 * 100
-    // = 200%
-    //
-    // Natija:
-    // +200.00%
-    // =========================================================
+    // =========================================
 
     let dailySalesChange = 0;
 
     if (yesterdaySales > 0) {
-      dailySalesChange =
-        ((dailySales - yesterdaySales) /
-          yesterdaySales) *
-        100;
+      dailySalesChange = ((dailySales - yesterdaySales) / yesterdaySales) * 100;
     }
 
-    // =========================================================
+    // =========================================
     // INVENTORY BALANCE
-    // =========================================================
+    // =========================================
 
     const inventoryStats = await Product.aggregate([
       {
@@ -891,72 +249,51 @@ exports.getStatistics = async (req, res) => {
           store_id: new mongoose.Types.ObjectId(store_id),
         },
       },
-
       {
         $group: {
           _id: null,
-
           balance: {
             $sum: {
-              $multiply: [
-                "$purchase_price",
-                "$quantity",
-              ],
+              $multiply: ["$purchase_price", "$quantity"],
             },
           },
         },
       },
     ]);
 
-    const inventoryBalance =
-      inventoryStats[0]?.balance || 0;
+    const inventoryBalance = inventoryStats[0]?.balance || 0;
 
-    // =========================================================
+    // =========================================
     // LOW STOCK
-    // =========================================================
+    // =========================================
 
-    const lowStockCount =
-      await Product.countDocuments({
-        store_id: new mongoose.Types.ObjectId(store_id),
+    const lowStockCount = await Product.countDocuments({
+      store_id: new mongoose.Types.ObjectId(store_id),
+      $expr: {
+        $lte: ["$quantity", "$minimum_quantity"],
+      },
+    });
 
-        $expr: {
-          $lte: [
-            "$quantity",
-            "$minimum_quantity",
-          ],
-        },
-      });
-
-    // =========================================================
+    // =========================================
     // RESPONSE
-    // =========================================================
+    // =========================================
 
     return res.status(200).json({
       monthly_revenue: monthlyRevenue,
 
-      monthly_revenue_growth:
-        Number(
-          monthlyRevenueGrowth.toFixed(2)
-        ),
+      monthly_revenue_growth: Number(monthlyRevenueGrowth.toFixed(2)),
 
-      monthly_cash_sale_revenue:
-        monthlyCashSaleRevenue,
+      monthly_cash_sale_revenue: monthlyCashSaleRevenue,
 
-      monthly_card_sale_revenue:
-        monthlyCardSaleRevenue,
+      monthly_card_sale_revenue: monthlyCardSaleRevenue,
 
       daily_sales: dailySales,
 
-      daily_sales_change:
-        Number(
-          dailySalesChange.toFixed(2)
-        ),
+      daily_sales_change: Number(dailySalesChange.toFixed(2)),
 
-      daily_cash_sale_revenue:
-        dailyCashSaleRevenue,
+      daily_cash_sale_revenue: dailyCashSaleRevenue,
 
-      daily_card_sale_revenue:
-        dailyCardSaleRevenue,
+      daily_card_sale_revenue: dailyCardSaleRevenue,
 
       monthly_profit: monthlyProfit,
 
@@ -968,12 +305,8 @@ exports.getStatistics = async (req, res) => {
 
       low_stock_count: lowStockCount,
     });
-
   } catch (err) {
-    console.log(
-      "GET STATISTICS ERROR:",
-      err.message
-    );
+    console.log(err.message);
 
     return res.status(500).json({
       message: err.message,
@@ -981,50 +314,28 @@ exports.getStatistics = async (req, res) => {
   }
 };
 
-
-// ============================================================
-// GET DAILY REVENUE
-// ============================================================
-
 exports.getDailyRevenue = async (req, res) => {
   try {
     const store_id = req.user.store_id;
 
     const now = new Date();
 
-    const { year, month, day } =
-      getTashkentDateParts(now);
+    const { year, month, day } = getTashkentDateParts(now);
 
-    const todayStart =
-      tashkentMidnight(
-        year,
-        month,
-        day
-      );
-
-    const tomorrowStart =
-      new Date(
-        todayStart.getTime() +
-          24 * 60 * 60 * 1000
-      );
+    const todayStart = tashkentMidnight(year, month, day);
+    const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
     const result = await Sale.aggregate([
       {
         $match: {
-          store_id:
-            new mongoose.Types.ObjectId(
-              store_id
-            ),
-
+          store_id: new mongoose.Types.ObjectId(store_id),
           status: "active",
-
           createdAt: {
             $gte: todayStart,
             $lt: tomorrowStart,
           },
         },
       },
-
       {
         $group: {
           _id: null,
@@ -1044,30 +355,19 @@ exports.getDailyRevenue = async (req, res) => {
       },
     ]);
 
-    const dailyRevenue =
-      result[0]?.revenue || 0;
+    const dailyRevenue = result[0]?.revenue || 0;
 
-    const cashSaleRevenue =
-      result[0]?.cash_sale_revenue || 0;
+    const cashSaleRevenue = result[0]?.cash_sale_revenue || 0;
 
-    const cardSaleRevenue =
-      result[0]?.card_sale_revenue || 0;
+    const cardSaleRevenue = result[0]?.card_sale_revenue || 0;
 
     return res.status(200).json({
       daily_revenue: dailyRevenue,
-
-      cash_sale_revenue:
-        cashSaleRevenue,
-
-      card_sale_revenue:
-        cardSaleRevenue,
+      cash_sale_revenue: cashSaleRevenue,
+      card_sale_revenue: cardSaleRevenue,
     });
-
   } catch (err) {
-    console.log(
-      "GET DAILY REVENUE ERROR:",
-      err.message
-    );
+    console.log(err.message);
 
     return res.status(500).json({
       message: err.message,
@@ -1075,189 +375,85 @@ exports.getDailyRevenue = async (req, res) => {
   }
 };
 
-
-// ============================================================
-// GET WEEKLY TREND
-// ============================================================
-
 exports.getWeeklyTrend = async (req, res) => {
   try {
     const store_id = req.user.store_id;
 
     const now = new Date();
 
-    const { year, month, day } =
-      getTashkentDateParts(now);
+    const { year, month, day } = getTashkentDateParts(now);
 
-    const todayStart =
-      tashkentMidnight(
-        year,
-        month,
-        day
-      );
-
-    const tomorrowStart =
-      new Date(
-        todayStart.getTime() +
-          24 * 60 * 60 * 1000
-      );
+    const todayStart = tashkentMidnight(year, month, day);
+    const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
     // 0 = Sunday
     // 1 = Monday
-    // 2 = Tuesday
     // ...
     // 6 = Saturday
+    const dayOfWeek = new Date(
+      `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
+        2,
+        "0",
+      )}T12:00:00+05:00`,
+    ).getDay();
 
-    const dayOfWeek =
-      new Date(
-        `${year}-${String(month).padStart(
-          2,
-          "0"
-        )}-${String(day).padStart(
-          2,
-          "0"
-        )}T12:00:00+05:00`
-      ).getDay();
+    // Monday = 0, Tuesday = 1, ..., Sunday = 6
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
-    // Monday = 0
-    // Tuesday = 1
-    // Wednesday = 2
-    // Thursday = 3
-    // Friday = 4
-    // Saturday = 5
-    // Sunday = 6
+    // Shu haftaning dushanbasi
+    const weekStart = new Date(
+      todayStart.getTime() - daysFromMonday * 24 * 60 * 60 * 1000,
+    );
 
-    const daysFromMonday =
-      dayOfWeek === 0
-        ? 6
-        : dayOfWeek - 1;
+    // Haftaning oxirigacha
+    const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    // =========================================================
-    // HAFTA BOSHLANISHI
-    // =========================================================
-
-    const weekStart =
-      new Date(
-        todayStart.getTime() -
-          daysFromMonday *
-            24 *
-            60 *
-            60 *
-            1000
-      );
-
-    // =========================================================
-    // HAFTA TUGASHI
-    // =========================================================
-
-    const weekEnd =
-      new Date(
-        weekStart.getTime() +
-          7 *
-            24 *
-            60 *
-            60 *
-            1000
-      );
-
-    // =========================================================
-    // WEEKLY SALES
-    // =========================================================
-
-    const result =
-      await Sale.aggregate([
-        {
-          $match: {
-            store_id:
-              new mongoose.Types.ObjectId(
-                store_id
-              ),
-
-            status: "active",
-
-            createdAt: {
-              $gte: weekStart,
-              $lt: weekEnd,
+    const result = await Sale.aggregate([
+      {
+        $match: {
+          store_id: new mongoose.Types.ObjectId(store_id),
+          status: "active",
+          createdAt: {
+            $gte: weekStart,
+            $lt: weekEnd,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$createdAt",
+              timezone: "Asia/Tashkent",
+            },
+          },
+          revenue: {
+            $sum: "$total_price",
+          },
+          cash_sale_revenue: {
+            $sum: {
+              $cond: [{ $eq: ["$total_remaining", 0] }, "$paid_by_cash", 0],
+            },
+          },
+          card_sale_revenue: {
+            $sum: {
+              $cond: [{ $eq: ["$total_remaining", 0] }, "$paid_by_card", 0],
             },
           },
         },
-
-        {
-          $group: {
-            _id: {
-              $dateToString: {
-                format: "%Y-%m-%d",
-
-                date: "$createdAt",
-
-                timezone:
-                  "Asia/Tashkent",
-              },
-            },
-
-            revenue: {
-              $sum: "$total_price",
-            },
-
-            cash_sale_revenue: {
-              $sum: {
-                $cond: [
-                  {
-                    $eq: [
-                      "$total_remaining",
-                      0,
-                    ],
-                  },
-
-                  "$paid_by_cash",
-
-                  0,
-                ],
-              },
-            },
-
-            card_sale_revenue: {
-              $sum: {
-                $cond: [
-                  {
-                    $eq: [
-                      "$total_remaining",
-                      0,
-                    ],
-                  },
-
-                  "$paid_by_card",
-
-                  0,
-                ],
-              },
-            },
-          },
-        },
-      ]);
-
-    // =========================================================
-    // REVENUE BY DATE
-    // =========================================================
+      },
+    ]);
 
     const revenueByDate = {};
 
     for (const item of result) {
       revenueByDate[item._id] = {
-        total_revenue:
-          item.revenue,
-
-        cash_sale_revenue:
-          item.cash_sale_revenue,
-
-        card_sale_revenue:
-          item.card_sale_revenue,
+        total_revenue: item.revenue,
+        cash_sale_revenue: item.cash_sale_revenue,
+        card_sale_revenue: item.card_sale_revenue,
       };
     }
-
-    // =========================================================
-    // DAY NAMES
-    // =========================================================
 
     const dayNames = [
       "monday",
@@ -1269,60 +465,29 @@ exports.getWeeklyTrend = async (req, res) => {
       "sunday",
     ];
 
-    // =========================================================
-    // WEEKLY TREND
-    // =========================================================
-
     const weeklyTrend = {};
 
-    // DOIM 7 KUN
-
+    // DOIM 7 kun
     for (let i = 0; i < 7; i++) {
-      const date =
-        new Date(
-          weekStart.getTime() +
-            i *
-              24 *
-              60 *
-              60 *
-              1000
-        );
+      const date = new Date(weekStart.getTime() + i * 24 * 60 * 60 * 1000);
 
-      const dateParts =
-        getTashkentDateParts(date);
+      const dateParts = getTashkentDateParts(date);
 
       const dateKey =
         `${dateParts.year}-` +
-        `${String(
-          dateParts.month
-        ).padStart(2, "0")}-` +
-        `${String(
-          dateParts.day
-        ).padStart(2, "0")}`;
+        `${String(dateParts.month).padStart(2, "0")}-` +
+        `${String(dateParts.day).padStart(2, "0")}`;
 
-      weeklyTrend[
-        dayNames[i]
-      ] =
-        revenueByDate[
-          dateKey
-        ] || {
-          total_revenue: 0,
-
-          cash_sale_revenue: 0,
-
-          card_sale_revenue: 0,
-        };
+      weeklyTrend[dayNames[i]] = revenueByDate[dateKey] || {
+        total_revenue: 0,
+        cash_sale_revenue: 0,
+        card_sale_revenue: 0,
+      };
     }
 
-    return res.status(200).json(
-      weeklyTrend
-    );
-
+    return res.status(200).json(weeklyTrend);
   } catch (err) {
-    console.log(
-      "GET WEEKLY TREND ERROR:",
-      err.message
-    );
+    console.log(err.message);
 
     return res.status(500).json({
       message: err.message,
