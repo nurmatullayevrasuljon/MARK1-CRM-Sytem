@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 import '../constants/app_colors.dart';
 import '../providers/theme_provider.dart';
 import '../providers/product_provider.dart';
@@ -766,6 +767,7 @@ class _ProductFormSheet extends StatefulWidget {
 class _ProductFormSheetState extends State<_ProductFormSheet> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameCtrl;
+  late TextEditingController _barcodeCtrl;
   late TextEditingController _buyPriceCtrl;
   late TextEditingController _sellPriceCtrl;
   late TextEditingController _qtyCtrl;
@@ -779,6 +781,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
     super.initState();
     final e = widget.edit;
     _nameCtrl = TextEditingController(text: e?.productName ?? '');
+    _barcodeCtrl = TextEditingController(text: e?.productBarcode ?? '');
     _buyPriceCtrl =
         TextEditingController(text: e?.purchasePrice != null && e!.purchasePrice > 0 ? e.purchasePrice.toString() : '');
     _sellPriceCtrl = TextEditingController(
@@ -794,6 +797,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _barcodeCtrl.dispose();
     _buyPriceCtrl.dispose();
     _sellPriceCtrl.dispose();
     _qtyCtrl.dispose();
@@ -836,6 +840,33 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
               _tf(_nameCtrl, 'Masalan: Pepsi 0.5L', isDark,
                   validator: (v) =>
                       v == null || v.isEmpty ? 'Nom kiriting' : null),
+
+              const SizedBox(height: 12),
+
+              _lbl('Shtrix-kod (Ixtiyoriy)', isDark),
+              _tf(_barcodeCtrl, 'Skanerlang yoki yozing', isDark,
+                  suffix: IconButton(
+                    icon: Icon(Icons.qr_code_scanner_rounded, color: AppColors.primary),
+                    onPressed: () async {
+                      String? res = await SimpleBarcodeScanner.scanBarcode(
+                        context,
+                        barcodeAppBar: const BarcodeAppBar(
+                          appBarTitle: 'Shtrix-kodni skanerlash',
+                          centerTitle: false,
+                          enableBackButton: true,
+                          backButtonIcon: Icon(Icons.arrow_back_ios),
+                        ),
+                        isShowFlashIcon: true,
+                        delayMillis: 2000,
+                        cameraFace: CameraFace.back,
+                      );
+                      if (res != null && res.isNotEmpty && res != '-1') {
+                        setState(() {
+                          _barcodeCtrl.text = res;
+                        });
+                      }
+                    },
+                  )),
 
               const SizedBox(height: 12),
 
@@ -1039,6 +1070,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
     bool isDark, {
     TextInputType? keyboard,
     String? Function(String?)? validator,
+    Widget? suffix,
   }) =>
       TextFormField(
         controller: ctrl,
@@ -1054,6 +1086,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
             color: AppColors.text(isDark), fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
+          suffixIcon: suffix,
           hintStyle: GoogleFonts.inter(
               color: AppColors.textHint(isDark), fontSize: 13),
           filled: true,
@@ -1097,6 +1130,11 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
           double.tryParse(_minQtyCtrl.text.trim()) ?? 0,
       'unit': _unit,
     };
+
+    final barcode = _barcodeCtrl.text.trim();
+    if (barcode.isNotEmpty) {
+      body['product_barcode'] = barcode;
+    }
 
     late ApiResult result;
     if (widget.edit == null) {

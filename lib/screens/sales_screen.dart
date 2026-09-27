@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 import '../constants/app_colors.dart';
 import '../providers/theme_provider.dart';
 import '../providers/sale_provider.dart';
@@ -1079,6 +1080,45 @@ class _ProductStepState extends State<_ProductStep> {
     super.dispose();
   }
 
+  Future<void> _scanBarcode() async {
+    String? res = await SimpleBarcodeScanner.scanBarcode(
+      context,
+      barcodeAppBar: const BarcodeAppBar(
+        appBarTitle: 'Shtrix-kodni skanerlash',
+        centerTitle: false,
+        enableBackButton: true,
+        backButtonIcon: Icon(Icons.arrow_back_ios),
+      ),
+      isShowFlashIcon: true,
+      delayMillis: 2000,
+      cameraFace: CameraFace.back,
+    );
+
+    if (res != null && res.isNotEmpty && res != '-1') {
+      final pp = Provider.of<ProductProvider>(context, listen: false);
+      // Mahalliy qidirish (shu paytgacha yuklanganlar orasidan)
+      final localMatch = pp.products.where((p) => p.productBarcode == res).toList();
+      if (localMatch.isNotEmpty) {
+        widget.onProductSelected(localMatch.first);
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('✅ ${localMatch.first.productName} tanlandi')));
+      } else {
+        // Backenddan qidirish
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Shtrix-kod bazadan izlanmoqda...')));
+        final apiRes = await pp.fetchProductByBarcode(res);
+        if (apiRes.isSuccess && apiRes.data != null) {
+          widget.onProductSelected(apiRes.data!);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('✅ ${apiRes.data!.productName} tanlandi')));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Bu shtrix-kod bo\'yicha mahsulot topilmadi')));
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
@@ -1126,6 +1166,10 @@ class _ProductStepState extends State<_ProductStep> {
                   color: AppColors.textHint(isDark), fontSize: 14),
               prefixIcon: Icon(Icons.search_rounded,
                   color: AppColors.textHint(isDark)),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.qr_code_scanner_rounded, color: AppColors.primary),
+                onPressed: _scanBarcode,
+              ),
               filled: true,
               fillColor: AppColors.bg(isDark),
               border: OutlineInputBorder(

@@ -136,6 +136,28 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
+  Future<ApiResult<ProductModel>> fetchProductByBarcode(String barcode) async {
+    try {
+      final data = await ApiService.get('/product/barcode/$barcode');
+      final productData = data['product'];
+      if (productData != null) {
+        final product = ProductModel.fromJson(productData);
+        // Also add or update the local list so the UI can display it
+        final index = _products.indexWhere((p) => p.id == product.id);
+        if (index >= 0) {
+          _products[index] = product;
+        } else {
+          _products.insert(0, product);
+        }
+        notifyListeners();
+        return ApiResult.success(message: 'Topildi', data: product);
+      }
+      return ApiResult.failure(ApiException('Xato: Mahsulot ma\'lumoti kelmadi'));
+    } on ApiException catch (e) {
+      return ApiResult.failure(e);
+    }
+  }
+
   Future<ApiResult<void>> createProduct(
       Map<String, dynamic> body) async {
     try {
