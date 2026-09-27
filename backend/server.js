@@ -19,11 +19,9 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: [
-      "https://mark1-crm.netlify.app",
-      "http://localhost:5173",
-      "http://localhost:3000",
-    ],
+    origin: function (origin, callback) {
+      callback(null, true);
+    },
     credentials: true,
   }),
 );
