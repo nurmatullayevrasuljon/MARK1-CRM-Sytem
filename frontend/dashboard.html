@@ -347,7 +347,12 @@
               <!-- Mahsulot tanlash -->
               <div class="col-md-3">
                 <label class="form-label small fw-semibold text-uppercase text-muted">Mahsulot</label>
-                <input type="text" id="saleSearch" class="form-control mb-2" style="background: var(--bg-main); border-color: var(--border-subtle); color: var(--text-primary);" placeholder="🔍 Mahsulot qidirish...">
+                <div class="input-group mb-2">
+                  <input type="text" id="saleSearch" class="form-control" style="background: var(--bg-main); border-color: var(--border-subtle); color: var(--text-primary);" placeholder="🔍 Mahsulot qidirish...">
+                  <button class="btn btn-outline-primary" type="button" onclick="startScanner('saleSearch')" title="Kamera orqali skanerlash">
+                    <i class="bi bi-qr-code-scan"></i>
+                  </button>
+                </div>
                 <select id="saleProduct" class="form-select" style="background: var(--bg-main); border-color: var(--border-subtle); color: var(--text-primary);"></select>
               </div>
 
@@ -962,7 +967,12 @@
                   <!-- BARCODE -->
                   <div class="col-md-6 mb-3">
                     <label class="form-label small fw-semibold text-uppercase text-muted">Shtrix-kod <small>(Ixtiyoriy)</small></label>
-                    <input id="productBarcode" class="form-control" placeholder="Skanerlang yoki yozing">
+                    <div class="input-group">
+                      <input id="productBarcode" class="form-control" placeholder="Skanerlang yoki yozing">
+                      <button class="btn btn-outline-primary" type="button" onclick="startScanner('productBarcode')" title="Kamera orqali skanerlash">
+                        <i class="bi bi-qr-code-scan"></i>
+                      </button>
+                    </div>
                   </div>
 
                   <!-- CATEGORY -->
@@ -1107,8 +1117,26 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js?v=1789490310" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js?v=1789490310" defer></script>
   <!-- Theme toggle -->
-  <script src="js/theme-toggle.js?v=1789490310"></script>
+  <!-- Scanner Modal -->
+  <div class="modal fade" id="scannerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="background: var(--bg-surface); border-radius: 16px;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold" style="color: var(--text-primary);">Kamera orqali skanerlash</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Yopish" onclick="stopScanner()"></button>
+        </div>
+        <div class="modal-body text-center">
+          <div id="reader" style="width: 100%; min-height: 300px;"></div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal" onclick="stopScanner()">Yopish</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="js/theme-toggle.js?v=1789490310"></script>
 </body>
 
 </html>

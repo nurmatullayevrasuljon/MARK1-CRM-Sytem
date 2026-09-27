@@ -9218,3 +9218,64 @@ async function loadProfileNew() {
 window.loadProfileNew = loadProfileNew;
 // ✅ FIX 3b: Ikkinchi loadProfileNew() o'chirildi — birinchisini override qilar edi
 // va mavjud bo'lmagan updateProfileStats() → ReferenceError berardi.
+/* ===============================================
+ * KAMERA ORQALI SKANERLASH (html5-qrcode)
+ * =============================================== */
+let html5QrCode;
+let scannerTargetInputId = null;
+
+function startScanner(targetId) {
+  scannerTargetInputId = targetId;
+  const scannerModal = new bootstrap.Modal(document.getElementById('scannerModal'));
+  scannerModal.show();
+
+  // Modal ochilgach kamerani ishga tushirish
+  document.getElementById('scannerModal').addEventListener('shown.bs.modal', function onModalShown() {
+    document.getElementById('scannerModal').removeEventListener('shown.bs.modal', onModalShown);
+    
+    html5QrCode = new Html5Qrcode("reader");
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+    html5QrCode.start(
+      { facingMode: "environment" }, // Orqa kamerani tanlash
+      config,
+      (decodedText, decodedResult) => {
+        // Skanerlandi
+        stopScanner();
+        scannerModal.hide();
+        
+        const targetInput = document.getElementById(scannerTargetInputId);
+        if (targetInput) {
+          targetInput.value = decodedText;
+          // Agar saleSearch bo'lsa, 'Enter' bosilgan holatni simulyatsiya qilamiz
+          if (scannerTargetInputId === 'saleSearch') {
+            const event = new KeyboardEvent('keydown', {
+              key: 'Enter',
+              code: 'Enter',
+              which: 13,
+              keyCode: 13,
+            });
+            targetInput.dispatchEvent(event);
+          }
+        }
+      },
+      (errorMessage) => {
+        // Xatoliklarni e'tiborsiz qoldirish mumkin (kameraga kod tushmagan bo'lsa xato beradi)
+      }
+    ).catch((err) => {
+      console.error("Kamerani ishga tushirishda xatolik:", err);
+      showSaleAlert("Kameraga ruxsat berilmagan yoki xatolik yuz berdi.", "error");
+    });
+  });
+}
+
+function stopScanner() {
+  if (html5QrCode) {
+    html5QrCode.stop().then(() => {
+      html5QrCode.clear();
+      html5QrCode = null;
+    }).catch(err => {
+      console.error("Kamerani to'xtatishda xatolik:", err);
+    });
+  }
+}
