@@ -9329,3 +9329,68 @@ window.sortTable = function(column) {
   
   renderDebtors();
 };
+
+/* ===============================================
+ * KAMERA ORQALI SKANERLASH (html5-qrcode)
+ * =============================================== */
+let html5QrCode;
+let scannerTargetInputId = null;
+
+window.startScanner = function(targetId) {
+  scannerTargetInputId = targetId;
+  // Use jQuery since they use Bootstrap 4 in script.js, or vanilla JS for Bootstrap 5. 
+  // Wait, earlier I used `new bootstrap.Modal`. Let's just use jQuery to be safe.
+  $('#scannerModal').modal('show');
+
+  $('#scannerModal').on('shown.bs.modal', function onModalShown() {
+    $('#scannerModal').off('shown.bs.modal', onModalShown);
+    
+    html5QrCode = new Html5Qrcode("reader");
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+    html5QrCode.start(
+      { facingMode: "environment" },
+      config,
+      (decodedText, decodedResult) => {
+        // Skanerlandi
+        stopScanner();
+        $('#scannerModal').modal('hide');
+        
+        const targetInput = document.getElementById(scannerTargetInputId);
+        if (targetInput) {
+          targetInput.value = decodedText;
+          if (scannerTargetInputId === 'saleSearch') {
+            const event = new KeyboardEvent('keydown', {
+              key: 'Enter',
+              code: 'Enter',
+              which: 13,
+              keyCode: 13,
+            });
+            targetInput.dispatchEvent(event);
+          }
+        }
+      },
+      (errorMessage) => {
+        // xato bo'lsa indamaymiz
+      }
+    ).catch((err) => {
+      console.error("Kamerani ishga tushirishda xatolik:", err);
+      if (typeof showSaleAlert === "function") {
+          showSaleAlert("Kameraga ruxsat berilmagan yoki xatolik yuz berdi.", "error");
+      } else {
+          alert("Kameraga ruxsat berilmagan yoki xatolik yuz berdi.");
+      }
+    });
+  });
+};
+
+window.stopScanner = function() {
+  if (html5QrCode) {
+    html5QrCode.stop().then(() => {
+      html5QrCode.clear();
+      html5QrCode = null;
+    }).catch(err => {
+      console.error("Kamerani to'xtatishda xatolik:", err);
+    });
+  }
+};
