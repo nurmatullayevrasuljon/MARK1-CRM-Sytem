@@ -1,9 +1,21 @@
 const { default: mongoose } = require("mongoose");
 const Product = require("../models/product.model");
 
+// Shtrix-kodni xavfsiz normallashtiradi: har doim string, bo'sh joylar
+// olib tashlanadi, lekin raqamga aylantirilmaydi — shu tufayli boshidagi
+// nollar ("0123456789012" kabi) yo'qolib qolmaydi.
+function normalizeBarcode(value) {
+  if (value === undefined || value === null) return "";
+  return String(value).trim();
+}
+
 exports.createProduct = async (req, res) => {
   try {
     let { product_barcode } = req.body;
+    if (product_barcode !== undefined) {
+      product_barcode = normalizeBarcode(product_barcode);
+      req.body.product_barcode = product_barcode;
+    }
 
     // BUG FIX: bir xil nomli mahsulot bir necha marta kiritilsa, har safar
     // ALOHIDA hujjat yaratilar edi — chunki shtrix-kod tekshiruvi faqat
@@ -89,8 +101,13 @@ exports.createProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    const { product_barcode } = req.body;
+    let { product_barcode } = req.body;
     const { product_id } = req.query;
+
+    if (product_barcode !== undefined) {
+      product_barcode = normalizeBarcode(product_barcode);
+      req.body.product_barcode = product_barcode;
+    }
 
     if (product_barcode) {
       const existingProduct = await Product.findOne({
@@ -275,6 +292,43 @@ exports.getProducts = async (req, res) => {
         total,
         total_pages: Math.ceil(total / perPage),
       },
+    });
+  } catch (err) {
+    console.log(err.message);
+
+    return res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+// YANGI: Shtrix-kod skaneri uchun aniq (exact) qidiruv.
+// Sotuv ekranidagi skanerlash oqimi regex/pagination'li /get o'rniga
+// shu endpointdan foydalanadi — faqat joriy do'kon (store_id) doirasida,
+// aniq moslik bilan. Boshqa do'konning tovari hech qachon qaytarilmaydi.
+exports.getProductByBarcode = async (req, res) => {
+  try {
+    const barcode = normalizeBarcode(req.params.barcode);
+
+    if (!barcode) {
+      return res.status(400).json({
+        message: "Shtrix-kod ko'rsatilmagan",
+      });
+    }
+
+    const product = await Product.findOne({
+      store_id: req.user.store_id,
+      product_barcode: barcode,
+    }).populate("category_id", "category_name");
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Bu shtrix-kod bo'yicha mahsulot topilmadi",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      product,
     });
   } catch (err) {
     console.log(err.message);
