@@ -1611,17 +1611,26 @@ html:not(.dark-mode) .logo img {
 
 /* MODAL / MOBILE CARDS DARK MODE FIXES */
 .dark-mode #productTable tr,
-.dark-mode #transactionsTable tr,
-.dark-mode #salesTable tr {
+.dark-mode #transactionsTableBody tr,
+.dark-mode #salesTable tr,
+.dark-mode #debtorTableBody tr {
   background: var(--bg-card) !important;
   border-color: var(--border-subtle) !important;
   box-shadow: var(--shadow-card) !important;
 }
 
 .dark-mode #productTable td::before,
-.dark-mode #transactionsTable td::before,
-.dark-mode #salesTable td::before {
+.dark-mode #transactionsTableBody td::before,
+.dark-mode #salesTable td::before,
+.dark-mode #debtorTableBody td::before {
   color: var(--text-secondary) !important;
+}
+
+/* Empty states */
+.dark-mode #productTable td,
+.dark-mode #transactionsTableBody td,
+.dark-mode #debtorTableBody td {
+  background: transparent !important;
 }
 
 .dark-mode .mobile-bottom-nav {

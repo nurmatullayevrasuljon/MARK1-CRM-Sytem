@@ -3255,7 +3255,7 @@ body {
 /* Products Table */
 @media (max-width: 767px) {
 
-  #productsSection .table,
+   
   #productsSection thead {
     display: block;
     justify-content: center !important;
