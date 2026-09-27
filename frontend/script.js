@@ -9394,3 +9394,10 @@ window.stopScanner = function() {
     });
   }
 };
+
+// Nested modal fix for Bootstrap 4
+$('#scannerModal').on('hidden.bs.modal', function () {
+  if ($('.modal:visible').length) {
+    $('body').addClass('modal-open');
+  }
+});
