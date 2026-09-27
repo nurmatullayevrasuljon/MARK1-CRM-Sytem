@@ -54,3 +54,16 @@ app.*.map.json
 .claude-flow/data/
 .claude-flow/logs/
 .claude-flow/sessions/
+
+# Media and Builds
+PlayMarket_Tayyor_Fayllar/
+Report-Png/
+debug_info/
+
+# Agent and DB files
+aikoql.redb
+ruvector.db
+.claude-flow/
+.agents/
+.claude/
+.swarm/
