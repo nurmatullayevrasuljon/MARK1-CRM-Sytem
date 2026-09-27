@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="view-transition" content="same-origin">
+  <title>Ro'yxatdan o'tish | Mark1 CRM</title>
+  <link rel="shortcut icon" href="assets/img/b-logo2.png" type="image/x-icon">
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-BXGWP6X57J"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-BXGWP6X57J');
+  </script>
+
+  <!-- Prevent FOUC -->
+  <script>
+    (function () {
+      var t = localStorage.getItem('theme');
+      if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark-mode');
+      }
+    })();
+  </script>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <!-- Premium theme -->
+  <link rel="stylesheet" href="css/premium-theme.css?v=2000">
+
+  <style>
+    /* ── Auth CSS Variables ── */
+    :root {
+      --auth-bg: #f0f2f8;
+      --auth-left-bg: linear-gradient(160deg, #0f1629 0%, #1a2650 50%, #0d1b3e 100%);
+      --auth-card-bg: #ffffff;
+      --auth-card-shadow: 0 4px 6px -1px rgba(0,0,0,.06), 0 24px 48px -8px rgba(0,0,0,.12);
+      --auth-input-bg: #f7f8fb;
+      --auth-input-border: #e2e5ef;
+      --auth-input-focus-border: #5B6AF0;
+      --auth-input-focus-shadow: 0 0 0 3px rgba(91,106,240,.14);
+      --auth-label: #6b7280;
+      --auth-text: #111827;
+      --auth-feature-bg: rgba(255,255,255,.07);
+      --auth-feature-border: rgba(255,255,255,.1);
+      --auth-feature-icon-bg: rgba(91,106,240,.25);
+      --auth-feature-icon-color: #818cf8;
+    }
+    :root.dark-mode {
+      --auth-bg: #0c0f1a;
+      --auth-left-bg: linear-gradient(160deg, #06080f 0%, #0f1629 50%, #080d1a 100%);
+      --auth-card-bg: #141828;
+      --auth-card-shadow: 0 4px 6px -1px rgba(0,0,0,.4), 0 24px 48px -8px rgba(0,0,0,.5);
+      --auth-input-bg: #1c2235;
+      --auth-input-border: #2a3250;
+      --auth-input-focus-border: #818cf8;
+      --auth-input-focus-shadow: 0 0 0 3px rgba(129,140,248,.18);
+      --auth-label: #94a3b8;
+      --auth-text: #f1f5f9;
+    }
+
+    *, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background: var(--auth-bg);
+      transition: background .2s ease;
+    }
+
+    /* ── Layout: Register = form LEFT, features RIGHT ── */
+    .auth-shell {
+      display: flex;
+      flex-direction: row-reverse;
+      min-height: 100vh;
+    }
+
+    /* ── LEFT (Features) PANEL ── */
+    .auth-left {
+      display: none;
+      flex: 0 0 520px;
+      background: var(--auth-left-bg);
+      padding: 48px 56px;
+      position: relative;
+      overflow: hidden;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    @media (min-width: 1024px) { .auth-left { display: flex; } }
+
+    .auth-left::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+    .auth-left::after {
+      content: '';
+      position: absolute;
+      top: -120px;
+      right: -120px;
+      width: 480px;
+      height: 480px;
+      background: radial-gradient(circle, rgba(91,106,240,.22) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .auth-brand { position: relative; z-index: 1; }
+    .auth-brand-logo { width: 220px; margin-left: -8px; display: block; }
+    .auth-brand-tagline {
+      margin-top: 16px;
+      font-size: 15px;
+      line-height: 1.6;
+      color: rgba(255,255,255,.52);
+    }
+
+    .auth-features {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .auth-feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--auth-feature-bg);
+      border: 1px solid var(--auth-feature-border);
+      border-radius: 14px;
+      transition: background .2s, border-color .2s;
+    }
+    .auth-feature-item:hover {
+      background: rgba(255,255,255,.1);
+      border-color: rgba(255,255,255,.15);
+    }
+
+    .auth-feature-icon {
+      flex-shrink: 0;
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: var(--auth-feature-icon-bg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .auth-feature-icon svg { color: var(--auth-feature-icon-color); width: 20px; height: 20px; }
+
+    .auth-feature-text b {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,.9);
+    }
+    .auth-feature-text span {
+      font-size: 13px;
+      color: rgba(255,255,255,.45);
+      line-height: 1.5;
+    }
+
+    .auth-left-footer { position: relative; z-index: 1; }
+    .auth-trust-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 999px;
+      font-size: 12px;
+      color: rgba(255,255,255,.45);
+    }
+    .auth-trust-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 0 3px rgba(52,211,153,.25);
+    }
+
+    /* ── RIGHT (Form) PANEL ── */
+    .auth-right {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--auth-card-bg);
+      border-radius: 24px;
+      box-shadow: var(--auth-card-shadow);
+      padding: 40px;
+      transition: background .2s, box-shadow .2s;
+    }
+
+    .auth-card-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -.035em;
+      color: var(--auth-text);
+      margin-bottom: 6px;
+    }
+    .auth-card-subtitle {
+      font-size: 14px;
+      color: var(--auth-label);
+      margin-bottom: 28px;
+    }
+
+    /* ── Form Fields ── */
+    .field-group { margin-bottom: 16px; }
+    .field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--auth-label);
+      margin-bottom: 7px;
+    }
+    .field-wrap { position: relative; }
+    .field-input {
+      width: 100%;
+      height: 48px;
+      padding: 0 16px;
+      background: var(--auth-input-bg);
+      border: 1.5px solid var(--auth-input-border);
+      border-radius: 12px;
+      font-size: 15px;
+      color: var(--auth-text);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s, background .2s;
+      -webkit-appearance: none;
+    }
+    .field-input::placeholder { color: #adb5c4; }
+    .field-input:focus {
+      border-color: var(--auth-input-focus-border);
+      box-shadow: var(--auth-input-focus-shadow);
+      background: var(--auth-card-bg);
+    }
+    .field-input.is-invalid { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.12); }
+
+    .invalid-feedback {
+      font-size: 12px;
+      color: #ef4444;
+      margin-top: 5px;
+      display: none;
+    }
+    .field-input.is-invalid ~ .invalid-feedback { display: block; }
+
+    /* ── Primary Button ── */
+    .btn-primary-auth {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 50px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      background: #5B6AF0;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background .15s, transform .1s, box-shadow .15s, opacity .2s;
+      box-shadow: 0 2px 8px rgba(91,106,240,.35);
+      margin-bottom: 20px;
+    }
+    .btn-primary-auth:hover:not(:disabled) {
+      background: #4a59e8;
+      box-shadow: 0 4px 16px rgba(91,106,240,.45);
+    }
+    .btn-primary-auth:active:not(:disabled) { transform: scale(.98); }
+    .btn-primary-auth:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+
+    /* ── Terms Row ── */
+    .terms-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .terms-check {
+      width: 16px; height: 16px;
+      margin-top: 2px;
+      accent-color: #5B6AF0;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .terms-label {
+      font-size: 13px;
+      color: var(--auth-label);
+      line-height: 1.5;
+      cursor: pointer;
+    }
+    .terms-label a { color: #5B6AF0; text-decoration: none; font-weight: 500; }
+
+    /* ── Divider ── */
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 4px 0 16px;
+      color: var(--auth-label);
+      font-size: 13px;
+    }
+    .auth-divider::before, .auth-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--auth-input-border);
+    }
+
+    /* ── Google Button ── */
+    .btn-google {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      height: 48px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--auth-text);
+      background: var(--auth-input-bg);
+      border: 1.5px solid var(--auth-input-border);
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      margin-bottom: 20px;
+    }
+    .btn-google:hover {
+      border-color: var(--auth-input-focus-border);
+      background: var(--auth-card-bg);
+    }
+    .btn-google img { width: 20px; height: 20px; object-fit: contain; }
+
+    /* ── Footer link ── */
+    .auth-footer-text {
+      text-align: center;
+      font-size: 13.5px;
+      color: var(--auth-label);
+    }
+    .auth-footer-text a {
+      color: #5B6AF0;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .auth-footer-text a:hover { opacity: .75; }
+
+    /* ── Helper text ── */
+    .form-help {
+      font-size: 12px;
+      color: var(--auth-label);
+      margin-top: 5px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, ::before, ::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="auth-shell">
+
+    <!-- ══════ FEATURES (RIGHT visually, but LEFT in DOM) PANEL ══════ -->
+    <aside class="auth-left">
+      <div class="auth-brand">
+        <img class="auth-brand-logo" src="assets/img/brand-l.png" alt="Mark1 CRM">
+        <p class="auth-brand-tagline">Savdo, mahsulotlar va mijozlaringizni<br>samarali boshqaring</p>
+      </div>
+
+      <div class="auth-features">
+        <div class="auth-feature-item">
+          <div class="auth-feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <div class="auth-feature-text">
+            <b>Real vaqt rejimida savdo tahlili</b>
+            <span>Kundalik daromad va tranzaksiyalarni kuzatib boring</span>
+          </div>
+        </div>
+
+        <div class="auth-feature-item">
+          <div class="auth-feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+              <line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
+          </div>
+          <div class="auth-feature-text">
+            <b>Inventarizatsiyani boshqarish</b>
+            <span>Ombor va mahsulot operatsiyalarini kuzatib boring</span>
+          </div>
+        </div>
+
+        <div class="auth-feature-item">
+          <div class="auth-feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+          </div>
+          <div class="auth-feature-text">
+            <b>Qarzlar va to'lovlarni nazorat qilish</b>
+            <span>To'lovlar va muddatlarni kuzatib boring</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-left-footer">
+        <span class="auth-trust-badge">
+          <span class="auth-trust-dot"></span>
+          Xavfsiz va shifrlangan ulanish
+        </span>
+      </div>
+    </aside>
+
+    <!-- ══════ FORM (LEFT visually) PANEL ══════ -->
+    <main class="auth-right">
+      <div class="auth-card">
+        <h1 class="auth-card-title">Hisob yaratish</h1>
+        <p class="auth-card-subtitle">Bugun bizning CRM platformamizga qo'shiling</p>
+
+        <form id="signupForm" novalidate>
+          <!-- Full name -->
+          <div class="field-group">
+            <label class="field-label" for="firstName">To'liq ism</label>
+            <input id="firstName" name="firstName" class="field-input"
+              required minlength="3" placeholder="To'liq ism" autocomplete="name">
+            <div class="invalid-feedback">Iltimos ismingizni kiriting.</div>
+          </div>
+
+          <!-- Phone -->
+          <div class="field-group">
+            <label class="field-label" for="phone">Telefon raqam</label>
+            <input id="phone" name="phone" type="tel" class="field-input"
+              required placeholder="+998 90 123 45 67" maxlength="13" autocomplete="tel">
+            <div class="invalid-feedback">Iltimos telefon raqam kiriting.</div>
+          </div>
+
+          <!-- Store name -->
+          <div class="field-group">
+            <label class="field-label" for="storeName">Do'kon nomi</label>
+            <input id="storeName" name="storeName" class="field-input"
+              required minlength="2" placeholder="Do'kon nomi">
+            <div class="invalid-feedback">Iltimos do'kon nomini kiriting.</div>
+          </div>
+
+          <!-- Password -->
+          <div class="field-group">
+            <label class="field-label" for="password">Parol</label>
+            <input id="password" name="password" type="password" class="field-input"
+              required minlength="6" placeholder="Kamida 6 ta belgi" autocomplete="new-password">
+            <p class="form-help">Kamida 6 ta belgi</p>
+            <div class="invalid-feedback">Kamida 6 ta belgidan iborat parol kiriting.</div>
+          </div>
+
+          <!-- Terms -->
+          <div class="terms-row">
+            <input id="terms" type="checkbox" class="terms-check" required>
+            <label for="terms" class="terms-label">
+              Hisob yaratish orqali men
+              <a href="#">Foydalanish shartlari</a> va
+              <a href="#">Maxfiylik siyosati</a>ga roziman
+            </label>
+          </div>
+
+          <!-- Submit -->
+          <button id="createBtn" class="btn-primary-auth" type="submit" disabled>
+            Yangi hisob yaratish
+          </button>
+
+          <!-- Divider -->
+          <div class="auth-divider">Yoki</div>
+
+          <!-- Google -->
+          <button id="googleBtn" type="button" class="btn-google">
+            <img src="assets/img/flat-color-icons_google.png" alt="Google">
+            Google orqali kirish
+          </button>
+
+          <!-- Footer -->
+          <p class="auth-footer-text">
+            <a href="login.html">Hisobingiz bormi? Kirish</a>
+          </p>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/api-client.js?v=800"></script>
+  <script src="js/auth-ui.js?v=800"></script>
+  <script src="js/theme-toggle.js?v=3"></script>
+
+  <!-- Smooth page transition with loading animation -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var shell = document.querySelector('.auth-shell');
+
+      // Enter animation
+      if (shell) {
+        shell.style.opacity = '0';
+        shell.style.transform = 'translateX(30px)';
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            shell.style.transition = 'transform 0.45s cubic-bezier(0.2,0.8,0.2,1), opacity 0.45s ease-out';
+            shell.style.opacity = '1';
+            shell.style.transform = 'translateX(0)';
+          });
+        });
+      }
+
+      // Exit animation with loading indicator on clicked link
+      document.querySelectorAll('a[href="login.html"]').forEach(function (link) {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          // Show spinner on the link
+          link.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" style="animation:spin .7s linear infinite;transform-origin:center"/></svg>Yuklanmoqda...</span>';
+          link.style.pointerEvents = 'none';
+          link.style.opacity = '0.7';
+          if (shell) {
+            shell.style.transition = 'transform 0.35s cubic-bezier(0.4,0,1,1), opacity 0.35s ease-in';
+            shell.style.opacity = '0';
+            shell.style.transform = 'translateX(30px)';
+          }
+          setTimeout(function () { window.location.href = 'login.html'; }, 350);
+        });
+      });
+    });
+  </script>
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</body>
+</html>

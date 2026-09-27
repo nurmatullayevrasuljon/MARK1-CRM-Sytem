@@ -1,0 +1,23 @@
+App Name:
+MARK1 CRM
+
+Short Description (Max 80 chars):
+Sizning biznesingiz va savdo guruhlaringiz uchun mukammal mobil CRM tizimi.
+
+Full Description:
+MARK1 CRM — kompaniyangizdagi mijozlar va savdo jarayonlarini boshqarish uchun eng qulay va to'liq avtomatlashtirilgan mobil ilova.
+Bu ilova orqali siz mijozlaringiz bilan munosabatlarni (CRM) yangi bosqichga olib chiqa olasiz, sotuvlarni ko'paytirasiz va ish samaradorligini keskin oshirasiz!
+
+ASOSIY IMKONIYATLAR:
+👥 Mijozlar Boshqaruvi: Barcha mijozlaringiz haqida ma'lumotlar, aloqa tarixi va buyurtmalarni bir joyda xavfsiz saqlang.
+📊 Savdo Tahlillari: Qulay va tushunarli grafiklar, statistika va hisobotlar orqali biznesingiz qanday o'sayotganini kunlik kuzatib boring.
+✅ Vazifalar va Bildirishnomalar: Jamoangizga vazifalar belgilang, muddatlarni kuzating va o'z vaqtida eslatmalar oling.
+🎨 Chiroyli va Qulay Dizayn: Ilovadan foydalanish juda onson. Qorong'u (Dark mode) va Yorug' (Light mode) rejimlar yordamida ishlash yanada yoqimli.
+🔒 Yuqori Xavfsizlik: Barcha ma'lumotlaringiz shifrlangan va himoyalangan.
+👥 Ko'p Foydalanuvchili Tizim: Admin, menejer va xodimlar uchun alohida ruxsat darajalari (rollar) mavjud.
+
+MARK1 CRM — kichik va o'rta bizneslar, savdo agentlari va do'konlar uchun eng maqbul yechim. Biznesingizni bugundan boshlab rasmda emas, real tarzda raqamlashtiring!
+
+Bog'lanish uchun:
+Veb-sayt: http://mark1.uz
+Texnik yordam: admin@mark1.uz

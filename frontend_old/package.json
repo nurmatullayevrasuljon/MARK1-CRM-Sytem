@@ -1,0 +1,12 @@
+{
+  "name": "markcrm-frontend",
+  "version": "1.0.0",
+  "description": "Vanilla HTML/JS/CSS Frontend for MarkCRM",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 3000",
+    "dev": "python3 -m http.server 3000"
+  },
+  "author": "",
+  "license": "ISC"
+}
