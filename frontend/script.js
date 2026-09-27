@@ -213,6 +213,7 @@ const sections = document.querySelectorAll(".section");
 const pageTitle = document.getElementById("pageTitle");
 
 function openPage(pageId, titleText) {
+  if(typeof $ !== "undefined") { $(".modal").modal("hide"); }
   const targetSection = document.getElementById(pageId) || document.getElementById("dashboard");
   if (!targetSection) return;
 
@@ -1517,6 +1518,8 @@ if (productForm) {
         const result = await AuthSystem.updateProduct(editingId, payload);
 
         if (!result || !result.success) {
+          if(window.setBtnLoading) window.setBtnLoading(submitBtn, false);
+          if(window.setBtnLoading) window.setBtnLoading(submitBtn, false);
           alert(result?.backendMessage || "Mahsulotni saqlashda xatolik yuz berdi");
           return;
         }
@@ -1534,10 +1537,12 @@ if (productForm) {
         showSaleAlert("Mahsulot qo'shildi!", "success");
       }
 
+      if(window.setBtnLoading) window.setBtnLoading(submitBtn, false);
       await apiLoadProducts();
       $("#productModal").modal("hide");
       productForm.reset();
     } catch (error) {
+      if(window.setBtnLoading) window.setBtnLoading(submitBtn, false);
       console.error(error);
       alert(getApiErrorMessage(error, "Mahsulotni saqlashda xatolik yuz berdi"));
     }
@@ -6329,6 +6334,7 @@ const MOBILE_PAGE_KEY = 'activeMobileSection';
 
 document.querySelectorAll('.mobile-bottom-nav button').forEach(btn => {
   btn.addEventListener('click', () => {
+    if(typeof $ !== "undefined") { $(".modal").modal("hide"); }
     const target = btn.dataset.target;
     if (!target) return;
 
