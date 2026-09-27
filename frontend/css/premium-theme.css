@@ -1608,3 +1608,30 @@ html:not(.dark-mode) .logo img {
 .modal-debtors.show {
   display: flex !important;
 }
+
+/* MODAL / MOBILE CARDS DARK MODE FIXES */
+.dark-mode #productTable tr,
+.dark-mode #transactionsTable tr,
+.dark-mode #salesTable tr {
+  background: var(--bg-card) !important;
+  border-color: var(--border-subtle) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.dark-mode #productTable td::before,
+.dark-mode #transactionsTable td::before,
+.dark-mode #salesTable td::before {
+  color: var(--text-secondary) !important;
+}
+
+.dark-mode .mobile-bottom-nav {
+  background: var(--bg-sidebar) !important;
+  border-top-color: var(--border-subtle) !important;
+}
+.dark-mode .mobile-bottom-nav button {
+  color: var(--text-secondary);
+}
+.dark-mode .mobile-bottom-nav button.active {
+  color: var(--brand-primary);
+  background: rgba(108, 123, 247, 0.1);
+}
