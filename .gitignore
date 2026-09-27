@@ -67,3 +67,9 @@ ruvector.db
 .agents/
 .claude/
 .swarm/
+
+# Unused Flutter platforms
+windows/
+macos/
+linux/
+web/
