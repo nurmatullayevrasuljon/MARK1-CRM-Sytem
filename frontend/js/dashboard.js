@@ -1368,6 +1368,7 @@ function getStockUI(product) {
 =============================================== */
 const productForm = document.getElementById("productForm");
 const productName = document.getElementById("productName");
+const productBarcode = document.getElementById("productBarcode");
 const productImage = document.getElementById("productImage");
 const productPrice = document.getElementById("productPrice");
 const productCurrency = document.getElementById("productCurrency");
@@ -1390,6 +1391,7 @@ if (openProductModal) {
     renderCategories();
     productUnit.value = "ta";
     productStock.value = "";
+    if (productBarcode) productBarcode.value = "";
     $("#productModal").modal("show");
   });
 }
@@ -1499,6 +1501,13 @@ if (productForm) {
         payload.images = [imageUrl];
       }
 
+      // Shtrix-kod ixtiyoriy — bo'sh qiymat yuborilmaydi,
+      // shunda backenddagi AUTO-* generatsiya ishlashda davom etadi.
+      const barcodeInputValue = productBarcode ? productBarcode.value.trim() : "";
+      if (barcodeInputValue) {
+        payload.product_barcode = barcodeInputValue;
+      }
+
       if (editingId) {
         const result = await AuthSystem.updateProduct(editingId, payload);
 
@@ -1536,6 +1545,7 @@ function editProduct(id) {
 
   editingId = id;
   productName.value = p.name;
+  if (productBarcode) productBarcode.value = p.barcode || "";
   document.getElementById("productCostPrice").value = p.costPrice || 0;
   productPrice.value = p.price;
   productCurrency.value = p.currency;
@@ -2030,6 +2040,58 @@ if (saleSearch) {
       p.name.toLowerCase().includes(value)
     );
     renderSaleProducts(filtered);
+  });
+
+  // YANGI: Shtrix-kod skaneri qo'llab-quvvatlash.
+  saleSearch.addEventListener("keydown", async e => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+
+    const scannedBarcode = saleSearch.value.trim();
+    if (!scannedBarcode) return;
+
+    // 1) Avval mahalliy `products` massividan aniq moslik qidiramiz
+    let matchedProduct = products.find(p => p.barcode === scannedBarcode);
+
+    // 2) Topilmasa, backenddan aniq shtrix-kod bo'yicha qidiramiz
+    if (!matchedProduct && !OFFLINE_DATA_MODE && window.crmApi) {
+      try {
+        const res = await window.crmApi.get(
+          `/product/barcode/${encodeURIComponent(scannedBarcode)}`
+        );
+        const rawProduct = res?.data?.product;
+        if (rawProduct) {
+          matchedProduct = mapApiProduct(rawProduct);
+          const existingIndex = products.findIndex(p => p.id === matchedProduct.id);
+          if (existingIndex >= 0) {
+            products[existingIndex] = matchedProduct;
+          } else {
+            products.push(matchedProduct);
+          }
+        }
+      } catch (err) {
+        if (err?.response?.status !== 404) {
+          console.error("Shtrix-kod qidirishda xatolik:", err);
+        }
+      }
+    }
+
+    if (!matchedProduct) {
+      showSaleAlert("Bu shtrix-kod bo'yicha mahsulot topilmadi.", "error");
+      return;
+    }
+
+    renderSaleProducts(products);
+    saleProduct.value = matchedProduct.id;
+    updateSaleFields();
+
+    saleSearch.value = "";
+    if (saleQty) {
+      saleQty.value = "1";
+      saleQty.focus();
+    }
+
+    showSaleAlert(`✅ ${matchedProduct.name} tanlandi`, "success");
   });
 }
 
