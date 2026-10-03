@@ -1,0 +1,91 @@
+/* ==================================================
+   MARK1 CRM — TUNGI (DARK) MAVZU
+   <html> da .dark-mode class bo'lsa yoqiladi.
+   Boshqarish: js/theme-toggle.js (suzuvchi tugma) yoki
+   Sozlamalar → "Qorong'i rejim" togglesi.
+================================================== */
+
+html.dark-mode {
+  color-scheme: dark;
+
+  /* Debtor jadvalidagi nom rangi uchun o'zgaruvchi */
+  --debtor-name-color: #f1f5f9;
+
+  /* Toast tizimi uchun o'zgaruvchilar — premium-theme.css 
+     allaqachon asosiy dizayn tokenlarini belgilaydi, 
+     faqat toast-specific qo'shimchalar */
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, .55);
+}
+
+
+
+
+
+
+
+/* --- Yon panel (sidebar) --- */
+html.dark-mode .sidebar {
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-subtle);
+}
+
+html.dark-mode .nav-item {
+  color: #c3cbe0;
+}
+
+html.dark-mode .nav-item:hover,
+html.dark-mode .nav-item.active {
+  background: #1a2342;
+  color: #fff;
+}
+
+/* --- Kartalar, panellar --- 
+   premium-theme.css allaqachon --bg-card, --text-primary, 
+   --border-subtle bilan boshqaradi */
+
+
+
+html.dark-mode .theme-toggle-btn {
+  background: var(--bg-hover);
+  border-color: var(--border-subtle);
+}
+
+html.dark-mode .theme-toggle-btn:hover {
+  background: var(--border-subtle);
+}
+
+
+
+
+
+
+
+/* --- Jadvallar --- */
+html.dark-mode .table-danger {
+  background: rgba(220, 38, 38, .12) !important;
+}
+
+/* --- Formalar --- premium-theme.css allaqachon --bg-surface, --border-subtle bilan boshqaradi */
+
+
+
+/* --- Tugmalar --- premium-theme.css allaqachon boshqaradi */
+
+/* --- Modallar --- premium-theme.css allaqachon boshqaradi */
+
+/* --- Statistika kartalari --- premium-theme.css semantic colors ishlatadi */
+
+/* --- Kam zaxira kartalari --- */
+
+/* --- Qarzdorlar bo'limi --- premium-theme.css boshqaradi */
+
+/* --- Sozlamalar --- premium-theme.css boshqaradi */
+
+/* --- Profil dropdown --- premium-theme.css boshqaradi */
+
+/* --- Ogohlantirishlar --- */
+
+/* --- Sale alerts --- */
+
+/* --- Mobil pastki navigatsiya --- 
+   premium-theme.css dashboard-layout.css bilan boshqaradi */

@@ -1,0 +1,12 @@
+--- /home/SardorDev2010/Desktop/markcrm/frontend/auth.js
++++ /home/SardorDev2010/Desktop/markcrm/frontend/auth.js
+@@ -1017,7 +1017,7 @@
+     protectPage: function () {
+       const page = window.location.pathname.split("/").pop().toLowerCase();
+-      const publicPages = ["/signup", "/login", "/"];
++      const publicPages = ["signup", "login", "landing", ""];
+       if (!publicPages.includes(page) && !this.isSessionValid()) {
+-        window.location.href = "/";
++        window.location.href = "/login";
+         return false;
+       }

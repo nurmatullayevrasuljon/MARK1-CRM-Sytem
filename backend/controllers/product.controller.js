@@ -1,10 +1,38 @@
 const { default: mongoose } = require("mongoose");
 const Product = require("../models/product.model");
 
+<<<<<<< HEAD
 exports.createProduct = async (req, res) => {
   try {
     let { product_barcode } = req.body;
 
+=======
+// Shtrix-kodni xavfsiz normallashtiradi: har doim string, bo'sh joylar
+// olib tashlanadi, lekin raqamga aylantirilmaydi — shu tufayli boshidagi
+// nollar ("0123456789012" kabi) yo'qolib qolmaydi.
+function normalizeBarcode(value) {
+  if (value === undefined || value === null) return "";
+  return String(value).trim();
+}
+
+exports.createProduct = async (req, res) => {
+  try {
+    let { product_barcode } = req.body;
+    if (product_barcode !== undefined) {
+      product_barcode = normalizeBarcode(product_barcode);
+      req.body.product_barcode = product_barcode;
+    }
+
+    // BUG FIX: bir xil nomli mahsulot bir necha marta kiritilsa, har safar
+    // ALOHIDA hujjat yaratilar edi — chunki shtrix-kod tekshiruvi faqat
+    // foydalanuvchi o'zi shtrix-kod kiritganda ishlaydi, avtomatik
+    // generatsiya qilinganda esa har safar BOSHQACHA (vaqt+tasodifiy son)
+    // bo'lgani uchun hech qachon mos kelmasdi. Endi mahsulot qo'shishdan
+    // oldin xuddi shu nom (katta-kichik harfga qaramay) + xuddi shu
+    // kategoriya bo'yicha mavjud mahsulot borligini tekshiramiz — bo'lsa,
+    // yangi hujjat yaratmasdan, MAVJUDINING miqdorini oshiramiz (qayta
+    // kirim/restock), narxlarini esa yangi kiritilgan qiymatga yangilaymiz.
+>>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
     if (req.body.product_name && req.body.category_id) {
       const duplicateProduct = await Product.findOne({
         store_id: req.user.store_id,
@@ -46,6 +74,10 @@ exports.createProduct = async (req, res) => {
       }
     }
 
+<<<<<<< HEAD
+=======
+    // Shtrix-kod frontend tomonidan yuborilmasa, avtomatik generatsiya qilamiz
+>>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
     if (!product_barcode) {
       product_barcode = `AUTO-${Date.now()}-${Math.floor(
         Math.random() * 10000,
@@ -79,9 +111,20 @@ exports.createProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
+<<<<<<< HEAD
     const { product_barcode } = req.body;
     const { product_id } = req.query;
 
+=======
+    let { product_barcode } = req.body;
+    const { product_id } = req.query;
+
+    if (product_barcode !== undefined) {
+      product_barcode = normalizeBarcode(product_barcode);
+      req.body.product_barcode = product_barcode;
+    }
+
+>>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
     if (product_barcode) {
       const existingProduct = await Product.findOne({
         product_barcode,
@@ -274,3 +317,43 @@ exports.getProducts = async (req, res) => {
     });
   }
 };
+<<<<<<< HEAD
+=======
+// YANGI: Shtrix-kod skaneri uchun aniq (exact) qidiruv.
+// Sotuv ekranidagi skanerlash oqimi regex/pagination'li /get o'rniga
+// shu endpointdan foydalanadi — faqat joriy do'kon (store_id) doirasida,
+// aniq moslik bilan. Boshqa do'konning tovari hech qachon qaytarilmaydi.
+exports.getProductByBarcode = async (req, res) => {
+  try {
+    const barcode = normalizeBarcode(req.params.barcode);
+
+    if (!barcode) {
+      return res.status(400).json({
+        message: "Shtrix-kod ko'rsatilmagan",
+      });
+    }
+
+    const product = await Product.findOne({
+      store_id: req.user.store_id,
+      product_barcode: barcode,
+    }).populate("category_id", "category_name");
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Bu shtrix-kod bo'yicha mahsulot topilmadi",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      product,
+    });
+  } catch (err) {
+    console.log(err.message);
+
+    return res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+>>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379

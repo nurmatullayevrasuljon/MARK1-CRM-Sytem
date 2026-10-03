@@ -173,7 +173,10 @@
  *       - Store Auth
  *     summary: Login store
  *     operationId: storeSignin
+<<<<<<< HEAD
  *
+=======
+>>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
  *     description: |
  *       Login to the store account.
  *
@@ -570,6 +573,7 @@
  *             example:
  *               message: Internal server error
  */
+<<<<<<< HEAD
 
 /**
  * @swagger
@@ -610,3 +614,5 @@
  *       500:
  *         description: Internal server error.
  */
+=======
+>>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379

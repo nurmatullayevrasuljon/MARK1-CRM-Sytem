@@ -12,7 +12,10 @@ const productRoutes = require("./product.routes");
 const clientRoutes = require("./client.routes");
 const saleRoutes = require("./sale.routes");
 const debtRoutes = require("./debt.routes");
+<<<<<<< HEAD
 const aiRoutes = require("./ai.routes");
+=======
+>>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
 const statisticsRoutes = require("./statistics.route");
 const { checkRole } = require("../middlewares/role.middleware");
 
@@ -25,7 +28,10 @@ router.use("/product", authMiddleware, productRoutes);
 router.use("/client", authMiddleware, clientRoutes);
 router.use("/sale", authMiddleware, saleRoutes);
 router.use("/debt", authMiddleware, debtRoutes);
+<<<<<<< HEAD
 router.use("/ai", authMiddleware, checkRole(["ceo"]), aiRoutes);
+=======
+>>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
 router.use(
   "/statistics",
   authMiddleware,

@@ -152,10 +152,13 @@ exports.getUserByPhone = async (req, res) => {
 exports.signinUser = async (req, res) => {
   try {
     const { user_phone, password } = req.body;
+<<<<<<< HEAD
     const type =
       req.headers["client-platform-type"]?.toLowerCase() === "mobile"
         ? "mobile"
         : "web";
+=======
+>>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
     const user = await User.findOne({ user_phone });
     if (!user) {
       return res
@@ -163,6 +166,10 @@ exports.signinUser = async (req, res) => {
         .json({ message: "Telefon raqam bo'yicha xodim topilmadi" });
     }
 
+<<<<<<< HEAD
+=======
+    // const isMatch = bcrypt.compare(password, user.password);
+>>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
     const isMatch = password.toString() === user.password;
 
     if (!isMatch) {
@@ -181,6 +188,7 @@ exports.signinUser = async (req, res) => {
       role: user.role,
     });
 
+<<<<<<< HEAD
     if (type === "web") {
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
@@ -190,11 +198,23 @@ exports.signinUser = async (req, res) => {
         path: "/api/auth/user/refresh",
       });
     }
+=======
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true, // FIX: Render odatda NODE_ENV=production'ni avtomatik o'rnatmaydi; shu sabab avvalgi shart doim false bo'lib, SameSite=None cookie brauzer tomonidan RAD ETILAR edi (refresh token hech qachon saqlanmasdi)
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/api/auth/user/refresh",
+    });
+>>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
 
     res.status(200).json({
       message: "Hisobga kirish muvaffaqiyatli",
       access_token: accessToken,
+<<<<<<< HEAD
       ...(type === "mobile" && { refresh_token: refreshToken }),
+=======
+>>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
     });
   } catch (err) {
     console.log(err.message);
@@ -248,4 +268,8 @@ exports.refreshUser = async (req, res) => {
     console.log(err.message);
     return res.status(500).json({ message: err.message });
   }
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
