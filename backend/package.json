@@ -24,10 +24,8 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "luxon": "^3.7.2",
-<<<<<<< HEAD
-=======
+
     "mongodb-memory-server": "^11.2.0",
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
     "mongoose": "^9.9.1",
     "multer": "^2.2.0",
     "node-cron": "^4.6.0",

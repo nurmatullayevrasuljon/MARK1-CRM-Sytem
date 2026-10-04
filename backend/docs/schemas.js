@@ -15,9 +15,9 @@ module.exports = {
     },
   },
   schemas: {
-    /* ===========================
+    /* ======
             STORE AUTH
-    ============================ */
+     */
 
     StoreSignup: {
       type: "object",
@@ -117,7 +117,6 @@ module.exports = {
       },
     },
 
-<<<<<<< HEAD
     ResendOtp: {
       type: "object",
       required: ["ceo_phone"],
@@ -129,11 +128,9 @@ module.exports = {
       },
     },
 
-=======
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
-    /* ===========================
+    /* ======
               USER
-    ============================ */
+     */
 
     UserSignin: {
       type: "object",
@@ -238,9 +235,9 @@ module.exports = {
       },
     },
 
-    /* ===========================
+    /* ======
              CATEGORY
-    ============================ */
+     */
 
     Category: {
       type: "object",
@@ -292,9 +289,9 @@ module.exports = {
       },
     },
 
-    /* ===========================
+    /* ======
              STATISTICS
-    ============================ */
+     */
 
     Statistics: {
       type: "object",
@@ -415,9 +412,9 @@ module.exports = {
       },
     },
 
-    /* ===========================
+    /* ======
              DEBT
-    ============================ */
+     */
 
     Debt: {
       type: "object",
@@ -557,9 +554,9 @@ module.exports = {
       },
     },
 
-    /* ===========================
+    /* ======
              PRODUCT
-    ============================ */
+     */
 
     Product: {
       type: "object",
@@ -713,9 +710,9 @@ module.exports = {
       },
     },
 
-    /* ===========================
+    /* ======
              STORE
-    ============================ */
+     */
 
     Store: {
       type: "object",
@@ -776,9 +773,9 @@ module.exports = {
       },
     },
 
-    /* ===========================
+    /* ======
                FILE
-    ============================ */
+     */
 
     File: {
       type: "object",
@@ -823,9 +820,9 @@ module.exports = {
       },
     },
 
-    /* ===========================
+    /* ======
             RESPONSES
-    ============================ */
+     */
 
     SignupResponse: {
       type: "object",
@@ -862,14 +859,11 @@ module.exports = {
           type: "string",
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxxxx",
         },
-<<<<<<< HEAD
         refresh_token: {
           type: "string",
           description: "Faqat client-platform-type: mobile bo'lganda qaytadi",
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
         },
-=======
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
       },
     },
 
@@ -940,9 +934,9 @@ module.exports = {
         },
       },
     },
-    /* ===========================
+    /* ======
              CLIENT
-    ============================ */
+     */
 
     Client: {
       type: "object",
@@ -991,9 +985,9 @@ module.exports = {
       },
     },
 
-    /* ===========================
+    /* ======
               SALE
-    ============================ */
+     */
 
     SaleProductInput: {
       type: "object",
@@ -1059,7 +1053,6 @@ module.exports = {
       },
     },
 
-<<<<<<< HEAD
     CreateSaleInput: {
       type: "object",
       required: ["products"],
@@ -1110,58 +1103,57 @@ module.exports = {
         },
       },
     },
-=======
-CreateSaleInput: {
-  type: "object",
-  required: ["products"],
-  properties: {
-    products: {
-      type: "array",
-      items: {
-        $ref: "#/components/schemas/SaleProductInput",
+
+    CreateSaleInput: {
+      type: "object",
+      required: ["products"],
+      properties: {
+        products: {
+          type: "array",
+          items: {
+            $ref: "#/components/schemas/SaleProductInput",
+          },
+          description:
+            "Mahsulotlar ro'yxati. opening_record berilgan bo'lsa, bu maydon e'tiborga olinmaydi va bo'sh massiv sifatida saqlanadi",
+        },
+        paid_by_cash: {
+          type: "number",
+          default: 0,
+          description: "Naqd to'langan summa",
+          example: 10000,
+        },
+        paid_by_card: {
+          type: "number",
+          default: 0,
+          description: "Karta orqali to'langan summa",
+          example: 0,
+        },
+        client_id: {
+          type: "string",
+          nullable: true,
+          example: "68922f5e7d82d8c2d5e4c123",
+        },
+        due_date: {
+          type: "string",
+          format: "date-time",
+          nullable: true,
+          description: "Qarz uchun to'lov muddati",
+          example: "2026-09-05T00:00:00.000Z",
+        },
+        note: {
+          type: "string",
+          nullable: true,
+          example: "Chegirma bilan sotildi",
+        },
+        opening_record: {
+          type: "number",
+          default: 0,
+          description:
+            "Eski tizimdan ko'chirilgan boshlang'ich qarz summasi (Opening Balance). 0 dan katta bo'lsa, sotuv oddiy mahsulot-sotuv sifatida emas, balki faqat qarz yozuvi sifatida yaratiladi (products bo'sh, total_price va total_remaining shu qiymatga teng bo'ladi)",
+          example: 150000,
+        },
       },
-      description:
-        "Mahsulotlar ro'yxati. opening_record berilgan bo'lsa, bu maydon e'tiborga olinmaydi va bo'sh massiv sifatida saqlanadi",
     },
-    paid_by_cash: {
-      type: "number",
-      default: 0,
-      description: "Naqd to'langan summa",
-      example: 10000,
-    },
-    paid_by_card: {
-      type: "number",
-      default: 0,
-      description: "Karta orqali to'langan summa",
-      example: 0,
-    },
-    client_id: {
-      type: "string",
-      nullable: true,
-      example: "68922f5e7d82d8c2d5e4c123",
-    },
-    due_date: {
-      type: "string",
-      format: "date-time",
-      nullable: true,
-      description: "Qarz uchun to'lov muddati",
-      example: "2026-09-05T00:00:00.000Z",
-    },
-    note: {
-      type: "string",
-      nullable: true,
-      example: "Chegirma bilan sotildi",
-    },
-    opening_record: {
-      type: "number",
-      default: 0,
-      description:
-        "Eski tizimdan ko'chirilgan boshlang'ich qarz summasi (Opening Balance). 0 dan katta bo'lsa, sotuv oddiy mahsulot-sotuv sifatida emas, balki faqat qarz yozuvi sifatida yaratiladi (products bo'sh, total_price va total_remaining shu qiymatga teng bo'ladi)",
-      example: 150000,
-    },
-  },
-},
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
 
     AddPaymentInput: {
       type: "object",
@@ -1257,6 +1249,84 @@ CreateSaleInput: {
           type: "string",
           format: "date-time",
         },
+      },
+    },
+    AiOverview: {
+      type: "object",
+      properties: {
+        _id: { type: "string", example: "66f9c1a2b3c4d5e6f7a8b9c0" },
+        store_id: { type: "string", example: "66f9a0a1b2c3d4e5f6a7b8c9" },
+        period: { type: "string", enum: ["daily"], example: "daily" },
+        date: {
+          type: "string",
+          format: "date-time",
+          description: "Tanlangan kun boshi (UTC+5 bo'yicha, UTC momentida)",
+          example: "2026-09-28T19:00:00.000Z",
+        },
+        sales: {
+          type: "object",
+          properties: {
+            revenue: { type: "number", example: 1200000 },
+            yesterday_revenue: { type: "number", example: 950000 },
+            last_7_days_average: { type: "number", example: 1000000 },
+            profit: { type: "number", example: 300000 },
+            transactions: { type: "integer", example: 14 },
+          },
+        },
+        debts: {
+          type: "object",
+          properties: {
+            new_debt: { type: "number", example: 200000 },
+            collected: { type: "number", example: 150000 },
+            overdue: { type: "number", example: 500000 },
+            overdue_clients: { type: "integer", example: 3 },
+          },
+        },
+        inventory: {
+          type: "object",
+          properties: {
+            low_stock_count: { type: "integer", example: 4 },
+            inventory_value: { type: "number", example: 25000000 },
+          },
+        },
+        top_products: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              product_id: {
+                type: "string",
+                example: "66f9b1a2b3c4d5e6f7a8b9c1",
+              },
+              quantity_sold: { type: "number", example: 12 },
+              revenue: { type: "number", example: 480000 },
+            },
+          },
+        },
+        slow_products: {
+          type: "array",
+          description: "Eng uzoq sotilmagan mahsulotlar (ko'pi bilan 5 ta)",
+          items: {
+            type: "object",
+            properties: {
+              product_id: {
+                type: "string",
+                example: "66f9b1a2b3c4d5e6f7a8b9c2",
+              },
+              days_without_sale: { type: "integer", example: 32 },
+              stock: { type: "number", example: 20 },
+              stock_value: { type: "number", example: 600000 },
+            },
+          },
+        },
+        ai_overview: {
+          type: "string",
+          description: "AI tomonidan shablon asosida yozilgan tahliliy matn",
+          example:
+            "29-sentabr kungi biznes tahlili: Savdo oldingi kunga nisbatan 26% oshdi. ... Tavsiya: uzoq sotilmagan mahsulotlarga chegirma qilish.",
+        },
+        createdAt: { type: "string", format: "date-time" },
+        updatedAt: { type: "string", format: "date-time" },
       },
     },
   },

@@ -84,7 +84,5 @@
  *       401:
  *         description: Unauthorized
  */
-<<<<<<< HEAD
 
-=======
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
+

@@ -21,14 +21,12 @@ const ProductSchema = new mongoose.Schema(
     selling_price: { type: Number, default: 0 },
     quantity: { type: Number, default: 0 },
     minimum_quantity: { type: Number, default: 0 },
-<<<<<<< HEAD
-=======
+
     // BUG FIX: "unit" maydoni umuman mavjud emas edi — shuning uchun UI'da
     // "dona"/"kg" tanlansa ham backend uni saqlay olmasdi, har doim standart
     // "dona" bo'lib qolardi. Controller req.body'ni to'liq o'tkazgani uchun
     // (Product.create(req.body) / findOneAndUpdate(..., req.body)) faqat
     // shu maydonni schema'ga qo'shish kifoya — controllerga tegilmadi.
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
     unit: { type: String, enum: ["dona", "kg"], default: "dona" },
     images: {
       type: [String],

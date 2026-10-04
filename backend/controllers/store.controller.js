@@ -13,9 +13,7 @@ exports.signup = async (req, res) => {
     const { ceo_name, ceo_phone, store_name, password } = req.body;
     const existingStore = await Store.findOne({ ceo_phone });
 
-<<<<<<< HEAD
-    if (existingStore) {
-=======
+
     // BUG FIX: avval faqat "existingStore bor-yo'qligi" tekshirilardi, hisob
     // tasdiqlangan (otp === null) yoki hali tasdiqlanmagan (otp !== null,
     // ya'ni foydalanuvchi SMS kodni hech qachon kiritmagan) ekani farqlanmasdi.
@@ -30,7 +28,6 @@ exports.signup = async (req, res) => {
     // yangi ma'lumotlar (parol, OTP) bilan qayta ishlatiladi (yangi hujjat
     // yaratilmaydi, mavjudi yangilanadi).
     if (existingStore && existingStore.otp === null) {
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
       return res.status(400).json({
         message: "Ushbu telefon raqam bilan avval ro'yhatdan o'tilgan",
       });
@@ -45,11 +42,9 @@ exports.signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const { otp, otp_expires_at } = generateOtp();
 
-<<<<<<< HEAD
-=======
+
     // const SMS_TEMPLATE = `MARK1 ilovasiga ro‘yxatdan o‘tish uchun tasdiqlash kodingiz: ${otp}. Ushbu kodni hech kimga bermang.`;
 
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
     const result = await sendSms(
       ceo_phone,
       null,
@@ -65,17 +60,8 @@ exports.signup = async (req, res) => {
         .json({ message: `Sms yuborishda xatolik: ${result.error}` });
     }
 
-<<<<<<< HEAD
-    await Store.create({
-      ceo_name,
-      ceo_phone,
-      store_name,
-      password: hashedPassword,
-      otp,
-      otp_expires_at,
-    });
 
-=======
+
     if (existingStore) {
       // Tasdiqlanmagan eski yozuvni yangi ma'lumotlar bilan yangilaymiz.
       existingStore.ceo_name = ceo_name;
@@ -94,7 +80,6 @@ exports.signup = async (req, res) => {
         otp_expires_at,
       });
     }
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
     return res.status(200).json({
       message: "Hisob yaratildi, hisobni tasdiqlashingiz mumkin",
       verify_data: { ceo_phone, otp_expires_at },
@@ -109,13 +94,11 @@ exports.verify = async (req, res) => {
   try {
     const { otp, ceo_phone } = req.body;
     const store = await Store.findOne({ ceo_phone });
-<<<<<<< HEAD
     const type =
       req.headers["client-platform-type"]?.toLowerCase() === "mobile"
         ? "mobile"
         : "web";
-=======
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
+
     if (!store) {
       return res
         .status(400)
@@ -154,7 +137,6 @@ exports.verify = async (req, res) => {
       store_id: store._id,
       role: "ceo",
     });
-<<<<<<< HEAD
     if (type === "web") {
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
@@ -164,7 +146,7 @@ exports.verify = async (req, res) => {
         path: "/api/auth/store/refresh",
       });
     }
-=======
+
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -173,15 +155,12 @@ exports.verify = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/api/auth/store/refresh",
     });
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
 
     res.status(200).json({
       message: "Hisobga kirish muvaffaqiyatli",
       access_token: accessToken,
-<<<<<<< HEAD
       ...(type === "mobile" && { refresh_token: refreshToken }),
-=======
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
+
     });
   } catch (err) {
     console.log(err.message);
@@ -193,20 +172,17 @@ exports.signin = async (req, res) => {
   try {
     const { ceo_phone, password } = req.body;
     const store = await Store.findOne({ ceo_phone });
-<<<<<<< HEAD
     const type =
       req.headers["client-platform-type"]?.toLowerCase() === "mobile"
         ? "mobile"
         : "web";
-=======
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
+
     if (!store) {
       return res
         .status(400)
         .json({ message: "Telefon raqam bo'yicha do'kon topilmadi" });
     }
 
-<<<<<<< HEAD
     if (store.otp !== null) {
       return res.status(400).json({
         message:
@@ -215,8 +191,7 @@ exports.signin = async (req, res) => {
       });
     }
 
-=======
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
+
     const isMatch = await bcrypt.compare(password, store.password);
 
     if (!isMatch) {
@@ -235,7 +210,6 @@ exports.signin = async (req, res) => {
       role: "ceo",
     });
 
-<<<<<<< HEAD
     if (type === "web") {
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
@@ -245,7 +219,7 @@ exports.signin = async (req, res) => {
         path: "/api/auth/store/refresh",
       });
     }
-=======
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true, // FIX: Render odatda NODE_ENV=production'ni avtomatik o'rnatmaydi; shu sabab avvalgi shart doim false bo'lib, SameSite=None cookie brauzer tomonidan RAD ETILAR edi (refresh token hech qachon saqlanmasdi)
@@ -253,15 +227,12 @@ exports.signin = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/api/auth/store/refresh",
     });
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
 
     res.status(200).json({
       message: "Hisobga kirish muvaffaqiyatli",
       access_token: accessToken,
-<<<<<<< HEAD
       ...(type === "mobile" && { refresh_token: refreshToken }),
-=======
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
+
     });
   } catch (err) {
     console.log(err.message);
@@ -271,7 +242,6 @@ exports.signin = async (req, res) => {
 
 exports.refresh = async (req, res) => {
   try {
-<<<<<<< HEAD
     let refreshToken;
 
     const type =
@@ -284,9 +254,7 @@ exports.refresh = async (req, res) => {
     } else {
       refreshToken = req.body.refresh_token;
     }
-=======
-    const refreshToken = req.cookies.refreshToken;
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
+
 
     if (!refreshToken) {
       return res.status(401).json({ message: "Refresh token topilmadi" });
@@ -368,11 +336,9 @@ exports.forgotPassword = async (req, res) => {
 
     await ceo.save();
 
-<<<<<<< HEAD
-=======
+
     // const SMS_TEMPLATE = `MARK1 ilovasiga ro‘yxatdan o‘tish uchun tasdiqlash kodingiz: ${otp}. Ushbu kodni hech kimga bermang.`;
 
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
     const result = await sendSms(
       ceo_phone,
       null,
@@ -462,11 +428,9 @@ exports.changePassword = async (req, res) => {
 
     res.clearCookie("refreshToken", {
       httpOnly: true,
-<<<<<<< HEAD
       secure: true,
-=======
+
       secure: true, // FIX: Render odatda NODE_ENV=production'ni avtomatik o'rnatmaydi; shu sabab avvalgi shart doim false bo'lib, SameSite=None cookie brauzer tomonidan RAD ETILAR edi (refresh token hech qachon saqlanmasdi)
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
       sameSite: "none",
       path: "/api/auth/store/refresh",
     });
@@ -478,7 +442,6 @@ exports.changePassword = async (req, res) => {
     console.log(err.message);
     return res.status(500).json({ message: err.message });
   }
-<<<<<<< HEAD
 };
 
 exports.resendOtp = async (req, res) => {
@@ -527,6 +490,5 @@ exports.resendOtp = async (req, res) => {
     return res.status(500).json({ message: err.message });
   }
 };
-=======
-};
->>>>>>> 4d9fe8d9bfa7ef6f92f4e2c5a4ba664385ffe379
+
+
