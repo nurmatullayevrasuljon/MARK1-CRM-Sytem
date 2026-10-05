@@ -24,6 +24,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MARK1 - Aqlli CRM platformasi</title>
+    <meta name="description" content="MARK1 CRM — oziq-ovqat do'konlari uchun sotuvlar, ombor, mahsulot, qarzdorlar va moliyaviy hisobotlarni bitta joyda boshqaradigan aqlli CRM platformasi. 14 kunlik bepul sinov.">
+    <meta name="theme-color" content="#141a2e">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="MARK1 - Aqlli CRM platformasi">
+    <meta property="og:description" content="Oziq-ovqat do'konlari uchun to'liq CRM yechimi: sotuvlar, ombor, qarzdorlar va hisobotlar — bitta joyda.">
+    <meta property="og:locale" content="uz_UZ">
     <link rel="shortcut icon" href="img/b-logo2.png" type="image/x-icon">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css?v=1789490310">
@@ -31,9 +37,12 @@
     <style>
         :root {
             /* TUNGI MAVZU (default) — CRM tungi palitrasiga mos */
-            --mk-primary: #6b7cff;
+            /* AA uchun: oq matn ustida 4.5+ bo'lishi kerak (avvalgi #6b7cff — 3.53 edi) */
+            --mk-primary: #4D5DEF;
             --mk-primary-dark: #4c5ede;
-            --mk-secondary: #8b5cf6;
+            /* Matn uchun alohida token — qorong'i fonda ochroq bo'lishi kerak */
+            --mk-primary-text: #8294ff;
+            --mk-secondary: #7c3aed;
             --mk-accent: #22d3ee;
             --mk-bg: #0b111f;
             --mk-bg-elevated: #101830;
@@ -46,15 +55,18 @@
         }
 
         html:not(.dark-mode) {
-            --mk-primary: #5B6AF0;
+            /* AA uchun: oq matn 4.5+, matn #e2e8f0 fonda 4.5+ (avvalgi #5B6AF0 — 4.08 edi) */
+            --mk-primary: #4455EE;
             --mk-primary-dark: #4A56C9;
-            --mk-secondary: #8b5cf6;
+            --mk-primary-text: #4455EE;
+            --mk-secondary: #7c3aed;
             --mk-accent: #0ea5e9;
             --mk-bg: #f4f6fb;
             --mk-bg-elevated: #ffffff;
             --mk-fg: #0f172a;
             --mk-muted: #e2e8f0;
-            --mk-muted-fg: #64748b;
+            /* avvalgi #64748b — och fonda 4.40 edi (4.5 dan kam) */
+            --mk-muted-fg: #576076;
             --mk-card: #ffffff;
             --mk-border: #cbd5e1;
         }
@@ -101,6 +113,26 @@
             outline: 2px solid var(--mk-primary);
             outline-offset: 3px;
             border-radius: 6px;
+        }
+
+        /* Skip-link — faqat klaviatura fokusida ko'rinadi (WCAG 2.4.1) */
+        .mk-root a.mk-skip-link {
+            position: fixed;
+            top: -100px;
+            left: 16px;
+            z-index: 9999;
+            padding: 12px 20px;
+            background: var(--mk-primary);
+            color: #fff;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+            transition: top .18s ease;
+        }
+
+        .mk-root a.mk-skip-link:focus {
+            top: 0;
         }
 
         /* ---- Motion system ---- */
@@ -242,24 +274,31 @@
             white-space: nowrap;
         }
 
+        /* .mk-root a { color:inherit } (spec 0,1,1) bu qoidani bosib yuborgani uchun
+           selektor kuchaytirildi — aks holda CTA'da gradient ustida quyuq matn
+           chiqib qoladi (kontrast 3.24, AA uchun 4.5 kerak). */
+        .mk-root a.mk-btn-primary,
         .mk-btn-primary {
             background: linear-gradient(90deg, var(--mk-primary), var(--mk-secondary));
             color: #fff;
             box-shadow: 0 8px 20px rgba(59, 91, 219, .18);
         }
 
+        .mk-root a.mk-btn-primary:hover,
         .mk-btn-primary:hover {
             box-shadow: 0 12px 28px rgba(59, 91, 219, .3);
             transform: translateY(-1px);
             color: #fff;
         }
 
+        .mk-root a.mk-btn-secondary,
         .mk-btn-secondary {
             background: var(--mk-bg-elevated);
             color: var(--mk-fg);
             border: 1px solid var(--mk-border);
         }
 
+        .mk-root a.mk-btn-secondary:hover,
         .mk-btn-secondary:hover {
             background: var(--mk-muted);
             transform: translateY(-1px);
@@ -345,6 +384,10 @@
             color: var(--mk-muted-fg);
             transition: color .2s;
             cursor: pointer;
+            /* WCAG 2.5.8: naviqatsiya linkining bosiladigan qismi ≥24px bo'lsin */
+            display: inline-flex;
+            align-items: center;
+            min-height: 24px;
         }
 
         .mk-nav-links a:hover {
@@ -352,7 +395,7 @@
         }
 
         .mk-nav-links a.active {
-            color: var(--mk-primary);
+            color: var(--mk-primary-text);
             font-weight: 600;
         }
 
@@ -366,6 +409,10 @@
             font-size: .95rem;
             font-weight: 500;
             color: var(--mk-muted-fg);
+            /* "Kirish" 17px balandlikda edi (WCAG 2.5.8) */
+            display: flex;
+            align-items: center;
+            min-height: 24px;
         }
 
         .mk-nav-buttons a.mk-link-btn:hover {
@@ -470,7 +517,7 @@
             border-radius: 999px;
             background: rgba(59, 91, 219, .08);
             border: 1px solid rgba(59, 91, 219, .18);
-            color: var(--mk-primary);
+            color: var(--mk-primary-text);
             font-size: .85rem;
             font-weight: 600;
             margin-bottom: 26px;
@@ -597,21 +644,21 @@
         }
 
         .mk-hero-metric.mk-m1 {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            background: linear-gradient(135deg, #2563eb, #1d4ed8); /* oq matn: 5.17 */
         }
 
         .mk-hero-metric.mk-m2 {
-            background: linear-gradient(135deg, #a855f7, #9333ea);
+            background: linear-gradient(135deg, #9333ea, #7e22ce); /* oq matn: 5.38 */
             animation-delay: .2s;
         }
 
         .mk-hero-metric.mk-m3 {
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            background: linear-gradient(135deg, #4f46e5, #4338ca); /* oq matn: 6.29 */
             animation-delay: .4s;
         }
 
         .mk-hero-metric.mk-m4 {
-            background: linear-gradient(135deg, #ec4899, #db2777);
+            background: linear-gradient(135deg, #db2777, #be185d); /* oq matn: 4.60 */
             animation-delay: .6s;
         }
 
@@ -751,7 +798,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--mk-primary);
+            color: var(--mk-primary-text);
             font-size: 1.4rem;
         }
 
@@ -916,7 +963,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--mk-primary);
+            color: var(--mk-primary-text);
             font-size: 1.4rem;
             margin-bottom: 20px;
         }
@@ -962,7 +1009,7 @@
         }
 
         .mk-testi-card p.mk-quote {
-            color: rgba(10, 10, 10, .8);
+            color: var(--mk-fg);
             line-height: 1.7;
             flex-grow: 1;
         }
@@ -999,7 +1046,10 @@
         /* PRICING */
         .mk-pricing-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            /* minmax(0, 1fr) — 1fr ning default min qiymati "auto" (min-content).
+               Tugma matni nowrap bo'lgani uchun track konteynerdan kengayib,
+               gorizontal overflow paydo bo'lardi. */
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 24px;
             align-items: stretch;
         }
@@ -1061,13 +1111,19 @@
 
         .mk-price-note {
             font-size: .78rem;
-            color: #9ca3af;
+            color: var(--mk-muted-fg);
             margin: 0 0 24px;
         }
 
         .mk-price-card .mk-btn {
             width: 100%;
             margin-bottom: 26px;
+            /* Kartadagi uzun CTA matni ("Sotuv bo'limi bilan bog'lanish")
+               nowrap holatida kartani konteynerdan tashqariga chiqarardi. */
+            white-space: normal;
+            text-align: center;
+            line-height: 1.3;
+            padding: 14px 20px;
         }
 
         .mk-price-feature {
@@ -1079,7 +1135,7 @@
         }
 
         .mk-price-feature i {
-            color: var(--mk-primary);
+            color: var(--mk-primary-text);
             margin-top: 2px;
         }
 
@@ -1090,8 +1146,13 @@
         }
 
         .mk-pricing-faq-link a {
-            color: var(--mk-primary);
+            color: var(--mk-primary-text);
             font-weight: 600;
+            /* WCAG 2.5.8: bosiladigan qism ≥24px. Matn qatorini
+               buzmaslik uchun vertikal padding + teskari margin. */
+            display: inline-block;
+            padding: 5px 0;
+            margin: -5px 0;
         }
 
         /* FAQ */
@@ -1107,6 +1168,7 @@
             width: 100%;
             background: none;
             border: none;
+            color: inherit; /* <button> oq rang meros qilmaydi — qorong'i rejimda ko'rinmas edi */
             padding: 20px 24px;
             display: flex;
             align-items: center;
@@ -1118,7 +1180,7 @@
 
         .mk-faq-q i {
             transition: transform .3s;
-            color: var(--mk-primary);
+            color: var(--mk-primary-text);
             flex-shrink: 0;
             margin-left: 14px;
         }
@@ -1156,8 +1218,12 @@
         }
 
         .mk-faq-support a {
-            color: var(--mk-primary);
+            color: var(--mk-primary-text);
             font-weight: 600;
+            /* WCAG 2.5.8: mustaqil CTA linki ≥24px bosiladigan qismga ega bo'lsin */
+            display: inline-flex;
+            align-items: center;
+            min-height: 24px;
         }
 
         /* CTA */
@@ -1224,7 +1290,7 @@
         }
 
         .mk-cta-trust i {
-            color: #22c55e;
+            color: #16a34a; /* 2.28 → 3.30 (1.4.11 non-text 3:1) */
             margin-right: 6px;
         }
 
@@ -1232,7 +1298,10 @@
         .mk-footer {
             border-top: 1px solid var(--mk-border);
             background: var(--mk-card);
-            padding: 70px 0 30px;
+            /* Pastki qatordagi ijtimoiy havolalarni suzuvchi mavzu
+               tugmasi (position:fixed; bottom:24px; 52px) yopib qolmasligi
+               uchun pastki bo'shliq kengaytirildi. */
+            padding: 70px 0 96px;
         }
 
         .mk-footer-grid {
@@ -1262,7 +1331,14 @@
             font-size: .8rem;
         }
 
-        .mk-footer-grid h4 {
+        .mk-footer-grid ul li a {
+            display: inline-block;
+            padding: 5px 0;
+            min-height: 24px;
+            line-height: 1.4;
+        }
+
+        .mk-footer-grid h3 {
             font-size: .95rem;
             font-weight: 700;
             margin: 0 0 16px;
@@ -1307,6 +1383,11 @@
             color: var(--mk-muted-fg);
             font-size: .9rem;
             font-weight: 500;
+            /* flex item sifatida display:block bo'lib 16px bo'lib qolgan edi —
+               WCAG 2.5.8 (>=24px) uchun balandlik berildi, ko'rinishi o'zgarmadi */
+            display: flex;
+            align-items: center;
+            min-height: 24px;
         }
 
         .mk-footer-social a:hover {
@@ -1321,9 +1402,17 @@
 
         @media (max-width: 768px) {
 
-            #navbar .mk-nav-links,
-            #navbar .mk-nav-buttons {
+            /* FAQAT navbar qatoridagi linklar yashiriladi.
+               `.mk-mobile-panel` ichidagi `.mk-nav-links` GA TA'SIR QILMASIN —
+               aks holda mobil menyu paneli bo'sh ochilardi (faqat Kirish/
+               Boshlash tugmalari ko'rinardi). */
+            #navbar .mk-wrap > .mk-nav-links,
+            #navbar .mk-wrap > .mk-nav-buttons {
                 display: none;
+            }
+
+            #navbar .mk-mobile-panel .mk-nav-links {
+                display: flex;
             }
 
             #mobileMenuBtn {
@@ -1441,18 +1530,22 @@
 
 <body class="mk-root">
 
+    <!-- Skip-link: klaviatura (Tab) foydalanuvchilari navbar orqali o'tmasdan
+         to'g'ridan-to'g'ri asosiy mazmunga o'ta oladi (WCAG 2.4.1). -->
+    <a class="mk-skip-link" href="#main-content">Asosiy mazmunga o'tish</a>
+
     <!-- NAVBAR — id="navbar" va id="mobileMenuBtn" index.js talab qiladi, o'zgartirmang -->
-    <nav id="navbar">
+    <nav id="navbar" aria-label="Asosiy navigatsiya">
         <div class="mk-wrap">
-            <a href="#" class="mk-logo">
+            <a href="/" class="mk-logo" aria-label="MARK1 bosh sahifa">
                 <img src="img/mark1-logo-navbar (1).png" alt="MARK1">
             </a>
 
             <ul class="nav-links mk-nav-links">
-                <li><a data-target="xususiyatlar">Xususiyatlar</a></li>
-                <li><a data-target="qanday-ishlaydi">Qanday ishlaydi</a></li>
-                <li><a data-target="narx">Narxlar</a></li>
-                <li><a data-target="savollar">FAQ</a></li>
+                <li><a href="#xususiyatlar" data-target="xususiyatlar">Xususiyatlar</a></li>
+                <li><a href="#qanday-ishlaydi" data-target="qanday-ishlaydi">Qanday ishlaydi</a></li>
+                <li><a href="#narx" data-target="narx">Narxlar</a></li>
+                <li><a href="#savollar" data-target="savollar">FAQ</a></li>
             </ul>
 
             <div class="mk-nav-buttons">
@@ -1463,12 +1556,12 @@
             <button id="mobileMenuBtn" aria-label="Menyu">☰</button>
         </div>
 
-        <div class="mk-mobile-panel">
+        <div class="mk-mobile-panel" id="mobileMenuPanel">
             <ul class="nav-links mk-nav-links">
-                <li><a data-target="xususiyatlar">Xususiyatlar</a></li>
-                <li><a data-target="qanday-ishlaydi">Qanday ishlaydi</a></li>
-                <li><a data-target="narx">Narxlar</a></li>
-                <li><a data-target="savollar">FAQ</a></li>
+                <li><a href="#xususiyatlar" data-target="xususiyatlar">Xususiyatlar</a></li>
+                <li><a href="#qanday-ishlaydi" data-target="qanday-ishlaydi">Qanday ishlaydi</a></li>
+                <li><a href="#narx" data-target="narx">Narxlar</a></li>
+                <li><a href="#savollar" data-target="savollar">FAQ</a></li>
             </ul>
             <div class="mk-mobile-cta">
                 <a href="/login" class="mk-btn mk-btn-secondary mk-btn-sm">Kirish</a>
@@ -1478,7 +1571,7 @@
     </nav>
 
     <!-- HERO -->
-    <section class="mk-hero">
+    <section class="mk-hero" id="main-content">
         <div class="mk-blur-orb mk-orb-1"></div>
         <div class="mk-blur-orb mk-orb-2"></div>
         <div class="mk-wrap mk-hero-grid">
@@ -1495,7 +1588,7 @@
                 <div class="mk-hero-buttons">
                     <a href="/signup" id="startBtn" class="mk-btn mk-btn-primary">Bepul sinab ko'ring <i
                             class="bi bi-arrow-right"></i></a>
-                    <a href="#" class="mk-btn mk-btn-secondary">Demo buyurtma qilish</a>
+                    <a href="/signup" class="mk-btn mk-btn-secondary">Demo buyurtma qilish</a>
                 </div>
                 <div class="mk-hero-trust">
                     <div>
@@ -1835,7 +1928,7 @@
                     <div class="mk-price-value"><span class="mk-amount">Maxsus</span><span class="mk-period">narx</span>
                     </div>
                     <p class="mk-price-note">&nbsp;</p>
-                    <a href="#" class="mk-btn mk-btn-secondary">Sotuv bo'limi bilan bog'lanish</a>
+                    <a href="#savollar" class="mk-btn mk-btn-secondary">Sotuv bo'limi bilan bog'lanish</a>
                     <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz hamma narsa</div>
                     <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz foydalanuvchi akkaunt</div>
                     <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Maxsus ish jarayonlari</div>
@@ -1913,7 +2006,7 @@
             </div>
             <div class="mk-faq-support">
                 <p>Hali ham savollaringiz bormi?</p>
-                <a href="#">Qo'llab-quvvatlash jamoasi bilan bog'laning →</a>
+                <a href="#savollar">Qo'llab-quvvatlash jamoasi bilan bog'laning →</a>
             </div>
         </div>
     </section>
@@ -1929,7 +2022,7 @@
             <div class="mk-cta-buttons">
                 <a href="/signup" id="bottomStartBtn" class="mk-btn mk-btn-primary">Bepul sinashni boshlang <i
                         class="bi bi-arrow-right"></i></a>
-                <a href="#" class="mk-btn mk-btn-secondary">Demo buyurtma qilish</a>
+                <a href="/signup" class="mk-btn mk-btn-secondary">Demo buyurtma qilish</a>
             </div>
             <div class="mk-cta-trust">
                 <p><i class="bi bi-check-circle-fill"></i>14 kunlik bepul sinov, kredit karta talab etilmaydi</p>
@@ -1951,7 +2044,7 @@
                     <p>Biznesingiz uchun kerakli hamma narsa — bitta CRM'da.</p>
                 </div>
                 <div>
-                    <h4>Mahsulot</h4>
+                    <h3>Mahsulot</h3>
                     <ul>
                         <li><a href="#xususiyatlar">Xususiyatlar</a></li>
                         <li><a href="#narx">Narxlar</a></li>
@@ -1960,7 +2053,7 @@
                     </ul>
                 </div>
                 <div>
-                    <h4>Kompaniya</h4>
+                    <h3>Kompaniya</h3>
                     <ul>
                         <li><a href="#">Biz haqimizda</a></li>
                         <li><a href="#">Blog</a></li>
@@ -1969,7 +2062,7 @@
                     </ul>
                 </div>
                 <div>
-                    <h4>Qo'llab-quvvatlash</h4>
+                    <h3>Qo'llab-quvvatlash</h3>
                     <ul>
                         <li><a href="#">Yordam markazi</a></li>
                         <li><a href="#">Aloqa</a></li>
@@ -1978,7 +2071,7 @@
                     </ul>
                 </div>
                 <div>
-                    <h4>Yuridik</h4>
+                    <h3>Yuridik</h3>
                     <ul>
                         <li><a href="#">Maxfiylik siyosati</a></li>
                         <li><a href="#">Foydalanish shartlari</a></li>
@@ -1999,8 +2092,9 @@
         </div>
     </footer>
 
-    <script src="index.js?v=1789490310" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js?v=1789490310"></script>
+    <script src="js/toast.js?v=1790606500"></script>
+    <script src="index.js?v=1790606500" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.20.0/dist/axios.min.js?v=1789490310"></script>
     <script src="auth.js?v=1789490310"></script>
 
     <script defer>
@@ -2053,13 +2147,13 @@
 
             // --- Dashboard showcase tablari ---
             var MK_DASH_PAGES = [
-                {name: 'Savdolar', icon: '📊', from: '#3b82f6', to: '#2563eb'},
-                {name: 'Ombor', icon: '📦', from: '#a855f7', to: '#9333ea'},
-                {name: 'Mahsulotlar', icon: '🛍️', from: '#ec4899', to: '#db2777'},
-                {name: 'Qarzdorlar', icon: '👥', from: '#f97316', to: '#ea580c'},
-                {name: 'Tahlil', icon: '📈', from: '#22c55e', to: '#16a34a'},
-                {name: 'Hisobotlar', icon: '📋', from: '#6366f1', to: '#4f46e5'},
-                {name: 'Sozlamalar', icon: '⚙️', from: '#6b7280', to: '#4b5563'}
+                {name: 'Savdolar', icon: '📊', from: '#2563eb', to: '#1d4ed8'},
+                {name: 'Ombor', icon: '📦', from: '#9333ea', to: '#7e22ce'},
+                {name: 'Mahsulotlar', icon: '🛍️', from: '#db2777', to: '#be185d'},
+                {name: 'Qarzdorlar', icon: '👥', from: '#c2410c', to: '#9a3412'},
+                {name: 'Tahlil', icon: '📈', from: '#15803d', to: '#166534'},
+                {name: 'Hisobotlar', icon: '📋', from: '#4f46e5', to: '#4338ca'},
+                {name: 'Sozlamalar', icon: '⚙️', from: '#4b5563', to: '#374151'}
             ];
             var mkDashTitle = document.getElementById('mkDashTitle');
             var mkDashMetrics = document.getElementById('mkDashMetrics');
@@ -2123,7 +2217,10 @@
                     a.addEventListener('click', function () {
                         mkNavbar.classList.remove('mobile-open');
                         var btn = document.getElementById('mobileMenuBtn');
-                        if (btn) btn.textContent = '☰';
+                        if (btn) {
+                            btn.textContent = '☰';
+                            btn.setAttribute('aria-expanded', 'false');
+                        }
                     });
                 });
             }
@@ -2133,14 +2230,33 @@
         const mobileBtn = document.getElementById("mobileMenuBtn");
 
         if (mobileBtn) {
+            // aria-expanded — ekran o'quvchisi menyu ochiq/yopiq ekanini bilsin (WCAG 4.1.2)
+            const syncMenuAria = () => {
+                const open = navbar.classList.contains("mobile-open");
+                mobileBtn.setAttribute("aria-expanded", open ? "true" : "false");
+                mobileBtn.setAttribute("aria-controls", "mobileMenuPanel");
+            };
+            mobileBtn.setAttribute("aria-expanded", "false");
+            mobileBtn.setAttribute("aria-controls", "mobileMenuPanel");
             mobileBtn.addEventListener("click", () => {
                 navbar.classList.toggle("mobile-open");
+                syncMenuAria();
+            });
+            // Escape bilan yopish (WCAG 2.1.2)
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape" && navbar.classList.contains("mobile-open")) {
+                    navbar.classList.remove("mobile-open");
+                    syncMenuAria();
+                    mobileBtn.focus();
+                }
             });
         }
 
         // Scroll to section
         document.querySelectorAll("[data-target]").forEach(item => {
-            item.addEventListener("click", function () {
+            item.addEventListener("click", function (e) {
+                // href="#id" bor (klaviatura uchun), lekin smooth scroll bizniki
+                if (this.dataset.target) e.preventDefault();
                 const target = document.getElementById(this.dataset.target);
 
                 if (target) {
@@ -2155,7 +2271,8 @@
             });
         });
         document.querySelectorAll("[data-target]").forEach(item => {
-            item.addEventListener("click", function () {
+            item.addEventListener("click", function (e) {
+                if (this.dataset.target) e.preventDefault();
                 const target = document.getElementById(this.dataset.target);
 
                 if (!target) return;

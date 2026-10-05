@@ -8,7 +8,7 @@ import '../constants/app_colors.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
 import 'auth/login_screen.dart';
-import 'auth/passcode_screen.dart';
+import 'main_shell.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -46,6 +46,11 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
 
     // 2.5 soniyadan keyin tekshirib o'tish
+    //
+    // PIN darvozasi olib tashlandi: ilova token bilan to'g'ridan-to'g'ri
+    // asosiy ekranga ochiladi. `PasscodeScreen` endi hech qayerdan
+    // chaqirilmaydi (faqat Profil'dagi "Kirish paroli" bo'limi bilan
+    // bog'liq edi) — shuning uchun import ham olib tashlandi.
     _navigationTimer = Timer(const Duration(milliseconds: 2500), () async {
       if (!mounted) return;
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -57,7 +62,7 @@ class _SplashScreenState extends State<SplashScreen>
           context,
           PageRouteBuilder(
             pageBuilder: (context, animation, secondaryAnimation) =>
-                isLoggedIn ? const PasscodeScreen() : const LoginScreen(),
+                isLoggedIn ? const MainShell() : const LoginScreen(),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
                   return FadeTransition(opacity: animation, child: child);

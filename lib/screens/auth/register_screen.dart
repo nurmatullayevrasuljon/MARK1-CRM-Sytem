@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../utils/phone_utils.dart';
 import '../main_shell.dart';
 import 'otp_screen.dart';
 
@@ -48,6 +49,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
+          tooltip: 'Orqaga',
           icon: Icon(Icons.arrow_back_ios_new_rounded,
               color: AppColors.text(isDark), size: 20),
           onPressed: () => Navigator.pop(context),
@@ -118,9 +120,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         RegExp(r'[0-9+\s\-()]')),
                   ],
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Telefon kiriting';
-                    final d = v.replaceAll(RegExp(r'\D'), '');
-                    if (d.length < 9) return 'Noto\'g\'ri telefon raqam';
+                    if (v == null || v.trim().isEmpty) return 'Telefon kiriting';
+                    // Backend `998${phone}` qo'shib SMS yuboradi, shuning uchun
+                    // qabul qilinadigan qiymat aynan 9 xonali bo'lishi shart.
+                    // (Avvalgi tekshiruv `d.length < 9` edi — 10-12 xonali
+                    // "998..." xato raqam ham o'tib ketardi.)
+                    final d = normalizeUzPhone(v);
+                    if (d.length != 9) return 'Noto\'g\'ri telefon raqam';
+                    if (d.startsWith('0')) return 'Raqam 0 bilan boshlanmasligi kerak';
                     return null;
                   },
                 ),
@@ -176,9 +183,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 20),
 
                 // Terms checkbox
-                GestureDetector(
-                  onTap: () => setState(() => _agree = !_agree),
-                  child: Row(children: [
+                Semantics(
+                  checked: _agree,
+                  // Checkbox roli va holati ekran o'quvchisiga e'lon qilinadi.
+                  label: 'Foydalanish shartlari va Maxfiylik siyosatiga roziman',
+                  child: GestureDetector(
+                    onTap: () => setState(() => _agree = !_agree),
+                    child: Row(children: [
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       width: 22,
@@ -231,7 +242,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 fontSize: 13)),
                       ])),
                     ),
-                  ]),
+                    ]),
+                  ),
                 ),
 
                 const SizedBox(height: 28),
@@ -265,7 +277,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               child: CircularProgressIndicator(
                                   color: Colors.white, strokeWidth: 2.5))
                           : Text(
-                              'Hisob yaratish',
+                              // Tugma o'chganda sababini o'zi aytadi — aks
+                              // holda foydalanuvchi "ishlamayapti" deb
+                              // o'ylab, qayta-qayta bosadi.
+                              _agree
+                                  ? 'Hisob yaratish'
+                                  : 'Shartga rozi bo\'ling',
                               style: GoogleFonts.inter(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
@@ -309,11 +326,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
 
-    String phoneStr = _phoneCtrl.text.trim();
-    phoneStr = phoneStr.replaceAll(RegExp(r"\D"), "");
-    if (phoneStr.startsWith("998") && phoneStr.length >= 12) {
-      phoneStr = phoneStr.substring(3);
-    }
+    // Backend `998${phone}` qo'shib SMS yuboradi → faqat 9 xona yuboriladi.
+    final phoneStr = normalizeUzPhone(_phoneCtrl.text);
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final result = await auth.register(
       name: _nameCtrl.text.trim(),
@@ -409,6 +423,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     String? Function(String?)? validator,
   }) =>
       TextFormField(
+        // Xato foydalanuvchi maydonni tuzatgan zahoti kiritiladi.
+        // Aks holda eski xato yozib turib qoladi.
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         controller: controller,
         obscureText: obscure,
         keyboardType: keyboard,

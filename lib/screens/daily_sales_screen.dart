@@ -6,6 +6,7 @@ import '../constants/app_colors.dart';
 import '../providers/theme_provider.dart';
 import '../providers/statistics_provider.dart';
 import '../providers/sale_provider.dart';
+import '../utils/format_utils.dart';
 
 class DailySalesScreen extends StatefulWidget {
   const DailySalesScreen({super.key});
@@ -170,7 +171,7 @@ class _DailySalesScreenState extends State<DailySalesScreen> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            '+ ${_formatMoney(sale.totalPrice)} UZS',
+                            '+${fmtMoney(sale.totalPrice)} so\'m',
                             style: GoogleFonts.inter(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
@@ -214,15 +215,8 @@ class _DailySalesScreenState extends State<DailySalesScreen> {
     );
   }
 
-  String _formatMoney(double? val) {
-    if (val == null) return '0';
-    return val
-        .toStringAsFixed(0)
-        .replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]} ',
-        );
-  }
+  /// Bosh ekranlar bilan bir xil ixcham ko'rinish (`3 ming`, `1.3 mln`).
+  String _formatMoney(double? val) => fmtMoney(val);
 
   String _formatDate(DateTime d) {
     return '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year} ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';

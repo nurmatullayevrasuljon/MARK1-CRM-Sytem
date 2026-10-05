@@ -73,5 +73,66 @@ windows/
 macos/
 linux/
 web/
-android/
+# android/ OLIB TASHLANDI (2026-09-30).
+#
+# NIMA UCHUN: bu qator "unused platformlar" ro'yxatida turardi, lekin
+# Android — ilovaning **yagona** yetkazib berish platformasi. Natijada
+# `git ls-files android/` → 0 fayl, ya'ni butun Android konfiguratsiyasi
+# (manifest, proguard qoidalari, gradle sozlamalari, res/) repodan
+# yo'qoldi.
+#
+# Bu jiddiy xavf edi: skaner muammosining asosiy sabablaridan biri —
+# `proguard-rules.pro` bo'shligi (R8 detektorni olib tashlaydi) va
+# `AndroidManifest.xml` da CAMERA ruxsatnomasining yo'qligi — ikkalasi
+# ham faqat shu ikki faylda. Ular qaytarilsa, yangi klon yoki
+# `flutter create .` da skaner **yana** ishlamaydi.
+#
+# Xavfsizlik: imzo kaliti sizib chiqmaydi — `android/.gitignore` allaqach
+# `**/*.keystore`, `**/*.jks`, `key.properties` va `local.properties` ni
+# bloklaydi. Mahalliy mashina sozlamalari (`local.properties` da SDK yo'li)
+# ham bloklangan.
 ios/
+
+# ---- 20261005 tozalash (avtomatik) ----
+node_modules/
+.next/
+.nuxt/
+.dart_tool/
+.gradle/
+dist/
+out/
+release/
+build/
+target/
+coverage/
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.cache/
+.turbo/
+.parcel-cache/
+.angular/
+.svelte-kit/
+.output/
+*.tsbuildinfo
+*.apk
+*.aab
+
+# maxfiy
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+credentials.json
+service-account*.json
+
+# tizim/IDE
+.idea/
+.vscode/
+.DS_Store
+*.log

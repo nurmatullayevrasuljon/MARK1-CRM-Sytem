@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
+import 'barcode_scanner_screen.dart';
 import '../constants/app_colors.dart';
 import '../providers/theme_provider.dart';
 import '../providers/product_provider.dart';
+import '../utils/format_utils.dart';
+import '../utils/dispose_utils.dart';
 import '../models/product_model.dart';
 import '../models/category_model.dart';
 
@@ -69,6 +71,15 @@ class _InventoryScreenState extends State<InventoryScreen>
             tooltip: 'Kategoriyalar',
             onPressed: () => _showCategoriesSheet(context, isDark, pp),
           ),
+          // Kategoriyalar menyusidan keyingi darajada: kategoriyani tez
+          // qo'shish. `playlist_add` ikonkasi mahsulot qo'shish
+          // (`add_rounded`) dan farqlanadi — ikkalasi yonma-yon
+          // turgani uchun chalkash bo'lmasligi kerak.
+          IconButton(
+            icon: Icon(Icons.playlist_add_rounded, color: AppColors.primary),
+            tooltip: 'Kategoriya qo\'shish',
+            onPressed: () => _showAddCategoryDialog(context, isDark, pp),
+          ),
           IconButton(
             icon: Icon(Icons.add_rounded, color: AppColors.primary),
             tooltip: 'Mahsulot qo\'shish',
@@ -108,6 +119,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                         color: AppColors.textHint(isDark)),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
+                            tooltip: 'Qidiruvni tozalash',
                             icon: Icon(Icons.clear_rounded,
                                 color: AppColors.textHint(isDark)),
                             onPressed: () {
@@ -234,6 +246,7 @@ class _InventoryScreenState extends State<InventoryScreen>
         Provider.of<ThemeProvider>(context, listen: false).isDark;
     final confirm = await showDialog<bool>(
       context: context,
+      barrierLabel: 'Bekor qilish',
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card(isDark),
         title: Text('O\'chirish',
@@ -272,13 +285,16 @@ class _InventoryScreenState extends State<InventoryScreen>
   }
 
   // ─── Add stock bottom sheet ───────────────────────────────────
-  void _showAddStockSheet(
-      BuildContext context, bool isDark, ProductProvider pp, ProductModel p) {
+  Future<void> _showAddStockSheet(
+      BuildContext context, bool isDark, ProductProvider pp, ProductModel p) async {
     final qtyCtrl = TextEditingController();
     final purPriceCtrl = TextEditingController(text: p.purchasePrice.toInt().toString());
     final sellPriceCtrl = TextEditingController(text: p.sellingPrice.toInt().toString());
-    
-    showModalBottomSheet(
+
+    // Oynada ishlatilgan controller'lar avval hech qachon dispose qilinmagan —
+    // har bir ochilishda xotirada qolib ketardi. Oyna yopilgach tozalaymiz.
+    try {
+      await showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.card(isDark),
       isScrollControlled: true,
@@ -311,7 +327,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                   style: GoogleFonts.inter(color: AppColors.textSec(isDark)),
                 ),
                 Text(
-                  'Hozirgi miqdor: ${p.quantity} ${p.unit}',
+                  'Hozirgi miqdor: ${fmtQty(p.quantity)} ${p.unit}',
                   style: GoogleFonts.inter(
                       color: AppColors.primary, fontWeight: FontWeight.w600),
                 ),
@@ -419,7 +435,13 @@ class _InventoryScreenState extends State<InventoryScreen>
                           ? null
                           : () async {
                               final qty = double.tryParse(qtyCtrl.text.trim()) ?? 0;
-                              if (qty <= 0) return;
+                              if (qty <= 0) {
+                                // Avval bu yerda `return` bor edi — tugma
+                                // "ishlamayapti"dek tuyardi, sababi
+                                // ko'rinmasdi. Endi aniq xabar beriladi.
+                                _showSnack('Miqdor 0 dan katta bo\'lishi kerak');
+                                return;
+                              }
                               final newPur = double.tryParse(purPriceCtrl.text.trim());
                               final newSell = double.tryParse(sellPriceCtrl.text.trim());
                               
@@ -462,6 +484,154 @@ class _InventoryScreenState extends State<InventoryScreen>
         });
       },
     );
+    } finally {
+      // `showModalBottomSheet` Future'i yopish animatsiyasi tugaguncha
+      // emas, `Navigator.pop` so'rovi bilananoq tugaydi. Agar shu yerda
+      // darhol `dispose()` qilsak, hali ekranda yopilayotgan sheet
+      // (masalan klaviatura yopilganda `MediaQuery` o'zgargani uchun)
+      // o'chirilgan controller bilan qayta quriladi va framework
+      // "controller used after disposed" assertion tashlaydi.
+      // Shuning uchun animatsiyadan keyinga suramiz.
+      disposeAfterRouteClosed(() {
+        qtyCtrl.dispose();
+        purPriceCtrl.dispose();
+        sellPriceCtrl.dispose();
+      });
+    }
+  }
+
+  // ─── Yangi kategoriya qo'shish (tez oynasi) ───────────────────
+  // Kategoriyalar menyusidan oldin bitta ochish/saqlash bosqichi kerak
+  // edi — endi AppBar'dagi `+` to'g'ridan-to'g'ri shu ishni qiladi.
+  Future<void> _showAddCategoryDialog(
+      BuildContext ctx, bool isDark, ProductProvider pp) async {
+    final ctrl = TextEditingController();
+    String? error;
+    bool saving = false;
+
+    await showDialog(
+      context: ctx,
+      // Standart `Dismiss` so'zi inglizcha chiqardi — o'zbekchaga almashtiramiz.
+      barrierLabel: 'Bekor qilish',
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (ctx, setDlg) => AlertDialog(
+            backgroundColor: AppColors.card(isDark),
+            title: Text('Yangi kategoriya',
+                style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.text(isDark))),
+            content: TextField(
+              controller: ctrl,
+              autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              style: GoogleFonts.inter(
+                  color: AppColors.text(isDark), fontSize: 15),
+              onChanged: (_) {
+                // Xatoni foydalanuvchi yozishni davom etganda tozalaymiz.
+                if (error != null) setDlg(() => error = null);
+              },
+              onSubmitted: (_) {
+                if (!saving && ctrl.text.trim().isNotEmpty) {
+                  setDlg(() {
+                    saving = true;
+                    error = null;
+                  });
+                }
+              },
+              decoration: InputDecoration(
+                hintText: 'Kategoriya nomi',
+                hintStyle: GoogleFonts.inter(
+                    color: AppColors.textHint(isDark), fontSize: 14),
+                errorText: error,
+                errorStyle: const TextStyle(color: AppColors.accentRed),
+                filled: true,
+                fillColor: AppColors.bg(isDark),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.border(isDark)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.border(isDark)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogCtx),
+                child: const Text('Bekor'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final name = ctrl.text.trim();
+                  if (name.isEmpty) {
+                    setDlg(() => error = 'Kategoriya nomini kiriting');
+                    return;
+                  }
+                  setDlg(() => saving = true);
+                  // `try/catch` shart: `createCategory` ichidagi
+                  // `loadCategories()` faqat `ApiException` ni ushlaydi.
+                  // Boshqa xato chiqsa `.then` hech qachon chaqirilmaydi
+                  // va tugma cheksiz aylanib qolardi — foydalanuvchi
+                  // buni "ishlamayapti" deb ko'rar edi.
+                  try {
+                    final res = await pp.createCategory(name);
+                    // Oyna allaqachon yopilgan bo'lishi mumkin.
+                    if (!dialogCtx.mounted) return;
+                    if (res.success) {
+                      Navigator.pop(dialogCtx);
+                      ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                        content: Text('$name kategoriyasi qo\'shildi'),
+                        backgroundColor: AppColors.accentGreen,
+                      ));
+                    } else {
+                      // `ApiResult.failure` `message` ni har doim null
+                      // qoldiradi — asosiy xato `error` ichida turadi.
+                      // Avvalgi `res.message ?? ...` tufayli 403/500
+                      // sababi ham yashirilib, doimiy "Qo'shib bo'lmadi"
+                      // chiqardi.
+                      setDlg(() {
+                        saving = false;
+                        error = res.error?.userMessage ??
+                            res.message ??
+                            'Qo\'shib bo\'lmadi';
+                      });
+                    }
+                  } catch (e) {
+                    if (!dialogCtx.mounted) return;
+                    setDlg(() {
+                      saving = false;
+                      error = 'Kutilmagan xatolik: $e';
+                    });
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                child: saving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
+                    : const Text('Qo\'shish'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    // `ctrl` shu joyda emas, `disposeAfterRouteClosed` orqali o'chiriladi
+    // (yopish animatsiyasidan keyin) — aks holda dialog hali ekranda
+    // qayta qurilayotganda "controller used after disposed" xatosi chiqadi.
+    disposeAfterRouteClosed(ctrl.dispose);
   }
 
   // ─── Categories bottom sheet ──────────────────────────────────
@@ -576,7 +746,12 @@ class _ProductList extends StatelessWidget {
         itemCount: products.length + (hasMore ? 1 : 0),
         itemBuilder: (_, i) {
           if (i == products.length) {
-            onLoadMore();
+            // `itemBuilder` build paytida chaqiriladi — shu yerda to'g'ridan
+            // to'g'ri provayderni ishga tushirib qo'ymaslik uchun kadr
+            // tugagachga suramiz. Yuklash navbatga qo'yilgani uchun
+            // takroriy chaqiruvlar zarar bermaydi.
+            WidgetsBinding.instance
+                .addPostFrameCallback((_) => onLoadMore());
             return const Center(
                 child: Padding(
               padding: EdgeInsets.all(16),
@@ -658,24 +833,29 @@ class _ProductTile extends StatelessWidget {
               const SizedBox(height: 2),
               Row(children: [
                 if (product.categoryName != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      product.categoryName!,
-                      style: GoogleFonts.inter(
-                          fontSize: 10,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600),
+                  Flexible(
+                    // Uzun kategoriya nomlari kartani siqib chiqarmasin.
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        product.categoryName!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                            fontSize: 10,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ),
                 const SizedBox(width: 6),
                 Text(
-                  '${product.quantity} ${product.unit}',
+                  '${fmtQty(product.quantity)} ${product.unit}',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: product.isLowStock
@@ -739,11 +919,10 @@ class _ProductTile extends StatelessWidget {
     );
   }
 
-  String _fmt(double v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)} mln';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)} ming';
-    return v.toStringAsFixed(0);
-  }
+  // Summa hech qachon yuvilmaydi: `1070` → "1 070", `1250000` → "1 250 000".
+  // Avvalgi `(v / 1000).toStringAsFixed(0)` yuvishi 1070 → "1 ming" qilib
+  // 70 so'mni yo'qotardi.
+  String _fmt(double v) => fmtSum(v);
 }
 
 // ─── Product Form Sheet ───────────────────────────────────────────
@@ -775,6 +954,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
   String _unit = 'dona';
   String? _categoryId;
   bool _loading = false;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -846,25 +1026,21 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
               _lbl('Shtrix-kod (Ixtiyoriy)', isDark),
               _tf(_barcodeCtrl, 'Skanerlang yoki yozing', isDark,
                   suffix: IconButton(
+                    tooltip: 'Shtrix-kod skanerlash',
                     icon: Icon(Icons.qr_code_scanner_rounded, color: AppColors.primary),
                     onPressed: () async {
-                      String? res = await SimpleBarcodeScanner.scanBarcode(
-                        context,
-                        barcodeAppBar: const BarcodeAppBar(
-                          appBarTitle: 'Shtrix-kodni skanerlash',
-                          centerTitle: false,
-                          enableBackButton: true,
-                          backButtonIcon: Icon(Icons.arrow_back_ios),
-                        ),
-                        isShowFlashIcon: true,
-                        delayMillis: 2000,
-                        cameraFace: CameraFace.back,
-                      );
-                      if (res != null && res.isNotEmpty && res != '-1') {
-                        setState(() {
-                          _barcodeCtrl.text = res;
-                        });
-                      }
+                      // `openBarcodeScanner` bekor qilinganda `null` qaytaradi.
+                      // Eski yechimda bekor qilinganda `"-2"` qaytarib, maydonga
+                      // `"-2"` yozilib qolardi (video'dagi chalkash qoldiq
+                      // ma'lumot).
+                      final res = await openBarcodeScanner(context);
+                      if (!mounted) return;
+                      if (res == null || res.trim().isEmpty) return;
+                      setState(() {
+                        _barcodeCtrl.text = res.trim();
+                        _barcodeCtrl.selection = TextSelection.collapsed(
+                            offset: _barcodeCtrl.text.length);
+                      });
                     },
                   )),
 
@@ -1073,6 +1249,9 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
     Widget? suffix,
   }) =>
       TextFormField(
+        // Xato foydalanuvchi maydonni tuzatgan zahoti kiritiladi.
+        // Aks holda eski xato yozib turib qoladi.
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         controller: ctrl,
         keyboardType: keyboard,
         inputFormatters: keyboard?.toString().contains('number') == true
@@ -1115,7 +1294,14 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
       );
 
   Future<void> _save() async {
+    // `_loading` faqat `setState` dan keyingi kadrda tugmani o'chiradi —
+    // shu orada ikkinchi marta bosilsa, `createProduct` **ikki marta**
+    // chaqiriladi va bazada bir xil mahsulot ikki qator bo'lib qoladi
+    // (video'da ko'rsatilgan dublikat mahsulotlar). Shu sababli ham
+    // `_loading`, ham `_saving` tekshiriladi.
+    if (_saving) return;
     if (!_formKey.currentState!.validate()) return;
+    _saving = true;
     setState(() => _loading = true);
 
     final body = <String, dynamic>{
@@ -1144,6 +1330,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
     }
 
     if (!mounted) return;
+    _saving = false;
     setState(() => _loading = false);
 
     if (result.success) {
@@ -1173,14 +1360,8 @@ class _CategoriesSheet extends StatefulWidget {
 }
 
 class _CategoriesSheetState extends State<_CategoriesSheet> {
-  final _nameCtrl = TextEditingController();
-  bool _adding = false;
-
-  @override
-  void dispose() {
-    _nameCtrl.dispose();
-    super.dispose();
-  }
+  // Qo'shish formasi shu joydan olib tashlandi (AppBar'dagi `+` tugmasi
+  // orqali qo'shiladi), shuning uchun controller/`_adding` kerak emas.
 
   @override
   Widget build(BuildContext context) {
@@ -1204,61 +1385,18 @@ class _CategoriesSheetState extends State<_CategoriesSheet> {
               color: AppColors.text(isDark),
             ),
           ),
-          const SizedBox(height: 16),
-
-          // Add form
-          Row(children: [
-            Expanded(
-              child: TextField(
-                controller: _nameCtrl,
-                style: GoogleFonts.inter(
-                    color: AppColors.text(isDark), fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: 'Yangi kategoriya nomi...',
-                  hintStyle: GoogleFonts.inter(
-                      color: AppColors.textHint(isDark), fontSize: 13),
-                  filled: true,
-                  fillColor: AppColors.bg(isDark),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        BorderSide(color: AppColors.border(isDark)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        BorderSide(color: AppColors.border(isDark)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        BorderSide(color: AppColors.primary, width: 1.5),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
-                ),
-              ),
+          const SizedBox(height: 6),
+          // Qo'shish oynasi endi yagona joyda — AppBar'dagi `+` tugmasi.
+          // Bu yerga ikkinchi maydon qo'shilsa, foydalanuvchi qaysi biri
+          // ishlaydi deb o'ylab vaqtni yo'qotadi. O'rnini ko'rsatamiz.
+          Text(
+            'Yangi kategoriya qo\'shish uchun yuqoridagi + tugmasini bosing',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: AppColors.textHint(isDark),
             ),
-            const SizedBox(width: 8),
-            ElevatedButton(
-              onPressed: _adding ? null : _addCategory,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12),
-              ),
-              child: _adding
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2))
-                  : const Icon(Icons.add_rounded, color: Colors.white),
-            ),
-          ]),
-
+          ),
           const SizedBox(height: 12),
 
           if (cats.isEmpty)
@@ -1283,19 +1421,6 @@ class _CategoriesSheetState extends State<_CategoriesSheet> {
       ),
     );
   }
-
-  Future<void> _addCategory() async {
-    final name = _nameCtrl.text.trim();
-    if (name.isEmpty) return;
-    setState(() => _adding = true);
-    await widget.pp.createCategory(name);
-    if (mounted) {
-      setState(() {
-        _adding = false;
-        _nameCtrl.clear();
-      });
-    }
-  }
 }
 
 class _CategoryTile extends StatelessWidget {
@@ -1316,11 +1441,13 @@ class _CategoryTile extends StatelessWidget {
       ),
       trailing: Row(mainAxisSize: MainAxisSize.min, children: [
         IconButton(
+          tooltip: 'Kategoriyani tahrirlash',
           icon: Icon(Icons.edit_outlined,
               color: AppColors.textSec(isDark), size: 18),
           onPressed: () => _editDialog(context),
         ),
         IconButton(
+          tooltip: 'Kategoriyaning o\'chirish',
           icon:
               Icon(Icons.delete_outline_rounded, color: AppColors.accentRed, size: 18),
           onPressed: () => _delete(context),
@@ -1333,6 +1460,7 @@ class _CategoryTile extends StatelessWidget {
     final ctrl = TextEditingController(text: cat.categoryName);
     await showDialog(
       context: context,
+      barrierLabel: 'Bekor qilish',
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card(isDark),
         title: Text('Kategoriyani tahrirlash',
@@ -1365,12 +1493,14 @@ class _CategoryTile extends StatelessWidget {
         ],
       ),
     );
-    ctrl.dispose();
+    // Yopish animatsiyasi tugagach o'chiramiz (qarang: disposeAfterRouteClosed).
+    disposeAfterRouteClosed(ctrl.dispose);
   }
 
   Future<void> _delete(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
+      barrierLabel: 'Bekor qilish',
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card(isDark),
         title: Text('O\'chirish',

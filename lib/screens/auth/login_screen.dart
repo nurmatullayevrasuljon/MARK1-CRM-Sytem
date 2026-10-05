@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../constants/app_colors.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
+import '../../utils/phone_utils.dart';
 import '../main_shell.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
@@ -25,6 +29,37 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passCtrl = TextEditingController();
   bool _obscure = true;
   bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Sessiya server tomonidan bekor qilingan bo'lsa, foydalanuvchiga sababini
+    // ko'rsatamiz. Xabar `consumeSessionNotice()` ichida o'chiriladi, shuning
+    // uchun ekrani qayta ochilganda takrorlanmaydi.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      // Sessiya tugishi ko'p uchraydi — foydalanuvchi har safar
+      // raqamni qayta yozmasligi uchun oxirgisini oldindan to'ldiramiz.
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final last = prefs.getString('last_login_phone');
+        if (last != null && last.isNotEmpty && _phoneCtrl.text.isEmpty) {
+          _phoneCtrl.text = last;
+        }
+      } catch (_) {
+        // Xato bo'lsa maydon bo'sh qoladi — kritik emas.
+      }
+      if (!mounted) return;
+
+      final notice = context.read<AuthProvider>().consumeSessionNotice();
+      if (notice == null || notice.isEmpty) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(notice),
+        backgroundColor: AppColors.accentRed,
+      ));
+    });
+  }
 
   @override
   void dispose() {
@@ -104,6 +139,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 _FieldLabel('Telefon raqam', isDark),
                 const SizedBox(height: 8),
                 TextFormField(
+                  // Xato foydalanuvchi maydonni tuzatgan zahoti kiritiladi.
+                  // Aks holda eski xato yozib turib qoladi.
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   controller: _phoneCtrl,
                   keyboardType: TextInputType.phone,
                   inputFormatters: [
@@ -119,9 +157,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     prefixIcon: Icons.phone_outlined,
                   ),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Telefon kiriting';
-                    final digits = v.replaceAll(RegExp(r'\D'), '');
-                    if (digits.length < 9) return 'Noto\'g\'ri telefon raqam';
+                    if (v == null || v.trim().isEmpty) return 'Telefon kiriting';
+                    // Backend aynan 9 xonali raqam kutadi (`998${phone}`).
+                    final digits = normalizeUzPhone(v);
+                    if (digits.length != 9) return 'Noto\'g\'ri telefon raqam';
+                    // 0 bilan boshlanuvchi raqam hech qanday hisobga
+                    // tegishli emas — sababni shu yerda aytib beramiz.
+                    if (digits.startsWith('0')) {
+                      return 'Raqam 0 bilan boshlanmaydi (masalan: 901234567)';
+                    }
                     return null;
                   },
                 ),
@@ -132,6 +176,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 _FieldLabel('Parol', isDark),
                 const SizedBox(height: 8),
                 TextFormField(
+                  // Xato foydalanuvchi maydonni tuzatgan zahoti kiritiladi.
+                  // Aks holda eski xato yozib turib qoladi.
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   controller: _passCtrl,
                   obscureText: _obscure,
                   style: GoogleFonts.inter(
@@ -236,11 +283,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
 
-    String phoneStr = _phoneCtrl.text.trim();
-    phoneStr = phoneStr.replaceAll(RegExp(r'\D'), '');
-    if (phoneStr.startsWith('998') && phoneStr.length >= 12) {
-      phoneStr = phoneStr.substring(3);
-    }
+    // Backend `998${phone}` qidiradi → 9 xona raqam yuboriladi.
+    final phoneStr = normalizeUzPhone(_phoneCtrl.text);
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final result = await auth.login(phoneStr, _passCtrl.text.trim());
@@ -249,6 +293,10 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = false);
 
     if (result.success) {
+      // Telefonni eslab qolamiz — sessiya tugsa foydalanuvchi yana
+      // 9 xonali raqamni qo'lda yozmasligi kerak.
+      // Parol hech qachon saqlanmaydi.
+      unawaited(_rememberPhone(phoneStr));
       _navigateToMain();
     } else {
       final err = result.error!;
@@ -273,6 +321,16 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         _showError(err.userMessage);
       }
+    }
+  }
+
+  /// Oxirgi muvaffaqiyatli kirishdagi telefon raqamini saqlaydi.
+  Future<void> _rememberPhone(String phone) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('last_login_phone', phone);
+    } catch (_) {
+      // Saqlanmasa ham kirish ishlaydi — jihatli xato ko'rsatilmaydi.
     }
   }
 

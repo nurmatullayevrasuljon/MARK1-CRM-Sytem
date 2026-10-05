@@ -1,4 +1,7 @@
-const API_URL = "http://localhost:8080";
+// Eslatma: asosiy API so'rovlari js/api-client.js ichidagi AuthSystem orqali
+// o'tadi. Bu qiymat faqat eski/komment qilingan kodda ishlatilgan, shuning uchun
+// u ham ishlab chiqarish manziliga tenglashtirildi (localhost qolmasligi uchun).
+const API_URL = "https://backend.mark1.uz";
 // ============================================================
 // 📦 USER DATA LOADING (SODDALASHTIRILGAN)
 // ============================================================
@@ -99,7 +102,7 @@ async function updateDailySalesPageCounter() {
         ${todayTotal.toLocaleString("uz-UZ")}
         <small style="
           font-size:0.6em;
-          color:#94a3b8;
+          color:var(--text-muted);
           font-weight:400;
           margin-left:4px
         ">UZS</small>
@@ -178,25 +181,25 @@ function updateTotalDebtCounter() {
       if (totalDebt > lastShown) {
         current += step;
         if (current >= totalDebt) {
-          counterEl.innerHTML = `${totalDebt.toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${totalDebt.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
           clearInterval(interval);
         } else {
-          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
         }
       } else {
         current -= step;
         if (current <= totalDebt) {
-          counterEl.innerHTML = `${totalDebt.toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${totalDebt.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
           clearInterval(interval);
         } else {
-          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
         }
       }
     }, 20);
 
     counterEl.dataset.lastValue = totalDebt;
   } else {
-    counterEl.innerHTML = `${totalDebt.toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+    counterEl.innerHTML = `${totalDebt.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
   }
 
   // Qarzdorlar sonini ko'rsatish
@@ -928,7 +931,7 @@ function updateMonthlyRevenueUI() {
   const firstSaleDate = getFirstSaleDate();
 
   if (!firstSaleDate) {
-    counterEl.innerHTML = `0 <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+    counterEl.innerHTML = `0 <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
     counterEl.dataset.lastValue = 0;
 
     if (changeEl) {
@@ -955,25 +958,25 @@ function updateMonthlyRevenueUI() {
       if (currentMonth > lastShown) {
         current += step;
         if (current >= currentMonth) {
-          counterEl.innerHTML = `${currentMonth.toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${currentMonth.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
           clearInterval(interval);
         } else {
-          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
         }
       } else {
         current -= step;
         if (current <= currentMonth) {
-          counterEl.innerHTML = `${currentMonth.toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${currentMonth.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
           clearInterval(interval);
         } else {
-          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
         }
       }
     }, 20);
 
     counterEl.dataset.lastValue = currentMonth;
   } else {
-    counterEl.innerHTML = `${currentMonth.toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+    counterEl.innerHTML = `${currentMonth.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
   }
 
   if (changeEl) {
@@ -1053,7 +1056,7 @@ function updateDailySalesCounter() {
   const lastShown = Number(counterEl.dataset.lastValue || 0);
 
   if (dayChanged) {
-    counterEl.innerHTML = `0 <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+    counterEl.innerHTML = `0 <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
     counterEl.dataset.lastValue = 0;
     animateCounter(counterEl, 0, todayTotal);
   }
@@ -1067,7 +1070,7 @@ function updateDailySalesCounter() {
   counterEl.dataset.lastValue = todayTotal;
 
   setTimeout(() => {
-    counterEl.innerHTML = `${todayTotal.toLocaleString()} <small style="font-size:0.6em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+    counterEl.innerHTML = `${todayTotal.toLocaleString()} <small style="font-size:0.6em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
   }, 1200);
 
   if (todayTotal === 0 && yesterdayTotal === 0) {
@@ -1267,7 +1270,7 @@ function renderProducts(list = products) {
         
         <!-- Rasm -->
         <td data-label="Rasm">
-          <img src="${p.image}" class="product-img">
+          <img src="${p.image}" class="product-img" alt="${p.name || 'Mahsulot rasmi'}" loading="lazy">
         </td>
 
         <!-- Nomi -->
@@ -1310,8 +1313,10 @@ function renderProducts(list = products) {
           <!-- EDIT -->
           <button 
             class="btn btn-sm btn-edit"
+            title="Mahsulotni tahrirlash"
+            aria-label="Mahsulotni tahrirlash${p.name ? ': ' + p.name : ''}"
             onclick="editProduct('${p.id}')">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6" aria-hidden="true" focusable="false">
               <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
             </svg>
 
@@ -1320,8 +1325,10 @@ function renderProducts(list = products) {
           <!-- DELETE -->
           <button 
             class="btn btn-sm btn-danger ms-2"
+            title="Mahsulotni o'chirish"
+            aria-label="Mahsulotni o'chirish${p.name ? ': ' + p.name : ''}"
             onclick="deleteProduct('${p.id}')">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6" aria-hidden="true" focusable="false">
               <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
             </svg>
 
@@ -3060,25 +3067,25 @@ function updateProfitUI() {
       if (currentProfit > lastShown) {
         current += step;
         if (current >= currentProfit) {
-          counterEl.innerHTML = `${currentProfit.toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${currentProfit.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
           clearInterval(interval);
         } else {
-          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
         }
       } else {
         current -= step;
         if (current <= currentProfit) {
-          counterEl.innerHTML = `${currentProfit.toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${currentProfit.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
           clearInterval(interval);
         } else {
-          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
         }
       }
     }, 20);
 
     counterEl.dataset.lastValue = currentProfit;
   } else {
-    counterEl.innerHTML = `${currentProfit.toLocaleString()} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+    counterEl.innerHTML = `${currentProfit.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
   }
 }
 
@@ -3101,7 +3108,7 @@ function updateInventoryBalanceUI() {
 
   const balance = Math.round(calculateInventoryBalance());
   counterEl.dataset.lastValue = balance;
-  counterEl.innerHTML = `${balance.toLocaleString("uz-UZ")} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">UZS</small>`;
+  counterEl.innerHTML = `${balance.toLocaleString("uz-UZ")} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
 }
 
 // showNotification — 3910-qatordagi unified versiyaga ko'chirildi (FIX 4)
@@ -3330,10 +3337,10 @@ function updateTotalTransactions() {
     el.dataset.lastValue = todayTransactions;
 
     setTimeout(() => {
-      el.innerHTML = `${todayTransactions} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">ta</small>`;
+      el.innerHTML = `${todayTransactions} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">ta</small>`;
     }, 1200);
   } else {
-    el.innerHTML = `${todayTransactions} <small style="font-size:0.55em;color:#94a3b8;font-weight:400;margin-left:4px">ta</small>`;
+    el.innerHTML = `${todayTransactions} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">ta</small>`;
   }
 }
 
@@ -3770,7 +3777,7 @@ function calculateProfitPreview() {
   } else if (profit < 0) {
     preview.innerHTML = `<span style="color:#ef4444;font-weight:600">${profit.toLocaleString()} UZS (Zarar!)</span>`;
   } else {
-    preview.innerHTML = `<span style="color:#94a3b8">0 UZS</span>`;
+    preview.innerHTML = `<span style="color:var(--text-muted)">0 UZS</span>`;
   }
 }
 
@@ -4508,7 +4515,7 @@ function renderSmsHistory() {
         <td colspan="6" style="text-align:center; padding:3rem;">
           <div style="font-size:3.5rem; margin-bottom:1rem; opacity:0.5;">📱</div>
           <div style="font-size:1.2rem; font-weight:600; color:#64748b; margin-bottom:0.5rem;">SMS tarixi bo'sh</div>
-          <div style="font-size:0.95rem; color:#94a3b8;">Birinchi SMS yuborilgandan keyin bu yerda ko'rinadi</div>
+          <div style="font-size:0.95rem; color:var(--text-muted);">Birinchi SMS yuborilgandan keyin bu yerda ko'rinadi</div>
         </td>
       </tr>
     `;
@@ -4544,7 +4551,7 @@ function renderSmsHistory() {
     const debtor = debtors.find(d => d.id === sms.debtorId);
     const debtorStatus = debtor ?
       `<small style="color:#10b981; font-weight:600;">✓ Faol</small>` :
-      `<small style="color:#94a3b8;">✓ To'langan</small>`;
+      `<small style="color:var(--text-muted);">✓ To'langan</small>`;
 
     return `
       <tr>
@@ -4723,7 +4730,7 @@ function renderDebtors() {
   if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align:center; padding:2rem; color:#94a3b8;">
+        <td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">
           <div style="font-size:3rem; margin-bottom:1rem;">📭</div>
           <div style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem;">Qarzdor topilmadi</div>
           <div style="font-size:0.9rem;">Yangi qarzdor qo'shish uchun yuqoridagi tugmani bosing</div>
@@ -9268,16 +9275,20 @@ window.loadProfileNew = loadProfileNew;
 
     function render() {
       const s = steps[i];
+      // ⚠️ Avvalgi versiya ranglarni qattiq (#fff / #5B6AF0 / #94a3b8) yozgan edi:
+      // qorong'i mavzuda oq karta + och matn, och mavzuda esa "Keyingi" tugmasi
+      // (oq matn #5B6AF0 ustida 4.41) AA talablariga javob bermas edi.
+      // Endi premium-theme o'zgaruvchilari orqali mavzuga moslashadi.
       overlay.innerHTML =
-        '<div style="background:#fff;border-radius:20px;max-width:420px;width:100%;padding:32px;box-shadow:0 24px 64px rgba(0,0,0,.3);font-family:inherit;position:relative">' +
-        '<button id="mark1-tour-skip" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:13px;color:#94a3b8;cursor:pointer">O\'tkazish</button>' +
+        '<div style="background:var(--bg-card, #fff);border-radius:20px;max-width:420px;width:100%;padding:32px;box-shadow:0 24px 64px rgba(0,0,0,.3);font-family:inherit;position:relative">' +
+        '<button id="mark1-tour-skip" style="position:absolute;top:6px;right:8px;background:none;border:none;font-size:13px;color:var(--text-muted, #5F6B7F);cursor:pointer;padding:8px;min-height:32px;min-width:44px">O\'tkazish</button>' +
         '<div style="font-size:44px;text-align:center;margin-bottom:12px">' + s.emoji + '</div>' +
-        '<h3 style="margin:0 0 8px;font-size:19px;font-weight:700;text-align:center;color:#0f172a">' + esc(s.title) + '</h3>' +
-        '<p style="margin:0 0 20px;font-size:14.5px;line-height:1.6;color:#475569;text-align:center">' + esc(s.text) + '</p>' +
+        '<h3 style="margin:0 0 8px;font-size:19px;font-weight:700;text-align:center;color:var(--text-primary, #0f172a)">' + esc(s.title) + '</h3>' +
+        '<p style="margin:0 0 20px;font-size:14.5px;line-height:1.6;color:var(--text-secondary, #5A6478);text-align:center">' + esc(s.text) + '</p>' +
         '<div style="display:flex;gap:6px;justify-content:center;margin-bottom:18px">' +
-        steps.map((_, n) => '<span style="width:8px;height:8px;border-radius:50%;background:' + (n === i ? '#5B6AF0' : '#e2e8f0') + '"></span>').join("") +
+        steps.map((_, n) => '<span style="width:8px;height:8px;border-radius:50%;background:' + (n === i ? 'var(--brand-primary, #4455EE)' : 'var(--border-subtle, #e2e8f0)') + '"></span>').join("") +
         '</div>' +
-        '<button id="mark1-tour-next" style="width:100%;padding:13px;border:none;border-radius:12px;background:#5B6AF0;color:#fff;font-size:15px;font-weight:600;cursor:pointer">' + esc(s.btn) + '</button>' +
+        '<button id="mark1-tour-next" style="width:100%;padding:13px;border:none;border-radius:12px;background:var(--brand-primary, #4455EE);color:#fff;font-size:15px;font-weight:600;cursor:pointer">' + esc(s.btn) + '</button>' +
         '</div>';
 
       overlay.querySelector("#mark1-tour-next").onclick = () => {
@@ -9402,8 +9413,29 @@ window.stopScanner = function() {
 };
 
 // Nested modal fix for Bootstrap 4
-$('#scannerModal').on('hidden.bs.modal', function () {
-  if ($('.modal:visible').length) {
-    $('body').addClass('modal-open');
+// Eslatma: script.js <defer> bilan jQuery'dan OLDIN yuklanadi, shuning uchun
+// bu bog'lanish DOM va jQuery tayyor bo'lgunga kutadi (aks holda "$ is not defined").
+(function bindScannerModalFix() {
+  function bind() {
+    if (typeof $ === 'undefined' || !document.getElementById('scannerModal')) {
+      return false;
+    }
+    $('#scannerModal').on('hidden.bs.modal', function () {
+      if ($('.modal:visible').length) {
+        $('body').addClass('modal-open');
+      }
+    });
+    return true;
   }
-});
+
+  if (bind()) return;
+  document.addEventListener('DOMContentLoaded', function () {
+    if (bind()) return;
+    window.addEventListener('load', bind);
+    // jQuery defer bilan yuklansa, qayta urinish kerak
+    var tries = 0;
+    var timer = setInterval(function () {
+      if (bind() || ++tries > 40) clearInterval(timer);
+    }, 50);
+  });
+})();

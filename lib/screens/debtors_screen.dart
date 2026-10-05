@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
+import '../utils/format_utils.dart';
 import '../providers/theme_provider.dart';
 import '../providers/debt_provider.dart';
 import '../providers/client_provider.dart';
 import '../models/sale_model.dart';
 import '../models/client_model.dart';
+import '../utils/phone_utils.dart';
 import 'sales_screen.dart';
 
 class DebtorsScreen extends StatefulWidget {
@@ -172,19 +174,56 @@ class _ClientsTabState extends State<_ClientsTab> {
                           style: GoogleFonts.inter(
                               color: AppColors.text(isDark), fontWeight: FontWeight.w600),
                         ),
-                        subtitle: c.clientPhone != null
-                            ? Text('+998 ${c.clientPhone}',
-                                style: GoogleFonts.inter(
-                                    color: AppColors.textSec(isDark), fontSize: 12))
+                        subtitle: (c.clientPhone != null && c.clientPhone!.trim().isNotEmpty)
+                            // Noto'g'ri raqamni ochiq ko'rsatamiz: `0` bilan
+                            // boshlangan 9 xona SMS orqali yetib bor maydi,
+                            // lekin foydalanuvchi "yubordim" deb o'ylaydi.
+                            ? Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      displayUzPhone(c.clientPhone),
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.inter(
+                                        color: isValidUzPhone(c.clientPhone)
+                                            ? AppColors.textSec(isDark)
+                                            : AppColors.accentRed,
+                                        fontSize: 12,
+                                        decoration: isValidUzPhone(c.clientPhone)
+                                            ? null
+                                            : TextDecoration.lineThrough,
+                                      ),
+                                    ),
+                                  ),
+                                  if (!isValidUzPhone(c.clientPhone)) ...[
+                                    const SizedBox(width: 6),
+                                    Semantics(
+                                      label: 'Telefon noto\'g\'ri',
+                                      child: Tooltip(
+                                        message: 'Raqam noto\'g\'ri — SMS yetib bor '
+                                            'maydi. 0 bilan boshlanmasin, '
+                                            'masalan 90 123 45 67.',
+                                        child: Icon(
+                                          Icons.warning_amber_rounded,
+                                          size: 14,
+                                          color: AppColors.accentRed,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              )
                             : null,
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
+                              tooltip: 'Tahrirlash',
                               icon: Icon(Icons.edit_rounded, color: AppColors.primary, size: 20),
                               onPressed: () => _showClientSheet(context, c),
                             ),
                             IconButton(
+                              tooltip: 'O\'chirish',
                               icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
                               onPressed: () => _deleteClient(context, c.id),
                             ),
@@ -207,6 +246,7 @@ class _ClientsTabState extends State<_ClientsTab> {
 
     final confirm = await showDialog<bool>(
       context: context,
+      barrierLabel: 'Bekor qilish',
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card(widget.isDark),
         title: Text('O\'chirish',
@@ -262,8 +302,20 @@ class _ClientFormSheetState extends State<_ClientFormSheet> {
     super.initState();
     if (widget.client != null) {
       _nameCtrl.text = widget.client!.clientName;
-      _phoneCtrl.text = widget.client!.clientPhone ?? '';
+      // Formada doim 9 xonali raqam ko'rsatiladi ("+998" prefiksi alohida),
+      // aks holda tahrirlashda "+998 +998 90..." takrorlanib qoladi.
+      final rawPhone = widget.client!.clientPhone ?? '';
+      _phoneCtrl.text = rawPhone.trim().isEmpty ? '' : normalizeUzPhone(rawPhone);
     }
+  }
+
+  @override
+  void dispose() {
+    // State field controllerlarni o'chirmaslik -> sheet har yopilganda
+    // xotira oqishi (memory leak).
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -331,15 +383,36 @@ class _ClientFormSheetState extends State<_ClientFormSheet> {
 
   Future<void> _save() async {
     final name = _nameCtrl.text.trim();
-    if (name.isEmpty) return;
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Mijoz ismini kiriting'),
+        backgroundColor: AppColors.accentRed,
+      ));
+      return;
+    }
+
+    // Backend `998${phone}` qo'shib SMS yuboradi, shuning uchun
+    // 9 xona raqam yuborish shart (aks holda "998998..." bo'lib xato ketadi).
+    final phoneStr = normalizeUzPhone(_phoneCtrl.text);
+    if (phoneStr.isNotEmpty && phoneStr.length != 9) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Telefon 9 xona bo\'lishi kerak (masalan: 901234567)'),
+        backgroundColor: AppColors.accentRed,
+      ));
+      return;
+    }
+    // `0` bilan boshlangan raqam to'g'ri formatda, lekin mavjud emas —
+    // server `998038302839` ga aylantiradi va SMS hech qachon yetib bor maydi.
+    if (phoneStr.isNotEmpty && phoneStr.startsWith('0')) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Raqam 0 bilan boshlanmaydi. Masalan: 901234567'),
+        backgroundColor: AppColors.accentRed,
+      ));
+      return;
+    }
+
     setState(() => _loading = true);
     final cp = Provider.of<ClientProvider>(context, listen: false);
-
-    String phoneStr = _phoneCtrl.text.trim();
-    phoneStr = phoneStr.replaceAll(RegExp(r'\D'), '');
-    if (phoneStr.startsWith('998') && phoneStr.length >= 12) {
-      phoneStr = phoneStr.substring(3);
-    }
 
     final res = widget.client == null
         ? await cp.createClient(name: name, phone: phoneStr)
@@ -475,11 +548,10 @@ class _DebtorsTab extends StatelessWidget {
     );
   }
 
-  String _fmt(double v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)} mln';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)} ming';
-    return v.toStringAsFixed(0);
-  }
+  // Summa hech qachon yuvilmaydi: `1070` → "1 070", `1250000` → "1 250 000".
+  // Avvalgi `(v / 1000).toStringAsFixed(0)` yuvishi 1070 → "1 ming" qilib
+  // 70 so'mni yo'qotardi.
+  String _fmt(double v) => fmtSum(v);
 }
 
 class _DebtTile extends StatelessWidget {
@@ -535,8 +607,8 @@ class _DebtTile extends StatelessWidget {
                     color: AppColors.text(isDark),
                   ),
                 ),
-                if (sale.clientPhone != null)
-                  Text('+998 ${sale.clientPhone}',
+                if (sale.clientPhone != null && sale.clientPhone!.trim().isNotEmpty)
+                  Text(displayUzPhone(sale.clientPhone),
                       style: GoogleFonts.inter(fontSize: 13, color: AppColors.textSec(isDark))),
                 if (sale.dueDate != null)
                   Row(children: [
@@ -580,11 +652,10 @@ class _DebtTile extends StatelessWidget {
     );
   }
 
-  String _fmt(double v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)} mln';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)} ming';
-    return v.toStringAsFixed(0);
-  }
+  // Summa hech qachon yuvilmaydi: `1070` → "1 070", `1250000` → "1 250 000".
+  // Avvalgi `(v / 1000).toStringAsFixed(0)` yuvishi 1070 → "1 ming" qilib
+  // 70 so'mni yo'qotardi.
+  String _fmt(double v) => fmtSum(v);
 
   String _fmtDate(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';

@@ -83,9 +83,13 @@ class ApiService {
   static const String _baseUrl = 'https://mark1-crm-sytem.onrender.com/api';
   static const Duration _timeout = Duration(seconds: 20);
 
-  // Refresh in progress flag — parallel refresh'larni oldini oladi
-  static bool _isRefreshing = false;
   static String? _cachedToken;
+
+  // Sessiya haqiqatan tugaganda (401 + refresh muvaffaqiyatsiz) chaqiriladi.
+  // AuthProvider uni o'rnatadi va foydalanuvchini login ekraniga qaytaradi.
+  // Faqat `withAuth: true` so'rovlarda ishlaydi — login/ro'yxatdan o'tishdagi
+  // 401-lar (noto'g'ri parol) bunga tegmaydi.
+  static void Function()? onSessionExpired;
 
   // ─── Token management ─────────────────────────────────────────
   static Future<String?> getToken() async {
@@ -130,22 +134,79 @@ class ApiService {
         'client-platform-type': 'mobile',
       };
 
+  // ─── Refresh cookie (backend faqat HTTP-only cookie qabul qiladi) ───
+  //
+  // Backend refresh tokinni JSON emas, faqat `Set-Cookie` orqali qaytaradi
+  // (`store.controller.js` → `res.cookie("refreshToken", ..., httpOnly: true)`),
+  // esa `POST /auth/store/refresh` uni `req.cookies.refreshToken` dan o'qiydi.
+  // Dart `http` paketi cookie-larni o'zi saqlamaydi, shuning uchun uni qo'lda
+  // SharedPreferences'ga yozib, refresh so'roviga `Cookie` headeri qo'shamiz.
+  // Aks holda 15 daqiqada access token tugaydi va foydalanuvchi login'ga
+  // tashlanadi ("Sessiya tugadi").
+  static Future<void> _captureRefreshCookie(http.Response res) async {
+    final raw = res.headers['set-cookie'];
+    if (raw == null || raw.isEmpty) return;
+    final match = RegExp(r'refreshToken=([^;,\s]+)').firstMatch(raw);
+    if (match == null) return;
+    final value = match.group(1) ?? '';
+    // O'chirilgan cookie (bo'sh qiymat) eski tokenni yo'q qilmasligi kerak.
+    if (value.isEmpty || value.length < 20) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('refresh_token', value);
+  }
+
+  static Future<Map<String, String>> _refreshCookieHeader() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rToken = prefs.getString('refresh_token');
+    if (rToken == null || rToken.isEmpty) return {};
+    return {'Cookie': 'refreshToken=$rToken'};
+  }
+
+
   // ─── Token Refresh ────────────────────────────────────────────
-  static Future<bool> refreshToken() async {
-    if (_isRefreshing) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      return _cachedToken != null;
-    }
-    _isRefreshing = true;
+  // Refresh transport xatosi (internet yo'q / server ko'tara olmadi).
+  // Bunda sessiya YOQILMAYDI — foydalanuvchi offline qoladi va keyin
+  // qayta uriniladi. Faqat haqiqiy 401 (cookie yaroqsiz) sessiyani tugatadi.
+  static bool _refreshOffline = false;
+
+  /// Hozir davom etayotgan refresh so'rovi (agar bo'lsa).
+  ///
+  /// Dashboard bir nechta so'rovni PARALLEL yuboradi va ular hammasi bir vaqtda
+  /// 401 oladi. Avvalgi kodda qo'shimcha so'rovlar `_isRefreshing` ko'rib
+  /// 500 ms kutib, `_cachedToken != null` deb `true` qaytardi — bu ESKIRGAN
+  /// token edi. U bilan qayta yuborilgan so'rov yana 401 olib, sessiyani
+  /// yopib yuborardi ("Sessiya tugadi" 15 daqiqadan keyin).
+  ///
+  /// Endi barcha parallel so'rovlar bitta `Future` ning natijasini kutadi.
+  static Future<bool>? _refreshFuture;
+
+  /// Parallel so'rovlarni bitta refresh natijasiga bog'laydi.
+  static Future<bool> refreshToken() {
+    final running = _refreshFuture;
+    if (running != null) return running;
+    final future = _doRefresh();
+    _refreshFuture = future;
+    return future.whenComplete(() {
+      if (identical(_refreshFuture, future)) _refreshFuture = null;
+    });
+  }
+
+  static Future<bool> _doRefresh() async {
+    _refreshOffline = false;
     try {
       final prefs = await SharedPreferences.getInstance();
       final rToken = prefs.getString('refresh_token');
-      if (rToken == null) return false;
+      if (rToken == null || rToken.isEmpty) return false;
 
       final res = await http
           .post(
             Uri.parse('$_baseUrl/auth/store/refresh'),
-            headers: _jsonHeaders,
+            headers: {
+              ..._jsonHeaders,
+              // Backend refresh tokinni faqat cookie'dan o'qiydi
+              // (`req.cookies.refreshToken`), JSON body emas.
+              ...await _refreshCookieHeader(),
+            },
             body: jsonEncode({'refresh_token': rToken}),
           )
           .timeout(_timeout);
@@ -155,15 +216,35 @@ class ApiService {
         final token = data['access_token'];
         if (token != null && token.isNotEmpty) {
           await saveToken(token);
-          _isRefreshing = false;
           return true;
         }
       }
-      _isRefreshing = false;
+
+      if (res.statusCode == 401 || res.statusCode == 404) {
+        // Cookie yaroqsiz — uni tozalaymiz, aks holda har safar
+        // befoyga 401 takrorlanaveradi.
+        await prefs.remove('refresh_token');
+      }
       return false;
     } catch (_) {
-      _isRefreshing = false;
+      // Socket/timeout/client xatosi — sessiya emas, tarmoq muammosi.
+      _refreshOffline = true;
       return false;
+    }
+  }
+
+  // ─── Sessiya tugashi ──────────────────────────────────────────
+  /// Tokenni o'chiradi va (faqat autentifikatsiya talab qilingan so'rovda)
+  /// global `onSessionExpired` callback'ini chaqiradi, shu bilan ilova
+  /// foydalanuvchini login ekraniga qaytaradi.
+  static Future<void> _endSession(bool withAuth) async {
+    await clearToken();
+    if (withAuth) {
+      try {
+        onSessionExpired?.call();
+      } catch (_) {
+        // Callback xatosi asosiy 401 xabarini yashirib qolmasin
+      }
     }
   }
 
@@ -174,7 +255,9 @@ class ApiService {
     Map<String, dynamic>? body,
     Map<String, String>? queryParams,
     bool withAuth = true,
-    bool isRetry = false,
+    /// 401 dan keyin necha marta qayta urinish qilindi.
+    /// Cheksiz rekursiya (token har safar "yangilanib" turib bersa) oldini oladi.
+    int attempt = 0,
     Duration? timeout,
   }) async {
     final effectiveTimeout = timeout ?? _timeout;
@@ -222,28 +305,65 @@ class ApiService {
               type: ApiErrorType.unknown, message: 'Unknown method');
       }
 
+      // Login/refresh javobidagi `Set-Cookie: refreshToken=...` ni saqlaymiz.
+      await _captureRefreshCookie(res);
+
       // ─── 401: Token refresh attempt ───────────────────────────
-      if (res.statusCode == 401 && !isRetry) {
-        final refreshed = await refreshToken();
-        if (refreshed) {
-          // Tokenni yangiladik — asl requestni qayta yuboramiz
-          return await _request(
-            method,
-            path,
-            body: body,
-            queryParams: queryParams,
-            withAuth: withAuth,
-            isRetry: true,
-            timeout: timeout,
-          );
-        } else {
-          await clearToken();
-          throw ApiException(
-            type: ApiErrorType.unauthorized,
-            message: 'Sessiya tugadi',
-            statusCode: 401,
-          );
+      if (res.statusCode == 401 && withAuth) {
+        // Bu so'rov ishlatgan token. Boshqa parallel so'rov shu orada
+        // tokenni yangilagan bo'lishi mumkin — yangisi bilan farq qilsa,
+        // foydalanuvchining sessiyasini behuda uzib yubormaymiz.
+        final usedToken = headers['Authorization'];
+
+        if (attempt == 0) {
+          final refreshed = await refreshToken();
+          if (refreshed) {
+            // Tokenni yangiladik — asl requestni qayta yuboramiz
+            return await _request(
+              method,
+              path,
+              body: body,
+              queryParams: queryParams,
+              withAuth: withAuth,
+              attempt: attempt + 1,
+              timeout: timeout,
+            );
+          }
+
+          if (_refreshOffline) {
+            // Internet yo'q edi — sessiya EMAS, tarmoq xatosi ko'rsatiladi.
+            // Aks holda metroda/planda ilova foydalanuvchini chatdan
+            // chiqarib yuboradi.
+            throw ApiException(
+              type: ApiErrorType.networkError,
+              message: 'Internet ulanishi topilmadi',
+            );
+          }
+        } else if (attempt < 3) {
+          // Qayta urinish ham 401 oldi. Eshitilgan token boshqacha bo'lsa
+          // (ya'ni biz yangilaganimiz) — yangi token bilan oxirgi urinishni
+          // qilib ko'ramiz. Aks holda haqiqatan sessiya tugagan.
+          final currentHeaders = await _authHeaders();
+          if (currentHeaders['Authorization'] != usedToken) {
+            return await _request(
+              method,
+              path,
+              body: body,
+              queryParams: queryParams,
+              withAuth: withAuth,
+              attempt: attempt + 1,
+              timeout: timeout,
+            );
+          }
         }
+
+        // Haqiqiy 401 — foydalanuvchi chiqishi kerak.
+        await _endSession(withAuth);
+        throw ApiException(
+          type: ApiErrorType.unauthorized,
+          message: 'Sessiya tugadi',
+          statusCode: 401,
+        );
       }
 
       final data = _handleResponse(res);
@@ -341,9 +461,11 @@ class ApiService {
   static Future<Map<String, dynamic>> post(
     String path, {
     Map<String, dynamic>? body,
+    Map<String, String>? queryParams,
     bool withAuth = true,
   }) =>
-      _request('POST', path, body: body, withAuth: withAuth);
+      _request('POST', path,
+          body: body, queryParams: queryParams, withAuth: withAuth);
 
   static Future<Map<String, dynamic>> put(
     String path, {

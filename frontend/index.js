@@ -365,9 +365,15 @@
         var attemptsLeft = 3;
 
         while (!verified && attemptsLeft > 0) {
-          var otp = window.prompt(
-            "Telefoningizga (" + userData.phone + ") yuborilgan tasdiqlash kodini kiriting:"
-          );
+          // toast.js yuklangan bo'lsa — zamonaviy modal (showPrompt),
+          // aks holda eski window.prompt ga qaytadi.
+          var otp = (typeof window.showPrompt === "function")
+            ? await window.showPrompt(
+                "Telefoningizga (" + userData.phone + ") yuborilgan tasdiqlash kodini kiriting:"
+              )
+            : window.prompt(
+                "Telefoningizga (" + userData.phone + ") yuborilgan tasdiqlash kodini kiriting:"
+              );
 
           if (otp === null) {
             // Foydalanuvchi bekor qildi — hisob yaratilgan, lekin tasdiqlanmagan holda qoladi.

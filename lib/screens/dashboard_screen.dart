@@ -1,16 +1,23 @@
+import "dart:math" as math;
 import "package:fl_chart/fl_chart.dart";
 import "../providers/locale_provider.dart";
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
+import '../utils/format_utils.dart';
 import '../providers/theme_provider.dart';
 import '../providers/statistics_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/statistics_model.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  // Boshqaruv panelidagi stat kartalar bosilganda tegishli bo'limga
+  // o'tish uchun MainShell'dan beriladi. null = tashqi hollarda
+  // (masalan testda) ekran mustaqil ochiladi.
+  final void Function(int index)? onTab;
+
+  const DashboardScreen({super.key, this.onTab});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -31,6 +38,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       await stats.loadAll();
     }
   }
+
+  // Indexlar MainShell'dagi tartib bilan mos: 1 = Sotish,
+  // 2 = Mahsulotlar, 3 = Kunlik Savdolar, 4 = Qarzdorlar.
+  void Function() _go(int index) => () => widget.onTab?.call(index);
 
   @override
   Widget build(BuildContext context) {
@@ -224,6 +235,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 delegate: SliverChildListDelegate([
                   _StatCard(
                     title: 'Bugungi savdo',
+                    onTap: _go(3), // Kunlik Savdolar
                     value: _formatMoney(statsProvider.stats?.dailySales),
                     icon: Icons.point_of_sale_rounded,
                     color: AppColors.primary,
@@ -232,6 +244,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   _StatCard(
                     title: 'Oylik foyda',
+                    onTap: _go(3), // Kunlik Savdolar
                     value: _formatMoney(statsProvider.stats?.monthlyProfit),
                     icon: Icons.account_balance_wallet_rounded,
                     color: AppColors.accentGreen,
@@ -240,6 +253,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   _StatCard(
                     title: 'Ombordagi mahsulotlar',
+                    onTap: _go(2), // Mahsulotlar
                     value: _formatMoney(
                         statsProvider.stats?.inventoryBalance),
                     icon: Icons.inventory_2_rounded,
@@ -249,6 +263,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   _StatCard(
                     title: 'Muddati o\'tgan qarz',
+                    onTap: _go(4), // Qarzdorlar
                     value: _formatMoney(statsProvider.stats?.overdueDebt),
                     icon: Icons.warning_amber_rounded,
                     color: AppColors.accentRed,
@@ -257,6 +272,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   _StatCard(
                     title: 'Qarzdorlar',
+                    onTap: _go(4), // Qarzdorlar
                     value: '${statsProvider.stats?.debtorsCount ?? 0} ta',
                     icon: Icons.people_outline_rounded,
                     color: Colors.orange,
@@ -265,6 +281,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   _StatCard(
                     title: 'Oz qolgan',
+                    onTap: _go(2), // Mahsulotlar
                     value:
                         '${statsProvider.stats?.lowStockCount ?? 0} mahsulot',
                     icon: Icons.inventory_outlined,
@@ -320,13 +337,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (v >= 1000000000) {
       return '${(v / 1000000000).toStringAsFixed(1)} mlrd so\'m';
     }
-    if (v >= 1000000) {
-      return '${(v / 1000000).toStringAsFixed(1)} mln so\'m';
-    }
-    if (v >= 1000) {
-      return '${(v / 1000).toStringAsFixed(0)} ming so\'m';
-    }
-    return '${v.toStringAsFixed(0)} so\'m';
+    // Karta o'lchovi 360 dp da ~160 dp — `fmtSum` ning to'liq
+    // `1 250 000 so'm` satri sig'may, uch bosqichli nuqta bilan
+    // (`1 250…`) kesilib qolardi. `fmtMoney` ixcham, lekin bitta
+    // kasr xonali ko'rinishni beradi: `1 250 000` → `1.3 mln so'm`.
+    // Kartadagi ma'lumot **ko'rsatish uchun** — to'g'ri summa esa
+    // batafsil ko'rinishda `fmtSum` bilan chiqadi.
+    return '${fmtMoney(v)} so\'m';
   }
 
   Widget _shimmerText({double width = 80, double height = 16}) {
@@ -350,6 +367,11 @@ class _StatCard extends StatelessWidget {
   final bool isDark;
   final bool loading;
 
+  // Karta bosilganda ochiladigan bo'lim (0 = Boshqaruv paneli,
+  // 1 = Sotish, 2 = Mahsulotlar, 3 = Kunlik Savdolar, 4 = Qarzdorlar,
+  // 5 = Sozlamalar). null → karta bosilmaydi.
+  final VoidCallback? onTap;
+
   const _StatCard({
     required this.title,
     required this.value,
@@ -357,66 +379,84 @@ class _StatCard extends StatelessWidget {
     required this.color,
     required this.isDark,
     this.loading = false,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.card(isDark),
+    // Karta endi bosiladigan: Material + InkWell splash (bosish
+    // animatsiyasi) va tap handler. Avval karta oddiy Container edi —
+    // bosilganda hech narsa bo'lmasligi foydalanuvchi uchun
+    // "ishlamayapti" tuyg'usini berardi.
+    return Material(
+      // Fon Material'da turadi, Chunki `InkWell` splash'i aynan Material
+      // ustiga chiziladi. Fon ichki Container'da bo'lsa, splash rang
+      // ostida qolib ko'rinmaydi.
+      color: AppColors.card(isDark),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border(isDark)),
+        side: BorderSide(color: AppColors.border(isDark)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 18),
-          ),
-          Column(
+      child: InkWell(
+        onTap: onTap,
+        // Karta bosilmaydigan bo'lsa (onTap == null) rang ham tushmaydi.
+        highlightColor: onTap == null
+            ? Colors.transparent
+            : AppColors.primary.withValues(alpha: 0.08),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              if (loading)
-                Container(
-                  width: 70,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: AppColors.border(isDark),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                )
-              else
-                Text(
-                  value,
-                  style: GoogleFonts.inter(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.text(isDark),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              const SizedBox(height: 2),
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: AppColors.textSec(isDark),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                child: Icon(icon, color: color, size: 18),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (loading)
+                    Container(
+                      width: 70,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: AppColors.border(isDark),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    )
+                  else
+                    Text(
+                      value,
+                      style: GoogleFonts.inter(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.text(isDark),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  const SizedBox(height: 2),
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: AppColors.textSec(isDark),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -439,8 +479,13 @@ class _PaymentBreakdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = (cashRevenue ?? 0) + (cardRevenue ?? 0);
-    final cashPct =
-        total > 0 ? ((cashRevenue ?? 0) / total) : 0.5;
+    // Ma'lumot bo'lmasa (0 so'm) bar yolg'on 50/50 "bo'yalgan" ko'rinishi
+    // kerak emas — bo'sh track chiqadi. flex 0 bo'lsa Flutter assertion
+    // beradi, shuning uchun kamida 1 beriladi.
+    final bool hasData = total > 0;
+    final cashPct = hasData ? ((cashRevenue ?? 0) / total) : 0.0;
+    final int cashFlex = hasData ? math.max(1, (cashPct * 100).round()) : 0;
+    final int cardFlex = hasData ? math.max(1, 100 - cashFlex) : 0;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -463,18 +508,24 @@ class _PaymentBreakdown extends StatelessWidget {
           const SizedBox(height: 14),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: (cashPct * 100).toInt(),
-                  child: Container(height: 10, color: AppColors.accentGreen),
-                ),
-                Expanded(
-                  flex: 100 - (cashPct * 100).toInt(),
-                  child: Container(height: 10, color: Colors.blue),
-                ),
-              ],
-            ),
+            child: hasData
+                ? Row(
+                    children: [
+                      Expanded(
+                        flex: cashFlex,
+                        child:
+                            Container(height: 10, color: AppColors.accentGreen),
+                      ),
+                      Expanded(
+                        flex: cardFlex,
+                        child: Container(height: 10, color: Colors.blue),
+                      ),
+                    ],
+                  )
+                : Container(
+                    height: 10,
+                    color: AppColors.border(isDark),
+                  ),
           ),
           const SizedBox(height: 12),
           Row(children: [
@@ -505,12 +556,8 @@ class _PaymentBreakdown extends StatelessWidget {
         decoration: BoxDecoration(color: c, shape: BoxShape.circle),
       );
 
-  String _fmt(double? v) {
-    if (v == null) return '0';
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)} mln';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)} ming';
-    return v.toStringAsFixed(0);
-  }
+  // Summa hech qachon yuvilmaydi: `1070` → "1 070", `1250000` → "1 250 000".
+  String _fmt(double? v) => fmtSum(v);
 }
 
 // ─── Weekly Trend Chart ───────────────────────────────────────────
@@ -634,10 +681,22 @@ class _WeeklyTrendCard extends StatelessWidget {
     );
   }
 
+  /// Diagramma o'qi uchun ixcham ko'rinish: `1070` → `"1.1k"`,
+  /// `1 250 000` → `"1.3M"`.
+  ///
+  /// NIMA UCHUN `fmtSum` emas: o'q yorlig'i (`bottomTitles`) cheklangan
+  /// balandlikda chiziladi. To'liq guruhlangan `"1 250 000"` 9 belgi —
+  /// u boshqa yorliqlar bilan to'qnashib, kesilib qoladi. Bu yerda
+  /// yuvish **qasddan** qilingan: o'q uchun ixchamlash ma'nosiz
+  /// raqamni ko'rsatish yetarli, moliyaviy xato esa yo'q
+  /// (aniq summa boshqa joylarda `fmtSum` bilan chiqadi).
   String _formatNumber(double value) {
-    if (value == 0) return '0';
-    if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(1)}M';
-    if (value >= 1000) return '${(value / 1000).toStringAsFixed(0)}k';
+    final abs = value.abs();
+    if (abs >= 1000000) return '${(value / 1000000).toStringAsFixed(1)}M';
+    if (abs >= 1000) {
+      // 10 000 dan katta bo'lsa bir kasr xona kerak emas.
+      return '${(value / 1000).toStringAsFixed(abs >= 10000 ? 0 : 1)}k';
+    }
     return value.toStringAsFixed(0);
   }
 }

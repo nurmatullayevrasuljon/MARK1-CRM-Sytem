@@ -2,9 +2,12 @@
   "use strict";
 
   // ---------- 1) YAGONA MANBA: BASE URL ----------
-  const API_ROOT = "http://localhost:8080";
-  const API_URL = API_ROOT + "/api"; // ⚠️ TASDIQLASH KERAK: backend prefiksi haqiqatan "/api" ekanini
-                                      // Swagger sahifasining "Servers" bo'limidan tekshiring.
+  // ⚠️ AVVALGI XATO: bu yerda "http://localhost:8080" turardi, ammo js/api-client.js
+  // ishlab chiqarish backendini "https://backend.mark1.uz" deb ko'rsatadi.
+  // Natijada landing.html'dagi Auth.register/Auth.login prodaktsiyada localhost'ga
+  // so'rov yuborardi (ERR_CONNECTION_REFUSED). Endi ikkala fayl bir xil manzilda.
+  const API_ROOT = "https://backend.mark1.uz";
+  const API_URL = API_ROOT + "/api";
 
   const ACCESS_KEY = "crm_access_token";
   const ROLE_KEY = "crm_role";        // "store" | "user" — refresh qaysi endpointga borishini aniqlaydi

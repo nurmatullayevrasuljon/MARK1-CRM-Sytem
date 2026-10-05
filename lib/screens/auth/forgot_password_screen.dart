@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../utils/phone_utils.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -34,6 +35,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
+          tooltip: 'Orqaga',
           icon: Icon(Icons.arrow_back_ios_new_rounded,
               color: AppColors.text(isDark), size: 20),
           onPressed: () => Navigator.pop(context),
@@ -98,6 +100,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
+                  // Xato foydalanuvchi maydonni tuzatgan zahoti kiritiladi.
+                  // Aks holda eski xato yozib turib qoladi.
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   controller: _phoneCtrl,
                   keyboardType: TextInputType.phone,
                   inputFormatters: [
@@ -131,9 +136,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         horizontal: 16, vertical: 16),
                   ),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Telefon kiriting';
-                    final d = v.replaceAll(RegExp(r'\D'), '');
-                    if (d.length < 9) return 'Noto\'g\'ri raqam';
+                    if (v == null || v.trim().isEmpty) return 'Telefon kiriting';
+                    final d = normalizeUzPhone(v);
+                    if (d.length != 9) return 'Noto\'g\'ri raqam';
+                    // 0 bilan boshlanuvchi raqam mavjud emas: server
+                    // `9980...` ga aylantiradi, SMS hech qachon yetib bor
+                    // maydi va foydalanuvchi "kod kelmadi" bilan qoladi.
+                    if (d.startsWith('0')) {
+                      return 'Raqam 0 bilan boshlanmaydi (masalan: 901234567)';
+                    }
                     return null;
                   },
                 ),
@@ -185,11 +196,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
 
-    String phoneStr = _phoneCtrl.text.trim();
-    phoneStr = phoneStr.replaceAll(RegExp(r"\D"), "");
-    if (phoneStr.startsWith("998") && phoneStr.length >= 12) {
-      phoneStr = phoneStr.substring(3);
-    }
+    // Backend `998${phone}` qidiradi → 9 xona raqam yuboriladi.
+    final phoneStr = normalizeUzPhone(_phoneCtrl.text);
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final result = await auth.forgotPassword(phoneStr);
 
@@ -258,6 +266,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
+          tooltip: 'Orqaga',
           icon: Icon(Icons.arrow_back_ios_new_rounded,
               color: AppColors.text(isDark), size: 20),
           onPressed: () => Navigator.pop(context),
@@ -355,6 +364,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
+                  // Xato foydalanuvchi maydonni tuzatgan zahoti kiritiladi.
+                  // Aks holda eski xato yozib turib qoladi.
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   controller: _passCtrl,
                   obscureText: _obscure,
                   style: GoogleFonts.inter(
@@ -409,6 +421,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
+                  // Xato foydalanuvchi maydonni tuzatgan zahoti kiritiladi.
+                  // Aks holda eski xato yozib turib qoladi.
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   controller: _confirmCtrl,
                   obscureText: _obscure,
                   style: GoogleFonts.inter(

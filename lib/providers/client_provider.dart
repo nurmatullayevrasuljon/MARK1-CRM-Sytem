@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../models/client_model.dart';
 import '../services/api_service.dart';
+import '../utils/phone_utils.dart';
 
 class ClientProvider extends ChangeNotifier {
   List<ClientModel> _clients = [];
@@ -50,10 +51,7 @@ class ClientProvider extends ChangeNotifier {
       final data = await ApiService.post('/client/create', body: {
         'client_name': name.trim(),
         if (phone != null && phone.isNotEmpty)
-          'client_phone': phone.replaceAll(RegExp(r'\D'), '').length >= 9
-              ? phone.replaceAll(RegExp(r'\D'), '').substring(
-                  phone.replaceAll(RegExp(r'\D'), '').length - 9)
-              : phone.replaceAll(RegExp(r'\D'), ''),
+          'client_phone': normalizeUzPhone(phone),
       });
       final client = data['data'] ?? data['client'];
       if (client != null) {
@@ -79,10 +77,7 @@ class ClientProvider extends ChangeNotifier {
         'client_id': clientId,
         'client_name': name.trim(),
         if (phone != null && phone.isNotEmpty)
-          'client_phone': phone.replaceAll(RegExp(r'\D'), '').length >= 9
-              ? phone.replaceAll(RegExp(r'\D'), '').substring(
-                  phone.replaceAll(RegExp(r'\D'), '').length - 9)
-              : phone.replaceAll(RegExp(r'\D'), ''),
+          'client_phone': normalizeUzPhone(phone),
       });
       await loadClients();
       return ApiResult.success(message: 'Mijoz yangilandi');

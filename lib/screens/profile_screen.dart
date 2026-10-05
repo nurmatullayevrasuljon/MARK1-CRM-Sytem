@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import '../constants/app_colors.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
 import '../screens/auth/login_screen.dart';
+import '../utils/phone_utils.dart';
+import '../utils/dispose_utils.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -138,9 +139,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: Colors.white.withValues(alpha: 0.8),
                     ),
                   ),
-                if (auth.store?.ceoPhone != null)
+                if (auth.store?.ceoPhone != null &&
+                    auth.store!.ceoPhone.isNotEmpty)
                   Text(
-                    '+998 ${auth.store!.ceoPhone}',
+                    displayUzPhone(auth.store!.ceoPhone),
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       color: Colors.white.withValues(alpha: 0.7),
@@ -219,13 +221,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   onTap: () => themeProvider.toggleTheme(),
                 ),
-                _SettingsTile(
-                  icon: Icons.pin_outlined,
-                  title: 'Kirish paroli (PIN)',
-                  isDark: isDark,
-                  onTap: () =>
-                      _showChangePinDialog(context, isDark),
-                ),
+                // PIN bo'limi olib tashlandi: ilova endi kirishda PIN
+                // so'ramaydi, shuning uchun uni o'zgartirish ham
+                // ma'nossiz edi (o'lik UI qolmasligi uchun butunlay
+                // o'chirildi).
 
                 const SizedBox(height: 24),
 
@@ -277,6 +276,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final navigator = Navigator.of(context);
     final confirm = await showDialog<bool>(
       context: context,
+      // Standart `Dismiss` so'zi inglizcha chiqardi — o'zbekchaga almashtiramiz.
+      barrierLabel: 'Bekor qilish',
       builder: (_) {
         final isDark =
             Provider.of<ThemeProvider>(context, listen: false).isDark;
@@ -294,9 +295,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onPressed: () => Navigator.pop(context, false),
               child: const Text('Bekor'),
             ),
+            // Tugma matni sarlavhadan farqlansin — ikkalasi "Chiqish" bo'lganda
+            // ekran o'quvchisi qaysi biri xavfli ekanini ajrata olmaydi.
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text('Chiqish',
+              child: Text('Ha, chiqish',
                   style: TextStyle(color: AppColors.accentRed)),
             ),
           ],
@@ -319,7 +322,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         TextEditingController(text: auth.store?.ceoName ?? '');
     final storeCtrl =
         TextEditingController(text: auth.store?.storeName ?? '');
+    final formKey = GlobalKey<FormState>();
     bool loading = false;
+    // Xatolik oyna ICHIDA ko'rsatiladi. `SnackBar` modal marshrutning
+    // orqasida chiziladi, ya'ni oyna ochiq turganda foydalanuvchi
+    // hech narsani ko'rmaydi. (Parol oynasida ham xuddi shu usul qo'llangan.)
+    String? formError;
 
     showModalBottomSheet(
       context: context,
@@ -337,7 +345,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               top: 24,
               bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
             ),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
+            child: Form(
+              key: formKey,
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
               Text(
                 'Profilni tahrirlash',
                 style: GoogleFonts.inter(
@@ -347,10 +357,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              _inputField(nameCtrl, 'To\'liq ism', Icons.person_outline_rounded, isDark),
+              _inputField(nameCtrl, 'To\'liq ism', Icons.person_outline_rounded, isDark,
+                  validator: (v) {
+                // Bo'sh yoki faqat bo'shliqdan iborat ism yuborilsa, do'kon
+                // egasi baland darajada "nomsiz" qolib ketardi — keyin
+                // hisobotlarda va SMS'da foydalanib bo'lmaydi.
+                final t = (v ?? '').trim();
+                if (t.isEmpty) return 'Ismni kiriting';
+                if (t.length < 2) return 'Kamida 2 ta belgi';
+                return null;
+              }),
               const SizedBox(height: 12),
-              _inputField(storeCtrl, 'Do\'kon nomi', Icons.storefront_outlined, isDark),
+              _inputField(storeCtrl, 'Do\'kon nomi', Icons.storefront_outlined, isDark,
+                  validator: (v) {
+                final t = (v ?? '').trim();
+                if (t.isEmpty) return 'Do\'kon nomini kiriting';
+                if (t.length < 2) return 'Kamida 2 ta belgi';
+                return null;
+              }),
               const SizedBox(height: 20),
+              // Xatolik oyna ichida ko'rsatiladi (yuqorida izohlangan sabab).
+              if (formError != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentRed.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.accentRed.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Text(
+                    formError!,
+                    style: GoogleFonts.inter(
+                      color: AppColors.accentRed,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -363,24 +411,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onPressed: loading
                         ? null
                         : () async {
-                            setSt(() => loading = true);
+                            // Validatsiya: bo'sh ism/do'kon nomi yuborilmasin.
+                            if (!(formKey.currentState?.validate() ?? false)) {
+                              return;
+                            }
+                            setSt(() {
+                              loading = true;
+                              formError = null;
+                            });
                             final result = await auth.updateProfile(
                               ceoName: nameCtrl.text.trim(),
                               storeName: storeCtrl.text.trim(),
                             );
-                            if (ctx.mounted) {
-                              Navigator.pop(ctx);
+                            if (!ctx.mounted) return;
+
+                            final ok = result.success;
+                            final msg = ok
+                                ? 'Profil yangilandi'
+                                : result.error?.userMessage ?? 'Xatolik';
+
+                            // Faqat muvaffaqiyatda yopamiz. Xatoda oyna
+                            // ochiq qoladi — foydalanuvchi tuzatib, qayta
+                            // urinish imkoniga ega bo'ladi.
+                            if (ok) {
+                              // Spinner'ni `pop` dan **oldin** to'xtaymiz:
+                              // yopilayotgan marshrutda `setSt` bejiz
+                              // ish va, agar oyna chiqish animatsiyasi
+                              // paytida qayta qurilsa, o'layotgan
+                              // widgetga `setState` keladi.
+                              setSt(() => loading = false);
+                              // SnackBar'ni `pop` dan OLDIN ko'rsatamiz.
+                              // Aks holda u modal marshrut **ortida**
+                              // chiziladi va foydalanuvchi hech narsani
+                              // ko'rmaydi — aynan shu muammo oynaning
+                              // ichida xatolik chiqqanda yuz berardi.
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(result.success
-                                      ? 'Profil yangilandi'
-                                      : result.error?.userMessage ??
-                                          'Xatolik'),
-                                  backgroundColor: result.success
-                                      ? AppColors.accentGreen
-                                      : AppColors.accentRed,
+                                  content: Text(msg),
+                                  backgroundColor: AppColors.accentGreen,
                                 ),
                               );
+                              Navigator.pop(ctx);
+                            } else {
+                              // Xato: oyna ochiq qoladi, `SnackBar` esa
+                              // uning orqasiga tushib qoladi. Shuning
+                              // uchun xabarni oyna ichida ko'rsatamiz
+                              // (`_showChangePassword` ham shuni qiladi).
+                              setSt(() {
+                                loading = false;
+                                formError = msg;
+                              });
                             }
                           },
                     style: ElevatedButton.styleFrom(
@@ -407,12 +487,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ]),
+            ),
           );
         });
       },
-    );
-    nameCtrl.dispose();
-    storeCtrl.dispose();
+    ).whenComplete(() {
+      // `showModalBottomSheet` Future'i yopish animatsiyasi tugaguncha
+      // emas, `Navigator.pop` so'rovi bilananoq tugaydi. Agar shu yerda
+      // darhol `dispose()` qilsak, hali ekranda yopilayotgan sheet
+      // (masalan klaviatura yopilganda `MediaQuery` o'zgargani uchun)
+      // o'chirilgan controller bilan qayta quriladi va framework
+      // "controller used after disposed" assertion tashlaydi.
+      // Shuning uchun animatsiyadan keyinga suramiz.
+      disposeAfterRouteClosed(() {
+        nameCtrl.dispose();
+        storeCtrl.dispose();
+      });
+    });
   }
 
   void _showChangePassword(
@@ -420,8 +511,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final oldCtrl = TextEditingController();
     final newCtrl = TextEditingController();
     final confCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
     bool loading = false;
     bool obscure = true;
+    // Modal oyna orqasidagi SnackBar ko'rinmaydi, shuning uchun xatoni
+    // oynaning ichida, maydonlar ostida ko'rsatamiz.
+    String? formError;
 
     showModalBottomSheet(
       context: context,
@@ -439,7 +534,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               top: 24,
               bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
             ),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
+            child: Form(
+              key: formKey,
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
               Text(
                 'Parolni o\'zgartirish',
                 style: GoogleFonts.inter(
@@ -451,21 +548,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 20),
               _inputField(oldCtrl, 'Eski parol', Icons.lock_outline_rounded,
                   isDark, obscure: obscure,
-                  suffix: GestureDetector(
-                    onTap: () => setSt(() => obscure = !obscure),
-                    child: Icon(
-                      obscure
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      color: AppColors.textHint(isDark),
+                  validator: (v) =>
+                      (v ?? '').isEmpty ? 'Eski parolni kiriting' : null,
+                  suffix: Semantics(
+                    button: true,
+                    label: obscure
+                        ? 'Parolni ko\'rsatish'
+                        : 'Parolni yashirish',
+                    excludeSemantics: true,
+                    child: GestureDetector(
+                      onTap: () => setSt(() => obscure = !obscure),
+                      child: Icon(
+                        obscure
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: AppColors.textHint(isDark),
+                      ),
                     ),
                   )),
               const SizedBox(height: 12),
               _inputField(newCtrl, 'Yangi parol', Icons.lock_reset_rounded,
-                  isDark, obscure: obscure),
+                  isDark, obscure: obscure,
+                  validator: (v) {
+                    final t = (v ?? '').trim();
+                    if (t.isEmpty) return 'Yangi parolni kiriting';
+                    if (t.length < 6) return 'Kamida 6 ta belgi';
+                    return null;
+                  }),
               const SizedBox(height: 12),
               _inputField(confCtrl, 'Yangi parolni tasdiqlang',
-                  Icons.lock_rounded, isDark, obscure: obscure),
+                  Icons.lock_rounded, isDark, obscure: obscure,
+                  validator: (v) {
+                    final t = (v ?? '').trim();
+                    if (t.isEmpty) return 'Parolni tasdiqlang';
+                    if (t != newCtrl.text.trim()) return 'Parollar mos kelmadi';
+                    return null;
+                  }),
+              if (formError != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentRed.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: AppColors.accentRed.withValues(alpha: 0.4)),
+                  ),
+                  child: Text(
+                    formError!,
+                    style: GoogleFonts.inter(
+                        fontSize: 13, color: AppColors.accentRed),
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -479,11 +616,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onPressed: loading
                         ? null
                         : () async {
-                            if (newCtrl.text != confCtrl.text) {
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
-                                content: Text('Parollar mos kelmadi'),
-                              ));
+                            setSt(() => formError = null);
+                            if (!(formKey.currentState?.validate() ?? false)) {
                               return;
                             }
                             setSt(() => loading = true);
@@ -491,24 +625,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               oldPassword: oldCtrl.text.trim(),
                               newPassword: newCtrl.text.trim(),
                             );
-                            if (ctx.mounted) {
+                            if (!ctx.mounted) return;
+                            setSt(() => loading = false);
+                            if (result.success) {
+                              // Parol o'zgarganda barcha tokenlar bekor
+                              // qilinadi — foydalanuvchi qayta kiritadi.
                               Navigator.pop(ctx);
-                              if (result.success) {
-                                // Logout qilindi
-                                Navigator.pushAndRemoveUntil(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const LoginScreen()),
-                                  (_) => false,
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(SnackBar(
-                                  content: Text(
-                                      result.error?.userMessage ?? 'Xatolik'),
-                                  backgroundColor: AppColors.accentRed,
-                                ));
-                              }
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const LoginScreen()),
+                                (_) => false,
+                              );
+                            } else {
+                              // Oyna ochiq qoladi, xato o'z ichida ko'rinadi.
+                              setSt(() => formError =
+                                  result.error?.userMessage ?? 'Xatolik');
                             }
                           },
                     style: ElevatedButton.styleFrom(
@@ -535,17 +667,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ]),
+            ),
           );
         });
       },
-    );
-  }
-
-  void _showChangePinDialog(BuildContext context, bool isDark) {
-    showDialog(
-      context: context,
-      builder: (_) => _ChangePinDialog(isDark: isDark),
-    );
+    ).whenComplete(() {
+      // Xuddi yuqoridagi kabi: kelajak animatsiya tugaguncha emas,
+      // pop so'rovi bilananoq tugaydi. Shuning uchun controllerlarni
+      // yopish animatsiyasidan keyin o'chiramiz.
+      disposeAfterRouteClosed(() {
+        oldCtrl.dispose();
+        newCtrl.dispose();
+        confCtrl.dispose();
+      });
+    });
   }
 
   Widget _inputField(
@@ -555,10 +690,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     bool isDark, {
     bool obscure = false,
     Widget? suffix,
+    String? Function(String?)? validator,
   }) =>
-      TextField(
+      TextFormField(
+        // Xato foydalanuvchi maydonni tuzatgan zahoti kiritiladi.
+        // Aks holda eski xato yozib turib qoladi.
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         controller: ctrl,
         obscureText: obscure,
+        // `Form` ichida bo'lishi shart — aks holda xato hech qachon ko'rinmaydi.
+        validator: validator,
         style:
             GoogleFonts.inter(color: AppColors.text(isDark), fontSize: 15),
         decoration: InputDecoration(
@@ -580,6 +721,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+                color: AppColors.accentRed.withValues(alpha: 0.6)),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: AppColors.accentRed, width: 1.5),
           ),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -661,66 +811,4 @@ class _SettingsTile extends StatelessWidget {
       );
 }
 
-// ─── Change PIN Dialog ────────────────────────────────────────────
-class _ChangePinDialog extends StatefulWidget {
-  final bool isDark;
-  const _ChangePinDialog({required this.isDark});
-
-  @override
-  State<_ChangePinDialog> createState() => _ChangePinDialogState();
-}
-
-class _ChangePinDialogState extends State<_ChangePinDialog> {
-  final _ctrl = TextEditingController();
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: AppColors.card(widget.isDark),
-      title: Text('PIN kodni o\'zgartirish',
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.w700,
-            color: AppColors.text(widget.isDark),
-          )),
-      content: TextField(
-        controller: _ctrl,
-        keyboardType: TextInputType.number,
-        maxLength: 4,
-        obscureText: true,
-        decoration: const InputDecoration(
-          hintText: '4 xonali yangi PIN',
-          border: OutlineInputBorder(),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Bekor'),
-        ),
-        ElevatedButton(
-          onPressed: () async {
-            if (_ctrl.text.length != 4) return;
-            final navigator = Navigator.of(context);
-            final messenger = ScaffoldMessenger.of(context);
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('app_passcode', _ctrl.text);
-            if (mounted) {
-              navigator.pop();
-              messenger.showSnackBar(const SnackBar(
-                content: Text('PIN muvaffaqiyatli o\'zgartirildi'),
-                backgroundColor: Colors.green,
-              ));
-            }
-          },
-          child: const Text('Saqlash'),
-        ),
-      ],
-    );
-  }
-}
+// ─── (PIN dialogi olib tashlandi: ilova kirishda PIN so'ramaydi) ──

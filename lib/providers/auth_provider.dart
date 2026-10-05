@@ -2,20 +2,67 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/store_model.dart';
+import '../utils/phone_utils.dart';
 
 class AuthProvider extends ChangeNotifier {
   String? _token;
   StoreModel? _store;
   bool _isLoading = false;
+  String? _sessionNotice;
+  bool _sessionExpired = false;
+
+  AuthProvider() {
+    // Sessiya haqiqatan tugaganda (401 + refresh muvaffaqiyatsiz) ilova
+    // "kirgan" holatda qolib, barcha so'rovlar xato berib qolmasligi uchun
+    // global handler. Aks holda foydalanuvchi eski ekranda tiqilib qoladi.
+    ApiService.onSessionExpired = _handleSessionExpired;
+  }
+
+  @override
+  void dispose() {
+    // `onSessionExpired` — **statik** maydon. Provider qayta yaratilganda
+    // (hot restart, test, `MultiProvider` qayta qurilishi) yangi instance
+    // o'z callback'ini yozadi, lekin eski instance yo'qolganda ham
+    // callback o'shandan qolsa — `notifyListeners()` o'lik `ChangeNotifier`
+    // ga murojaat qilib, jimgina xato beradi.
+    // Faqat o'zimning callback'imni olib tashlaymiz: boshqa provider
+    // (savdo va h.k.) allaqach qo'ygan bo'lsa, uni buzmaymiz.
+    if (identical(ApiService.onSessionExpired, _handleSessionExpired)) {
+      ApiService.onSessionExpired = null;
+    }
+    super.dispose();
+  }
 
   String? get token => _token;
   StoreModel? get store => _store;
   bool get isLoading => _isLoading;
+  /// Sessiya server tomonidan bekor qilinganini bildiradi. MainShell shu
+  /// bayroqqa qarab login ekraniga qaytadi. Oddiy (qo'lda) chiqishda
+  /// `false` bo'lib qoladi — o'sha holatlarda ekranlar o'zlari navigatsiya
+  //  qiladi, ikki marta push bo'lib qolmasligi uchun.
+  bool get sessionExpired => _sessionExpired;
   bool get isAuthenticated =>
       _token != null &&
       _token!.isNotEmpty &&
       _token != 'DEMO_TOKEN_OFFLINE';
   bool get isDemo => _token == 'DEMO_TOKEN_OFFLINE';
+
+  /// Sessiya tugaganda login ekranida ko'rsatiladigan xabarni beradi va
+  /// uni tozalaydi (ikki marta chiqmasligi uchun).
+  String? consumeSessionNotice() {
+    final notice = _sessionNotice;
+    _sessionNotice = null;
+    return notice;
+  }
+
+  void _handleSessionExpired() {
+    // Bir nechta parallel so'rov bir vaqtda 401 qaytarishi mumkin —
+    // birinchi chaqirish yetarli, qolganlari e'tiborsiz o'tadi.
+    if (_token == null) return;
+    _sessionExpired = true;
+    _sessionNotice = 'Sessiya tugadi. Iltimos, qayta kiring.';
+    logout();
+  }
 
   Future<void> loadToken() async {
     _token = await ApiService.getToken();
@@ -56,6 +103,7 @@ class AuthProvider extends ChangeNotifier {
         ));
       }
       _token = token;
+      _sessionExpired = false;
       await ApiService.saveToken(token);
       return ApiResult.success(message: 'Muvaffaqiyatli kirdingiz!');
     } on ApiException catch (e) {
@@ -116,6 +164,7 @@ class AuthProvider extends ChangeNotifier {
         ));
       }
       _token = token;
+      _sessionExpired = false;
       await ApiService.saveToken(token);
       return ApiResult.success(message: 'Tasdiqlandi!');
     } on ApiException catch (e) {
@@ -255,14 +304,5 @@ class AuthProvider extends ChangeNotifier {
 
   // ─── Phone format helper ──────────────────────────────────────
   /// Backend 9 digit kutadi: "901234567" (without +998)
-  String _formatPhone(String raw) {
-    String cleaned = raw.replaceAll(RegExp(r'\D'), '');
-    if (cleaned.startsWith('998') && cleaned.length == 12) {
-      return cleaned.substring(3);
-    }
-    if (cleaned.length > 9) {
-      return cleaned.substring(cleaned.length - 9);
-    }
-    return cleaned;
-  }
+  String _formatPhone(String raw) => normalizeUzPhone(raw);
 }

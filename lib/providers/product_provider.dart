@@ -13,6 +13,12 @@ class ProductProvider extends ChangeNotifier {
   int _currentPage = 1;
   int _totalPages = 1;
   bool _hasMore = true;
+  // Bir vaqtda faqat bitta mahsulot so'rovi ketadi. `ListView.builder`
+  // ichidagi "yana yuklash" indikatori build paytida `onLoadMore()` ni
+  // chaqiradi, tez tab almashganda esa `initState` dagi refresh so'rovlari
+  // ustma-ust tushadi. Ikkita parallel so'rov bir xil sahifani olib keladi
+  // va natijada ro'yxatga takroriy mahsulotlar qo'shib ketadi.
+  Future<void>? _inflightProducts;
 
   List<ProductModel> get products => _products;
   List<CategoryModel> get categories => _categories;
@@ -51,6 +57,15 @@ class ProductProvider extends ChangeNotifier {
       return ApiResult.success(message: 'Kategoriya yaratildi');
     } on ApiException catch (e) {
       return ApiResult.failure(e);
+    } catch (e) {
+      // API'dan kelgan yoki parse xatosi `ApiException` bo'lmasa,
+      // u butunlay yuqoriga chiqib ketardi va UI dagi `.then`
+      // hech qachon ishlamasdi. Shu yerning o'zida ushlab,
+      // foydalanuvchiga ko'rinadigan xatolikka aylantiramiz.
+      return ApiResult.failure(ApiException(
+        type: ApiErrorType.unknown,
+        message: 'Kategoriya qo\'shishda xatolik: $e',
+      ));
     }
   }
 
@@ -84,19 +99,61 @@ class ProductProvider extends ChangeNotifier {
     String? categoryId,
     bool refresh = false,
   }) async {
+    final pending = _inflightProducts;
+    if (pending != null) {
+      // Kutilayotgan so'rovni e'tiborsiz qoldirmaymiz: refresh ni kutamiz,
+      // oddiy "yana yuklash" chaqiruvi esa shu so'rov tomonidan qamrab
+      // olingani uchun o'tkazib yuboriladi.
+      if (!refresh) return;
+      await pending;
+    }
+
     if (refresh) {
       _currentPage = 1;
       _hasMore = true;
-      _products = [];
+      // Eski ro'yxatni shu yerda o'chirmaymiz: so'rov muvaffaqiyatsiz
+      // bo'lsa (tarmoq uzilishi, server xatosi) foydalanuvchi mahsulotlarsiz
+      // qolib ketmasin. Yangilash muvaffaqiyatli bo'lganda pastdagi
+      // `refresh || page == 1` sharti tufayli ro'yxat to'liq yangilanadi
+      // (qo'shilib ketmaydi).
     }
     if (!_hasMore) return;
+
+    // Qaysi sahifa so'ralgani shu yerda qotiriladi: `await` davomida boshqa
+    // chaqiruv `_currentPage` ni o'zgartirib qo'yishi mumkin edi va javob
+    // noto'g'ri (allaqachon yuklangan) sahifa sifatida qayta ishlanar edi.
+    final page = _currentPage;
 
     _isLoading = true;
     if (refresh || _products.isEmpty) notifyListeners();
 
+    final run = _fetchProductsPage(
+      search: search,
+      categoryId: categoryId,
+      page: page,
+      refresh: refresh,
+    );
+    _inflightProducts = run;
+    try {
+      await run;
+    } finally {
+      if (identical(_inflightProducts, run)) {
+        _inflightProducts = null;
+      }
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _fetchProductsPage({
+    String? search,
+    String? categoryId,
+    required int page,
+    required bool refresh,
+  }) async {
     try {
       final params = <String, String>{
-        'page': _currentPage.toString(),
+        'page': page.toString(),
         'limit': '20',
       };
       if (search != null && search.isNotEmpty) {
@@ -113,26 +170,30 @@ class ProductProvider extends ChangeNotifier {
       if (list is List) {
         final newItems =
             list.map((e) => ProductModel.fromJson(e)).toList();
-        if (refresh || _currentPage == 1) {
+        if (refresh || page == 1) {
           _products = newItems;
         } else {
-          _products = [..._products, ...newItems];
+          // Zaxira himoya: server sahifalari ustma-ust kelib qolsa ham
+          // (yoki eskirgan parallel so'rov javobi kech kelsa ham) ro'yxatda
+          // bir xil mahsulot ikki marta turib qolmasin.
+          final seen = _products.map((p) => p.id).toSet();
+          _products = [
+            ..._products,
+            ...newItems.where((p) => !seen.contains(p.id)),
+          ];
         }
       }
 
       if (pagination != null) {
         _totalPages = pagination['total_pages'] ?? 1;
-        _hasMore = _currentPage < _totalPages;
-        _currentPage++;
+        _hasMore = page < _totalPages;
+        _currentPage = page + 1;
       } else {
         _hasMore = false;
       }
       _error = null;
     } on ApiException catch (e) {
       _error = e.userMessage;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
     }
   }
 
@@ -152,7 +213,10 @@ class ProductProvider extends ChangeNotifier {
         notifyListeners();
         return ApiResult.success(message: 'Topildi', data: product);
       }
-      return ApiResult.failure(ApiException('Xato: Mahsulot ma\'lumoti kelmadi'));
+      return ApiResult.failure(ApiException(
+        type: ApiErrorType.notFound,
+        message: 'Mahsulot ma\'lumoti kelmadi',
+      ));
     } on ApiException catch (e) {
       return ApiResult.failure(e);
     }

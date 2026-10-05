@@ -85,6 +85,7 @@ class _OtpScreenState extends State<OtpScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
+          tooltip: 'Orqaga',
           icon: Icon(Icons.arrow_back_ios_new_rounded,
               color: AppColors.text(isDark), size: 20),
           onPressed: () => Navigator.pop(context),

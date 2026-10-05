@@ -7,8 +7,11 @@ class LightColors {
   static const Color card        = Color(0xFFFFFFFF);
   static const Color cardBorder  = Color(0xFFE8EAF0);
   static const Color textPrimary = Color(0xFF0D0F1A);
-  static const Color textSecond  = Color(0xFF64748B);
-  static const Color textHint    = Color(0xFF94A3B8);
+  // WCAG 2.2 AA (1.4.3) uchun: #F5F6FA fonda 4.5:1 dan kam bo'lmasligi kerak.
+  // #64748B = 4.41 (muvaffaqiyatsiz), #94A3B8 = 2.37 (jiddiy MUVAFFAQIYATSIZ —
+  // placeholder matni deyarli ko'rinmas edi).
+  static const Color textSecond  = Color(0xFF5E6D82);
+  static const Color textHint    = Color(0xFF5E728E);
 }
 
 // ===== DARK TEMA (Qora) =====
@@ -19,7 +22,10 @@ class DarkColors {
   static const Color cardBorder  = Color(0xFF252840);
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecond  = Color(0xFF8892A4);
-  static const Color textHint    = Color(0xFF4A5568);
+  // WCAG 2.2 AA (1.4.3) uchun: #1C1F33 kartada 4.5:1 dan kam bo'lmasligi kerak.
+  // #4A5568 = 2.16 (jiddiy MUVAFFAQIYATSIZ) — tungi rejimda placeholder va
+  // ikonka matnlari deyarli ko'rinmas edi.
+  static const Color textHint    = Color(0xFF7A88A1);
 }
 
 // ===== UMUMIY RANGLAR =====

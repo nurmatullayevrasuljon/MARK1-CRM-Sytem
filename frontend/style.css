@@ -235,11 +235,11 @@ body {
 }
 
 .counter-up {
-  color: #16a34a;
+  color: var(--success-text);
 }
 
 .counter-down {
-  color: #dc2626;
+  color: var(--danger-text);
 }
 
 .counter-smal {
@@ -310,22 +310,22 @@ body {
 
 /* Color variants */
 .text-success {
-  color: #16a34a !important;
+  color: var(--success-text) !important;
 }
 
 .text-danger {
-  color: #dc2626 !important;
+  color: var(--danger-text) !important;
 }
 
 .text-muted {
-  color: #94a3b8 !important;
+  color: var(--text-muted) !important;
 }
 
 /* Small UZS text */
 .counter small,
 .daily-c small {
   font-size: 0.55em;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-weight: 500;
   margin-left: 0;
   white-space: nowrap;
@@ -410,13 +410,13 @@ body {
 
 /* Button hover effects */
 #addSaleCash:hover {
-  background-color: #16a34a;
+  background-color: #047857;
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
 }
 
 #addSaleCard:hover {
-  background-color: #0284c7;
+  background-color: #0369A1;
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(6, 182, 212, 0.3);
 }
@@ -441,7 +441,7 @@ body {
 .counter small,
 h3 small {
   font-size: 0.55em;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-weight: 400;
   margin-left: 0;
   opacity: 0.9;
@@ -1038,7 +1038,7 @@ h3 small {
 
 .product-category {
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -1057,7 +1057,7 @@ h3 small {
 
 .qty-unit {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -1073,7 +1073,7 @@ h3 small {
 
 .price-info .currency {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--text-secondary);
   font-weight: 600;
 }
 
@@ -1092,7 +1092,7 @@ h3 small {
 
 .time-text {
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -1172,13 +1172,13 @@ h3 small {
 .empty-title {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #64748b;
+  color: var(--text-secondary);
   margin-bottom: 0.5rem;
 }
 
 .empty-subtitle {
   font-size: 0.95rem;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 /* ===============================================
@@ -1226,7 +1226,7 @@ h3 small {
 
 .debtor-paid {
   background: #f1f5f9;
-  color: #64748b;
+  color: var(--text-secondary);
   border: 1px solid #cbd5e1;
 }
 
@@ -1235,7 +1235,7 @@ h3 small {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .phone-cell i {
@@ -2000,14 +2000,14 @@ h3 small {
 
 .overdue-empty-icon {
   font-size: 3rem;
-  color: #22c55e;
+  color: var(--success-text);
   margin-bottom: 0.75rem;
   font-weight: 700;
 }
 
 .overdue-empty-text {
   font-size: 1rem;
-  color: #64748b;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -2188,7 +2188,7 @@ h3 small {
 }
 
 .header p {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 16px;
 }
 
@@ -2213,7 +2213,7 @@ h3 small {
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
@@ -2253,7 +2253,7 @@ h3 small {
 }
 
 .content-header p {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -2330,7 +2330,7 @@ h3 small {
   left: 5px;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
+  color: var(--text-muted);
   pointer-events: none;
   /* border: 1px solid; */
 }
@@ -2490,7 +2490,7 @@ h3 small {
 }
 
 .security-card p {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 14px;
   margin-bottom: 16px;
 }
@@ -2530,7 +2530,7 @@ h3 small {
 }
 
 .setting-info p {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -2620,7 +2620,7 @@ svg {
   margin-bottom: 20px;
 }
 
-.topbar h5 {
+.topbar h1, .topbar h5 {
   font-size: 24px;
   color: #1e293b;
   font-weight: 600;
@@ -2704,14 +2704,14 @@ svg {
 
 .profile-store {
   font-size: 12px;
-  color: #64748b;
+  color: var(--text-secondary);
   line-height: 1.2;
 }
 
 .profile-dropdown-icon {
   width: 16px;
   height: 16px;
-  color: #64748b;
+  color: var(--text-secondary);
   transition: transform 0.3s ease;
 }
 
@@ -2779,7 +2779,8 @@ svg {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.profile-dropdown-info h4 {
+.profile-dropdown-info h4,
+.profile-dropdown-info #dropdownName {
   font-size: 16px;
   color: #1e293b;
   font-weight: 600;
@@ -2788,7 +2789,7 @@ svg {
 
 .profile-dropdown-info p {
   font-size: 13px;
-  color: #64748b;
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -2826,7 +2827,7 @@ svg {
 
 .stat-label {
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -2857,7 +2858,7 @@ svg {
 .dropdown-item svg {
   width: 20px;
   height: 20px;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .dropdown-item:hover svg {
@@ -2972,7 +2973,7 @@ svg {
 }
 
 .demo-info ul {
-  color: #64748b;
+  color: var(--text-secondary);
   line-height: 1.8;
   list-style-position: inside;
 }
@@ -3182,7 +3183,7 @@ body {
     flex: 1;
     gap: 2px;
     font-size: 10px;
-    color: #64748b;
+    color: var(--text-secondary);
     padding: 6px 4px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -3195,8 +3196,8 @@ body {
 
   .mobile-bottom-nav button.active,
   .mobile-bottom-nav button:active {
-    color: #06b6d4;
-    background: #f0f9ff;
+    color: var(--brand-text, #4455EE);
+    background: var(--brand-surface, rgba(68, 85, 238, 0.08));
   }
 
   .mobile-bottom-nav button span {
@@ -3331,7 +3332,7 @@ body {
   #productTable td::before {
     content: attr(data-label);
     font-weight: 600;
-    color: #64748b;
+    color: var(--text-secondary);
     margin-right: 12px;
     flex-shrink: 0;
   }
@@ -3394,7 +3395,7 @@ body {
   #transactionsTableBody td::before {
     content: attr(data-label);
     font-weight: 600;
-    color: #64748b;
+    color: var(--text-secondary);
     font-size: 13px;
     min-width: 90px;
     text-transform: uppercase;
@@ -3420,7 +3421,7 @@ body {
 
   .product-category {
     font-size: 12px;
-    color: #94a3b8;
+    color: var(--text-muted);
   }
 
   /* Quantity info */
@@ -3437,7 +3438,7 @@ body {
 
   .qty-unit {
     font-size: 12px;
-    color: #94a3b8;
+    color: var(--text-muted);
   }
 
   /* Price info */
@@ -3464,7 +3465,7 @@ body {
 
   .time-text {
     font-size: 12px;
-    color: #94a3b8;
+    color: var(--text-muted);
   }
 
   /* Payment badges */
@@ -3518,13 +3519,13 @@ body {
   .empty-title {
     font-size: 16px;
     font-weight: 600;
-    color: #1e293b;
+    color: var(--text-secondary);
     margin-bottom: 6px;
   }
 
   .empty-subtitle {
     font-size: 13px;
-    color: #94a3b8;
+    color: var(--text-muted);
   }
 }
 
@@ -3589,7 +3590,7 @@ body {
   #salesTable td::before {
     content: attr(data-label);
     font-weight: 600;
-    color: #64748b;
+    color: var(--text-secondary);
   }
 }
 
@@ -3764,13 +3765,36 @@ body {
     border-radius: 8px !important;
   }
 
-  .d-flex.gap-2 {
+  /* BUG FIX: avvalgi qoida `.d-flex.gap-2` uchun butunlay keng edi —
+     u faqat toolbar/form qatorlarini ustma-ust tushirishi kerak bo'lardi,
+     ammo unga kartalar ichidagi sarlavhalar (`text-uppercase` — emoji +
+     matn) va tugmalar (`btn` — ikonka + matn) ham kirib qolgan edi.
+     Natijada mobil ekranlarda ⚠️ emoji bir qatorda, "To'lanmagan qarz"
+     matni esa alohida markazlashgan qatorda chiqardi (barcha stat
+     kartalarda shunday edi). Endi `.btn` va sarlavha qatorlari chetlab
+     o'tiladi — ular doim bir qatorda qoladi. */
+  /* .filter-tabs — gorizontal/wrap qatorli filtr tugmalari, ustma-ush
+     tushmasligi kerak (ichidagi overflow-x: auto ishlashi uchun). */
+  .d-flex.gap-2:not(.btn):not(.text-uppercase):not(.filter-tabs) {
     flex-direction: column;
     gap: 8px;
   }
 
-  .d-flex.gap-2>* {
+  .d-flex.gap-2:not(.btn):not(.text-uppercase):not(.filter-tabs)>* {
     width: 100%;
+  }
+
+  /* Karta sarlavhi: emoji qatorda qolsin, matn uning yonida. */
+  .card-body p.text-uppercase.d-flex {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    width: auto;
+  }
+
+  .card-body p.text-uppercase.d-flex>span {
+    width: auto;
+    flex: 0 0 auto;
   }
 }
 
@@ -3787,7 +3811,10 @@ body {
     padding: 8px 14px;
     font-size: 12px;
     flex: 1 1 auto;
-    min-width: calc(50% - 3px);
+    /* 2 ta tugma bitta qatorda joylashishi uchun (gap 6px hisobga olingan):
+       avvalgi `calc(50% - 3px)` 2×150+6=306 > 304 → har biri alohida qatorda
+       to'liq kenglikka o'sib, ustma-ust ko'rinishga olib kelgan edi. */
+    min-width: calc(50% - 8px);
   }
 
   .search-add-container {

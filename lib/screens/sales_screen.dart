@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 import '../constants/app_colors.dart';
+import '../utils/phone_utils.dart';
+import '../utils/format_utils.dart';
+import '../utils/quantity_dialog.dart';
+import 'barcode_scanner_screen.dart';
 import '../providers/theme_provider.dart';
 import '../providers/sale_provider.dart';
 import '../providers/product_provider.dart';
@@ -23,11 +26,30 @@ class _SalesScreenState extends State<SalesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
 
+  static const _statuses = ['active', 'cancelled', 'returned'];
+
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 3, vsync: this);
+    _tabCtrl = TabController(length: 3, vsync: this)
+      // NIMA UCHUN: avval faqat `TabBar.onTap` orqali yuklardi.
+      // `TabBarView` ni barmoq bilan surish esa `onTap` NI
+      // CHALDIRMAYDI — faqat `index` o'zgaradi. Natijada foydalanuvchi
+      // "Bekor qilingan"ga sursa, bo'sh ro'yxat ("Savdolar yo'q")
+      // chiqadi, spinner yo'q, so'rov ham yuborilmaydi — ma'lumot
+      // borligini faqat pastga tortib bilish mumkin bo'lardi.
+      ..addListener(_onTabChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  void _onTabChanged() {
+    // Surish jarayonida `index` bir necha marta o'zgaradi (drag boshlash,
+    // qo'yish, animatsiya). Faqat tugallangan holatda ishlaymiz.
+    if (_tabCtrl.indexIsChanging) return;
+    final i = _tabCtrl.index;
+    if (i < 0 || i >= _statuses.length) return;
+    Provider.of<SaleProvider>(context, listen: false)
+        .selectStatus(_statuses[i]);
   }
 
   @override
@@ -51,7 +73,12 @@ class _SalesScreenState extends State<SalesScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Provider.of<ThemeProvider>(context).isDark;
-    final sp = Provider.of<SaleProvider>(context);
+    // `SaleProvider` bu yerda **o'qilmaydi**: tab almashganda
+    // `selectStatus` o'z holatini o'zgartiradi, ro'yxat esa
+    // `_SalesList` ichida `context.watch` orqali kuzatiladi. Bu
+    // ekranni qayta qurishga majbur qilmasligi kerak — aks holda
+    // `SaleProvider` ning `loading` o'zgarishi butun ekranni
+    // qayta quradi (jumladan skaner tugmasi holati).
 
     return Scaffold(
       backgroundColor: AppColors.bg(isDark),
@@ -68,6 +95,9 @@ class _SalesScreenState extends State<SalesScreen>
         ),
         actions: [
           IconButton(
+            // Faqat belgi bo'lgan tugmada ekran o'quvchisi uchun nom kerak —
+            // aks holda TalkBack uni "nomsiz tugma" deb o'qirdi.
+            tooltip: 'Yangi savdo',
             icon: Icon(Icons.add_rounded, color: AppColors.primary, size: 28),
             onPressed: () => _showNewSaleFlow(context, isDark),
           ),
@@ -85,26 +115,33 @@ class _SalesScreenState extends State<SalesScreen>
             Tab(text: 'Qaytarilgan'),
           ],
           onTap: (i) {
-            final statuses = ['active', 'cancelled', 'returned'];
-            sp.loadSales(status: statuses[i], refresh: true);
+            // `selectStatus` o'zi ham yuklaydi (`loaded == false` bo'lsa).
+            // Ikkala qatlamni chaqirish **o'lik kod** edi: `selectStatus`
+            // ichidagi `loadSales` `loading = true` ni sinxron qilib
+            // ulguradi, shuning uchun keyingi qo'ng'iroq `loading` qalqoniga
+            // urilib, hech narsa qilmasdan qaytadi.
+            _onTabChanged();
           },
         ),
       ),
       body: TabBarView(
         controller: _tabCtrl,
         children: [
-          _SalesList(status: 'active', isDark: isDark, onRefresh: _load),
           _SalesList(
-              status: 'cancelled', isDark: isDark, onRefresh: () async {
-            await sp.loadSales(status: 'cancelled', refresh: true);
-          }),
+              status: 'active', isDark: isDark, onRefresh: () => _loadFor('active')),
           _SalesList(
-              status: 'returned', isDark: isDark, onRefresh: () async {
-            await sp.loadSales(status: 'returned', refresh: true);
-          }),
+              status: 'cancelled', isDark: isDark, onRefresh: () => _loadFor('cancelled')),
+          _SalesList(
+              status: 'returned', isDark: isDark, onRefresh: () => _loadFor('returned')),
         ],
       ),
     );
+  }
+
+  Future<void> _loadFor(String status) async {
+    final sp = Provider.of<SaleProvider>(context, listen: false);
+    sp.selectStatus(status);
+    await sp.loadSales(status: status, refresh: true);
   }
 
   void _showNewSaleFlow(BuildContext context, bool isDark) {
@@ -136,11 +173,17 @@ class _SalesList extends StatelessWidget {
   Widget build(BuildContext context) {
     final sp = Provider.of<SaleProvider>(context);
 
-    if (sp.isLoading && sp.sales.isEmpty) {
+    // Har bir tab' o'z statusidagi ro'yxatni o'qiydi (`salesFor`) — avval
+    // bitta umumiy ro'yxat ishlatilardi va tab'lar aralashib ketardi.
+    final bucket = sp.salesFor(status);
+
+    if (sp.isLoadingFor(status) && bucket.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final filtered = sp.sales.where((s) => s.status == status).toList();
+    // Ro'yxatda bir xil savdo ikki marta ko'rinmasin.
+    final seen = <String>{};
+    final filtered = bucket.where((s) => seen.add(s.id)).toList();
 
     if (filtered.isEmpty) {
       return Center(
@@ -150,6 +193,15 @@ class _SalesList extends StatelessWidget {
           const SizedBox(height: 12),
           Text('Savdolar yo\'q',
               style: GoogleFonts.inter(color: AppColors.textSec(isDark))),
+          // So'rov muvaffaqiyatsiz bo'lsa, "bo'sh" emas, "xato" ko'rsatiladi —
+          // aks holda foydalanuvchi ma'lumot yo'q deb o'ylaydi.
+          if (sp.error != null) ...[
+            const SizedBox(height: 12),
+            Text(sp.error!,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                    color: AppColors.accentRed, fontSize: 12)),
+          ],
         ]),
       );
     }
@@ -345,11 +397,10 @@ class _SaleTile extends StatelessWidget {
     }
   }
 
-  String _fmt(double v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)} mln';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)} ming';
-    return v.toStringAsFixed(0);
-  }
+  // Summa hech qachon yuvilmaydi: `1070` → "1 070", `1250000` → "1 250 000".
+  // Avvalgi `(v / 1000).toStringAsFixed(0)` yuvishi 1070 → "1 ming" qilib
+  // 70 so'mni yo'qotardi (video'da ko'rsatilgan xato).
+  String _fmt(double v) => fmtSum(v);
 
   String _formatDate(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
@@ -370,6 +421,7 @@ class SaleDetailScreen extends StatelessWidget {
         backgroundColor: AppColors.card(isDark),
         elevation: 0,
         leading: IconButton(
+          tooltip: 'Orqaga',
           icon: Icon(Icons.arrow_back_ios_new_rounded,
               color: AppColors.text(isDark), size: 20),
           onPressed: () => Navigator.pop(context),
@@ -569,11 +621,10 @@ class SaleDetailScreen extends StatelessWidget {
         ]),
       );
 
-  String _fmt(double v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)} mln';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)} ming';
-    return v.toStringAsFixed(0);
-  }
+  // Summa hech qachon yuvilmaydi: `1070` → "1 070", `1250000` → "1 250 000".
+  // Avvalgi `(v / 1000).toStringAsFixed(0)` yuvishi 1070 → "1 ming" qilib
+  // 70 so'mni yo'qotardi (video'da ko'rsatilgan xato).
+  String _fmt(double v) => fmtSum(v);
 
   String _fmtDt(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
@@ -603,7 +654,10 @@ class _PaymentSheetState extends State<_PaymentSheet> {
   @override
   void initState() {
     super.initState();
-    _amtCtrl.text = widget.sale.totalRemaining.toStringAsFixed(0);
+    // Qarzni maydonga to'g'ri kiritamiz. `toStringAsFixed(0)` **yuvadi**:
+    // qarz `1070.50` bo'lsa maydon `1071` bo'ladi (ortiqcha to'lov).
+    // `fmtInput` hech narsani o'zgartirmaydi.
+    _amtCtrl.text = fmtInput(widget.sale.totalRemaining);
   }
 
   @override
@@ -787,11 +841,10 @@ class _PaymentSheetState extends State<_PaymentSheet> {
     }
   }
 
-  String _fmt(double v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)} mln';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)} ming';
-    return v.toStringAsFixed(0);
-  }
+  // Summa hech qachon yuvilmaydi: `1070` → "1 070", `1250000` → "1 250 000".
+  // Avvalgi `(v / 1000).toStringAsFixed(0)` yuvishi 1070 → "1 ming" qilib
+  // 70 so'mni yo'qotardi (video'da ko'rsatilgan xato).
+  String _fmt(double v) => fmtSum(v);
 }
 
 // ─── New Sale Sheet ───────────────────────────────────────────────
@@ -879,6 +932,7 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
                   cart: _cart,
                   scrollCtrl: scrollCtrl,
                   onCartChanged: () => setState(() {}),
+                  canContinue: _cart.isNotEmpty,
                   onNext: () {
                     if (_cart.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -887,8 +941,19 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
                     }
                     setState(() {
                       _step = 1; // Jump to Payment
-                      if (_cashCtrl.text.isEmpty && _cardCtrl.text.isEmpty) {
-                        _cashCtrl.text = _total.toInt().toString();
+                      // To'lov maydonini jami summa bilan **sinxronlaymiz**.
+                      // Avval u faqat bo'sh bo'lsa bir marta to'ldirilardi:
+                      // foydalanuvchi 1-qadamga qaytib savatni o'zgartirsa,
+                      // maydonda ESKI suma qolardi (qoldiq ma'lumot) —
+                      // "To'lanadigan" noto'g'ri chiqardi.
+                      //
+                      // `toStringAsFixed(0)` ishlatilMASLIGI kerak: u yuvadi
+                      // (1070.50 → 1071 ortiqcha to'lov, 1070.40 → 1070
+                      // qoldiqda 0.40 so'm "qarz" tug'iladi va foydalanuvchiga
+                      // muddat so'raladi). `fmtInput` aniq qiymat beradi.
+                      if (_totalPaid == 0) {
+                        _cashCtrl.text = fmtInput(_total);
+                        _cardCtrl.clear();
                       }
                     });
                   },
@@ -984,7 +1049,7 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
       );
 
   Future<void> _createSale() async {
-    if (_cart.isEmpty) return;
+    if (_cart.isEmpty || _loading) return; // ikki marta yuborishni oldini olamiz
     setState(() => _loading = true);
 
     final sp = Provider.of<SaleProvider>(context, listen: false);
@@ -1025,8 +1090,27 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
     setState(() => _loading = false);
 
     if (result.success) {
+      // Savatni tozalaymiz: keyingi sotuvda eski mahsulotlar qolmasin
+      // (video'dagi "savatda qoldiq ma'lumot" muammosi shundan kelib
+      // chiqqan). `pop` dan oldin tozalash, orqadagi oynada (splash/
+      // dashboard) to'g'ri holat ko'rinishini ta'minlaydi.
+      setState(() {
+        _cart.clear();
+        _selectedClient = null;
+        _payMethod = 'cash';
+        _cashCtrl.clear();
+        _cardCtrl.clear();
+        _noteCtrl.clear();
+        _dueDate = null;
+        _step = 0;
+      });
+      // Xabarni `pop` dan OLDIN ko'rsatamiz. `Navigator.pop` dan keyin
+      // `ScaffoldMessenger.of(context)` bu ekrning `Scaffold`'ini
+      // qidiradi — marshrut yopilayotgan paytda u topilmasligi mumkin
+      // va xabar umuman chiqmaydi. Oldindan olib, keyin ishlatamiz.
+      final messenger = ScaffoldMessenger.of(context);
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      messenger.showSnackBar(SnackBar(
         content: Text('Sotuv amalga oshirildi!'),
         backgroundColor: AppColors.accentGreen,
         behavior: SnackBarBehavior.floating,
@@ -1048,7 +1132,7 @@ class _CartItem {
   final ProductModel product;
   double qty;
 
-  _CartItem({required this.product}) : qty = 1;
+  _CartItem({required this.product, double? qty}) : qty = qty ?? 1;
 }
 
 // ─── Step 0: Product selection ────────────────────────────────────
@@ -1059,12 +1143,18 @@ class _ProductStep extends StatefulWidget {
   final VoidCallback onCartChanged;
   final VoidCallback onNext;
 
+  /// Savat bo'sh bo'lsa `false` → "Davom etish" o'chiriladi.
+  /// (Avval tugma faol ko'rinar, bosilganda esa SnackBar modal bottom
+  /// sheet ortida qolib, foydalanuvchi hech qanday javob ko'rmasdi.)
+  final bool canContinue;
+
   const _ProductStep({
     required this.isDark,
     required this.cart,
     required this.scrollCtrl,
     required this.onCartChanged,
     required this.onNext,
+    required this.canContinue,
   });
 
   @override
@@ -1074,48 +1164,100 @@ class _ProductStep extends StatefulWidget {
 class _ProductStepState extends State<_ProductStep> {
   final _searchCtrl = TextEditingController();
 
+  /// Skaner oynasi ochiqligi — qayta bosilishni oldini oladi.
+  bool _scanning = false;
+
   @override
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _scanBarcode() async {
-    String? res = await SimpleBarcodeScanner.scanBarcode(
-      context,
-      barcodeAppBar: const BarcodeAppBar(
-        appBarTitle: 'Shtrix-kodni skanerlash',
-        centerTitle: false,
-        enableBackButton: true,
-        backButtonIcon: Icon(Icons.arrow_back_ios),
-      ),
-      isShowFlashIcon: true,
-      delayMillis: 2000,
-      cameraFace: CameraFace.back,
-    );
+  /// Mahsulotni savatga **miqdorni so'rab** qo'shadi.
+  ///
+  /// NIMA UCHUN: avval `_selectProduct` har qanday tanlovda (`+` bosilishi
+  /// yoki skaner natijasi) `qty = 1` bilan **oniksiz** qo'shardi —
+  /// foydalanuvchi "miqdor kiritishda ham avtomatik qo'shib qo'yayapti"
+  /// deb shikoyat qilgan. Endi hech narsa avtomatik qo'shilmaydi:
+  /// miqdor dialogi orqali aniq tasdiqlanadi, bekor qilinganda hech narsa
+  /// o'zgarmaydi.
+  Future<void> _addProductWithQuantity(
+    ProductModel p, {
+    bool scanned = false,
+  }) async {
+    final existingIdx = widget.cart.indexWhere((c) => c.product.id == p.id);
+    final inCart = existingIdx == -1 ? 0.0 : widget.cart[existingIdx].qty;
 
-    if (res != null && res.isNotEmpty && res != '-1') {
+    // Omborda hech qancha qolmagan bo'lsa — aniq xabar bilan to'xtaymiz.
+    if (p.quantity <= 0 && inCart <= 0) {
+      _snack('${p.productName} omborda qolmadi');
+      return;
+    }
+
+    final qty = await showQuantityDialog(
+      context,
+      product: p,
+      title: scanned ? 'Shtrix-kod topildi' : 'Miqdor kiritish',
+      currentInCart: inCart,
+    );
+    if (!mounted || qty == null) return;
+
+    if (existingIdx == -1) {
+      widget.cart.add(_CartItem(product: p, qty: qty));
+    } else {
+      widget.cart[existingIdx].qty += qty;
+    }
+    widget.onCartChanged();
+    setState(() {});
+    _snack('${p.productName} savatga qo\'shildi');
+  }
+
+  void _snack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  Future<void> _scanBarcode() async {
+    // Ikki marta bosilishni oldini olamiz. `openBarcodeScanner` oddiy
+    // `Navigator.push` — marshrut o'tishi (~300 ms) davomida tugma
+    // hali ham "faol" ko'rinadi. Ikki marta bosilsa, **ikki** skaner
+    // oynasi ochiladi: birinchisining natijasi ikkinchisiga borib
+    // ketadi, birinchisi esa `null` qaytarib natijani yo'qotadi.
+    if (_scanning) return;
+    setState(() => _scanning = true);
+    try {
+      // `openBarcodeScanner` bekor qilinganda yoki hech narsa topilmasa
+      // `null` qaytaradi. Eski yechimda bekor qilinganda `"-2"` qaytarib,
+      // `"-2"` bo'yicha mahsulot qidirilib "topilmadi" xabari chiqardi.
+      final res = await openBarcodeScanner(context);
+      if (!mounted) return;
+      if (res == null || res.trim().isEmpty) return; // bekor qilindi
+
+      final barcode = res.trim();
       final pp = Provider.of<ProductProvider>(context, listen: false);
+
       // Mahalliy qidirish (shu paytgacha yuklanganlar orasidan)
-      final localMatch = pp.products.where((p) => p.productBarcode == res).toList();
+      final localMatch =
+          pp.products.where((p) => p.productBarcode == barcode).toList();
       if (localMatch.isNotEmpty) {
-        widget.onProductSelected(localMatch.first);
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('✅ ${localMatch.first.productName} tanlandi')));
-      } else {
-        // Backenddan qidirish
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Shtrix-kod bazadan izlanmoqda...')));
-        final apiRes = await pp.fetchProductByBarcode(res);
-        if (apiRes.isSuccess && apiRes.data != null) {
-          widget.onProductSelected(apiRes.data!);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('✅ ${apiRes.data!.productName} tanlandi')));
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Bu shtrix-kod bo\'yicha mahsulot topilmadi')));
-        }
+        await _addProductWithQuantity(localMatch.first, scanned: true);
+        return;
       }
+
+      // Backenddan qidirish
+      _snack('Shtrix-kod bazadan izlanmoqda...');
+      final apiRes = await pp.fetchProductByBarcode(barcode);
+      if (!mounted) return;
+      if (apiRes.success && apiRes.data != null) {
+        await _addProductWithQuantity(apiRes.data!, scanned: true);
+      } else {
+        _snack('Bu shtrix-kod bo\'yicha mahsulot topilmadi');
+      }
+    } finally {
+      // Xato yuz bersa ham qalqon qolib ketmasin.
+      if (mounted) setState(() => _scanning = false);
     }
   }
 
@@ -1147,10 +1289,14 @@ class _ProductStepState extends State<_ProductStep> {
                 Icon(Icons.shopping_cart_rounded,
                     color: AppColors.primary, size: 20),
                 const SizedBox(width: 8),
-                Text(
-                  '${widget.cart.length} mahsulot | ${_fmt(widget.cart.fold(0.0, (s, i) => s + i.qty * i.product.sellingPrice))} so\'m',
-                  style: GoogleFonts.inter(
-                      color: AppColors.primary, fontWeight: FontWeight.w600),
+                // Flexible: katta summalar Row'ni siqib chiqarmasin.
+                Flexible(
+                  child: Text(
+                    '${widget.cart.length} mahsulot | ${_fmt(widget.cart.fold(0.0, (s, i) => s + i.qty * i.product.sellingPrice))} so\'m',
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                        color: AppColors.primary, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ]),
             ),
@@ -1167,6 +1313,7 @@ class _ProductStepState extends State<_ProductStep> {
               prefixIcon: Icon(Icons.search_rounded,
                   color: AppColors.textHint(isDark)),
               suffixIcon: IconButton(
+                tooltip: 'Shtrix-kod skanerlash',
                 icon: Icon(Icons.qr_code_scanner_rounded, color: AppColors.primary),
                 onPressed: _scanBarcode,
               ),
@@ -1207,17 +1354,10 @@ class _ProductStepState extends State<_ProductStep> {
               product: p,
               isDark: isDark,
               cartItem: cartItem,
-              onAdd: () {
-                final idx = widget.cart
-                    .indexWhere((c) => c.product.id == p.id);
-                if (idx == -1) {
-                  widget.cart.add(_CartItem(product: p));
-                } else {
-                  widget.cart[idx].qty++;
-                }
-                widget.onCartChanged();
-                setState(() {});
-              },
+              // Ro'yxatdagi `+` ham endi miqdorni **so'raydi** — avval u
+              // `qty = 1` bilan oniksiz qo'shardi. Savatda allaqachon
+              // bo'lsa, "qancha qo'shish" sifatida so'raydi.
+              onAdd: () => _addProductWithQuantity(p),
               onRemove: () {
                 final idx = widget.cart
                     .indexWhere((c) => c.product.id == p.id);
@@ -1241,25 +1381,49 @@ class _ProductStepState extends State<_ProductStep> {
         child: SizedBox(
           width: double.infinity,
           height: 50,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: ElevatedButton(
-              onPressed: widget.onNext,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+          // O'chirilgan tugma faqat kulrang bo'lib qolsa, foydalanuvchi
+          // "ishlamayapti" deb o'ylaydi. Sababni o'zida yozib qo'yamiz.
+          child: Semantics(
+            button: true,
+            enabled: widget.canContinue,
+            label: widget.canContinue
+                ? 'Davom etish'
+                : 'Savatga mahsulot qo\'shish kerak',
+            excludeSemantics: true,
+            // `excludeSemantics: true` pastdagi `ElevatedButton` ning
+            // `onPressed` harakatini ham yo'qotadi — TalkBack tugmani
+            // "o'qiydi", lekin ikki marta bosish hech narsa qilmaydi.
+            // Savat bo'sh bo'lsa `null` (harakat yo'q), aks holda
+            // harakatni shu yerda qayta beramiz.
+            onTap: widget.canContinue ? widget.onNext : null,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: widget.canContinue
+                    ? AppColors.primaryGradient
+                    // Savat bo'sh — tugma ko'rinadi, lekin bosilmaydi.
+                    : const LinearGradient(
+                        colors: [Color(0xFFB6BAC7), Color(0xFFA3A8B7)],
+                      ),
+                borderRadius: BorderRadius.circular(14),
               ),
-              child: Text(
-                'Davom etish →',
-                style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white),
+              child: ElevatedButton(
+                onPressed: widget.canContinue ? widget.onNext : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                ),
+                child: Text(
+                  widget.canContinue
+                      ? 'Davom etish →'
+                      : 'Savatga mahsulot qo\'shing',
+                  style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color:
+                          widget.canContinue ? Colors.white : Colors.white70),
+                ),
               ),
             ),
           ),
@@ -1268,11 +1432,10 @@ class _ProductStepState extends State<_ProductStep> {
     ]);
   }
 
-  String _fmt(double v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)} mln';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)} ming';
-    return v.toStringAsFixed(0);
-  }
+  // Summa hech qachon yuvilmaydi: `1070` → "1 070", `1250000` → "1 250 000".
+  // Avvalgi `(v / 1000).toStringAsFixed(0)` yuvishi 1070 → "1 ming" qilib
+  // 70 so'mni yo'qotardi (video'da ko'rsatilgan xato).
+  String _fmt(double v) => fmtSum(v);
 }
 
 class _ProductSelectTile extends StatelessWidget {
@@ -1322,7 +1485,7 @@ class _ProductSelectTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
-                '${_fmt(product.sellingPrice)} so\'m | Qoldi: ${product.quantity} ${product.unit}',
+                '${_fmt(product.sellingPrice)} so\'m | Qoldi: ${fmtQty(product.quantity)} ${product.unit}',
                 style: GoogleFonts.inter(
                     fontSize: 12, color: AppColors.textSec(isDark)),
               ),
@@ -1331,6 +1494,7 @@ class _ProductSelectTile extends StatelessWidget {
         ),
         if (cartItem != null) ...[
           IconButton(
+            tooltip: 'Savatdan olib tashlash',
             onPressed: onRemove,
             icon: const Icon(Icons.remove_circle_rounded, color: Colors.red),
             iconSize: 22,
@@ -1350,6 +1514,7 @@ class _ProductSelectTile extends StatelessWidget {
           ),
         ],
         IconButton(
+          tooltip: 'Savatga qo\'shish',
           onPressed:
               product.quantity > (cartItem?.qty ?? 0) ? onAdd : null,
           icon: Icon(
@@ -1366,11 +1531,10 @@ class _ProductSelectTile extends StatelessWidget {
     );
   }
 
-  String _fmt(double v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)} mln';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)} ming';
-    return v.toStringAsFixed(0);
-  }
+  // Summa hech qachon yuvilmaydi: `1070` → "1 070", `1250000` → "1 250 000".
+  // Avvalgi `(v / 1000).toStringAsFixed(0)` yuvishi 1070 → "1 ming" qilib
+  // 70 so'mni yo'qotardi (video'da ko'rsatilgan xato).
+  String _fmt(double v) => fmtSum(v);
 }
 
 // ─── Step 1: Client selection ─────────────────────────────────────
@@ -1488,8 +1652,8 @@ class _ClientStepState extends State<_ClientStep> {
                   style: GoogleFonts.inter(
                       color: AppColors.text(isDark),
                       fontWeight: FontWeight.w500)),
-              subtitle: c.clientPhone != null
-                  ? Text('+998 ${c.clientPhone}',
+              subtitle: (c.clientPhone != null && c.clientPhone!.trim().isNotEmpty)
+                  ? Text(displayUzPhone(c.clientPhone),
                       style: GoogleFonts.inter(
                           color: AppColors.textSec(isDark), fontSize: 12))
                   : null,
@@ -1720,12 +1884,17 @@ class _PaymentStepState extends State<_PaymentStep> {
               Icon(Icons.check_circle_outline_rounded,
                   color: AppColors.accentGreen, size: 18),
               const SizedBox(width: 8),
-              Text(
-                'To\'lanadigan: ${_fmt(widget.totalPaid)} so\'m',
-                style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: AppColors.accentGreen,
-                    fontWeight: FontWeight.w600),
+              // Flexible: katta summalar (masalan 1,250,000,000 so'm)
+              // Row'ni siqib chiqarmasligi uchun.
+              Flexible(
+                child: Text(
+                  'To\'lanadigan: ${_fmt(widget.totalPaid)} so\'m',
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: AppColors.accentGreen,
+                      fontWeight: FontWeight.w600),
+                ),
               ),
             ]),
           ),
@@ -1934,9 +2103,8 @@ class _PaymentStepState extends State<_PaymentStep> {
     ]);
   }
 
-  String _fmt(double v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)} mln';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)} ming';
-    return v.toStringAsFixed(0);
-  }
+  // Summa hech qachon yuvilmaydi: `1070` → "1 070", `1250000` → "1 250 000".
+  // Avvalgi `(v / 1000).toStringAsFixed(0)` yuvishi 1070 → "1 ming" qilib
+  // 70 so'mni yo'qotardi (video'da ko'rsatilgan xato).
+  String _fmt(double v) => fmtSum(v);
 }

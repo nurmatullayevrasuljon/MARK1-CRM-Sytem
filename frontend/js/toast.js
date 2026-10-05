@@ -87,6 +87,11 @@
 
   const container = document.createElement('div');
   container.id = 'toast-container';
+  // WCAG 4.1.3 (Status Messages): ekran o'quvchisi xabarni ovozli
+  // chiqarishi uchun jonli hudud (aria-live) sifatida belgilanadi.
+  container.setAttribute('role', 'status');
+  container.setAttribute('aria-live', 'polite');
+  container.setAttribute('aria-atomic', 'true');
   document.body.appendChild(container);
 
   window.showToast = function(msg, type = 'info') {
@@ -132,10 +137,10 @@
       const btnClass = danger ? "btn-confirm btn-danger" : "btn-confirm";
       const iconHtml = danger ? '<div style="color: #ef4444; font-size: 3rem; margin-bottom: 1rem; text-align: center;"><i class="bi bi-exclamation-triangle-fill"></i></div>' : '';
       overlay.innerHTML = `
-        <div class="custom-modal" style="text-align: center;">
+        <div class="custom-modal" role="dialog" aria-modal="true" aria-labelledby="cmTitle" aria-describedby="cmMsg" style="text-align: center;">
           ${iconHtml}
-          <h3>${title}</h3>
-          <p>${msg.replace(/\n/g, '<br>')}</p>
+          <h3 id="cmTitle">${title}</h3>
+          <p id="cmMsg">${msg.replace(/\n/g, '<br>')}</p>
           <div class="btns" style="display: flex; gap: 1rem; width: 100%;">
             <button class="btn-cancel" style="flex: 1;">${cancelText}</button>
             <button class="${btnClass}" style="flex: 1; ${danger ? 'background: #ef4444;' : ''}">${confirmText}</button>
@@ -144,14 +149,37 @@
       `;
       document.body.appendChild(overlay);
       setTimeout(() => overlay.classList.add('show'), 10);
-      
-      const close = (val) => {
-        overlay.classList.remove('show');
-        setTimeout(() => { overlay.remove(); resolve(val); }, 200);
+
+      const prev = document.activeElement;
+      const cancelBtn = overlay.querySelector('.btn-cancel');
+      const okBtn = overlay.querySelector('.btn-confirm');
+      // WCAG 2.1.1: modal ochilganda fokus unga o'tadi, Escape yopadi.
+      setTimeout(() => cancelBtn.focus(), 30);
+      const onKey = (e) => {
+        if (e.key === 'Escape') { e.preventDefault(); close(false); }
+        // WCAG 2.1.2: fokus faqat modal ichida qolsin (Tab sikli)
+        else if (e.key === 'Tab') {
+          const f = [...overlay.querySelectorAll('button, input')];
+          if (!f.length) return;
+          const first = f[0], last = f[f.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
       };
-      
-      overlay.querySelector('.btn-cancel').onclick = () => close(false);
-      overlay.querySelector('.btn-confirm').onclick = () => close(true);
+      document.addEventListener('keydown', onKey, true);
+
+      const close = (val) => {
+        document.removeEventListener('keydown', onKey, true);
+        overlay.classList.remove('show');
+        setTimeout(() => {
+          overlay.remove();
+          if (prev && prev.focus) { try { prev.focus(); } catch (e) {} }
+          resolve(val);
+        }, 200);
+      };
+
+      cancelBtn.onclick = () => close(false);
+      okBtn.onclick = () => close(true);
     });
   };
 
@@ -160,10 +188,10 @@
       const overlay = document.createElement('div');
       overlay.id = 'custom-modal-overlay';
       overlay.innerHTML = `
-        <div class="custom-modal">
-          <h3>Kiritish</h3>
-          <p>${msg.replace(/\n/g, '<br>')}</p>
-          <input type="text" id="prompt-input" autocomplete="off">
+        <div class="custom-modal" role="dialog" aria-modal="true" aria-labelledby="cpTitle" aria-describedby="cpMsg">
+          <h3 id="cpTitle">Kiritish</h3>
+          <p id="cpMsg">${msg.replace(/\n/g, '<br>')}</p>
+          <input type="text" id="prompt-input" autocomplete="off" aria-labelledby="cpTitle">
           <div class="btns">
             <button class="btn-cancel">Bekor qilish</button>
             <button class="btn-confirm">Tasdiqlash</button>
@@ -171,20 +199,45 @@
         </div>
       `;
       document.body.appendChild(overlay);
+      const prev = document.activeElement;
       setTimeout(() => {
         overlay.classList.add('show');
-        document.getElementById('prompt-input').focus();
+        const inp = document.getElementById('prompt-input');
+        if (inp) inp.focus();
       }, 10);
-      
-      const close = (val) => {
-        overlay.classList.remove('show');
-        setTimeout(() => { overlay.remove(); resolve(val); }, 200);
+
+      const onKey = (e) => {
+        if (e.key === 'Escape') { e.preventDefault(); close(null); }
+        // WCAG 2.1.2: fokus modal ichida qolishi (oddiy Tab sikli)
+        else if (e.key === 'Tab') {
+          const f = [...overlay.querySelectorAll('button, input')];
+          if (!f.length) return;
+          const first = f[0], last = f[f.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
       };
-      
+      document.addEventListener('keydown', onKey, true);
+
+      const close = (val) => {
+        document.removeEventListener('keydown', onKey, true);
+        overlay.classList.remove('show');
+        setTimeout(() => {
+          overlay.remove();
+          if (prev && prev.focus) { try { prev.focus(); } catch (e) {} }
+          resolve(val);
+        }, 200);
+      };
+
       overlay.querySelector('.btn-cancel').onclick = () => close(null);
       overlay.querySelector('.btn-confirm').onclick = () => {
         const val = document.getElementById('prompt-input').value;
         close(val === "" ? null : val);
       };
+      // Enter — tasdiqlash
+      const inp = overlay.querySelector('#prompt-input');
+      if (inp) inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); overlay.querySelector('.btn-confirm').click(); }
+      });
     });
   };

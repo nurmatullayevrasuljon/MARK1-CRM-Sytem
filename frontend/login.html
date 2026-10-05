@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="view-transition" content="same-origin">
   <title>Kirish | Mark1 CRM</title>
+  <meta name="description" content="Mark1 CRM hisobingizga kiring — sotuvlar, ombor, qarzdorlar va moliyaviy hisobotlaringizni boshqaring.">
   <link rel="shortcut icon" href="img/b-logo2.png" type="image/x-icon">
 
   <!-- Google Analytics -->
@@ -29,7 +30,10 @@
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css?v=1789490310">
   <!-- Premium theme -->
-  <link rel="stylesheet" href="css/premium-theme.css?v=1789490310">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="css/premium-theme.css?v=1790606600">
 
   <style>
     /* ── Auth CSS Variables ── */
@@ -40,9 +44,11 @@
       --auth-card-shadow: 0 4px 6px -1px rgba(0,0,0,.06), 0 24px 48px -8px rgba(0,0,0,.12);
       --auth-input-bg: #f7f8fb;
       --auth-input-border: #e2e5ef;
-      --auth-input-focus-border: #5B6AF0;
+      --auth-input-focus-border: #4455EE;
       --auth-input-focus-shadow: 0 0 0 3px rgba(91,106,240,.14);
       --auth-label: #6b7280;
+      /* Link/akcent matni: oq fonda 5.56 (AA) */
+      --auth-accent: #4455EE;
       --auth-text: #111827;
       --auth-feature-bg: rgba(255,255,255,.07);
       --auth-feature-border: rgba(255,255,255,.1);
@@ -59,6 +65,8 @@
       --auth-input-focus-border: #818cf8;
       --auth-input-focus-shadow: 0 0 0 3px rgba(129,140,248,.18);
       --auth-label: #94a3b8;
+      /* #4455EE quyuq karta #141828 ustida 3.17 edi — AA uchun ochroq kerak */
+      --auth-accent: #8FA0FF;
       --auth-text: #f1f5f9;
     }
 
@@ -172,7 +180,7 @@
     }
     .auth-feature-text span {
       font-size: 13px;
-      color: rgba(255,255,255,.45);
+      color: rgba(255,255,255,.55); /* .45 → 4.13 (AA'dan past), .55 → 5.43 */
       line-height: 1.5;
     }
 
@@ -186,7 +194,7 @@
       border: 1px solid rgba(255,255,255,.1);
       border-radius: 999px;
       font-size: 12px;
-      color: rgba(255,255,255,.45);
+      color: rgba(255,255,255,.55); /* .45 → 4.13 (AA'dan past), .55 → 5.43 */
     }
     .auth-trust-dot {
       width: 6px;
@@ -292,16 +300,19 @@
       color: var(--auth-label);
       cursor: pointer;
       user-select: none;
+      /* Bosish maydoni (WCAG 2.5.8): label ham, checkbox ham >=24px */
+      min-height: 24px;
     }
     .auth-check {
-      width: 16px; height: 16px;
-      accent-color: #5B6AF0;
+      width: 24px; height: 24px;
+      flex-shrink: 0;
+      accent-color: #4455EE;
       cursor: pointer;
     }
     .auth-forgot {
       font-size: 13px;
       font-weight: 500;
-      color: #5B6AF0;
+      color: var(--auth-accent);
       text-decoration: none;
     }
     .auth-forgot:hover { opacity: .75; }
@@ -316,7 +327,7 @@
       border-radius: 12px;
       font-size: 15px;
       font-weight: 600;
-      background: #5B6AF0;
+      background: #4455EE;
       color: #fff;
       border: none;
       cursor: pointer;
@@ -379,7 +390,7 @@
       color: var(--auth-label);
     }
     .auth-footer-text a {
-      color: #5B6AF0;
+      color: var(--auth-accent);
       font-weight: 600;
       text-decoration: none;
     }
@@ -443,7 +454,7 @@
       display: block;
       text-align: center;
       font-size: 13px;
-      color: #5B6AF0;
+      color: var(--auth-accent);
       text-decoration: none;
       margin-top: 12px;
     }
@@ -456,6 +467,10 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css?v=1789490310"></head>
 
 <body>
+  <!-- Skip-link: klaviatura foydalanuvchisi chap panelni chetlab o'tib
+       to'g'ridan-to'g'ri forma/ga o'tadi (WCAG 2.4.1). -->
+  <a href="#main-content" class="skip-link">Asosiy mazmunga o'tish</a>
+
   <div class="auth-shell">
 
     <!-- ══════ LEFT PANEL ══════ -->
@@ -515,7 +530,7 @@
     </aside>
 
     <!-- ══════ RIGHT PANEL ══════ -->
-    <main class="auth-right">
+    <main class="auth-right" id="main-content" tabindex="-1">
       <div class="auth-card">
         <h1 class="auth-card-title">Qaytib kelganingizdan xursandmiz</h1>
         <p class="auth-card-subtitle">CRM platformasidagi hisobingizga kiring</p>
@@ -579,7 +594,7 @@
       <button type="button" class="fp-close" id="fpCloseBtn" aria-label="Yopish">&times;</button>
 
       <div class="fp-step active" id="fpStep1">
-        <h5 class="fp-title">Parolni tiklash</h5>
+        <h2 class="fp-title">Parolni tiklash</h2>
         <p class="fp-subtitle">Ro'yxatdan o'tgan telefon raqamingizni kiriting, sizga tasdiqlash kodi yuboriladi.</p>
         <div class="fp-error" id="fpStep1Error"></div>
         <div class="field-group">
@@ -590,7 +605,7 @@
       </div>
 
       <div class="fp-step" id="fpStep2">
-        <h5 class="fp-title">Tasdiqlash kodi</h5>
+        <h2 class="fp-title">Tasdiqlash kodi</h2>
         <p class="fp-subtitle" id="fpStep2Subtitle">Telefoningizga yuborilgan kodni va yangi parolni kiriting.</p>
         <div class="fp-error" id="fpStep2Error"></div>
         <div class="field-group">
@@ -618,7 +633,7 @@
 
       <div class="fp-step" id="fpStep3">
         <div class="fp-success-icon">✅</div>
-        <h5 class="fp-title" style="text-align:center;">Parol muvaffaqiyatli tiklandi!</h5>
+        <h2 class="fp-title" style="text-align:center;">Parol muvaffaqiyatli tiklandi!</h2>
         <p class="fp-subtitle" style="text-align:center;">Endi yangi parolingiz bilan tizimga kirishingiz mumkin.</p>
         <button type="button" id="fpDoneBtn" class="btn-primary-auth">Tizimga kirish</button>
       </div>
@@ -626,8 +641,8 @@
   </div>
 
   <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js?v=1789490310"></script>
-  <script src="js/toast.js?v=1789490310"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.20.0/dist/axios.min.js?v=1789490310"></script>
+  <script src="js/toast.js?v=1790606500"></script>
   <script src="js/api-client.js?v=1789490310"></script>
   <script src="js/auth-ui.js?v=1789490310" defer></script>
   <script src="js/theme-toggle.js?v=1789490310"></script>
