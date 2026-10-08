@@ -14,7 +14,7 @@ exports.getAppVersion = async (req, res) => {
     const forceUpdate = process.env.FORCE_UPDATE === "true";
     const playStoreUrl =
       process.env.PLAY_STORE_URL ||
-      "https://play.google.com/store/apps/details?id=uz.mark1";
+      "https://play.google.com/store/apps/details?id=uz.mark1.crm";
     const changelog =
       process.env.APP_CHANGELOG ||
       "Yangi imkoniyatlar qo'shildi, xavfsizlik va tezkorlik oshirildi.";

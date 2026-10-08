@@ -32,7 +32,7 @@ class AppUpdateInfo {
       minSupportedVersionCode: json['min_supported_version_code'] ?? 5001,
       forceUpdate: json['force_update'] ?? false,
       playStoreUrl: json['play_store_url'] ??
-          'https://play.google.com/store/apps/details?id=uz.mark1',
+          'https://play.google.com/store/apps/details?id=uz.mark1.crm',
       title: json['title'] ?? 'Yangi versiya mavjud! 🚀',
       message: json['message'] ??
           'Ilovada yangi imkoniyatlar qo\'shildi va tezkorlik oshirildi.',
@@ -108,7 +108,7 @@ class _UpdateDialog extends StatelessWidget {
   const _UpdateDialog({required this.info, required this.isForce});
 
   Future<void> _openPlayStore() async {
-    final marketUri = Uri.parse('market://details?id=uz.mark1');
+    final marketUri = Uri.parse('market://details?id=uz.mark1.crm');
     final webUri = Uri.parse(info.playStoreUrl);
 
     try {
