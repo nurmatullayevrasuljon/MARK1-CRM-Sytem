@@ -135,4 +135,5 @@ service-account*.json
 .idea/
 .vscode/
 .DS_Store
-*.log.playwright-mcp/
+*.log
+.playwright-mcp/
