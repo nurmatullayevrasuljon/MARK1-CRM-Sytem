@@ -9744,10 +9744,19 @@ window.loadProfileNew = loadProfileNew;
   }
 
   // Sahifa to'liq yuklangach boshlaymiz (boshqa initlar bilan to'qnashmasin)
+  // ⚠️ TUZATISH: avval flag faqat finish() da yozilardi — foydalanuvchi
+  // tugmani bosmasdan sahifani yopsa/yangilasa, tur har kirishda qayta
+  // chiqar edi. Endi tur ko'rsatilgan zahoti "ko'rsatildi" deb belgilanadi.
+  function showTourOnce() {
+    if (localStorage.getItem("mark1_tour_done")) return;
+    localStorage.setItem("mark1_tour_done", "1");
+    startOnboardingTour();
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => setTimeout(startOnboardingTour, 1200));
+    document.addEventListener("DOMContentLoaded", () => setTimeout(showTourOnce, 1200));
   } else {
-    setTimeout(startOnboardingTour, 1200);
+    setTimeout(showTourOnce, 1200);
   }
 })();
 // ============================================================
