@@ -29,9 +29,9 @@ exports.getStatistics = async (req, res) => {
         : tashkentMidnight(year, month - 1, 1);
     const previousMonthEnd = currentMonthStart;
 
-    // =========================================
+    // ======
     // SALES STATISTICS
-    // =========================================
+    // ======
 
     const salesStats = await Sale.aggregate([
       {
@@ -217,9 +217,9 @@ exports.getStatistics = async (req, res) => {
 
     const overdueCount = stats.overdue[0]?.count || 0;
 
-    // =========================================
+    // ======
     // MONTHLY REVENUE GROWTH
-    // =========================================
+    // ======
 
     let monthlyRevenueGrowth = 0;
 
@@ -229,9 +229,9 @@ exports.getStatistics = async (req, res) => {
         100;
     }
 
-    // =========================================
+    // ======
     // DAILY SALES CHANGE
-    // =========================================
+    // ======
 
     let dailySalesChange = 0;
 
@@ -239,9 +239,9 @@ exports.getStatistics = async (req, res) => {
       dailySalesChange = ((dailySales - yesterdaySales) / yesterdaySales) * 100;
     }
 
-    // =========================================
+    // ======
     // INVENTORY BALANCE
-    // =========================================
+    // ======
 
     const inventoryStats = await Product.aggregate([
       {
@@ -263,9 +263,9 @@ exports.getStatistics = async (req, res) => {
 
     const inventoryBalance = inventoryStats[0]?.balance || 0;
 
-    // =========================================
+    // ======
     // LOW STOCK
-    // =========================================
+    // ======
 
     const lowStockCount = await Product.countDocuments({
       store_id: new mongoose.Types.ObjectId(store_id),
@@ -274,9 +274,9 @@ exports.getStatistics = async (req, res) => {
       },
     });
 
-    // =========================================
+    // ======
     // RESPONSE
-    // =========================================
+    // ======
 
     return res.status(200).json({
       monthly_revenue: monthlyRevenue,

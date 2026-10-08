@@ -67,6 +67,7 @@ exports.createProduct = async (req, res) => {
       }
     }
 
+
     // Shtrix-kod frontend tomonidan yuborilmasa, avtomatik generatsiya qilamiz
     if (!product_barcode) {
       product_barcode = `AUTO-${Date.now()}-${Math.floor(
@@ -101,6 +102,7 @@ exports.createProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
+
     let { product_barcode } = req.body;
     const { product_id } = req.query;
 
@@ -301,6 +303,7 @@ exports.getProducts = async (req, res) => {
     });
   }
 };
+
 // YANGI: Shtrix-kod skaneri uchun aniq (exact) qidiruv.
 // Sotuv ekranidagi skanerlash oqimi regex/pagination'li /get o'rniga
 // shu endpointdan foydalanadi — faqat joriy do'kon (store_id) doirasida,

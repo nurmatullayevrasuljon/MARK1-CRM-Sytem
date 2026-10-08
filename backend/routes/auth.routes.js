@@ -7,6 +7,8 @@ const {
   logout,
   forgotPassword,
   resetPassword,
+  resendOtp,
+
 } = require("../controllers/store.controller");
 const { signinUser, refreshUser, logoutUser } = require("../controllers/user.controller");
 const router = express.Router();
@@ -18,6 +20,8 @@ router.post("/store/signin", signin);
 router.post("/store/logout", logout);
 router.post("/store/forgot-password", forgotPassword);
 router.post("/store/reset-password", resetPassword);
+router.post("/store/resend-otp", resendOtp);
+
 
 router.post("/user/signin", signinUser);
 router.post("/user/refresh", refreshUser);

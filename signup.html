@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BXGWP6X57J"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-BXGWP6X57J');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark1 CRM Signup</title>
+    <link rel="shortcut icon" href="img/b-logo2.png" type="image/x-icon">
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="vendor/css/bootstrap.css">
+</head>
+
+<body>
+    <div class="container-fluid p-0">
+        <div class="row justify-content-center align-items-center my-2">
+            <div class="col-xl-5 login-box">
+                <h2 class="brand-title">
+                    <img src="img/brand-l.png" alt="Logo">
+                    <span>platformasi</span>
+                </h2>
+                <p class="mark-text">Savdo, mahsulotlar va mijozlaringizni samarali <br> boshqaring</p>
+                <div class="d-flex align-items-center">
+                    <div class="blue-box my-2"><span></span></div>
+                    <div class="d-flex flex-column">
+                        <b class="bl-text ml-2">Real vaqt rejimida savdo tahlili </b>
+                        <span class="bl-text2 ml-2">Kundalik daromad va tranzaksiyalarni kuzatib boring</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="blue-box my-2"><span></span></div>
+                    <div class="d-flex flex-column">
+                        <b class="bl-text ml-2">Inventarizatsiyani boshqarish </b>
+                        <span class="bl-text2 ml-2">Ombor va ombor operatsiyalarini kuzatib boring</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="blue-box my-2"><span></span></div>
+                    <div class="d-flex flex-column">
+                        <b class="bl-text ml-2">Real vaqt rejimida savdo tahlili </b>
+                        <span class="bl-text2 ml-2">To'lovlar va muddatlarni kuzatib boring</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-5 form-box p-4">
+                <h3 class="l-text ml-3">Hisob yaratish</h3>
+                <span class="l-text2 ml-3">Bugun bizning CRM platformamizga qo'shiling</span>
+
+                <form id="signupForm" novalidate>
+                    <div class="row g-3">
+
+                        <div class="col-12 my-3">
+                            <input id="firstName" name="firstName" class="form-control rounded-pill text-capitalize"
+                                required minlength="3" placeholder="To'liq ism" />
+                            <div class="invalid-feedback">Iltimos ismingizni kiriting.</div>
+                        </div>
+
+                        <div class="col-12 my-3">
+                            <input id="email" name="email" type="email" class="form-control rounded-pill" required
+                                placeholder="Elektron pochta" />
+                            <div class="invalid-feedback">Iltimos to'g'ri email kiriting.</div>
+                        </div>
+
+                        <div class="col-12 my-3">
+                            <input id="phone" name="phone" type="tel" class="form-control rounded-pill" required
+                                placeholder="Tel raqam +998" maxlength="13" />
+                            <div class="invalid-feedback">Iltimos telefon raqam kiriting.</div>
+                        </div>
+
+                        <div class="col-12 my-3">
+                            <input id="storeName" name="storeName" class="form-control rounded-pill" required
+                                minlength="2" placeholder="Do'kon nomi" />
+                            <div class="invalid-feedback">Iltimos do'kon nomini kiriting.</div>
+                        </div>
+
+                        <div class="col-12 my-3">
+                            <input id="password" name="password" type="password" class="form-control rounded-pill"
+                                required minlength="6" placeholder="Password" />
+                            <div class="form-text small-muted">Kamida 6 ta belgi</div>
+                            <div class="invalid-feedback">Kamida 6 ta belgidan iborat parol kiriting.</div>
+                        </div>
+
+                        <div class="col-12 text-center">
+                            <input id="terms" type="checkbox" class="form-check-input me-2" required />
+                            <label for="terms" class="small-muted mb-0">
+                                Hisob yaratish orqali men
+                                <a href="#" data-no-transition>Foydalanish shartlari</a> va
+                                <a href="#" data-no-transition>Maxfiylik siyosati</a>ga roziman
+                            </label>
+                        </div>
+
+                        <div class="col-12 mt-2">
+                            <button id="createBtn" class="btn btn-primary-cta w-100" type="submit" disabled>
+                                Yangi hisob yaratish
+                            </button>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="divider">
+                                <div class="line"></div>
+                                <div class="small-muted">Or</div>
+                                <div class="line"></div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <button id="googleBtn" type="button" class="btn btn-google w-100 border mb-3 gap-2">
+                                <img src="img/flat-color-icons_google.png" alt="G" />
+                                <span class="small-muted">Continue with Google</span>
+                            </button>
+                            <a href="login.html" class="auth-link">Hisobingiz bormi? Kirish</a>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="auth.js"></script>
+    <script src="index.js?v=1783512488"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

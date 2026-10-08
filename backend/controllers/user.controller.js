@@ -163,6 +163,11 @@ exports.getUserByPhone = async (req, res) => {
 exports.signinUser = async (req, res) => {
   try {
     const { user_phone, password } = req.body;
+    const type =
+      req.headers["client-platform-type"]?.toLowerCase() === "mobile"
+        ? "mobile"
+        : "web";
+
     const user = await User.findOne({ user_phone });
     
     // CF-15 fix: Yagona xato xabari
@@ -201,6 +206,16 @@ exports.signinUser = async (req, res) => {
       role: user.role,
     });
 
+    if (type === "web") {
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: "/api/auth/user/refresh",
+      });
+    }
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
@@ -212,6 +227,8 @@ exports.signinUser = async (req, res) => {
     res.status(200).json({
       message: "Hisobga kirish muvaffaqiyatli",
       access_token: accessToken,
+      ...(type === "mobile" && { refresh_token: refreshToken }),
+
     });
   } catch (err) {
     console.log(err.message);

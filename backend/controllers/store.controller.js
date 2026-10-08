@@ -45,6 +45,8 @@ exports.signup = async (req, res) => {
         .json({ message: `Sms yuborishda xatolik: ${result.error}` });
     }
 
+
+
     if (existingStore) {
       // Tasdiqlanmagan eski yozuvni yangi ma'lumotlar bilan yangilaymiz.
       existingStore.ceo_name = ceo_name;
@@ -81,6 +83,11 @@ exports.verify = async (req, res) => {
   try {
     const { otp, ceo_phone } = req.body;
     const store = await Store.findOne({ ceo_phone });
+    const type =
+      req.headers["client-platform-type"]?.toLowerCase() === "mobile"
+        ? "mobile"
+        : "web";
+
     if (!store) {
       return res
         .status(400)
@@ -134,6 +141,16 @@ exports.verify = async (req, res) => {
       store_id: store._id,
       role: "ceo",
     });
+    if (type === "web") {
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: "/api/auth/store/refresh",
+      });
+    }
+
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -146,6 +163,8 @@ exports.verify = async (req, res) => {
     res.status(200).json({
       message: "Hisobga kirish muvaffaqiyatli",
       access_token: accessToken,
+      ...(type === "mobile" && { refresh_token: refreshToken }),
+
     });
   } catch (err) {
     console.log(err.message);
@@ -157,13 +176,26 @@ exports.signin = async (req, res) => {
   try {
     const { ceo_phone, password } = req.body;
     const store = await Store.findOne({ ceo_phone });
-    
+    const type =
+      req.headers["client-platform-type"]?.toLowerCase() === "mobile"
+        ? "mobile"
+        : "web";
+
     // CF-15: Enumeration oracle himoyasi — yagona xato xabari
     if (!store) {
       return res
         .status(400)
         .json({ message: "Telefon raqam yoki parol noto'g'ri" });
     }
+
+    if (store.otp !== null) {
+      return res.status(400).json({
+        message:
+          "Hisobingiz hali tasdiqlanmagan. Iltimos, OTP kodni tasdiqlang",
+        verify_data: { ceo_phone, otp_expires_at: store.otp_expires_at },
+      });
+    }
+
 
     const isMatch = await bcrypt.compare(password, store.password);
 
@@ -185,6 +217,16 @@ exports.signin = async (req, res) => {
       role: "ceo",
     });
 
+    if (type === "web") {
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: "/api/auth/store/refresh",
+      });
+    }
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
@@ -196,6 +238,8 @@ exports.signin = async (req, res) => {
     res.status(200).json({
       message: "Hisobga kirish muvaffaqiyatli",
       access_token: accessToken,
+      ...(type === "mobile" && { refresh_token: refreshToken }),
+
     });
   } catch (err) {
     console.log(err.message);
@@ -205,7 +249,19 @@ exports.signin = async (req, res) => {
 
 exports.refresh = async (req, res) => {
   try {
-    const refreshToken = req.cookies.refreshToken;
+    let refreshToken;
+
+    const type =
+      req.headers["client-platform-type"]?.toLowerCase() === "mobile"
+        ? "mobile"
+        : "web";
+
+    if (type === "web") {
+      refreshToken = req.cookies.refreshToken;
+    } else {
+      refreshToken = req.body.refresh_token;
+    }
+
 
     if (!refreshToken) {
       return res.status(401).json({ message: "Refresh token topilmadi" });
@@ -414,6 +470,8 @@ exports.changePassword = async (req, res) => {
 
     res.clearCookie("refreshToken", {
       httpOnly: true,
+      secure: true,
+
       secure: true, // FIX: Render odatda NODE_ENV=production'ni avtomatik o'rnatmaydi; shu sabab avvalgi shart doim false bo'lib, SameSite=None cookie brauzer tomonidan RAD ETILAR edi (refresh token hech qachon saqlanmasdi)
       sameSite: "none",
       path: "/api/auth/store/refresh",
@@ -427,3 +485,52 @@ exports.changePassword = async (req, res) => {
     return res.status(500).json({ message: err.message });
   }
 };
+
+exports.resendOtp = async (req, res) => {
+  try {
+    const { ceo_phone } = req.body;
+    const store = await Store.findOne({ ceo_phone });
+
+    if (!store) {
+      return res
+        .status(400)
+        .json({ message: "Telefon raqam bo'yicha do'kon topilmadi" });
+    }
+
+    if (store.otp === null) {
+      return res
+        .status(400)
+        .json({ message: "Ushbu hisob allaqachon tasdiqlangan" });
+    }
+
+    const { otp, otp_expires_at } = generateOtp();
+
+    const result = await sendSms(
+      ceo_phone,
+      null,
+      "universal_otp",
+      1,
+      "MARK1",
+      otp,
+    );
+    if (!result.success) {
+      return res
+        .status(400)
+        .json({ message: `Sms yuborishda xatolik: ${result.error}` });
+    }
+
+    store.otp = otp;
+    store.otp_expires_at = otp_expires_at;
+    await store.save();
+
+    return res.status(200).json({
+      message: "OTP kod qayta yuborildi",
+      verify_data: { ceo_phone, otp_expires_at },
+    });
+  } catch (err) {
+    console.log(err.message);
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+

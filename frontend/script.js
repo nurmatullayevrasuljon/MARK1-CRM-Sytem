@@ -6775,6 +6775,424 @@ window.getUserData = getUserData;
 window.saveUserData = saveUserData;
 window.logout = logout;
 
+// ============================================================
+// MARK1 AI — Daily Business Overview
+// GET /api/ai/overview?period=daily&date=DD-MM-YYYY[&force=true]
+//
+// - Faqat mavjud window.crmApi (token + refresh interceptor) ishlatiladi.
+// - Sahifa ochilganda BIR marta force=false bilan chaqiriladi (backend keshidan).
+// - force=true faqat "Qayta tahlil qilish" tugmasi bosilganda yuboriladi.
+// - Backend /api/ai faqat CEO uchun (role "store"); xodim (role "user")
+//   uchun karta ko'rsatilmaydi va request yuborilmaydi.
+// - Xato bo'lsa faqat shu karta xato holatini ko'rsatadi, dashboard davom etadi.
+// ============================================================
+(function () {
+  "use strict";
+
+  if (window.__mk1AiOverviewLoaded) return;
+  window.__mk1AiOverviewLoaded = true;
+
+  var CARD_ID = "mk1AiCard";
+  var TZ_OFFSET_MS = 5 * 3600000;      // Asia/Tashkent = UTC+5 (yozgi vaqt yo'q)
+  var FORCE_COOLDOWN_MS = 15000;       // OpenAI'ga ketma-ket force so'rovlar oldini olish
+  var REQUEST_TIMEOUT_MS = 60000;      // birinchi tahlil OpenAI'ni kutishi mumkin
+  var NAME_RETRY_MAX = 4;
+  var NAME_RETRY_MS = 1500;
+
+  var state = {
+    inited: false,
+    loading: false,
+    data: null,
+    lastForceAt: 0,
+    nameTimer: null,
+    nameTries: 0
+  };
+
+  // ---------- Yordamchilar ----------
+
+  // Foydalanuvchi brauzer timezone'idan qat'i nazar, Toshkent sanasi (DD-MM-YYYY)
+  function getTashkentDateStr() {
+    var d = new Date(Date.now() + TZ_OFFSET_MS);
+    var p = function (n) { return String(n).padStart(2, "0"); };
+    return p(d.getUTCDate()) + "-" + p(d.getUTCMonth() + 1) + "-" + d.getUTCFullYear();
+  }
+
+  function esc(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function num(value) {
+    var n = Number(value);
+    return isFinite(n) ? n : 0;
+  }
+
+  // Dashboarddagi mavjud kartalar bilan bir xil: raqam.toLocaleString("uz-UZ") + <small>UZS</small>
+  function money(value) {
+    return esc(Math.round(num(value)).toLocaleString("uz-UZ")) + " <small>UZS</small>";
+  }
+
+  function getCard() {
+    return document.getElementById(CARD_ID);
+  }
+
+  function notify(message, type) {
+    if (typeof showNotification === "function") showNotification(message, type || "info");
+  }
+
+  // Mahsulot nomi: frontenddagi mavjud `products` keshidan (qo'shimcha API so'rov YO'Q)
+  function lookupProductName(id) {
+    try {
+      var list = (typeof products !== "undefined" && Array.isArray(products)) ? products : [];
+      var key = String(id);
+      for (var i = 0; i < list.length; i++) {
+        if (String(list[i].id) === key) return list[i].name || "";
+      }
+    } catch (e) { /* products hali e'lon qilinmagan bo'lishi mumkin */ }
+    return "";
+  }
+
+  function productNameHtml(id) {
+    var name = lookupProductName(id);
+    if (name) return '<span class="mk-ai-pname" data-mk-pid="' + esc(id) + '">' + esc(name) + "</span>";
+    return '<span class="mk-ai-pname mk-ai-unresolved" data-mk-pid="' + esc(id) + '">Noma\'lum mahsulot</span>';
+  }
+
+  // Mahsulotlar keyinroq yuklansa nomlarni (faqat DOM'da) yangilaydi — API so'rovsiz, cheklangan urinish
+  function scheduleNameResolve() {
+    if (state.nameTimer) { clearTimeout(state.nameTimer); state.nameTimer = null; }
+    state.nameTries = 0;
+
+    function tick() {
+      var card = getCard();
+      if (!card) return;
+      var pending = card.querySelectorAll(".mk-ai-unresolved");
+      if (!pending.length) return;
+
+      Array.prototype.forEach.call(pending, function (el) {
+        var name = lookupProductName(el.getAttribute("data-mk-pid"));
+        if (name) {
+          el.textContent = name;
+          el.classList.remove("mk-ai-unresolved");
+        }
+      });
+
+      state.nameTries += 1;
+      if (card.querySelectorAll(".mk-ai-unresolved").length && state.nameTries < NAME_RETRY_MAX) {
+        state.nameTimer = setTimeout(tick, NAME_RETRY_MS);
+      }
+    }
+    state.nameTimer = setTimeout(tick, NAME_RETRY_MS);
+  }
+
+  // ---------- Render ----------
+
+  function buildShell(card) {
+    card.innerHTML =
+      '<div class="mk-ai-head">' +
+        '<div class="mk-ai-title">' +
+          '<span class="mk-ai-badge" aria-hidden="true">✨</span>' +
+          "<div><h5>MARK1 AI</h5><p>Bugungi biznes tahlili</p></div>" +
+        "</div>" +
+        '<div class="mk-ai-actions">' +
+          '<span class="mk-ai-date" id="mk1AiDate"></span>' +
+          '<button type="button" class="mk-ai-btn mk-ai-btn-primary" data-mk-ai="refresh">↻ Yangilash</button>' +
+          '<button type="button" class="mk-ai-btn" data-mk-ai="force" title="AI tahlilini qaytadan yaratadi">Qayta tahlil qilish</button>' +
+        "</div>" +
+      "</div>" +
+      '<div class="mk-ai-body" id="mk1AiBody"></div>';
+  }
+
+  function setBusy(busy) {
+    var card = getCard();
+    if (!card) return;
+    card.setAttribute("aria-busy", busy ? "true" : "false");
+    Array.prototype.forEach.call(card.querySelectorAll("[data-mk-ai]"), function (btn) {
+      btn.disabled = !!busy;
+    });
+  }
+
+  function setBody(html) {
+    var body = document.getElementById("mk1AiBody");
+    if (body) body.innerHTML = html;
+  }
+
+  function renderLoading() {
+    setBody(
+      '<div class="mk-ai-loading" role="status">' +
+        '<div class="mk-ai-spinner" aria-hidden="true"></div>' +
+        "<div>" +
+          "<strong>AI biznesingizni tahlil qilmoqda...</strong>" +
+          '<ul class="mk-ai-steps">' +
+            "<li>Savdolar tekshirilmoqda...</li>" +
+            "<li>Ombor tekshirilmoqda...</li>" +
+            "<li>Qarzdorliklar tekshirilmoqda...</li>" +
+          "</ul>" +
+        "</div>" +
+      "</div>" +
+      '<div class="mk-ai-skel-grid" aria-hidden="true">' +
+        '<div class="mk-ai-skel"></div><div class="mk-ai-skel"></div><div class="mk-ai-skel"></div>' +
+      "</div>"
+    );
+  }
+
+  function renderError(kind) {
+    var text = "AI tahlilini olishda xatolik yuz berdi.";
+    if (kind === "network") text = "Server bilan aloqa o'rnatilmadi. Internet aloqasini tekshirib, qayta urinib ko'ring.";
+    if (kind === "auth") text = "Sessiya muddati tugagan. Qaytadan kiring.";
+    setBody(
+      '<div class="mk-ai-error" role="alert">' +
+        '<div class="mk-ai-error-icon" aria-hidden="true">⚠️</div>' +
+        "<p>" + esc(text) + "</p>" +
+        (kind === "auth" ? "" : '<button type="button" class="mk-ai-btn mk-ai-btn-primary" data-mk-ai="refresh">Qayta urinish</button>') +
+      "</div>"
+    );
+  }
+
+  // Backend matni ma'nosi O'ZGARTIRILMAYDI: faqat jumlalarga ajratib, o'qilishi oson ko'rsatiladi
+  function renderAiText(text) {
+    var raw = String(text == null ? "" : text).trim();
+    if (!raw) return "";
+
+    var recMatch = raw.search(/Tavsiya\s*:/i);
+    var main = recMatch >= 0 ? raw.slice(0, recMatch) : raw;
+    var reco = recMatch >= 0 ? raw.slice(recMatch).replace(/^Tavsiya\s*:\s*/i, "").trim() : "";
+
+    var sentences = main
+      .replace(/([.!?])\s+/g, "$1\n")
+      .split("\n")
+      .map(function (s) { return s.replace(/^\d+\)\s*/, "").trim(); })
+      .filter(Boolean);
+
+    var heading = "";
+    if (sentences.length && /:\s*$/.test(sentences[0])) heading = sentences.shift();
+
+    function iconFor(s) {
+      var t = s.toLowerCase();
+      if (t.indexOf("muddati o'tgan") >= 0 || t.indexOf("qarz") >= 0) return "⚠️";
+      if (t.indexOf("sotilmagan") >= 0 || t.indexOf("minimal qoldiq") >= 0 || t.indexOf("omborda") >= 0 || t.indexOf("zaxira") >= 0) return "📦";
+      if (t.indexOf("sof ") >= 0 || t.indexOf("foyda") >= 0 || t.indexOf("zarar") >= 0) return "💰";
+      if (t.indexOf("savdo") >= 0 || t.indexOf("sotuv") >= 0 || t.indexOf("sotildi") >= 0) return "📈";
+      return "•";
+    }
+
+    var html = '<div class="mk-ai-text">';
+    html += '<div class="mk-ai-section-title">🤖 MARK1 AI xulosasi</div>';
+    if (heading) html += '<p class="mk-ai-heading">' + esc(heading) + "</p>";
+    if (sentences.length) {
+      html += '<ul class="mk-ai-sentences">';
+      sentences.forEach(function (s) {
+        html += '<li><span class="mk-ai-ico" aria-hidden="true">' + iconFor(s) + "</span><span>" + esc(s) + "</span></li>";
+      });
+      html += "</ul>";
+    }
+    if (reco) {
+      html += '<div class="mk-ai-reco"><strong>💡 Tavsiya</strong><span>' + esc(reco) + "</span></div>";
+    }
+    html += "</div>";
+    return html;
+  }
+
+  function renderTopProducts(list) {
+    if (!Array.isArray(list) || !list.length) {
+      return '<p class="mk-ai-empty">Bu kunda sotilgan mahsulot yo\'q.</p>';
+    }
+    var html = '<ul class="mk-ai-list">';
+    list.forEach(function (p) {
+      html += "<li>" + productNameHtml(p.product_id) +
+        '<span class="mk-ai-meta">' + esc(num(p.quantity_sold)) + " dona · " + money(p.revenue) + "</span></li>";
+    });
+    return html + "</ul>";
+  }
+
+  function renderSlowProducts(list) {
+    if (!Array.isArray(list) || !list.length) {
+      return '<p class="mk-ai-empty">Uzoq sotilmagan mahsulot yo\'q.</p>';
+    }
+    var html = '<ul class="mk-ai-list">';
+    list.forEach(function (p) {
+      html += "<li>" + productNameHtml(p.product_id) +
+        '<span class="mk-ai-meta">' + esc(num(p.days_without_sale)) + " kundan beri sotilmagan · qoldiq: " +
+        esc(num(p.stock)) + " · " + money(p.stock_value) + "</span></li>";
+    });
+    return html + "</ul>";
+  }
+
+  function renderData() {
+    var d = state.data;
+    if (!d) return;
+
+    var s = d.sales || {};
+    var debts = d.debts || {};
+    var inv = d.inventory || {};
+
+    var dateEl = document.getElementById("mk1AiDate");
+    if (dateEl) dateEl.textContent = state.dateStr || "";
+
+    var revenue = num(s.revenue);
+    var yesterday = num(s.yesterday_revenue);
+    var changeHtml;
+    if (yesterday > 0) {
+      var pct = Math.round(((revenue - yesterday) / yesterday) * 100);
+      var cls = pct > 0 ? "counter-up" : (pct < 0 ? "counter-down" : "");
+      var arrow = pct > 0 ? "↑" : (pct < 0 ? "↓" : "→");
+      changeHtml = '<span class="mk-ai-change ' + cls + '">' + arrow + " " + Math.abs(pct) + "% kechagiga nisbatan</span>";
+    } else {
+      changeHtml = '<span class="mk-ai-change mk-ai-muted">Kecha savdo bo\'lmagan — taqqoslab bo\'lmaydi</span>';
+    }
+
+    var html = "";
+
+    html += '<div class="mk-ai-hero">' +
+      '<span class="mk-ai-label">📈 Bugungi tushum</span>' +
+      '<div class="mk-ai-value">' + money(revenue) + "</div>" +
+      changeHtml +
+      '<span class="mk-ai-muted mk-ai-sub">7 kunlik o\'rtacha: ' + money(s.last_7_days_average) + "</span>" +
+    "</div>";
+
+    html += '<div class="mk-ai-grid">' +
+      '<div class="mk-ai-tile"><span class="mk-ai-label">💰 Foyda</span><div class="mk-ai-tvalue">' + money(s.profit) + "</div></div>" +
+      '<div class="mk-ai-tile"><span class="mk-ai-label">🧾 Savdolar</span><div class="mk-ai-tvalue">' + esc(num(s.transactions)) + " ta</div></div>" +
+      '<div class="mk-ai-tile mk-ai-tile-warn"><span class="mk-ai-label">⚠️ Muddati o\'tgan</span><div class="mk-ai-tvalue">' + money(debts.overdue) +
+        '</div><span class="mk-ai-muted">' + esc(num(debts.overdue_clients)) + " ta mijoz</span></div>" +
+      '<div class="mk-ai-tile"><span class="mk-ai-label">🧮 Yangi qarz</span><div class="mk-ai-tvalue">' + money(debts.new_debt) + "</div></div>" +
+      '<div class="mk-ai-tile"><span class="mk-ai-label">✅ Undirilgan</span><div class="mk-ai-tvalue">' + money(debts.collected) + "</div></div>" +
+    "</div>";
+
+    html += '<div class="mk-ai-section">' + renderAiText(d.ai_overview) + "</div>";
+
+    html += '<div class="mk-ai-section"><div class="mk-ai-cols">' +
+      "<div>" +
+        '<div class="mk-ai-section-title">💡 Eng ko\'p sotilganlar</div>' + renderTopProducts(d.top_products) +
+      "</div>" +
+      "<div>" +
+        '<div class="mk-ai-section-title">🐌 Sekin sotilayotganlar</div>' + renderSlowProducts(d.slow_products) +
+      "</div>" +
+    "</div></div>";
+
+    html += '<div class="mk-ai-section mk-ai-inventory">' +
+      '<span class="mk-ai-section-title">📦 Ombor</span>' +
+      "<span>Kam qolgan: <strong>" + esc(num(inv.low_stock_count)) + " ta</strong></span>" +
+      "<span>Ombor qiymati: <strong>" + money(inv.inventory_value) + "</strong></span>" +
+    "</div>";
+
+    setBody(html);
+    scheduleNameResolve();
+  }
+
+  // ---------- Request ----------
+
+  function handleError(err, hadData) {
+    var status = err && err.response && err.response.status;
+    // Texnik tafsilot faqat konsolga; foydalanuvchiga umumiy xabar
+    console.error("[MARK1 AI] overview xatosi:", status || "network", err && err.message);
+
+    if (status === 401) {
+      renderError("auth");
+      if (window.AuthSystem && typeof window.AuthSystem.logout === "function") window.AuthSystem.logout();
+      return;
+    }
+    if (status === 403) {
+      // Backend faqat CEO uchun — karta umuman ko'rsatilmaydi
+      var card = getCard();
+      if (card) card.hidden = true;
+      return;
+    }
+
+    var kind = (!err || !err.response) ? "network" : "server";
+    if (hadData && state.data) {
+      renderData();
+      notify("AI tahlilini yangilab bo'lmadi. Oldingi ma'lumot ko'rsatilmoqda.", "error");
+    } else {
+      renderError(kind);
+    }
+  }
+
+  function load(force) {
+    if (state.loading) return;            // parallel / double-click request yo'q
+    var card = getCard();
+    if (!card) return;
+
+    var api = window.crmApi;
+    if (!api || typeof api.get !== "function") { renderError("server"); return; }
+
+    var hadData = !!state.data;
+    var dateStr = getTashkentDateStr();
+
+    state.loading = true;
+    if (force) state.lastForceAt = Date.now();
+    setBusy(true);
+    renderLoading();
+
+    api.get("/ai/overview", {
+      params: { period: "daily", date: dateStr, force: force ? "true" : "false" },
+      timeout: REQUEST_TIMEOUT_MS
+    })
+      .then(function (res) {
+        var data = res && res.data;
+        if (!data || typeof data !== "object" || !data.sales) throw new Error("Kutilmagan javob formati");
+        state.data = data;
+        state.dateStr = dateStr;
+        renderData();
+      })
+      .catch(function (err) {
+        try { handleError(err, hadData); } catch (e) { console.error("[MARK1 AI]", e); }
+      })
+      .then(function () {
+        state.loading = false;
+        setBusy(false);
+      });
+  }
+
+  function onCardClick(e) {
+    var btn = e.target && e.target.closest ? e.target.closest("[data-mk-ai]") : null;
+    if (!btn || btn.disabled || state.loading) return;
+
+    var action = btn.getAttribute("data-mk-ai");
+    if (action === "force") {
+      if (Date.now() - state.lastForceAt < FORCE_COOLDOWN_MS) {
+        notify("Iltimos, qayta tahlildan oldin bir necha soniya kuting.", "info");
+        return;
+      }
+      load(true);
+    } else {
+      load(false);
+    }
+  }
+
+  function init() {
+    if (state.inited) return;
+    state.inited = true;
+
+    var card = getCard();
+    if (!card) return;
+
+    var auth = window.AuthSystem;
+    if (!auth || typeof auth.isSessionValid !== "function" || !auth.isSessionValid()) return;
+    // /api/ai faqat CEO uchun (role "store"); xodim (role "user") uchun karta yashirin qoladi
+    if (typeof auth.getRole === "function" && auth.getRole() === "user") return;
+
+    card.hidden = false;
+    buildShell(card);
+    card.addEventListener("click", onCardClick);
+    load(false);
+  }
+
+  window.MK1AiOverview = {
+    reload: function (force) { load(!!force); }
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+
 // =========================================
 // CHANGE PASSWORD API — VERIFIED ENDPOINT
 // =========================================
@@ -9427,7 +9845,6 @@ window.stopScanner = function() {
     });
     return true;
   }
-
   if (bind()) return;
   document.addEventListener('DOMContentLoaded', function () {
     if (bind()) return;

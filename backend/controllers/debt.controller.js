@@ -19,18 +19,18 @@ exports.getDebts = async (req, res) => {
 
     const { store_id } = req.user;
 
-    // =========================
+    // ====
     // Helper
-    // =========================
+    // ====
 
     const getTashkentDateOnly = (date) => {
       const { year, month, day } = getTashkentDateParts(new Date(date));
       return tashkentMidnight(year, month, day);
     };
 
-    // =========================
+    // ====
     // Base filter
-    // =========================
+    // ====
 
     const filter = {
       store_id,
@@ -38,9 +38,9 @@ exports.getDebts = async (req, res) => {
       total_remaining: { $gt: 0 },
     };
 
-    // =========================
+    // ====
     // Client filter
-    // =========================
+    // ====
 
     if (client_id) {
       if (!mongoose.Types.ObjectId.isValid(client_id)) {
@@ -52,9 +52,9 @@ exports.getDebts = async (req, res) => {
       filter.client_id = client_id;
     }
 
-    // =========================
+    // ====
     // Date filter
-    // =========================
+    // ====
 
     if (start_date || end_date) {
       const createdAt = {};
@@ -86,9 +86,9 @@ exports.getDebts = async (req, res) => {
       filter.createdAt = createdAt;
     }
 
-    // =========================
+    // ====
     // Sort
-    // =========================
+    // ====
 
     const allowedSortTypes = ["total_price", "total_paid", "total_remaining"];
 
@@ -107,24 +107,24 @@ exports.getDebts = async (req, res) => {
       [sortField]: sortDirection,
     };
 
-    // =========================
+    // ====
     // Today's date - Tashkent
-    // =========================
+    // ====
 
     const todayStart = getTashkentDateOnly(new Date());
 
-    // =========================
+    // ====
     // Get debts
-    // =========================
+    // ====
 
     const debts = await Sale.find(filter)
       .populate("client_id")
       .populate("products.product_id")
       .sort(sort);
 
-    // =========================
+    // ====
     // Add overdue_days_count
-    // =========================
+    // ====
 
     const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -149,9 +149,9 @@ exports.getDebts = async (req, res) => {
       };
     });
 
-    // =========================
+    // ====
     // Statistics
-    // =========================
+    // ====
 
     const statisticsResult = await Sale.aggregate([
       {
@@ -223,9 +223,9 @@ exports.getDebts = async (req, res) => {
       overdue_debts_count: 0,
     };
 
-    // =========================
+    // ====
     // Response
-    // =========================
+    // ====
 
     return res.status(200).json({
       message: "Qarzlar muvaffaqiyatli olindi",
