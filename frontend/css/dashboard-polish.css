@@ -319,3 +319,175 @@ input[name="debtSalePaymentType"] + span { cursor: pointer; }
   .content { padding: 0; }
   .card-box { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
 }
+
+/* ============================================================
+   16. ALIGNMENT + RESPONSIVE + 12px QA (2026-10-08)
+   Faqat geometriya va shrift o'lchami. Ranglar/palitra O'ZGARMAYDI.
+   ============================================================ */
+
+/* 16.1 Bootstrap gutter modelini qaytaramiz:
+   .section gorizontal padding 0 → .row -15px → .col 15px padding.
+   Natija: topbar ↔ section sarlavhasi ↔ kartalar bitta vertical chiziqda
+   (ilgari 43px = 28px section + 15px col sapmasi bor edi). */
+.section { padding: 2rem 0; }
+.section > .row { margin-left: -15px; margin-right: -15px; }
+
+/* Kartochka ichidagi sarlavha va forma maydonlari ham teng chiziqda
+   (p-4 = 21px > 15px gutter, shuning uchun overflow yo'q). */
+.card-body.p-4 .row { margin-left: -15px; margin-right: -15px; }
+.modal-body .row { margin-left: -15px; margin-right: -15px; }
+
+/* Modal sarlavh (15px) va forma maydonlari (15px) bir xilInset. */
+.modal-header,
+.modal-body,
+.modal-footer { padding: 15px; }
+
+/* 16.2 Mobilda .content yon paddingini 16px qilib, -15px .row
+   chegarasi .content skroll hududidan chiqib ketmasligini ta'minlaydi
+   (aks holda 3-7px gorizontal skroll paydo bo'lardi). */
+@media screen and (max-width: 767px) {
+  .content {
+    padding-top: 16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* 16.3 Tablet (768-991px): statistika kartalari 4 o'rniga 2×2 —
+   "1,755 UZS", "Oylik tushum" kesilmasin va bloklar kattalashsin. */
+@media (min-width: 768px) and (max-width: 991px) {
+  .section > .row > .col-md-3.col-sm-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  /* Sidebar ikonka-reakali rejim (style.css 70px sidebar) —
+     shu fayldagi font-size: 0.9rem uni buzib, matnni kesib qolgan edi. */
+  .sidebar { padding: 20px 10px; }
+  .sidebar .nav-item {
+    font-size: 0;
+    padding: 12px 10px;
+    gap: 6px;
+    justify-content: center;
+  }
+  .sidebar .nav-item svg { font-size: 20px; }
+}
+
+/* 16.4 style.css dagi qattiq 420px — 768-1200px oralig'ida ustun
+   kontent qutisidan (359px) kengroq chiqib, blokdan tashqariga
+   siqilardi. Ikki ustun endi teng kenglikda. */
+.overdue-wrapper { width: 100%; }
+
+/* 992-1015px oralig'ida 4-ustunli kartada 30px ikonka + katta so'z
+   (INVENTAR/BALANSI) sig'may, yuqori qismi kesilardi. Ikkinchi qatorga. */
+.card-box small.counter-smal { flex-wrap: wrap; }
+
+/* 16.10 SOTUV FORMASI: 768-1199px oralig'ida 4 ustun (3+2+3+4) daromad
+   tugmalar guruhini (Naqd/Karta/Qarzga = 266px) tor ustunga (185px)
+   sig'dirmay, kartadan tashqariga chiqarib, .content ichida gorizontal
+   skroll hosil qilayotgan edi (bu MUAMMO polish'dan ham OLDIN bor edi:
+   .content 724>698). Shu oraliqda 2x2 tartibga o'tiladi — kichik
+   bloklar ham kattalashadi (Miqdor ustuni 78px o'rniga 293px). */
+@media (min-width: 768px) and (max-width: 1199px) {
+  #selling .card-body .row > .col-md-2,
+  #selling .card-body .row > .col-md-3,
+  #selling .card-body .row > .col-md-4 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+
+/* 16.11 Mobilda tugmalar guruchi ustma-ust tushadi, ammo `.btn + .btn`
+   qoldig'i 4px qolib, har bir tugma ustundan 4px tashqariga chiqayotgan
+   edi (nosimmetrik chet). Blok ichida yashirilgan bo'lsa ham,
+   tashqi chetlari 4px siljigan. */
+@media (max-width: 767px) {
+  .btn-group .btn + .btn { margin-left: 0; }
+}
+
+/* 16.12 MOBIL QARZDORLAR JADVALI — kontent kesilmasligi uchun.
+   style.css `#debtorTableBody td::before { min-width: 100px }` +
+   `margin-right: 12px` label uchun 112px ajratadi; qiymat tomonidagi
+   `.sms-status-badge` esa `white-space: nowrap` bilan 164px.
+   112 + 164 = 276px, holatda esa 203px — natijada jadvalning ~73px
+   qismi `.table-responsive { overflow-x: hidden }` sababli mobilda
+   butunlay ko'rinmas va bosilmas bo'lib qolayotgan edi.
+   Endi: label tabiiy kenglikka o'tadi, qiymat esa zarur bo'lsa
+   qatorga tushadi. (Ayni paytda badge shrifti 10.5px edi — 12px.) */
+@media (max-width: 767px) {
+  #debtorTableBody td::before { min-width: 0; font-size: 12px; }
+  #debtorTableBody td > div { min-width: 0; }
+}
+.sms-status-badge { font-size: 12px; white-space: normal; }
+
+/* 16.9 JADVAL USTUNLARI KESILMASLIGI UCHUN.
+   Qarzdorlar jadvali 7 ustun / 1121px. premium-theme dagi
+   .table-responsive { overflow: hidden } tufayli 992-1400px oraliqda
+   oxirgi 1-3 ustun ("Qaytarish sana", "Holati", "Amallar") butunlay
+   kesilib, ko'rinmay va bosilmay qolayotgan edi.
+   >=769px da gorizontal skroll qaytariladi (Bootstrap standarti);
+   <=768px da jadval blok-kartachaga aylantirilgani uchun o'zgarmaydi. */
+@media (min-width: 769px) {
+  .table-responsive {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+}
+
+/* 16.5 Counter qatorga sig'masa — kesilmaydi, qatorga tushadi. */
+.counter,
+.daily-c,
+.daily-counter,
+.card-box h3.counter,
+.card-box h3.daily-c {
+  flex-wrap: wrap;
+  white-space: normal;
+}
+
+/* 16.6 Statistika kartalari balandligi teng (ilgari 134/137/136/159px). */
+.section > .row > .col-md-3.col-sm-6 > .card-box { height: 100%; }
+
+/* 16.7 12px minimal shrift. Root font-size 14px sababli
+   0.7rem=9.8px, 0.75rem=10.5px, 0.8rem=11.2px, 0.85rem=11.9px
+   — barchasi 12px dan pastga tushgan. */
+.small,
+small { font-size: 12px; }
+
+.btn.btn-sm { font-size: 12px; }
+.badge { font-size: 12px; }
+.table thead th { font-size: 12px; }
+
+.profile-avatar-fallback,
+.profile-badge,
+.stat-label,
+.stat-label-date,
+.debt-count-badge,
+.stock-text,
+.currency,
+.price-info .currency,
+.product-category,
+.time-text,
+.qty-unit,
+.payment-badge,
+.status-badge,
+.sms-status-badge,
+.mk-ai-section-title,
+.mk-ai-heading,
+.overdue-subtitle,
+.low-stock-section .section-header p { font-size: 12px; }
+
+.overdue-mini-days { font-size: 12px; }
+
+h3 small,
+.mk-ai-value small,
+.mk-ai-tvalue small,
+.mk-ai-meta small,
+.mk-ai-sub small,
+.mk-ai-inventory small { font-size: 12px; }
+
+/* script.js UZS birliklariga INLINE font-size:0.55em/0.6em yozadi.
+   Inline style CSS dan yuqori bo'lgani uchun mayda ekranda
+   10.78px / 11.76px ga tushayotgan edi — 12px polni majburlaymiz. */
+.counter small,
+.daily-c small,
+.daily-counter small { font-size: 12px !important; }
