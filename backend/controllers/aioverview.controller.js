@@ -501,6 +501,129 @@ async function callOpenAI(computed) {
   return choice.message.content.trim();
 }
 
+// ---------- Qoidaviy fallback (OpenAI kaliti yo'q yoki xato bo'lsa) ----------
+// MARK1 AI karta hech qachon 500 bermasligi kerak: SYSTEM_PROMPT shablonining
+// o'zidan, faqat computed qiymatlar asosida xulosa yasaladi (matematikasiz).
+function buildFallbackOverview(c) {
+  const s = c.sales || {};
+  const d = c.debts || {};
+  const inv = c.inventory || {};
+  const sp = c.slow_products || {};
+  const sentences = [];
+  const add = (t) => t && sentences.push(t);
+
+  if (s.change) {
+    if (s.change.direction === "oshdi" || s.change.direction === "kamaydi") {
+      add(
+        `Savdo oldingi kunga nisbatan ${s.change.pct}% ${s.change.direction}.`,
+      );
+    } else {
+      add("Savdo oldingi kun bilan deyarli bir xil bo'ldi.");
+    }
+  }
+  if (c.growth_driver) {
+    add(
+      `${c.growth_driver.label} asosiy qismi ${c.growth_driver.name} dan keldi.`,
+    );
+  }
+  if (c.top_product) {
+    const tp = c.top_product;
+    let t;
+    if (tp.velocity_direction === "tez" || tp.velocity_direction === "sekin") {
+      t = `${tp.name} odatdagidan ${tp.velocity_change_pct}% ${tp.velocity_direction} sotildi va hozir ${tp.current_stock} dona qoldi.`;
+    } else {
+      t = `${tp.name} odatdagidek sotildi va hozir ${tp.current_stock} dona qoldi.`;
+    }
+    if (tp.days_of_stock_left != null) {
+      t += ` Oxirgi 7 kunlik savdo tezligida taxminan ${tp.days_of_stock_left} kunga yetadi.`;
+    }
+    add(t);
+  }
+  if (sp.count > 0) {
+    let t = `${sp.count} ta mahsulot ${sp.min_days_without_sale} kundan beri sotilmagan.`;
+    if (sp.total_stock_value) {
+      t += ` Ularda ${sp.total_stock_value} miqdorida kapital turibdi.`;
+    }
+    if (sp.slowest) {
+      t += ` Eng uzoq sotilmagani — ${sp.slowest.name} (${sp.slowest.days} kun).`;
+    }
+    add(t);
+  }
+
+  const label = c.date_label || "Bugungi";
+  if (!s.transactions) {
+    add(`${label} kuni savdo qilinmadi.`);
+  } else {
+    let t = `${label} kuni ${s.revenue} miqdorida savdo qilindi`;
+    if (d.new_debt) t += `, shundan ${d.new_debt} qarzga berildi`;
+    add(`${t}.`);
+
+    let jami = `Jami ${s.transactions} ta sotuv bo'ldi`;
+    if (s.average_check) jami += `, o'rtacha chek ${s.average_check}`;
+    add(`${jami}.`);
+
+    let profit = `Sof ${s.profit_label} ${s.profit}`;
+    if (s.profit_margin_pct != null) profit += ` (${s.profit_margin_pct}%)`;
+    add(`${profit}.`);
+  }
+  if (s.last_7_days_average) {
+    add(
+      `Oldingi 7 kunda kuniga o'rtacha ${s.last_7_days_average} savdo qilingan.`,
+    );
+  }
+  if (d.collected) add(`Shu kuni qarzlardan ${d.collected} undirildi.`);
+  if (d.overdue_clients > 0) {
+    add(
+      `${d.overdue_clients} mijozning jami ${d.overdue} qarzi muddati o'tgan.`,
+    );
+  }
+  if (inv.low_stock_count > 0) {
+    add(
+      `Hozirgi holatda ${inv.low_stock_count} ta mahsulot minimal qoldiqqa yetgan yoki tugagan.`,
+    );
+  }
+  if (inv.inventory_value) {
+    add(`Hozirgi holatda ombordagi tovarlar qiymati ${inv.inventory_value}.`);
+  }
+  if (!sentences.length) return "";
+
+  // Tavsiyalar — SYSTEM_PROMPT dagi ustuvorlik tartibida (1-3 ta)
+  const tips = [];
+  if (sp.count > 0) tips.push("uzoq sotilmagan mahsulotlarga chegirma qilish");
+  if (d.overdue_clients > 0) {
+    tips.push("muddati o'tgan qarzdor mijozlar bilan bog'lanish");
+  }
+  if (
+    c.top_product &&
+    c.top_product.days_of_stock_left != null &&
+    c.top_product.days_of_stock_left <= 3
+  ) {
+    tips.push(`${c.top_product.name} zaxirasini to'ldirish`);
+  }
+  if (inv.low_stock_count > 0) {
+    tips.push("minimal qoldiqqa yetgan mahsulotlarni buyurtma qilish");
+  }
+  if (s.change && s.change.direction === "kamaydi") {
+    tips.push("savdo kamayishi sabablarini tekshirish");
+  }
+  if (s.profit_label === "zarar") tips.push("narx va tannarxni qayta ko'rib chiqish");
+
+  const picked = tips.slice(0, 3);
+  let advice = "Hozircha alohida choralar talab qilinmaydi";
+  if (picked.length === 1) advice = picked[0];
+  else if (picked.length === 2) advice = `${picked[0]} va ${picked[1]}`;
+  else if (picked.length === 3) {
+    advice = `${picked[0]}, ${picked[1]} va ${picked[2]}`;
+  }
+
+  const header = c.date_label ? `${c.date_label} kungi biznes tahlili:\n` : "";
+  return (
+    header +
+    sentences.map((t, i) => `${i + 1}) ${t}`).join(" ") +
+    `\nTavsiya: ${advice}.`
+  );
+}
+
 // ---------- Controller ----------
 
 async function getAiOverview(req, res) {
@@ -525,12 +648,13 @@ async function getAiOverview(req, res) {
     }
 
     // Avval saqlangan overview bo'lsa, qayta hisoblamasdan qaytaramiz
+    // (bo'sh ai_overview esa qayta hisoblanadi — kalit qo'shilganda avtomatik tiklanadi)
     const existing = await AiOverview.findOne({
       store_id,
       period,
       date: startOfDay(date),
     });
-    if (existing && req.query.force !== "true") {
+    if (existing && existing.ai_overview && req.query.force !== "true") {
       return res.json(existing);
     }
 
@@ -650,7 +774,25 @@ async function getAiOverview(req, res) {
       },
     };
 
-    const ai_overview = await callOpenAI(computed);
+    // OpenAI kaliti sozlanmagan yoki so'rov xato bersa — karta ishlashda
+    // qoladi: qoidaviy xulosa bilan davom etamiz (500 emas).
+    let ai_overview = "";
+    if (!process.env.OPENAI_API_KEY) {
+      console.warn(
+        "OPENAI_API_KEY topilmadi — MARK1 AI qoidaviy xulosasi ishlatiladi",
+      );
+      ai_overview = buildFallbackOverview(computed);
+    } else {
+      try {
+        ai_overview = await callOpenAI(computed);
+      } catch (err) {
+        console.error(
+          "callOpenAI xatosi — qoidaviy xulosaga o'tildi:",
+          err.message,
+        );
+        ai_overview = buildFallbackOverview(computed);
+      }
+    }
 
     const doc = await AiOverview.findOneAndUpdate(
       { store_id, period, date: startOfDay(date) },
