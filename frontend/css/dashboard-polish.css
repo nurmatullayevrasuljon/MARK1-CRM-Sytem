@@ -74,6 +74,34 @@ textarea.form-control { min-height: 0; }
   font-feature-settings: "tnum";
 }
 
+/* ─── 3b. WCAG AA CONTRAST (axe color-contrast topilgan 3 ta buzilish) ───── */
+/* .text-danger var(--danger)=#EF4444 da 11px matn faqat 3.76:1 edi.
+   Kichik delta matnlari uchun quyuqroq semantic-text tokenlari ishlatiladi. */
+.counter-change.text-danger,
+.counter-change.text-danger * { color: var(--danger-text) !important; }
+.counter-change.text-success,
+.counter-change.text-success * { color: var(--success-text) !important; }
+
+/* Stock kartalari: style.css `.stock-card.danger` fonni #fff5f5 qilib qo'yadi
+   (premium `.stock-card` dan spesifikroq) — shuning uchun matn ranglari
+   shu och fon uchun ham AA'dan yuqori bo'lishi shart. */
+.stock-category { color: var(--text-muted); }
+.stock-status.danger { color: var(--danger-text); }
+.stock-status.warning { color: var(--warning-text); }
+
+/* Qorong'i mavzuda och rangli danger/warning kartalarni ham tokenlarga o'tkazamiz */
+.dark-mode .stock-card.danger {
+  background: var(--danger-bg);
+  border-color: rgba(248, 113, 113, 0.35);
+}
+.dark-mode .stock-card.warning {
+  background: var(--warning-bg);
+  border-color: rgba(251, 191, 36, 0.35);
+}
+.dark-mode .stock-category { color: var(--text-muted); }
+.dark-mode .stock-status.danger { color: var(--danger-text); }
+.dark-mode .stock-status.warning { color: var(--warning-text); }
+
 /* ─── 4. SIDEBAR ──────────────────────────────────────────────────────────── */
 .sidebar .nav-item {
   min-height: 44px;                 /* touch target 44px (AA 2.5.8) */
