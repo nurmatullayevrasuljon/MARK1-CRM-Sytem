@@ -528,6 +528,9 @@
             font-weight: 800;
             line-height: 1.15;
             margin: 0 0 24px;
+            /* QA: majburiy <br> "uchun" uchun yolg'iz qator yaratgan edi.
+               Balans qo'llanilganda qatorlar teng bo'linadi. */
+            text-wrap: balance;
         }
 
         .mk-rotate-wrap {
@@ -1553,7 +1556,7 @@
                 <a href="/signup" class="mk-btn mk-btn-primary mk-btn-sm">Boshlash</a>
             </div>
 
-            <button id="mobileMenuBtn" aria-label="Menyu">☰</button>
+            <button id="mobileMenuBtn" aria-label="Menyu"><i class="bi bi-list" aria-hidden="true"></i></button>
         </div>
 
         <div class="mk-mobile-panel" id="mobileMenuPanel">
@@ -1580,7 +1583,7 @@
                 <h1>
                     <span class="mk-rotate-wrap"><span id="mkRotatingWord"
                             style="color:#7c3aed;">Kiyim-kechak</span></span>
-                    do'konlari uchun<br>
+                    do'konlari uchun
                     to'liq <span class="mk-grad-text">CRM yechimi</span>
                 </h1>
                 <p class="mk-lead">Sotuvlar, mahsulotlar, ombor, qarzdorlar va biznes tahlilini bitta kuchli
@@ -2218,7 +2221,8 @@
                         mkNavbar.classList.remove('mobile-open');
                         var btn = document.getElementById('mobileMenuBtn');
                         if (btn) {
-                            btn.textContent = '☰';
+                            // QA: emoji ☰ o'rniga Bootstrap Icons
+                            btn.innerHTML = '<i class="bi bi-list" aria-hidden="true"></i>';
                             btn.setAttribute('aria-expanded', 'false');
                         }
                     });
@@ -2235,6 +2239,9 @@
                 const open = navbar.classList.contains("mobile-open");
                 mobileBtn.setAttribute("aria-expanded", open ? "true" : "false");
                 mobileBtn.setAttribute("aria-controls", "mobileMenuPanel");
+                // QA: ikonka holatga qarab almashadi (bi-list ↔ bi-x-lg)
+                const icon = mobileBtn.querySelector("i");
+                if (icon) icon.className = open ? "bi bi-x-lg" : "bi bi-list";
             };
             mobileBtn.setAttribute("aria-expanded", "false");
             mobileBtn.setAttribute("aria-controls", "mobileMenuPanel");
@@ -2311,7 +2318,7 @@
     </script>
 
     <!-- Theme toggle -->
-    <script src="js/theme-toggle.js?v=1790606601"></script>
+    <script src="js/theme-toggle.js?v=1790900001"></script>
 
 </body>
 

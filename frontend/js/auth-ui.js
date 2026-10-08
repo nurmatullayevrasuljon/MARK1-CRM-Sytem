@@ -1003,7 +1003,15 @@
       btn.addEventListener("click", function () {
         var isHidden = input.type === "password";
         input.type = isHidden ? "text" : "password";
-        btn.textContent = isHidden ? "🙈" : "👁";
+        // QA: emoji o'rniga Bootstrap Icons (yagona ikonka tizimi)
+        var icon = btn.querySelector("i");
+        if (icon) {
+          icon.className = isHidden ? "bi bi-eye-slash" : "bi bi-eye";
+        } else {
+          btn.innerHTML = isHidden
+            ? '<i class="bi bi-eye-slash" aria-hidden="true"></i>'
+            : '<i class="bi bi-eye" aria-hidden="true"></i>';
+        }
         btn.setAttribute(
           "aria-label",
           isHidden ? "Parolni yashirish" : "Parolni ko'rsatish"

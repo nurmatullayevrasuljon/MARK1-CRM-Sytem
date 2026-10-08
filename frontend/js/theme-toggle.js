@@ -131,6 +131,9 @@
   function createFloatingButton() {
     var btn = document.createElement("button");
     btn.setAttribute("data-theme-toggle", "");
+    // QA: emoji 🌙/☀️ o'rniga Bootstrap Icons (yagona ikonka tizimi)
+    // Bootstrap Icons landing/login/signup sahifalarida yuklangan.
+    btn.setAttribute("data-theme-icon", "bi");
     btn.setAttribute("aria-label", isDark ? "Kunduzgi rejimga o'tish" : "Tungi rejimga o'tish");
     btn.setAttribute("title", "Mavzuni almashtirish (Shift+T)");
     setToggleIcon(btn, isDark);

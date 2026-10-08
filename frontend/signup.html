@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="css/premium-theme.css?v=1790606600">
+  <link rel="stylesheet" href="css/premium-theme.css?v=1790900001">
 
   <style>
     /* ── Auth CSS Variables ── */
@@ -238,7 +238,9 @@
       margin-bottom: 7px;
     }
     .field-wrap { position: relative; }
-    .field-input {
+    /* QA: premium-theme `input[type="tel"]` (0,1,1) dan kuchli bo'lishi uchun
+       element + class ishlatildi — aks holda 12.25px ga tushardi. */
+    input.field-input {
       width: 100%;
       height: 48px;
       padding: 0 16px;
@@ -250,6 +252,9 @@
       outline: none;
       transition: border-color .15s, box-shadow .15s, background .2s;
       -webkit-appearance: none;
+    }
+    @media (max-width: 768px) {
+      input.field-input { font-size: 16px; }  /* iOS avto-zoomni oldini olish */
     }
     .field-input::placeholder { color: #adb5c4; }
     .field-input:focus {
@@ -481,7 +486,7 @@
           <div class="field-group">
             <label class="field-label" for="password">Parol</label>
             <input id="password" name="password" type="password" class="field-input"
-              required minlength="6" placeholder="Kamida 6 ta belgi" autocomplete="new-password">
+              required minlength="6" placeholder="Parolingizni kiriting" autocomplete="new-password">
             <p class="form-help">Kamida 6 ta belgi</p>
             <div class="invalid-feedback">Kamida 6 ta belgidan iborat parol kiriting.</div>
           </div>
@@ -523,8 +528,8 @@
   <script src="https://cdn.jsdelivr.net/npm/axios@1.20.0/dist/axios.min.js?v=1789490310"></script>
   <script src="js/toast.js?v=1790606500"></script>
   <script src="js/api-client.js?v=1789490310"></script>
-  <script src="js/auth-ui.js?v=1789490310"></script>
-  <script src="js/theme-toggle.js?v=1790606601"></script>
+  <script src="js/auth-ui.js?v=1790900001"></script>
+  <script src="js/theme-toggle.js?v=1790900001"></script>
 
   <!-- Smooth page transition with loading animation -->
   <script>

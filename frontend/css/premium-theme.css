@@ -251,7 +251,7 @@ small { color: var(--text-muted); }
 }
 .profile-info { display: flex; flex-direction: column; }
 .profile-name  { font-size: 0.875rem; font-weight: 600; color: var(--text-primary) !important; line-height: 1.2; }
-.profile-store { font-size: 0.75rem; color: var(--text-muted); line-height: 1.2; }
+.profile-store { /* QA: 0.75rem (10.5px) — 12px minimum */ font-size: 12px; color: var(--text-muted); line-height: 1.2; }
 .profile-dropdown-icon { width: 14px; height: 14px; color: var(--text-muted); }
 
 /* Dropdown */
@@ -373,7 +373,7 @@ small { color: var(--text-muted); }
   color: var(--text-secondary);
 }
 .card-box small.counter-smal {
-  font-size: 0.8rem;
+  font-size: 12px;
   color: var(--text-secondary);
   font-weight: 600;
   display: flex;
@@ -386,8 +386,9 @@ small { color: var(--text-muted); }
   color: var(--brand-text);
 }
 .card-box .text-success { color: var(--success-text) !important; }
-.card-box .text-muted   { color: var(--text-muted) !important; font-size: 0.8rem; }
-.counter-change { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+/* QA: 0.8rem (11.2px) — kontent matni uchun 12px minimum */
+.card-box .text-muted   { color: var(--text-muted) !important; font-size: 12px; }
+.counter-change { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
 
 /* Daily counter card */
 .daily-counter {
@@ -396,7 +397,7 @@ small { color: var(--text-muted); }
   color: var(--brand-text);
   letter-spacing: -0.04em;
 }
-.counter-change { color: var(--text-muted); font-size: 0.8rem; }
+.counter-change { color: var(--text-muted); font-size: 12px; }
 
 /* ─── Tables ─────────────────────────────────────────────────────────────── */
 .table-responsive {
@@ -534,8 +535,25 @@ select {
   color: var(--text-primary) !important;
   border-radius: var(--radius-md);
   padding: 0.625rem 0.875rem;
-  font-size: 0.875rem;
+  /* QA: 0.875rem (12.25px) juda kichik edi — o'qiladigan minimum 14px */
+  font-size: 1rem;
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* QA: iOS avto-zoomni oldini olish uchun mayda ekranda form elementlari 16px.
+   (Safari 0.875rem=input'larga fokusda sahifani kattalashtiradi) */
+@media (max-width: 768px) {
+  .form-control,
+  .form-select,
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="password"],
+  input[type="tel"],
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }
 .form-control:focus,
 .form-select:focus,
@@ -554,7 +572,7 @@ select:focus {
 }
 .form-label {
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 12px;
   color: var(--text-secondary);
   margin-bottom: 0.375rem;
   display: block;
@@ -705,7 +723,7 @@ input:checked + .toggle-slider::before { transform: translateX(20px); }
   margin-bottom: 0.75rem;
   gap: 1rem;
 }
-.setting-info p { margin: 0; color: var(--text-muted); font-size: 0.8rem; }
+.setting-info p { margin: 0; color: var(--text-muted); font-size: 12px; }
 .setting-info strong { font-size: 0.9rem; color: var(--text-primary) !important; font-weight: 600; }
 .security-card {
   padding: 1.5rem;
@@ -1055,12 +1073,12 @@ textarea:focus-visible {
 .form-group label,
 .form-group .form-label {
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 12px;
   color: var(--text-secondary);
   margin-bottom: 0.375rem;
 }
 .form-group .text-muted {
-  font-size: 0.75rem;
+  font-size: 12px;
 }
 .form-group .form-control.is-invalid,
 .form-group input.is-invalid {
@@ -1187,9 +1205,14 @@ textarea:focus-visible {
 
 /* ─── Stock Card (individual items) ──────────────────────────────────────── */
 .stock-card {
+  /* QA: markup vertikal yig'indi (header/values/progress/status) —
+     ilgari row-layout mobil overflow (>384px) va progress bar 0 kenglik
+     xatosiga olib kelgan edi. */
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0.35rem;
   padding: 0.75rem 1rem;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
@@ -1198,8 +1221,10 @@ textarea:focus-visible {
   transition: background 0.2s;
 }
 .stock-card:hover { background: var(--bg-hover); }
+.stock-card .stock-card-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.stock-card .stock-values { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
 .stock-card .stock-name { font-weight: 600; color: var(--text-primary) !important; font-size: 0.875rem; }
-.stock-card .stock-detail { font-size: 0.8rem; color: var(--text-secondary); }
+.stock-card .stock-detail { font-size: 12px; color: var(--text-secondary); }
 
 /* ─── Product Image ──────────────────────────────────────────────────────── */
 .product-img {
@@ -1772,12 +1797,13 @@ html.dark-mode .btn-outline-primary:not(.active) {
 .mk-ai-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
 .mk-ai-title { display: flex; align-items: center; gap: 0.75rem; }
 .mk-ai-title h3, .mk-ai-title h5 { margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em; }
-.mk-ai-title p { margin: 0; font-size: 0.8rem; color: var(--text-secondary); }
+.mk-ai-title p { margin: 0; font-size: 12px; color: var(--text-secondary); }
 .mk-ai-badge { width: 38px; height: 38px; border-radius: var(--radius-md); background: var(--brand-surface); display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
 .mk-ai-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-.mk-ai-date { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); border: 1px solid var(--border-subtle); background: var(--bg-surface); border-radius: var(--radius-full); padding: 0.25rem 0.65rem; }
+.mk-ai-date { font-size: 12px; font-weight: 600; color: var(--text-secondary); border: 1px solid var(--border-subtle); background: var(--bg-surface); border-radius: var(--radius-full); padding: 0.25rem 0.65rem; }
 .mk-ai-date:empty { display: none; }
-.mk-ai-btn { font: inherit; font-size: 0.8rem; font-weight: 600; color: var(--text-primary); background: var(--bg-surface); border: 1px solid var(--border-strong); border-radius: var(--radius-md); padding: 0.4rem 0.8rem; cursor: pointer; transition: background 0.2s ease, opacity 0.2s ease; }
+/* QA: 31px bosish maydoni juda kichik edi — WCAG 2.5.8 bo'yicha kamida 44px */
+.mk-ai-btn { font: inherit; font-size: 12.5px; font-weight: 600; color: var(--text-primary); background: var(--bg-surface); border: 1px solid var(--border-strong); border-radius: var(--radius-md); min-height: 44px; padding: 0.4rem 0.9rem; cursor: pointer; transition: background 0.2s ease, opacity 0.2s ease; }
 .mk-ai-btn:hover:not(:disabled) { background: var(--bg-hover); }
 .mk-ai-btn-primary { color: #fff; background: var(--brand-primary); border-color: var(--brand-primary); }
 .mk-ai-btn-primary:hover:not(:disabled) { background: var(--brand-hover); }
@@ -1785,13 +1811,13 @@ html.dark-mode .btn-outline-primary:not(.active) {
 .mk-ai-body { margin-top: 1.25rem; }
 
 .mk-ai-hero { display: flex; flex-direction: column; gap: 0.15rem; margin-bottom: 1rem; }
-.mk-ai-label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
+.mk-ai-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
 .mk-ai-value { font-size: 1.75rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.03em; line-height: 1.2; }
 .mk-ai-value small, .mk-ai-tvalue small, .mk-ai-meta small { font-size: 0.7em; font-weight: 600; color: var(--text-secondary); }
 .mk-ai-change { font-size: 0.85rem; font-weight: 600; }
 .mk-ai-change.counter-up { color: var(--success); }
 .mk-ai-change.counter-down { color: var(--danger); }
-.mk-ai-muted { font-size: 0.8rem; color: var(--text-secondary); }
+.mk-ai-muted { font-size: 12px; color: var(--text-secondary); }
 .mk-ai-sub { margin-top: 0.15rem; }
 
 .mk-ai-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; }
@@ -1812,14 +1838,14 @@ html.dark-mode .btn-outline-primary:not(.active) {
 .mk-ai-list li { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.55rem 0.75rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); min-width: 0; }
 .mk-ai-pname { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); overflow-wrap: anywhere; }
 .mk-ai-pname.mk-ai-unresolved { color: var(--text-muted); font-style: italic; }
-.mk-ai-meta { font-size: 0.78rem; color: var(--text-secondary); }
+.mk-ai-meta { font-size: 12px; color: var(--text-secondary); }
 .mk-ai-empty { margin: 0; font-size: 0.85rem; color: var(--text-secondary); }
 .mk-ai-inventory { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.5rem; font-size: 0.875rem; color: var(--text-primary); }
 .mk-ai-inventory .mk-ai-section-title { margin: 0; }
 
 .mk-ai-loading { display: flex; align-items: flex-start; gap: 0.9rem; color: var(--text-primary); }
 .mk-ai-spinner { width: 22px; height: 22px; margin-top: 2px; border-radius: 50%; border: 3px solid var(--border-subtle); border-top-color: var(--brand-primary); animation: mk-ai-spin 0.8s linear infinite; flex-shrink: 0; }
-.mk-ai-steps { list-style: none; margin: 0.35rem 0 0; padding: 0; font-size: 0.8rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.15rem; }
+.mk-ai-steps { list-style: none; margin: 0.35rem 0 0; padding: 0; font-size: 12px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.15rem; }
 .mk-ai-skel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
 .mk-ai-skel { height: 64px; border-radius: var(--radius-md); background: linear-gradient(90deg, var(--bg-surface) 25%, var(--bg-hover) 50%, var(--bg-surface) 75%); background-size: 200% 100%; animation: mk-ai-shimmer 1.4s ease-in-out infinite; }
 .mk-ai-error { text-align: center; padding: 1rem 0.5rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }

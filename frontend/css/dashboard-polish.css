@@ -285,13 +285,13 @@ input[name="debtSalePaymentType"] + span { cursor: pointer; }
   .mobile-bottom-nav button {
     min-height: 48px;               /* Android 48dp touch target */
     gap: 4px;
-    font-size: 11px;                /* QA: 10px juda kichik edi */
+    font-size: 12px;                /* QA: 10px juda kichik edi, keyin 11px — 12px qabul qilindi */
     color: var(--text-secondary);
     border-radius: var(--radius-md);
     transition: background 0.15s ease, color 0.15s ease;
   }
   .mobile-bottom-nav button i { font-size: 20px; }
-  .mobile-bottom-nav button span { font-weight: 600; }
+  .mobile-bottom-nav button span { font-weight: 600; white-space: nowrap; }
   .mobile-bottom-nav button.active,
   .mobile-bottom-nav button:active {
     color: var(--brand-text);

@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="css/premium-theme.css?v=1790606600">
+  <link rel="stylesheet" href="css/premium-theme.css?v=1790900001">
 
   <style>
     /* ── Auth CSS Variables ── */
@@ -246,7 +246,9 @@
       margin-bottom: 7px;
     }
     .field-wrap { position: relative; }
-    .field-input {
+    /* QA: premium-theme `input[type="tel"]` (0,1,1) dan kuchli bo'lishi uchun
+       element + class ishlatildi — aks holda 12.25px ga tushardi. */
+    input.field-input {
       width: 100%;
       height: 48px;
       padding: 0 16px;
@@ -258,6 +260,9 @@
       outline: none;
       transition: border-color .15s, box-shadow .15s, background .2s;
       -webkit-appearance: none;
+    }
+    @media (max-width: 768px) {
+      input.field-input { font-size: 16px; }  /* iOS avto-zoomni oldini olish */
     }
     .field-input::placeholder { color: #adb5c4; }
     .field-input:focus {
@@ -551,7 +556,7 @@
             <div class="field-wrap">
               <input id="password" type="password" class="field-input has-toggle"
                 placeholder="Parolingizni kiriting" required minlength="6" autocomplete="current-password">
-              <button type="button" class="pw-toggle-btn" data-pw-toggle="password" aria-label="Parolni ko'rsatish">👁</button>
+              <button type="button" class="pw-toggle-btn" data-pw-toggle="password" aria-label="Parolni ko'rsatish"><i class="bi bi-eye" aria-hidden="true"></i></button>
             </div>
           </div>
 
@@ -616,14 +621,14 @@
           <label class="field-label" for="fpNewPassword">Yangi parol</label>
           <div class="field-wrap">
             <input id="fpNewPassword" type="password" class="field-input has-toggle" placeholder="Kamida 6 ta belgi" minlength="6">
-            <button type="button" class="pw-toggle-btn" data-pw-toggle="fpNewPassword" aria-label="Parolni ko'rsatish">👁</button>
+            <button type="button" class="pw-toggle-btn" data-pw-toggle="fpNewPassword" aria-label="Parolni ko'rsatish"><i class="bi bi-eye" aria-hidden="true"></i></button>
           </div>
         </div>
         <div class="field-group">
           <label class="field-label" for="fpNewPasswordConfirm">Yangi parolni takrorlang</label>
           <div class="field-wrap">
             <input id="fpNewPasswordConfirm" type="password" class="field-input has-toggle" placeholder="Parolni qayta kiriting" minlength="6">
-            <button type="button" class="pw-toggle-btn" data-pw-toggle="fpNewPasswordConfirm" aria-label="Parolni ko'rsatish">👁</button>
+            <button type="button" class="pw-toggle-btn" data-pw-toggle="fpNewPasswordConfirm" aria-label="Parolni ko'rsatish"><i class="bi bi-eye" aria-hidden="true"></i></button>
           </div>
         </div>
         <button type="button" id="fpResetBtn" class="btn-primary-auth" style="margin-top:8px;">Parolni tiklash</button>
@@ -644,8 +649,8 @@
   <script src="https://cdn.jsdelivr.net/npm/axios@1.20.0/dist/axios.min.js?v=1789490310"></script>
   <script src="js/toast.js?v=1790606500"></script>
   <script src="js/api-client.js?v=1789490310"></script>
-  <script src="js/auth-ui.js?v=1789490310" defer></script>
-  <script src="js/theme-toggle.js?v=1790606601"></script>
+  <script src="js/auth-ui.js?v=1790900001" defer></script>
+  <script src="js/theme-toggle.js?v=1790900001"></script>
 
   <!-- Smooth page transition with loading animation -->
   <script>

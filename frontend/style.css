@@ -2826,7 +2826,7 @@ svg {
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -2894,7 +2894,7 @@ svg {
   background: #dbeafe;
   color: #1e40af;
   border-radius: 12px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -3846,12 +3846,12 @@ body {
   .status-badge,
   .payment-badge,
   .sms-type-badge {
-    font-size: 11px;
+    font-size: 12px;
     padding: 4px 8px;
   }
 
   .status-badge-large {
-    font-size: 11px;
+    font-size: 12px;
     padding: 6px 10px;
   }
 }
