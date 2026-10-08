@@ -981,7 +981,7 @@ function updateMonthlyRevenueUI() {
 
   if (changeEl) {
     if (monthsDiff === 0) {
-      changeEl.innerText = "📊 Birinchi oy (0%)";
+      changeEl.innerText = "Birinchi oy (0%)";
       changeEl.className = "counter-change text-info";
     }
     else {
@@ -1247,7 +1247,7 @@ function renderProducts(list = products) {
     productTable.innerHTML = `
       <tr>
         <td colspan="7" class="text-center text-muted py-4">
-          <div style="font-size:2.5rem; margin-bottom:0.5rem;">📦</div>
+          <div style="font-size:2.5rem; margin-bottom:0.5rem;" aria-hidden="true"><i class="bi bi-box-seam"></i></div>
           <div style="font-size:1.05rem; font-weight:600; color:inherit;">${isSearchEmpty ? "Bunday mahsulot topilmadi" : "Hozircha mahsulot yo'q"}</div>
           ${isSearchEmpty
             ? `<div style="font-size:0.9rem;">Qidiruvni o'zgartirib ko'ring yoki barcha mahsulotlarni ko'rish uchun qidiruvni tozalang.</div>`
@@ -2471,7 +2471,7 @@ async function handleSale(paymentType) {
       saveProducts();
       saveSales();
 
-      showSaleAlert(`✅ ${product.name} sotildi! (OFFLINE)`, "success");
+      showSaleAlert(`${product.name} sotildi! (OFFLINE)`, "success");
       saleQty.value = "";
       saleQty.focus();
 
@@ -2503,13 +2503,13 @@ async function handleSale(paymentType) {
 
     if (!result || !result.success) {
       showSaleAlert(
-        result?.backendMessage || "❌ Sotuv amalga oshirilmadi!",
+        result?.backendMessage || "Sotuv amalga oshirilmadi!",
         "error"
       );
       return;
     }
 
-    showSaleAlert(`✅ ${product.name} sotildi!`, "success");
+    showSaleAlert(`${product.name} sotildi!`, "success");
     saleQty.value = "";
     saleQty.focus();
 
@@ -2737,13 +2737,13 @@ async function handleDebtSaleSubmit(event) {
 
     if (!result || !result.success) {
       showSaleAlert(
-        result?.backendMessage || "❌ Sotuv amalga oshirilmadi!",
+        result?.backendMessage || "Sotuv amalga oshirilmadi!",
         "error"
       );
       return;
     }
 
-    showSaleAlert(`✅ ${product.name} qarzga sotildi!`, "success");
+    showSaleAlert(`${product.name} qarzga sotildi!`, "success");
     closeDebtSaleModal();
     saleQty.value = "";
 
@@ -2788,7 +2788,7 @@ function renderSales() {
     salesTable.innerHTML = `
       <tr>
         <td colspan="6" class="text-center text-muted py-4">
-          <div style="font-size:2rem; margin-bottom:0.25rem;">🧾</div>
+          <div style="font-size:2rem; margin-bottom:0.25rem;" aria-hidden="true"><i class="bi bi-receipt"></i></div>
           Yuqoridagi formadan mahsulot tanlab, birinchi sotuvni boshlang
         </td>
       </tr>
@@ -2813,8 +2813,8 @@ function renderSales() {
         <td>${s.total.toLocaleString()} ${s.currency}</td>
         <td>${time}</td>
         <td>
-          <button class="btn btn-sm btn-danger" onclick="cancelSale('${s.id}')" title="Bekor qilish">
-            ✖
+          <button class="btn btn-sm btn-danger" onclick="cancelSale('${s.id}')" title="Bekor qilish" aria-label="Sotuvni bekor qilish">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
           </button>
         </td>
       </tr>
@@ -2878,7 +2878,7 @@ async function cancelSale(id) {
       saveSales();
     }
 
-    showSaleAlert("✅ Sotuv bekor qilindi! (OFFLINE)", "success");
+    showSaleAlert("Sotuv bekor qilindi! (OFFLINE)", "success");
     await apiLoadProducts();
     await apiLoadSales();
 
@@ -2898,7 +2898,7 @@ async function cancelSale(id) {
       return;
     }
 
-    showSaleAlert("✅ Sotuv bekor qilindi!", "success");
+    showSaleAlert("Sotuv bekor qilindi!", "success");
     await apiLoadProducts();
     await apiLoadSales();
 
@@ -2925,7 +2925,7 @@ async function deleteSale(id) {
     sales = sales.filter(s => s.id !== id);
     saveSales();
 
-    showSaleAlert("✅ Sotuv bekor qilindi! (OFFLINE)", "success");
+    showSaleAlert("Sotuv bekor qilindi! (OFFLINE)", "success");
     await apiLoadProducts();
     await apiLoadSales();
 
@@ -2945,7 +2945,7 @@ async function deleteSale(id) {
       return;
     }
 
-    showSaleAlert("✅ Sotuv bekor qilindi!", "success");
+    showSaleAlert("Sotuv bekor qilindi!", "success");
     await apiLoadProducts();
     await apiLoadSales();
 
@@ -3233,7 +3233,7 @@ function renderTransactions(apiTransactions) {
     tbody.innerHTML = `
       <tr>
         <td colspan="6" class="empty-state">
-          <div class="empty-icon">🧾</div>
+          <div class="empty-icon" aria-hidden="true"><i class="bi bi-receipt"></i></div>
           <div class="empty-title">Bu davrda sotuv yo'q</div>
           <div class="empty-subtitle">Boshqa davrni tanlang yoki qidiruvni tozalab ko'ring</div>
         </td>
@@ -3951,7 +3951,7 @@ async function handleAdjustDebt(event) {
           previousDebt: debtor.amount + amount
         });
 
-        showSuccessMessage(`💰 ${amount.toLocaleString()} so'm to'lov qabul qilindi! (OFFLINE)`);
+        showSuccessMessage(`${amount.toLocaleString()} so'm to'lov qabul qilindi! (OFFLINE)`);
       }
 
       saveDebtors();
@@ -3980,7 +3980,7 @@ async function handleAdjustDebt(event) {
       }
 
       showSaleAlert(
-        `ℹ️ ${debtor.name} uchun qarz qo'shish: mahsulot va miqdorni tanlab, "Qarzga sotish" tugmasini bosing — mijoz avtomatik tanlangan bo'ladi.`,
+        `${debtor.name} uchun qarz qo'shish: mahsulot va miqdorni tanlab, "Qarzga sotish" tugmasini bosing — mijoz avtomatik tanlangan bo'ladi.`,
         "success"
       );
       return;
@@ -4006,7 +4006,7 @@ async function handleAdjustDebt(event) {
         previousDebt: debtor.amount
       });
 
-      showSuccessMessage(`💰 ${amount.toLocaleString()} so'm to'lov qabul qilindi!`);
+      showSuccessMessage(`${amount.toLocaleString()} so'm to'lov qabul qilindi!`);
     }
 
     closeAdjustModal();
@@ -4068,7 +4068,7 @@ async function handleSubmit(event) {
       saveDebtors();
 
       closeModal();
-      showSuccessMessage(`✅ ${newDebtor.name} muvaffaqiyatli qo'shildi! (OFFLINE)`);
+      showSuccessMessage(`${newDebtor.name} muvaffaqiyatli qo'shildi! (OFFLINE)`);
       await apiLoadDebtors();
       return;
     }
@@ -4088,7 +4088,7 @@ async function handleSubmit(event) {
     }
 
     showSaleAlert(
-      `ℹ️ ${newDebtor.name} uchun: mahsulot va miqdorni tanlab, "Qarzga sotish" tugmasini bosing — mijoz ma'lumotlari oldindan to'ldirilgan bo'ladi.`,
+      `${newDebtor.name} uchun: mahsulot va miqdorni tanlab, "Qarzga sotish" tugmasini bosing — mijoz ma'lumotlari oldindan to'ldirilgan bo'ladi.`,
       "success"
     );
     return;
@@ -4131,7 +4131,7 @@ async function deleteDebtor(id) {
     if (OFFLINE_DATA_MODE) {
       debtors = debtors.filter(d => d.id !== id);
       saveDebtors();
-      showSuccessMessage(`🗑 ${name} muvaffaqiyatli o'chirildi! (OFFLINE)`);
+      showSuccessMessage(`${name} muvaffaqiyatli o'chirildi! (OFFLINE)`);
       await apiLoadDebtors();
       return;
     }
@@ -4151,7 +4151,7 @@ async function deleteDebtor(id) {
     console.log("✅ SUCCESS");
     console.log("━━━━━━━━━━━━━━━━━━━━━━");
 
-    showSuccessMessage(`🗑 ${name} muvaffaqiyatli o'chirildi!`);
+    showSuccessMessage(`${name} muvaffaqiyatli o'chirildi!`);
     await apiLoadDebtors();
   } catch (err) {
     console.error("❌ ERROR:", err?.response?.status, err?.response?.data || err.message);
@@ -4206,7 +4206,7 @@ async function updateDebtor(id, data) {
         saveDebtors();
       }
 
-      showSuccessMessage(`✅ ${data.name} ma'lumotlari yangilandi! (OFFLINE)`);
+      showSuccessMessage(`${data.name} ma'lumotlari yangilandi! (OFFLINE)`);
       closeEditDebtorModal();
       await apiLoadDebtors();
       return;
@@ -4249,7 +4249,7 @@ async function updateDebtor(id, data) {
     }
 
     showSuccessMessage(
-      `✅ ${data.name} — ism va telefon yangilandi. (Qarz summasi va muddatini o'zgartirish uchun hozircha backend imkoniyati yo'q — faqat "Qarzni kamaytirish" yoki "O'chirish" mumkin.)`
+      `${data.name} — ism va telefon yangilandi. (Qarz summasi va muddatini o'zgartirish uchun hozircha backend imkoniyati yo'q — faqat "Qarzni kamaytirish" yoki "O'chirish" mumkin.)`
     );
     closeEditDebtorModal();
     await apiLoadDebtors();
@@ -4390,7 +4390,7 @@ async function sendSms(event) {
       }
 
       const clientName = result.data?.client?.client_name || debtor.name;
-      showSuccessMessage(`📱 ${clientName}ga SMS muvaffaqiyatli yuborildi!`);
+      showSuccessMessage(`${clientName}ga SMS muvaffaqiyatli yuborildi!`);
 
       // Tarixga yozib qo'yamiz (mavjud smsHistory mexanizmi orqali) —
       // faqat ko'rsatish/hisobot uchun, backend allaqachon jo'natgan.
@@ -4461,7 +4461,7 @@ function sendAutoSms(debtor) {
   console.log('═══════════════════════════════════\n');
 
   renderSmsHistory();
-  showSuccessMessage(`📱 ${debtor.name}ga avtomatik SMS yuborildi!`);
+  showSuccessMessage(`${debtor.name}ga avtomatik SMS yuborildi!`);
 }
 
 function sendOverdueSms(debtor, daysOverdue) {
@@ -4502,7 +4502,7 @@ function sendOverdueSms(debtor, daysOverdue) {
   console.log('═══════════════════════════════════\n');
 
   renderSmsHistory();
-  showSuccessMessage(`🚨 ${debtor.name}ga kechikish eslatmasi yuborildi!`);
+  showSuccessMessage(`${debtor.name}ga kechikish eslatmasi yuborildi!`);
 }
 
 function renderSmsHistory() {
@@ -4513,7 +4513,7 @@ function renderSmsHistory() {
     tbody.innerHTML = `
       <tr>
         <td colspan="6" style="text-align:center; padding:3rem;">
-          <div style="font-size:3.5rem; margin-bottom:1rem; opacity:0.5;">📱</div>
+          <div style="font-size:3.5rem; margin-bottom:1rem; opacity:0.5;" aria-hidden="true"><i class="bi bi-phone"></i></div>
           <div style="font-size:1.2rem; font-weight:600; color:#64748b; margin-bottom:0.5rem;">SMS tarixi bo'sh</div>
           <div style="font-size:0.95rem; color:var(--text-muted);">Birinchi SMS yuborilgandan keyin bu yerda ko'rinadi</div>
         </td>
@@ -4731,7 +4731,7 @@ function renderDebtors() {
     tbody.innerHTML = `
       <tr>
         <td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">
-          <div style="font-size:3rem; margin-bottom:1rem;">📭</div>
+          <div style="font-size:3rem; margin-bottom:1rem;" aria-hidden="true"><i class="bi bi-inbox"></i></div>
           <div style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem;">Qarzdor topilmadi</div>
           <div style="font-size:0.9rem;">Yangi qarzdor qo'shish uchun yuqoridagi tugmani bosing</div>
         </td>
@@ -4849,22 +4849,22 @@ function renderDebtors() {
         </td>
         <td data-label="Amallar">
           <div class="action-buttons-grid">
-            <button class="action-btn action-btn-call" onclick="contactDebtor('${d.id}')" title="Qo'ng'iroq qilish">
+            <button class="action-btn action-btn-call" onclick="contactDebtor('${d.id}')" title="Qo'ng'iroq qilish" aria-label="Qo'ng'iroq qilish: ${d.name}">
               <i class="bi bi-telephone-fill"></i>
             </button>
-            <button class="action-btn action-btn-sms" onclick="openSmsModal('${d.id}')" title="SMS yuborish">
+            <button class="action-btn action-btn-sms" onclick="openSmsModal('${d.id}')" title="SMS yuborish" aria-label="SMS yuborish: ${d.name}">
               <i class="bi bi-chat-dots-fill"></i>
             </button>
-            <button class="action-btn action-btn-add" onclick="openAdjustModal('${d.id}', 'add')" title="Qarz qo'shish">
+            <button class="action-btn action-btn-add" onclick="openAdjustModal('${d.id}', 'add')" title="Qarz qo'shish" aria-label="Qarz qo'shish: ${d.name}">
               <i class="bi bi-plus-circle-fill"></i>
             </button>
-            <button class="action-btn action-btn-reduce" onclick="openAdjustModal('${d.id}', 'reduce')" title="To'lov qabul qilish">
+            <button class="action-btn action-btn-reduce" onclick="openAdjustModal('${d.id}', 'reduce')" title="To'lov qabul qilish" aria-label="To'lov qabul qilish: ${d.name}">
               <i class="bi bi-dash-circle-fill"></i>
             </button>
-            <button class="action-btn action-btn-edit" onclick="openEditDebtorModal('${d.id}')" title="Tahrirlash" style="background:#f59e0b; color:#fff;">
+            <button class="action-btn action-btn-edit" onclick="openEditDebtorModal('${d.id}')" title="Tahrirlash" aria-label="Tahrirlash: ${d.name}" style="background:#f59e0b; color:#fff;">
               <i class="bi bi-pencil-fill"></i>
             </button>
-            <button class="action-btn action-btn-delete" onclick="deleteDebtor('${d.id}')" title="O'chirish">
+            <button class="action-btn action-btn-delete" onclick="deleteDebtor('${d.id}')" title="O'chirish" aria-label="O'chirish: ${d.name}">
               <i class="bi bi-trash-fill"></i>
             </button>
           </div>
@@ -6377,28 +6377,39 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!savedSection) return;
 
   const sectionEl = document.getElementById(savedSection);
+  if (!sectionEl) return;
+
   const navBtn = document.querySelector(
     `.mobile-bottom-nav button[data-target="${savedSection}"]`
   );
+  // Pastki navigatsiyada yo'q bo'limlar (masalan "Sozlamalar") uchun
+  // sidebar variantidan foydalanamiz — aks holda restore jim bo'lib qolardi.
+  const sideBtn = document.querySelector(
+    `.sidebar .nav-item[data-target="${savedSection}"]`
+  );
 
-  if (sectionEl && navBtn) {
-    // Sections
-    document.querySelectorAll('.section').forEach(s =>
-      s.classList.remove('active')
-    );
-    sectionEl.classList.add('active');
+  // Sections
+  document.querySelectorAll('.section').forEach(s =>
+    s.classList.remove('active')
+  );
+  sectionEl.classList.add('active');
 
-    // Nav buttons
-    document.querySelectorAll('.mobile-bottom-nav button').forEach(b =>
-      b.classList.remove('active')
-    );
-    navBtn.classList.add('active');
+  // Nav buttons
+  document.querySelectorAll('.mobile-bottom-nav button').forEach(b =>
+    b.classList.remove('active')
+  );
+  document.querySelectorAll('.sidebar .nav-item').forEach(b =>
+    b.classList.remove('active')
+  );
+  if (navBtn) navBtn.classList.add('active');
+  if (sideBtn) sideBtn.classList.add('active');
 
-    // Title
-    const title = navBtn.querySelector('span')?.innerText;
-    if (title) {
-      document.getElementById('pageTitle').innerText = title;
-    }
+  // Title
+  const title =
+    navBtn?.querySelector('span')?.innerText ||
+    sideBtn?.innerText.trim();
+  if (title) {
+    document.getElementById('pageTitle').innerText = title;
   }
 });
 
@@ -6895,8 +6906,8 @@ window.logout = logout;
     card.innerHTML =
       '<div class="mk-ai-head">' +
         '<div class="mk-ai-title">' +
-          '<span class="mk-ai-badge" aria-hidden="true">✨</span>' +
-          "<div><h5>MARK1 AI</h5><p>Bugungi biznes tahlili</p></div>" +
+          '<span class="mk-ai-badge" aria-hidden="true"><i class="bi bi-stars"></i></span>' +
+          "<div><h3>MARK1 AI</h3><p>Bugungi biznes tahlili</p></div>" +
         "</div>" +
         '<div class="mk-ai-actions">' +
           '<span class="mk-ai-date" id="mk1AiDate"></span>' +
@@ -6946,7 +6957,7 @@ window.logout = logout;
     if (kind === "auth") text = "Sessiya muddati tugagan. Qaytadan kiring.";
     setBody(
       '<div class="mk-ai-error" role="alert">' +
-        '<div class="mk-ai-error-icon" aria-hidden="true">⚠️</div>' +
+        '<div class="mk-ai-error-icon" aria-hidden="true"><i class="bi bi-exclamation-triangle-fill"></i></div>' +
         "<p>" + esc(text) + "</p>" +
         (kind === "auth" ? "" : '<button type="button" class="mk-ai-btn mk-ai-btn-primary" data-mk-ai="refresh">Qayta urinish</button>') +
       "</div>"
@@ -6973,15 +6984,15 @@ window.logout = logout;
 
     function iconFor(s) {
       var t = s.toLowerCase();
-      if (t.indexOf("muddati o'tgan") >= 0 || t.indexOf("qarz") >= 0) return "⚠️";
-      if (t.indexOf("sotilmagan") >= 0 || t.indexOf("minimal qoldiq") >= 0 || t.indexOf("omborda") >= 0 || t.indexOf("zaxira") >= 0) return "📦";
-      if (t.indexOf("sof ") >= 0 || t.indexOf("foyda") >= 0 || t.indexOf("zarar") >= 0) return "💰";
-      if (t.indexOf("savdo") >= 0 || t.indexOf("sotuv") >= 0 || t.indexOf("sotildi") >= 0) return "📈";
+      if (t.indexOf("muddati o'tgan") >= 0 || t.indexOf("qarz") >= 0) return '<i class="bi bi-exclamation-triangle-fill"></i>';
+      if (t.indexOf("sotilmagan") >= 0 || t.indexOf("minimal qoldiq") >= 0 || t.indexOf("omborda") >= 0 || t.indexOf("zaxira") >= 0) return '<i class="bi bi-box-seam"></i>';
+      if (t.indexOf("sof ") >= 0 || t.indexOf("foyda") >= 0 || t.indexOf("zarar") >= 0) return '<i class="bi bi-cash-stack"></i>';
+      if (t.indexOf("savdo") >= 0 || t.indexOf("sotuv") >= 0 || t.indexOf("sotildi") >= 0) return '<i class="bi bi-graph-up-arrow"></i>';
       return "•";
     }
 
     var html = '<div class="mk-ai-text">';
-    html += '<div class="mk-ai-section-title">🤖 MARK1 AI xulosasi</div>';
+    html += '<div class="mk-ai-section-title"><i class="bi bi-robot" aria-hidden="true"></i> MARK1 AI xulosasi</div>';
     if (heading) html += '<p class="mk-ai-heading">' + esc(heading) + "</p>";
     if (sentences.length) {
       html += '<ul class="mk-ai-sentences">';
@@ -6991,7 +7002,7 @@ window.logout = logout;
       html += "</ul>";
     }
     if (reco) {
-      html += '<div class="mk-ai-reco"><strong>💡 Tavsiya</strong><span>' + esc(reco) + "</span></div>";
+      html += '<div class="mk-ai-reco"><strong><i class="bi bi-lightbulb" aria-hidden="true"></i> Tavsiya</strong><span>' + esc(reco) + "</span></div>";
     }
     html += "</div>";
     return html;
@@ -7048,34 +7059,34 @@ window.logout = logout;
     var html = "";
 
     html += '<div class="mk-ai-hero">' +
-      '<span class="mk-ai-label">📈 Bugungi tushum</span>' +
+      '<span class="mk-ai-label"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i> Bugungi tushum</span>' +
       '<div class="mk-ai-value">' + money(revenue) + "</div>" +
       changeHtml +
       '<span class="mk-ai-muted mk-ai-sub">7 kunlik o\'rtacha: ' + money(s.last_7_days_average) + "</span>" +
     "</div>";
 
     html += '<div class="mk-ai-grid">' +
-      '<div class="mk-ai-tile"><span class="mk-ai-label">💰 Foyda</span><div class="mk-ai-tvalue">' + money(s.profit) + "</div></div>" +
-      '<div class="mk-ai-tile"><span class="mk-ai-label">🧾 Savdolar</span><div class="mk-ai-tvalue">' + esc(num(s.transactions)) + " ta</div></div>" +
-      '<div class="mk-ai-tile mk-ai-tile-warn"><span class="mk-ai-label">⚠️ Muddati o\'tgan</span><div class="mk-ai-tvalue">' + money(debts.overdue) +
+      '<div class="mk-ai-tile"><span class="mk-ai-label"><i class="bi bi-cash-stack" aria-hidden="true"></i> Foyda</span><div class="mk-ai-tvalue">' + money(s.profit) + "</div></div>" +
+      '<div class="mk-ai-tile"><span class="mk-ai-label"><i class="bi bi-receipt" aria-hidden="true"></i> Savdolar</span><div class="mk-ai-tvalue">' + esc(num(s.transactions)) + " ta</div></div>" +
+      '<div class="mk-ai-tile mk-ai-tile-warn"><span class="mk-ai-label"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> Muddati o\'tgan</span><div class="mk-ai-tvalue">' + money(debts.overdue) +
         '</div><span class="mk-ai-muted">' + esc(num(debts.overdue_clients)) + " ta mijoz</span></div>" +
-      '<div class="mk-ai-tile"><span class="mk-ai-label">🧮 Yangi qarz</span><div class="mk-ai-tvalue">' + money(debts.new_debt) + "</div></div>" +
-      '<div class="mk-ai-tile"><span class="mk-ai-label">✅ Undirilgan</span><div class="mk-ai-tvalue">' + money(debts.collected) + "</div></div>" +
+      '<div class="mk-ai-tile"><span class="mk-ai-label"><i class="bi bi-journal-text" aria-hidden="true"></i> Yangi qarz</span><div class="mk-ai-tvalue">' + money(debts.new_debt) + "</div></div>" +
+      '<div class="mk-ai-tile"><span class="mk-ai-label"><i class="bi bi-check-circle" aria-hidden="true"></i> Undirilgan</span><div class="mk-ai-tvalue">' + money(debts.collected) + "</div></div>" +
     "</div>";
 
     html += '<div class="mk-ai-section">' + renderAiText(d.ai_overview) + "</div>";
 
     html += '<div class="mk-ai-section"><div class="mk-ai-cols">' +
       "<div>" +
-        '<div class="mk-ai-section-title">💡 Eng ko\'p sotilganlar</div>' + renderTopProducts(d.top_products) +
+        '<div class="mk-ai-section-title"><i class="bi bi-lightbulb" aria-hidden="true"></i> Eng ko\'p sotilganlar</div>' + renderTopProducts(d.top_products) +
       "</div>" +
       "<div>" +
-        '<div class="mk-ai-section-title">🐌 Sekin sotilayotganlar</div>' + renderSlowProducts(d.slow_products) +
+        '<div class="mk-ai-section-title"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Sekin sotilayotganlar</div>' + renderSlowProducts(d.slow_products) +
       "</div>" +
     "</div></div>";
 
     html += '<div class="mk-ai-section mk-ai-inventory">' +
-      '<span class="mk-ai-section-title">📦 Ombor</span>' +
+      '<span class="mk-ai-section-title"><i class="bi bi-box-seam" aria-hidden="true"></i> Ombor</span>' +
       "<span>Kam qolgan: <strong>" + esc(num(inv.low_stock_count)) + " ta</strong></span>" +
       "<span>Ombor qiymati: <strong>" + money(inv.inventory_value) + "</strong></span>" +
     "</div>";
@@ -9655,27 +9666,27 @@ window.loadProfileNew = loadProfileNew;
 
     const steps = [
       {
-        emoji: "📊",
+        emoji: '<i class="bi bi-graph-up-arrow"></i>',
         title: "Xush kelibsiz!",
         text: "Bu sizning boshqaruv panelingiz. Bugungi savdo, oylik tushum va foydani shu yerda bir qarashda ko'rasiz.",
         btn: "Keyingi"
       },
       {
-        emoji: "📦",
+        emoji: '<i class="bi bi-box-seam"></i>',
         title: "1-qadam: mahsulot qo'shing",
         text: "Sotuvni boshlashdan oldin omboringizga mahsulotlaringizni kiriting. \"Mahsulotlar\" bo'limida \"+ Mahsulot qo'shish\" tugmasi xizmat qiladi.",
         action: "productsSection",
         btn: "Mahsulotlarga o'tish"
       },
       {
-        emoji: "🛒",
+        emoji: '<i class="bi bi-cart-check"></i>',
         title: "2-qadam: sotuv qiling",
         text: "\"Sotish\" bo'limida mahsulot tanlab, miqdorni kiriting va Naqd, Karta yoki Qarzga tugmasini bosing — shu qadar!",
         action: "selling",
         btn: "Sotishga o'tish"
       },
       {
-        emoji: "🧾",
+        emoji: '<i class="bi bi-receipt"></i>',
         title: "3-qadam: qarzlarni kuzatib boring",
         text: "Qarzga sotgan mahsulotlaringiz \"Qarzlar\" bo'limida ko'rinadi. Muddati yaqinlashgan mijozlarga tizim avtomatik SMS eslatma yuboradi.",
         action: "debtors",
@@ -9754,12 +9765,12 @@ window.sortTable = function(column) {
   }
   
   document.querySelectorAll('th[onclick^="sortTable"]').forEach(th => {
-    th.innerHTML = th.innerHTML.replace(' 🔼', '').replace(' 🔽', '');
+    th.innerHTML = th.innerHTML.replace(' \u2191', '').replace(' \u2193', '');
   });
   
   const activeTh = document.querySelector(`th[onclick="sortTable('${column}')"]`);
   if (activeTh) {
-    activeTh.innerHTML += currentSortOrder === 'asc' ? ' 🔼' : ' 🔽';
+    activeTh.innerHTML += currentSortOrder === 'asc' ? ' \u2191' : ' \u2193';
   }
   
   renderDebtors();

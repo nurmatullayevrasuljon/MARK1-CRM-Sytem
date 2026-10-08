@@ -25,7 +25,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/premium-theme.css?v=1790606600">
+<link rel="stylesheet" href="css/premium-theme.css?v=1790700002">
+  <!-- ui-ux-pro-max review qatlamı: focus-visible, reduced-motion, touch targets -->
+  <link rel="stylesheet" href="css/dashboard-polish.css?v=1790700001">
   <script>
     // FOUC oldini olish: mavzuni sahifa chizilishidan oldin qo'llash.
     (function () {
@@ -46,19 +48,19 @@
   <div class="d-flex">
 
     <!-- SIDEBAR -->
-    <aside class="sidebar" role="navigation" aria-label="Asosiy navigatsiya">
+    <nav class="sidebar" aria-label="Asosiy navigatsiya">
       <!-- Logotip heading emas — h4 edi, ekran o'quvchilari uchun sarlavhalar
            tartibini buzardi (WCAG 1.3.1). Endi oddiy konteyner. -->
       <div class="logo">
         <img src="img/brand-l.png" alt="Mark1 CRM">
       </div>
-      <ul class="nav flex-column" role="menubar">
+      <ul class="nav flex-column" role="menubar" aria-label="Bo'limlar">
         <li class="nav-item active" data-target="dashboard" role="menuitem" tabindex="0">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
             stroke="currentColor" class="svg-icon">
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M6 13.5V3.75m0 9.75a1.5 1.5 0 0 1 0 3m0-3a1.5 1.5 0 0 0 0 3m0 3.75V16.5m12-3V3.75m0 9.75a1.5 1.5 0 0 1 0 3m0-3a1.5 1.5 0 0 0 0 3m0 3.75V16.5m-6-9V3.75m0 3.75a1.5 1.5 0 0 1 0 3m0-3a1.5 1.5 0 0 0 0 3m0 9.75V10.5" />
-          </svg>&nbsp;
+          </svg>
           Boshqaruv paneli
         </li>
         <li class="nav-item" data-target="selling" role="menuitem" tabindex="0">
@@ -66,7 +68,7 @@
             stroke="currentColor" class="svg-icon">
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-          </svg>&nbsp;
+          </svg>
           Sotish
         </li>
         <li class="nav-item" data-target="productsSection" role="menuitem" tabindex="0">
@@ -74,7 +76,7 @@
             stroke="currentColor" class="svg-icon">
             <path stroke-linecap="round" stroke-linejoin="round"
               d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
-          </svg>&nbsp;
+          </svg>
           Mahsulotlar
         </li>
         <li class="nav-item" data-target="daily-sales" role="menuitem" tabindex="0">
@@ -82,7 +84,7 @@
             stroke="currentColor" class="svg-icon">
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-          </svg>&nbsp;
+          </svg>
           Savdo tarixi
         </li>
         <li class="nav-item" data-target="debtors" role="menuitem" tabindex="0">
@@ -104,7 +106,7 @@
           Sozlamalar
         </li>
       </ul>
-    </aside>
+    </nav>
     <!-- MOBILE BOTTOM NAV -->
     <nav class="mobile-bottom-nav" role="navigation" aria-label="Mobil navigatsiya">
       <button data-target="dashboard" aria-label="Boshqaruv paneli">
@@ -127,11 +129,6 @@
         <i class="bi bi-people"></i>
         <span>Qarzlar</span>
       </button>
-      <button data-target="settings" aria-label="Sozlamalar">
-        <i class="bi bi-gear"></i>
-        <span>Sozlamalar</span>
-      </button>
-
     </nav>
 
     <!-- MAIN -->
@@ -140,13 +137,13 @@
         <!-- Sahifaning yagona h1 sarlavhasi (WCAG 1.3.1 / 2.4.6) -->
         <h1 id="pageTitle">Boshqaruv paneli</h1>
         <div class="top-actions">
-          <button class="theme-toggle-btn" id="themeToggleBtn" title="Kunduzgi/tungi rejim" aria-label="Mavzuni almashtirish">🌙</button>
+          <button class="theme-toggle-btn" id="themeToggleBtn" data-theme-icon="bi" title="Kunduzgi/tungi rejim (Shift+T)" aria-label="Mavzuni almashtirish"><i class="bi bi-moon-stars" aria-hidden="true"></i></button>
           <div class="profile-wrapper">
             <div class="profile-trigger" id="profileTrigger">
               <div class="profile-avatar-wrapper">
-                <img id="topbarAvatar" class="profile-avatar" alt="Avatar">
+                <img id="topbarAvatar" class="profile-avatar" alt="Avatar" width="32" height="32">
                 <div id="topbarAvatarFallback" class="profile-avatar-fallback">AU</div>
-                <div class="notification-dot"></div>
+                <div class="notification-dot" aria-hidden="true"></div>
               </div>
               <div class="profile-info">
                 <span class="profile-name" id="profileName">Foydalanuvchi</span>
@@ -160,7 +157,7 @@
             <div class="profile-dropdown" id="profileDropdown">
               <div class="profile-dropdown-header">
                 <div class="profile-dropdown-avatar-wrapper">
-                  <img id="dropdownAvatar" class="profile-dropdown-avatar" alt="Avatar">
+                  <img id="dropdownAvatar" class="profile-dropdown-avatar" alt="Avatar" width="40" height="40">
                   <div id="dropdownAvatarFallback" class="profile-dropdown-avatar-fallback">AU</div>
                   <div class="profile-dropdown-info">
                     <div id="dropdownName">Foydalanuvchi</div>
@@ -337,7 +334,7 @@
           <div class="col-lg-6">
             <section class="low-stock-section">
               <div class="section-header">
-                <span class="icon">⚠️</span>
+                <span class="icon" aria-hidden="true"><i class="bi bi-exclamation-triangle-fill"></i></span>
                 <div>
                   <h4>Kam zaxiralar haqida ogohlantirish</h4>
                   <p>Qayta buyurtma berish darajasidan past mahsulotlar</p>
@@ -353,7 +350,7 @@
 
       <!-- SELLING SECTION -->
       <section id="selling" class="section">
-        <div id="saleAlert" class="sale-alert hidden"></div>
+        <div id="saleAlert" class="sale-alert hidden" role="status" aria-live="polite"></div>
         <div class="d-flex justify-content-between align-items-center mb-4">
           <div>
             <h2 class="h4 mb-0 fw-bold">Sotish</h2>
@@ -361,47 +358,47 @@
           </div>
         </div>
 
-        <div class="card border-0 shadow-sm mt-4" style="background: var(--bg-surface);">
+        <div class="card border-0 shadow-sm mt-4">
           <div class="card-body p-4">
-            <h3 class="h5 mb-4 fw-bold" style="color: var(--text-primary);">🛒 Yangi sotuv</h3>
+            <h3 class="h5 mb-4 fw-bold" style="color: var(--text-primary);"><i class="bi bi-cart-plus" aria-hidden="true"></i> Yangi sotuv</h3>
 
             <div class="row">
               <!-- Mahsulot tanlash -->
               <div class="col-md-3">
                 <label class="form-label small fw-semibold text-uppercase text-muted" for="saleSearch">Mahsulot</label>
                 <div class="input-group mb-2 shadow-sm" style="border-radius: 8px; overflow: hidden; border: 1px solid var(--border-subtle);">
-                  <input type="text" id="saleSearch" class="form-control border-0" style="background: var(--bg-main); color: var(--text-primary); box-shadow: none;" placeholder="🔍 Mahsulot qidirish...">
+                  <input type="text" id="saleSearch" class="form-control border-0" style="background: var(--bg-main); color: var(--text-primary); box-shadow: none;" placeholder="Mahsulot nomi yoki barkod...">
                   <button class="btn border-0" style="background: var(--brand-primary); color: #fff; padding: 0 12px;" type="button" onclick="startScanner('saleSearch')" title="Kamera orqali skanerlash">
                     <i class="bi bi-qr-code-scan"></i>
                   </button>
                 </div>
-                <select id="saleProduct" class="form-select" style="background: var(--bg-main); border-color: var(--border-subtle); color: var(--text-primary);" aria-label="Mahsulot tanlash"></select>
+                <select id="saleProduct" class="form-select" aria-label="Mahsulot tanlash"></select>
               </div>
 
               <!-- Miqdor -->
               <div class="col-md-2">
                 <label id="saleQtyLabel" class="form-label small fw-semibold text-uppercase text-muted" for="saleQty">Miqdor</label>
-                <input type="number" id="saleQty" class="form-control" style="background: var(--bg-main); border-color: var(--border-subtle); color: var(--text-primary);" step="0.01" min="0.01"
+                <input type="number" id="saleQty" class="form-control" step="0.01" min="0.01"
                   placeholder="Miqdorni kiriting" />
               </div>
 
               <!-- Narx (disabled) -->
               <div class="col-md-3">
                 <label class="form-label small fw-semibold text-uppercase text-muted" for="salePrice">Narx</label>
-                <input type="text" id="salePrice" class="form-control" style="background: var(--bg-main); border-color: var(--border-subtle); color: var(--text-primary);" disabled>
+                <input type="text" id="salePrice" class="form-control" disabled>
               </div>
 
               <!-- To'lov turi tugmalari (Naqd / Karta / Qarzga — bitta qatorda) -->
               <div class="col-md-4 d-flex align-items-end">
                 <div class="btn-group w-100">
                   <button class="btn btn-success" id="addSaleCash" title="Naqd bilan sotish">
-                    💵 Naqd
+                    <i class="bi bi-cash-stack" aria-hidden="true"></i> Naqd
                   </button>
                   <button class="btn btn-info" id="addSaleCard" title="Karta bilan sotish">
-                    💳 Karta
+                    <i class="bi bi-credit-card" aria-hidden="true"></i> Karta
                   </button>
                   <button class="btn btn-warning" id="addSaleDebt" title="Qarzga yoki qisman to'lov bilan sotish">
-                    🧾 Qarzga
+                    <i class="bi bi-receipt" aria-hidden="true"></i> Qarzga
                   </button>
                 </div>
               </div>
@@ -412,7 +409,7 @@
               <div class="modal-debtors-content">
                 <div class="modal-debtors-header">
                   <h2>Qarzga sotish</h2>
-                  <button class="close-modal-debtors" onclick="closeDebtSaleModal()">&times;</button>
+                  <button class="close-modal-debtors" aria-label="Yopish" onclick="closeDebtSaleModal()">&times;</button>
                 </div>
                 <form id="debtSaleForm" onsubmit="handleDebtSaleSubmit(event)">
                   <div class="form-group">
@@ -439,8 +436,8 @@
                   </div>
                   <div class="form-group" id="debtSalePaymentTypeGroup" style="display:none;">
                     <label>To'langan summaning turi</label><br>
-                    <label class="mr-3"><input type="radio" name="debtSalePaymentType" value="cash" checked> 💵 Naqd</label>
-                    <label><input type="radio" name="debtSalePaymentType" value="card"> 💳 Karta</label>
+                    <label class="mr-3"><input type="radio" name="debtSalePaymentType" value="cash" checked> <i class="bi bi-cash-stack" aria-hidden="true"></i> Naqd</label>
+                    <label><input type="radio" name="debtSalePaymentType" value="card"> <i class="bi bi-credit-card" aria-hidden="true"></i> Karta</label>
                   </div>
                   <div class="form-group">
                     <label for="debtSaleDueDate">Qaytarish muddati</label>
@@ -457,20 +454,20 @@
 
             <!-- Bugungi sotilgan mahsulotlar jadvali -->
             <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
-              <h3 class="h6 mb-0 fw-bold" style="color: var(--text-primary);">🧾 Bugungi sotilgan mahsulotlar</h3>
+              <h3 class="h6 mb-0 fw-bold" style="color: var(--text-primary);"><i class="bi bi-receipt" aria-hidden="true"></i> Bugungi sotilgan mahsulotlar</h3>
               <small class="text-muted">Real vaqt rejimida yangilanadi</small>
             </div>
 
             <div class="table-responsive rounded border" style="border-color: var(--border-subtle) !important;">
               <table class="table table-hover align-middle mb-0">
-                <thead style="background: var(--bg-main);">
+                <thead>
                   <tr>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase px-3 py-3">Mahsulot</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">Miqdor</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">Narx</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">Jami</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">Vaqt</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">Harakatlar</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase px-3 py-3">Mahsulot</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Miqdor</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Narx</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Jami</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Vaqt</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Harakatlar</th>
                   </tr>
                 </thead>
                 <tbody id="salesTable"></tbody>
@@ -500,7 +497,7 @@
           <button class="btn btn-primary px-4 py-2 fw-semibold shadow-sm" id="openProductModal" style="background: var(--brand-primary); border: none;">+ Mahsulot qo'shish</button>
         </div>
 
-        <div class="card border-0 shadow-sm" style="background: var(--bg-surface);">
+        <div class="card border-0 shadow-sm">
           <div class="card-body p-0">
             <div class="p-4 border-bottom" style="border-color: var(--border-subtle) !important;">
               <div class="position-relative" style="max-width: 400px; width: 100%;">
@@ -511,15 +508,15 @@
 
             <div class="table-responsive">
               <table class="table table-hover align-middle mb-0">
-                <thead style="background: var(--bg-main);">
+                <thead>
                   <tr>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase px-4 py-3">Rasm</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">Nomi</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">Turi</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">Narxi</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">Soni</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">Sotuv holati</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">Harakatlar</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase px-4 py-3">Rasm</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Nomi</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Turi</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Narxi</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Soni</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Sotuv holati</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Harakatlar</th>
                   </tr>
                 </thead>
                 <tbody id="productTable"></tbody>
@@ -542,7 +539,7 @@
         <div class="row mb-4">
           <!-- Bugungi daromad card -->
           <div class="col-md-4 mb-3">
-            <div class="card border-0 shadow-sm h-100" style="background: var(--bg-surface);">
+            <div class="card border-0 shadow-sm h-100">
               <div class="card-body">
                 <p class="text-muted mb-1 small text-uppercase fw-semibold">Bugungi daromad</p>
                 <h3 class="daily-counter mb-2 fw-bold" id="dailySalesPageCounter" data-last-value="0" style="color: var(--text-primary); font-size: 1.75rem;">0</h3>
@@ -554,10 +551,10 @@
           </div>
           <!-- To'lanmagan qarz -->
           <div class="col-md-4 mb-3">
-            <div class="card border-0 shadow-sm h-100" style="background: var(--bg-surface);">
+            <div class="card border-0 shadow-sm h-100">
               <div class="card-body">
                 <p class="text-muted mb-1 small text-uppercase fw-semibold d-flex align-items-center gap-2">
-                  <span style="color: var(--warning-text);">⚠️</span> To'lanmagan qarz
+                  <span style="color: var(--warning-text);" aria-hidden="true"><i class="bi bi-exclamation-triangle-fill"></i></span> To'lanmagan qarz
                 </p>
                 <h3 class="counter mb-2 fw-bold" data-key="totalDebt" data-count="0" style="color: var(--text-primary); font-size: 1.75rem;">0</h3>
                 <div class="debt-count-badge small" style="color: var(--text-secondary);">
@@ -570,10 +567,10 @@
 
           <!-- Bugungi tranziksiyalar -->
           <div class="col-md-4 mb-3">
-            <div class="card border-0 shadow-sm h-100" style="background: var(--bg-surface);">
+            <div class="card border-0 shadow-sm h-100">
               <div class="card-body">
                 <p class="text-muted mb-1 small text-uppercase fw-semibold d-flex align-items-center gap-2">
-                  <span style="color: var(--brand-text);">📝</span> Bugungi sotuvlar
+                  <span style="color: var(--brand-text);" aria-hidden="true"><i class="bi bi-pencil-square"></i></span> Bugungi sotuvlar
                 </p>
                 <h3 class="tranzik-text mb-2 fw-bold" id="totalTransactionsCounter" data-last-value="0" style="color: var(--text-primary); font-size: 1.75rem;">0</h3>
                 <div class="small" style="color: var(--text-secondary);">Sotuvlar soni</div>
@@ -583,7 +580,7 @@
         </div>
 
         <!-- ===== TRANSACTION JOURNAL ===== -->
-        <div class="card border-0 shadow-sm" style="background: var(--bg-surface);">
+        <div class="card border-0 shadow-sm">
           <div class="card-body p-0">
             <div class="p-4 border-bottom" style="border-color: var(--border-subtle) !important;">
               <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -609,14 +606,14 @@
             
             <div class="table-responsive">
               <table class="table table-hover align-middle mb-0">
-                <thead style="background: var(--bg-main);">
+                <thead>
                   <tr>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase px-4 py-3">Mahsulot</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">Miqdor</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">Narx</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">Sana / Vaqt</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">To'lov turi</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase py-3">Status</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase px-4 py-3">Mahsulot</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Miqdor</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Narx</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Sana / Vaqt</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">To'lov turi</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Status</th>
                   </tr>
                 </thead>
                 <tbody id="transactionsTableBody"></tbody>
@@ -633,7 +630,7 @@
             <p class="text-muted mb-0 small">To'lov holatini va to'lanmagan qoldiqlarni kuzatib boring</p>
           </div>
           <div class="d-flex gap-2">
-            <input type="text" id="searchInput" class="form-control shadow-sm" placeholder="🔍 Qidirish..." style="background: var(--bg-main); border-color: var(--border-subtle); color: var(--text-primary); max-width: 250px;" aria-label="Qidirish">
+            <input type="text" id="searchInput" class="form-control shadow-sm" placeholder="Qidirish..." style="background: var(--bg-main); border-color: var(--border-subtle); color: var(--text-primary); max-width: 250px;" aria-label="Qidirish">
             <button class="btn btn-primary px-4 py-2 fw-semibold shadow-sm" onclick="openModal()" style="background: var(--brand-primary); border: none;">+ Yangi qarzdor</button>
           </div>
         </div>
@@ -671,11 +668,11 @@
         <div class="card border-0 shadow-sm">
           <div class="card-header bg-transparent border-bottom-0 pt-4 pb-0">
             <div class="d-flex justify-content-between align-items-center">
-              <div class="filter-tabs d-flex gap-2" style="overflow-x: auto;">
+              <div class="filter-tabs d-flex gap-2" style="overflow-x: auto;" role="group" aria-label="Qarzdorlar filtri">
                 <button class="btn btn-sm btn-outline-primary active px-3 rounded-pill" data-filter="all">Hammasi</button>
-                <button class="btn btn-sm btn-outline-danger px-3 rounded-pill" data-filter="overdue">Muddati o'tgan</button>
-                <button class="btn btn-sm btn-outline-warning px-3 rounded-pill" data-filter="upcoming">Yaqinlashmoqda</button>
-                <button class="btn btn-sm btn-outline-success px-3 rounded-pill" data-filter="normal">Oddiy</button>
+                <button class="btn btn-sm btn-outline-danger px-3 rounded-pill" data-filter="overdue" aria-pressed="false">Muddati o'tgan</button>
+                <button class="btn btn-sm btn-outline-warning px-3 rounded-pill" data-filter="upcoming" aria-pressed="false">Yaqinlashmoqda</button>
+                <button class="btn btn-sm btn-outline-success px-3 rounded-pill" data-filter="normal" aria-pressed="false">Oddiy</button>
               </div>
             </div>
           </div>
@@ -684,13 +681,13 @@
               <table class="table table-hover align-middle">
                 <thead>
                   <tr>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase" style="cursor:pointer;" onclick="sortTable('name')">Mijoz ism-sharifi</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase" style="cursor:pointer;" onclick="sortTable('amount')">Qarz summasi</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase">Telefon raqam</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase">Olingan sana</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase" style="cursor:pointer;" onclick="sortTable('date')">Qaytarish sanasi</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase">Holati</th>
-                    <th class="text-muted small fw-semibold border-0 text-uppercase text-end">Amallar</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase" style="cursor:pointer;" onclick="sortTable('name')">Mijoz ism-sharifi</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase" style="cursor:pointer;" onclick="sortTable('amount')">Qarz summasi</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase">Telefon raqam</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase">Olingan sana</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase" style="cursor:pointer;" onclick="sortTable('date')">Qaytarish sanasi</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase">Holati</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase text-end">Amallar</th>
                   </tr>
                 </thead>
                 <tbody id="debtorTableBody">
@@ -701,11 +698,11 @@
           </div>
         </div>
       
-        <div class="modal-debtors" id="debtorModal">
+        <div class="modal-debtors" id="debtorModal" role="dialog" aria-modal="true" aria-label="Yangi qarzdor qo'shish">
           <div class="modal-debtors-content">
             <div class="modal-debtors-header">
               <h2>Yangi qarzdor qo'shish</h2>
-              <button class="close-modal-debtors" onclick="closeModal()">&times;</button>
+              <button class="close-modal-debtors" aria-label="Yopish" onclick="closeModal()">&times;</button>
             </div>
             <form id="debtorForm" onsubmit="handleSubmit(event)">
               <div class="form-group">
@@ -741,11 +738,11 @@
         </div>
 
         <!-- SMS modali -->
-        <div class="modal-debtors" id="smsModal">
+        <div class="modal-debtors" id="smsModal" role="dialog" aria-modal="true" aria-label="SMS eslatma">
           <div class="modal-debtors-content">
             <div class="modal-debtors-header">
               <h2>SMS eslatma</h2>
-              <button class="close-modal-debtors" onclick="closeSmsModal()">&times;</button>
+              <button class="close-modal-debtors" aria-label="Yopish" onclick="closeSmsModal()">&times;</button>
             </div>
             <form id="smsForm" onsubmit="sendSms(event)">
               <div class="form-group">
@@ -772,11 +769,11 @@
         </div>
 
         <!-- Qarz qo'shish/kamaytirish modali -->
-        <div class="modal-debtors" id="adjustDebtModal">
+        <div class="modal-debtors" id="adjustDebtModal" role="dialog" aria-modal="true" aria-label="Qarzni o'zgartirish">
           <div class="modal-debtors-content">
             <div class="modal-debtors-header">
               <h2 id="adjustModalTitle">Qarzni o'zgartirish</h2>
-              <button class="close-modal-debtors" onclick="closeAdjustModal()">&times;</button>
+              <button class="close-modal-debtors" aria-label="Yopish" onclick="closeAdjustModal()">&times;</button>
             </div>
             <form id="adjustDebtForm" onsubmit="handleAdjustDebt(event)">
               <div class="form-group">
@@ -802,11 +799,11 @@
 
         <!-- YANGI: Qarzdorni tahrirlash oynasi (avval HTML'i umuman yo'q edi,
              shuning uchun "Tahrirlash" tugmasi hech qachon ishlamagan) -->
-        <div class="modal-debtors" id="editDebtorModal">
+        <div class="modal-debtors" id="editDebtorModal" role="dialog" aria-modal="true" aria-label="Qarzdorni tahrirlash">
           <div class="modal-debtors-content">
             <div class="modal-debtors-header">
               <h2>Qarzdorni tahrirlash</h2>
-              <button class="close-modal-debtors" onclick="closeEditDebtorModal()">&times;</button>
+              <button class="close-modal-debtors" aria-label="Yopish" onclick="closeEditDebtorModal()">&times;</button>
             </div>
             <form id="editDebtorForm" onsubmit="handleEditDebtorSubmit(event)">
               <input type="hidden" id="editDebtorId" aria-label="editDebtorId">
@@ -857,21 +854,21 @@
                   <div class="row mb-3">
                     <div class="col-md-6">
                       <label class="form-label text-muted small fw-semibold" for="fullName">F.I.SH</label>
-                      <input type="text" id="fullName" class="form-control" placeholder="Ism Familiya" style="background: var(--bg-surface); border-color: var(--border-subtle); color: var(--text-primary);">
+                      <input type="text" id="fullName" class="form-control" placeholder="Ism Familiya">
                     </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted small fw-semibold" for="email">Email</label>
-                      <input type="email" id="email" class="form-control" placeholder="email@example.com" style="background: var(--bg-surface); border-color: var(--border-subtle); color: var(--text-primary);">
+                      <input type="email" id="email" class="form-control" placeholder="email@example.com">
                     </div>
                   </div>
                   <div class="row mb-4">
                     <div class="col-md-6">
                       <label class="form-label text-muted small fw-semibold" for="phone">Telefon raqam</label>
-                      <input type="tel" id="phone" class="form-control" placeholder="+998 90 123 45 67" style="background: var(--bg-surface); border-color: var(--border-subtle); color: var(--text-primary);">
+                      <input type="tel" id="phone" class="form-control" placeholder="+998 90 123 45 67">
                     </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted small fw-semibold" for="department">Departament</label>
-                      <select id="department" class="form-select" style="background: var(--bg-surface); border-color: var(--border-subtle); color: var(--text-primary);">
+                      <select id="department" class="form-select">
                         <option value="boshqaruv">Boshqaruv</option>
                         <option value="savdo">Savdo</option>
                         <option value="it">IT</option>
@@ -893,15 +890,15 @@
                   <div class="row mb-3">
                     <div class="col-md-4">
                       <label class="form-label text-muted small fw-semibold" for="oldPasswordInput">Eski parol</label>
-                      <input type="password" id="oldPasswordInput" class="form-control" placeholder="****" style="background: var(--bg-surface); border-color: var(--border-subtle); color: var(--text-primary);">
+                      <input type="password" id="oldPasswordInput" class="form-control" placeholder="****">
                     </div>
                     <div class="col-md-4">
                       <label class="form-label text-muted small fw-semibold" for="newPasswordInput">Yangi parol</label>
-                      <input type="password" id="newPasswordInput" class="form-control" placeholder="****" style="background: var(--bg-surface); border-color: var(--border-subtle); color: var(--text-primary);">
+                      <input type="password" id="newPasswordInput" class="form-control" placeholder="****">
                     </div>
                     <div class="col-md-4">
                       <label class="form-label text-muted small fw-semibold" for="confirmPasswordInput">Tasdiqlash</label>
-                      <input type="password" id="confirmPasswordInput" class="form-control" placeholder="****" style="background: var(--bg-surface); border-color: var(--border-subtle); color: var(--text-primary);">
+                      <input type="password" id="confirmPasswordInput" class="form-control" placeholder="****">
                     </div>
                   </div>
                   <div class="d-flex justify-content-between align-items-center">
@@ -980,8 +977,8 @@
           <div class="modal-content">
             <form id="productForm">
               <div class="modal-header">
-                <h2 class="modal-title">📦 Mahsulot qo'shish</h2>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h2 class="modal-title"><i class="bi bi-box-seam" aria-hidden="true"></i> Mahsulot qo'shish</h2>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Yopish">&times;</button>
               </div>
 
               <div class="modal-body">
@@ -1043,7 +1040,7 @@
                   <div class="col-md-12 mb-3">
                     <div class="alert alert-info mb-0 py-2">
                       <i class="bi bi-calculator"></i>
-                      <small class="text-muted">💡 Birlik foyda:</small>
+                      <small class="text-muted">Birlik foyda:</small>
                       <strong id="profitPreview" style="margin-left:10px;">0 UZS</strong>
                     </div>
                   </div>
@@ -1130,7 +1127,7 @@
   <script src="js/ux-enhancements.js?v=1789490310"></script>
   <script src="js/api-client.js?v=1789490310"></script>
   <script src="index.js?v=1790606500" defer></script>
-  <script src="script.js?v=1790606800" defer></script>
+  <script src="script.js?v=1790700002" defer></script>
   <script defer>
   </script>
   <script defer>
@@ -1167,7 +1164,74 @@
   </div>
 
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript"></script>
-  <script src="js/theme-toggle.js?v=1789490310"></script>
+  <script src="js/theme-toggle.js?v=1790606601"></script>
+  <!-- ui-ux-pro-max review qatlamı: klaviatura navigatsiyasi + aria sinxronizatsiyasi -->
+  <script>
+    (function () {
+      "use strict";
+
+      /* ── 1. Sidebar menubar klaviaturasi (WAI-ARIA APG):
+            ArrowUp/ArrowDown — fokus, Home/End — birinchi/oxirgi,
+            Enter/Space — bo'limni ochish (li elementi o'zi press bo'lmaydi) ── */
+      var SIDEBAR_SEL = ".sidebar .nav-item[role='menuitem']";
+      document.addEventListener("keydown", function (e) {
+        var el = document.activeElement;
+        if (!el || !el.matches || !el.matches(SIDEBAR_SEL)) return;
+        var items = Array.prototype.slice.call(document.querySelectorAll(SIDEBAR_SEL));
+        var i = items.indexOf(el);
+        if (i < 0) return;
+
+        var next = -1;
+        if (e.key === "ArrowDown") next = (i + 1) % items.length;
+        else if (e.key === "ArrowUp") next = (i - 1 + items.length) % items.length;
+        else if (e.key === "Home") next = 0;
+        else if (e.key === "End") next = items.length - 1;
+        else if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+          e.preventDefault();
+          el.click();
+          return;
+        }
+        if (next >= 0) {
+          e.preventDefault();
+          items[next].focus();
+        }
+      });
+
+      /* ── 2. aria-current="page" — faol bo'lim e'lon qilinadi (WCAG 4.1.2) ── */
+      var NAV_SEL = ".sidebar .nav-item[data-target], .mobile-bottom-nav button[data-target]";
+      function syncAriaCurrent() {
+        document.querySelectorAll(NAV_SEL).forEach(function (el) {
+          if (el.classList.contains("active")) el.setAttribute("aria-current", "page");
+          else el.removeAttribute("aria-current");
+        });
+      }
+
+      /* ── 3. Filter tablari: aria-pressed holati class'dan o'qiladi ── */
+      function syncAriaPressed() {
+        document.querySelectorAll(".filter-tabs button").forEach(function (btn) {
+          btn.setAttribute("aria-pressed", btn.classList.contains("active") ? "true" : "false");
+        });
+      }
+
+      function initA11ySync() {
+        syncAriaCurrent();
+        syncAriaPressed();
+        var mo = new MutationObserver(function () {
+          syncAriaCurrent();
+          syncAriaPressed();
+        });
+        document.querySelectorAll(".sidebar .nav, .mobile-bottom-nav, .filter-tabs").forEach(function (root) {
+          mo.observe(root, { subtree: true, attributes: true, attributeFilter: ["class"] });
+        });
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initA11ySync);
+      } else {
+        initA11ySync();
+      }
+    })();
+  </script>
 </body>
 
 </html>

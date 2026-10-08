@@ -28,6 +28,19 @@
 
   var isDark = applySavedTheme();
 
+  /* ── 1b. Tugma ichini chizish: bootstrap-icon yoki emoji ──
+     data-theme-icon="bi" bo'lsa (dashboard) ikonka, aks holda emoji
+     (landing/login/signup sahifalarida hech narsa o'zgarmaydi). */
+  function setToggleIcon(btn, dark) {
+    if (btn.hasAttribute("data-theme-icon")) {
+      btn.innerHTML = dark
+        ? '<i class="bi bi-sun" aria-hidden="true"></i>'
+        : '<i class="bi bi-moon-stars" aria-hidden="true"></i>';
+    } else {
+      btn.textContent = dark ? "\u2600\uFE0F" : "\uD83C\uDF19";
+    }
+  }
+
   /* ── 2. Mavzuni almashtirish funksiyasi ── */
   function toggleTheme() {
     var current = document.documentElement.classList.contains("dark-mode");
@@ -38,7 +51,7 @@
 
     // Barcha toggle tugmalarini yangilash
     document.querySelectorAll("[data-theme-toggle]").forEach(function (btn) {
-      btn.textContent = next ? "☀️" : "🌙";
+      setToggleIcon(btn, next);
       btn.setAttribute("aria-label", next ? "Kunduzgi rejimga o'tish" : "Tungi rejimga o'tish");
     });
 
@@ -69,7 +82,7 @@
     if (existingBtn) {
       // Index.html kabi sahifada — mavjud tugmani ishlatish
       existingBtn.setAttribute("data-theme-toggle", "");
-      existingBtn.textContent = isDark ? "☀️" : "🌙";
+      setToggleIcon(existingBtn, isDark);
       existingBtn.setAttribute("aria-label", isDark ? "Kunduzgi rejimga o'tish" : "Tungi rejimga o'tish");
       existingBtn.addEventListener("click", toggleTheme);
     } else {
@@ -95,7 +108,7 @@
         localStorage.setItem("theme", dark ? "dark" : "light");
         isDark = dark;
         document.querySelectorAll("[data-theme-toggle]").forEach(function (btn) {
-          btn.textContent = dark ? "☀️" : "🌙";
+          setToggleIcon(btn, dark);
           btn.setAttribute("aria-label", dark ? "Kunduzgi rejimga o'tish" : "Tungi rejimga o'tish");
         });
       });
@@ -107,7 +120,7 @@
         document.documentElement.classList.toggle("dark-mode", e.matches);
         isDark = e.matches;
         document.querySelectorAll("[data-theme-toggle]").forEach(function (btn) {
-          btn.textContent = isDark ? "☀️" : "🌙";
+          setToggleIcon(btn, isDark);
         });
         syncSettingsToggle(isDark);
       }
@@ -120,7 +133,7 @@
     btn.setAttribute("data-theme-toggle", "");
     btn.setAttribute("aria-label", isDark ? "Kunduzgi rejimga o'tish" : "Tungi rejimga o'tish");
     btn.setAttribute("title", "Mavzuni almashtirish (Shift+T)");
-    btn.textContent = isDark ? "☀️" : "🌙";
+    setToggleIcon(btn, isDark);
 
     // Stillar
     btn.style.cssText = [

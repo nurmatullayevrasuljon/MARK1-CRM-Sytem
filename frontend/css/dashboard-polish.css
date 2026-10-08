@@ -1,0 +1,293 @@
+/* ==========================================================================
+   MARK1 CRM — DASHBOARD POLISH v1.0
+   ui-ux-pro-max review qatlamı (dashboard.html uchun, premium-theme keyin)
+   Muhimlik tartibi: A11y → Touch → Performance → Style → Layout → Type
+   ========================================================================== */
+
+/* ─── 1. ACCESSIBILITY: global focus-visible (WCAG 2.4.7) ────────────────── */
+/* Bootstrap/premium `outline:none` qiladi — shuning uchun yuqori spesifiklik
+   + !important bilan klaviatura fokusini qaytarish SHART. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible,
+.form-check-input:focus-visible {
+  outline: 2px solid var(--brand-primary) !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--brand-surface) !important;
+}
+.skip-link:focus-visible { outline-offset: 0; }
+
+/* ─── 2. REDUCED MOTION (prefers-reduced-motion) ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── 3. GLOBAL COMPONENT BASE ────────────────────────────────────────────── */
+.btn {
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+              color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+.btn:active:not(:disabled) { transform: scale(0.98); }
+.btn:disabled { opacity: 0.6; }
+
+/* Card yuzasi — dashboard ichidagi 30+ takroriy inline style o'rniga */
+.card {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+
+/* Form nazoratlari — minimal-balandlik (touch target) */
+.form-control,
+.form-select,
+select.form-control {
+  min-height: 42px;
+}
+textarea.form-control { min-height: 0; }
+.form-label { letter-spacing: 0.01em; }
+
+/* Raqamlar tabular — animatsiyali counter'larda raqam "sakramasligi" uchun */
+.counter,
+.daily-c,
+.daily-counter,
+.tranzik-text,
+#totalSum,
+#overdueAmount,
+#upcomingAmount,
+#totalAmount,
+.profit-preview,
+.table td.num,
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ─── 4. SIDEBAR ──────────────────────────────────────────────────────────── */
+.sidebar .nav-item {
+  min-height: 44px;                 /* touch target 44px (AA 2.5.8) */
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+}
+.sidebar .nav-item .svg-icon {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.sidebar .nav-item:hover .svg-icon { transform: scale(1.06); }
+.sidebar .nav-item[aria-current="page"] {
+  background: var(--brand-surface);
+  color: var(--brand-text);
+}
+
+/* ─── 5. TOPBAR ───────────────────────────────────────────────────────────── */
+.topbar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+.topbar h1, .topbar h5 {
+  color: var(--text-primary) !important;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.theme-toggle-btn {
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+  width: 44px;                      /* touch target 44px */
+  height: 44px;
+}
+.theme-toggle-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--brand-primary);
+  color: var(--brand-text);
+}
+.profile-trigger {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  min-height: 44px;
+}
+.profile-trigger:hover { background: var(--bg-hover); }
+
+/* ─── 6. KPI STAT CARD ────────────────────────────────────────────────────── */
+.card-box {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-box:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+/* Ikonka-chip: SVG ustida birxil vizual qatlam */
+.card-box small.counter-smal {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.card-box small.counter-smal svg.svg-icon {
+  width: 30px;
+  height: 30px;
+  padding: 6px;
+  border-radius: var(--radius-md);
+  background: var(--brand-surface);
+  color: var(--brand-text);
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+.card-box h3.counter,
+.card-box h3.daily-c {
+  color: var(--text-primary) !important;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.counter-change { font-weight: 500; }
+
+/* Grafik kartalari sarlavhasi */
+.card-box h3.h6 { color: var(--text-primary) !important; letter-spacing: 0.01em; }
+
+/* ─── 7. SECTION SARYAVHASI + IKONKA CHIP ─────────────────────────────────── */
+.low-stock-section .section-header .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.overdue-title, .overdue-subtitle { color: var(--text-primary); }
+.overdue-subtitle { color: var(--text-muted); }
+
+/* ─── 8. SOTISH: to'lov tugmalari rang-kodi ───────────────────────────────── */
+/* Naqd=yashil, Karta=brand, Qarzga=amber — har biri alohida ma'no beradi */
+#addSaleCash,
+#addSaleCard,
+#addSaleDebt {
+  min-height: 46px;                 /* touch target */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  flex: 1 1 0;
+}
+#addSaleCash { background: var(--success); border-color: var(--success); color: #fff; }
+#addSaleCash:hover, #addSaleCash:focus { background: #0EA374; border-color: #0EA374; color: #fff; }
+#addSaleCard { background: var(--brand-primary); border-color: var(--brand-primary); color: #fff; }
+#addSaleCard:hover, #addSaleCard:focus { background: var(--brand-hover); border-color: var(--brand-hover); color: #fff; }
+#addSaleDebt { background: var(--warning); border-color: var(--warning); color: #3D2B00; }
+#addSaleDebt:hover, #addSaleDebt:focus { background: #E08A00; border-color: #E08A00; color: #3D2B00; }
+
+/* To'lov turidagi radio-lar */
+.debt-sale-payment-type label,
+input[name="debtSalePaymentType"] + span { cursor: pointer; }
+
+/* Jami daromad pill */
+#totalSum { font-weight: 800; letter-spacing: -0.01em; }
+
+/* ─── 9. JADVAL ───────────────────────────────────────────────────────────── */
+.table thead th {
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+  user-select: none;
+}
+.table thead th[onclick] { cursor: pointer; }
+.table tbody td { font-size: 0.875rem; }
+.table-responsive.border { border-color: var(--border-subtle) !important; }
+
+/* ─── 10. FILTR TABLARI ───────────────────────────────────────────────────── */
+.filter-tabs button {
+  min-height: 40px;                 /* touch target */
+  padding: 0.5rem 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.filter-tabs button[aria-pressed="true"] {
+  background: var(--brand-primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* ─── 11. MODALLAR (modal-debtors) ────────────────────────────────────────── */
+.close-modal-debtors {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  font-size: 1.5rem;
+  line-height: 1;
+  margin: -8px -8px 0 0;
+  transition: background 0.15s ease;
+}
+.close-modal-debtors:hover { background: var(--bg-hover); }
+.modal-debtors-content { max-height: calc(100vh - 48px); overflow-y: auto; }
+.modal-debtors-header h2 { color: var(--text-primary); letter-spacing: -0.01em; }
+
+/* ─── 12. MOBIL PASTKI NAVIGATSIYA (≤5 element, safe-area, 48dp target) ──── */
+@media (max-width: 767px) {
+  .mobile-bottom-nav {
+    height: auto;
+    min-height: 64px;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-subtle);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+  }
+  .mobile-bottom-nav button {
+    min-height: 48px;               /* Android 48dp touch target */
+    gap: 4px;
+    font-size: 11px;                /* QA: 10px juda kichik edi */
+    color: var(--text-secondary);
+    border-radius: var(--radius-md);
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .mobile-bottom-nav button i { font-size: 20px; }
+  .mobile-bottom-nav button span { font-weight: 600; }
+  .mobile-bottom-nav button.active,
+  .mobile-bottom-nav button:active {
+    color: var(--brand-text);
+    background: var(--brand-surface);
+  }
+  .content { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ─── 13. DARK MODE qo'shimchalari (token bilan) ──────────────────────────── */
+.dark-mode .btn-warning,
+.dark-mode #addSaleDebt { color: #241700; }
+.dark-mode .profile-trigger { background: var(--bg-card); }
+.dark-mode .card-box small.counter-smal svg.svg-icon {
+  background: var(--brand-surface);
+  color: var(--brand-text);
+}
+
+/* ─── 14. EMPTY STATE + YUKLANISH ─────────────────────────────────────────── */
+.empty-state { text-align: center; color: var(--text-muted); }
+.empty-icon { font-size: 2.5rem; opacity: 0.75; }
+
+/* ─── 15. PRINT (ixtiyoriy) ───────────────────────────────────────────────── */
+@media print {
+  .sidebar, .mobile-bottom-nav, .top-actions, .profile-wrapper { display: none !important; }
+  .content { padding: 0; }
+  .card-box { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+}
