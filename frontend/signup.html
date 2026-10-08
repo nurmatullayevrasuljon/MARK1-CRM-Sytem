@@ -83,6 +83,20 @@
       transition: background .2s ease;
     }
 
+    /* Kirish animatsiyasi `.auth-shell` ni 30px O'NGGA siljitadi
+       (login.html esa -30px — u hech qachon chetga chiqmaydi).
+       Shu sababli sahifa ochilishi davrida butun hujjatda 30px
+       gorizontal skroll paydo bo'lib, sahifa yon tomonga siljishi
+       mumkin edi. `clip` skroll konteyner yaratmay, faqat chetdan
+       tashqaridagi qismini kesadi — animatsiya ko'rinishi o'zgarmaydi
+       (bloc ekranning tashqarisidan kiradi) va gorizontal skroll
+       hech qachon paydo bo'lmaydi. `overflow-y` `clip` bilan
+       juftlashganda `visible` holatida qoladi, ya'ni vertikal
+       skroll o'zgarmaydi. */
+    html, body {
+      overflow-x: clip;
+    }
+
     /* ── Layout: Register = form LEFT, features RIGHT ── */
     .auth-shell {
       display: flex;
