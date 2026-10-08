@@ -8,6 +8,7 @@ import '../providers/auth_provider.dart';
 import '../screens/auth/login_screen.dart';
 import '../utils/phone_utils.dart';
 import '../utils/dispose_utils.dart';
+import '../services/update_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -221,10 +222,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   onTap: () => themeProvider.toggleTheme(),
                 ),
-                // PIN bo'limi olib tashlandi: ilova endi kirishda PIN
-                // so'ramaydi, shuning uchun uni o'zgartirish ham
-                // ma'nossiz edi (o'lik UI qolmasligi uchun butunlay
-                // o'chirildi).
+                _SettingsTile(
+                  icon: Icons.system_update_rounded,
+                  title: 'Yangilanishlarni tekshirish',
+                  subtitle: 'v${UpdateService.currentVersionName}',
+                  isDark: isDark,
+                  onTap: () => UpdateService.checkForUpdate(
+                    context,
+                    isManualCheck: true,
+                  ),
+                ),
 
                 const SizedBox(height: 24),
 
@@ -763,6 +770,7 @@ class _SectionHeader extends StatelessWidget {
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String title;
+  final String? subtitle;
   final bool isDark;
   final VoidCallback? onTap;
   final Widget? trailing;
@@ -770,6 +778,7 @@ class _SettingsTile extends StatelessWidget {
   const _SettingsTile({
     required this.icon,
     required this.title,
+    this.subtitle,
     required this.isDark,
     this.onTap,
     this.trailing,
@@ -802,6 +811,15 @@ class _SettingsTile extends StatelessWidget {
               color: AppColors.text(isDark),
             ),
           ),
+          subtitle: subtitle != null
+              ? Text(
+                  subtitle!,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: AppColors.textHint(isDark),
+                  ),
+                )
+              : null,
           trailing: trailing ??
               Icon(Icons.chevron_right_rounded,
                   color: AppColors.textHint(isDark)),

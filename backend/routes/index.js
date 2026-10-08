@@ -13,11 +13,13 @@ const clientRoutes = require("./client.routes");
 const saleRoutes = require("./sale.routes");
 const debtRoutes = require("./debt.routes");
 const aiRoutes = require("./ai.routes");
+const appRoutes = require("./app.routes");
 
 const statisticsRoutes = require("./statistics.route");
 const { checkRole } = require("../middlewares/role.middleware");
 
 router.use("/auth", authRoutes);
+router.use("/app", appRoutes);
 router.use("/store", authMiddleware, checkRole(["ceo"]), storeRoutes);
 router.use("/user", authMiddleware, userRoutes);
 router.use("/file", authMiddleware, checkRole(["ceo"]), fileRoutes);

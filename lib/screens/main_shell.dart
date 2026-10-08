@@ -11,7 +11,8 @@ import 'inventory_screen.dart';
 import 'debtors_screen.dart';
 import 'sales_screen.dart';
 import 'profile_screen.dart';
-import 'daily_sales_screen.dart'; // Added
+import 'daily_sales_screen.dart';
+import '../services/update_service.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -59,7 +60,10 @@ class _MainShellState extends State<MainShell> {
     // ildizi bo'lgani uchun barcha holat shu yerda ushlanadi.
     // Birinchi tekshiruv frame'dan keyin — Navigator hali qurilmagan.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _onAuthChanged();
+      if (mounted) {
+        _onAuthChanged();
+        UpdateService.checkForUpdate(context);
+      }
     });
   }
 
