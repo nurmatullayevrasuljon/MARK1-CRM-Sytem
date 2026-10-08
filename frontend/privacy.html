@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <!-- Prevent FOUC: apply theme before paint -->
+    <script>
+      (function () {
+        var t = localStorage.getItem('theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (t === 'dark' || (!t && prefersDark)) {
+          document.documentElement.classList.add('dark-mode');
+        }
+      })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maxfiylik Siyosati — MARK1 CRM</title>
+    <meta name="description" content="MARK1 CRM platformasi va mobil ilovasining rasmiy Maxfiylik Siyosati (Privacy Policy). Foydalanuvchilar va biznes ma'lumotlari xavfsizligi.">
+    <meta name="theme-color" content="#141a2e">
+    <link rel="shortcut icon" href="img/b-logo2.png" type="image/x-icon">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --mk-primary: #4D5DEF;
+            --mk-primary-dark: #4c5ede;
+            --mk-primary-text: #8294ff;
+            --mk-secondary: #7c3aed;
+            --mk-accent: #22d3ee;
+            --mk-bg: #0b111f;
+            --mk-bg-elevated: #101830;
+            --mk-fg: #f1f5f9;
+            --mk-muted: #1a2342;
+            --mk-muted-fg: #9aa5bd;
+            --mk-card: #101830;
+            --mk-border: #223055;
+            --mk-radius: 16px;
+        }
+
+        html:not(.dark-mode) {
+            --mk-primary: #4455EE;
+            --mk-primary-dark: #4A56C9;
+            --mk-primary-text: #4455EE;
+            --mk-secondary: #7c3aed;
+            --mk-accent: #0ea5e9;
+            --mk-bg: #f4f6fb;
+            --mk-bg-elevated: #ffffff;
+            --mk-fg: #0f172a;
+            --mk-muted: #e2e8f0;
+            --mk-muted-fg: #576076;
+            --mk-card: #ffffff;
+            --mk-border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--mk-bg);
+            color: var(--mk-fg);
+            line-height: 1.7;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        header {
+            border-bottom: 1px solid var(--mk-border);
+            background: var(--mk-bg-elevated);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+
+        .navbar {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--mk-fg);
+            font-weight: 800;
+            font-size: 1.25rem;
+        }
+
+        .brand img {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--mk-muted-fg);
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--mk-primary-text);
+        }
+
+        .btn-primary {
+            background: var(--mk-primary);
+            color: #fff !important;
+            padding: 0.55rem 1.2rem;
+            border-radius: 9999px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 700;
+            transition: transform 0.15s ease, background-color 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            background: var(--mk-primary-dark);
+        }
+
+        .theme-toggle-btn {
+            background: var(--mk-muted);
+            border: 1px solid var(--mk-border);
+            color: var(--mk-fg);
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .main-container {
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .policy-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--mk-border);
+        }
+
+        .policy-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.9rem;
+            border-radius: 9999px;
+            background: rgba(77, 93, 239, 0.12);
+            color: var(--mk-primary-text);
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .policy-title {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.75rem;
+        }
+
+        .policy-meta {
+            color: var(--mk-muted-fg);
+            font-size: 0.95rem;
+        }
+
+        .policy-card {
+            background: var(--mk-card);
+            border: 1px solid var(--mk-border);
+            border-radius: var(--mk-radius);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        h2 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--mk-fg);
+            margin: 2rem 0 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        h2:first-of-type {
+            margin-top: 0;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--mk-muted-fg);
+        }
+
+        ul {
+            margin: 0.5rem 0 1.25rem 1.5rem;
+            color: var(--mk-muted-fg);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        strong {
+            color: var(--mk-fg);
+        }
+
+        .highlight-box {
+            background: rgba(77, 93, 239, 0.07);
+            border-left: 4px solid var(--mk-primary);
+            padding: 1.25rem 1.5rem;
+            border-radius: 0 12px 12px 0;
+            margin: 1.5rem 0;
+        }
+
+        .highlight-box p {
+            margin: 0;
+            color: var(--mk-fg);
+            font-weight: 500;
+        }
+
+        footer {
+            border-top: 1px solid var(--mk-border);
+            background: var(--mk-bg-elevated);
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            color: var(--mk-muted-fg);
+            font-size: 0.9rem;
+            margin-top: 4rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--mk-muted-fg);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer-links a:hover {
+            color: var(--mk-primary-text);
+        }
+
+        @media (max-width: 640px) {
+            .policy-card {
+                padding: 1.5rem;
+            }
+            .policy-title {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="navbar">
+            <a href="/" class="brand">
+                <img src="img/b-logo2.png" alt="MARK1 Logo">
+                <span>MARK1 CRM</span>
+            </a>
+            <div class="nav-links">
+                <a href="/" class="nav-link"><i class="bi bi-house-door"></i> Bosh sahifa</a>
+                <a href="/login" class="nav-link"><i class="bi bi-box-arrow-in-right"></i> Kirish</a>
+                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Mavzuni almashtirish">
+                    <i class="bi bi-moon-stars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <div class="policy-header">
+            <div class="policy-badge">
+                <i class="bi bi-shield-check"></i> Rasmiy Xavfsizlik Hujjati
+            </div>
+            <h1 class="policy-title">Maxfiylik Siyosati (Privacy Policy)</h1>
+            <p class="policy-meta">Kuchga kirish sanasi: <strong>2026-yil 1-oktabr</strong> | Oxirgi tahrir: <strong>2026-yil 8-oktabr</strong></p>
+        </div>
+
+        <div class="policy-card">
+            <h2><i class="bi bi-info-circle text-primary"></i> 1. Umumiy qoidalar</h2>
+            <p>
+                Ushbu Maxfiylik Siyosati <strong>"MARK1 CRM"</strong> platformasi (keyingi o'rinlarda <em>"Platforma"</em>, <em>"Ilova"</em> yoki <em>"Biz"</em>) tomonidan foydalanuvchilar (do'kon egalari, administratorlar, sotuvchilar va mijozlar) shaxsiy va biznes ma'lumotlarini qanday to'planishi, ishlatilishi, saqlanishi va himoya qilinishini belgilaydi.
+            </p>
+            <p>
+                Platformamizdan (veb-sayt: <strong>https://mark1.uz</strong> yoki Android/iOS mobil ilovasi) foydalanish orqali siz ushbu Maxfiylik Siyosati shartlariga to'liq rozilik bildirasiz.
+            </p>
+
+            <div class="highlight-box">
+                <p><i class="bi bi-lock-fill"></i> <strong>Bizning qat'iy tamoyilimiz:</strong> Sizning savdo hisobotlaringiz, tovarlaringiz ro'yxati va mijozlaringiz ma'lumotlari faqat sizning shaxsiy biznesingizga tegishli. Biz ma'lumotlaringizni hech qachon uchinchi shaxslarga sotmaymiz yoki reklama maqsadlarida tarqatmaymiz.</p>
+            </div>
+
+            <h2><i class="bi bi-database text-primary"></i> 2. Qanday ma'lumotlarni to'playmiz?</h2>
+            <p>Platformaning to'liq va uzluksiz ishlashini ta'minlash uchun quyidagi ma'lumotlar qayta ishlanadi:</p>
+            <ul>
+                <li><strong>Hisob ma'lumotlari:</strong> Do'kon egasining ismi (CEO name), do'kon nomi, telefon raqami, xavfsiz paroli (bcrypt xesh shaklida).</li>
+                <li><strong>Xodimlar ma'lumotlari:</strong> Qo'shilgan sotuvchi va administratorlarning ismlari, telefon raqamlari va tizimdagi rollari.</li>
+                <li><strong>Biznes va savdo ma'lumotlari:</strong> Mahsulotlar katalogi, shtrix-kodlar, kirim va sotish narxlari, qoldiqlar, savdo cheklari, to'lov turlari (naqd/karta).</li>
+                <li><strong>Nasiya va qarzlar daftari:</strong> Do'koningiz orqali nasiyaga tovar olgan mijozlarning ismlari, telefon raqamlari, qarz summasi va to'lov muddatlari.</li>
+                <li><strong>Qurilma va texnik ma'lumotlar:</strong> Ilova versiyasi, operatsion tizim turi, IP-manzil va xatolik jurnallari (Crash logs).</li>
+            </ul>
+
+            <h2><i class="bi bi-camera text-primary"></i> 3. Qurilma ruxsatnomalari (Device Permissions)</h2>
+            <p>Mobil ilova o'z funksiyalarini bajarishi uchun quyidagi ruxsatnomalarni so'raydi:</p>
+            <ul>
+                <li><strong>Kamera (CAMERA):</strong> Faqatgina tovarlardagi shtrix-kodlar va QR-kodlarni bir zumda skanerlash hamda mahsulot/profil rasmlarini olish uchun ishlatiladi. Kamera orqali hech qanday video yoki maxfiy tasvirlar ruxsatsiz yozib olinmaydi.</li>
+                <li><strong>Internet (INTERNET):</strong> Ma'lumotlarni bulutli server bilan xavfsiz sinxronlash uchun.</li>
+                <li><strong>Bildirishnomalar (POST_NOTIFICATIONS):</strong> Qarz muddati kelganda yoki muhim biznes yangiliklari haqida eslatmalar yetkazish uchun.</li>
+            </ul>
+
+            <h2><i class="bi bi-chat-dots text-primary"></i> 4. SMS xizmatlari va eslatmalar</h2>
+            <p>
+                MARK1 CRM foydalanuvchining hisobini xavfsiz tasdiqlash (OTP) va do'kon egasining ko'rsatmasiga binoan qarzdor mijozlarga avtomatik/qo'lda SMS eslatmalar yuborish uchun rasmiy SMS-provayder shlyuzlaridan foydalanadi. SMS xabarlar faqat belgilangan maqsadlarda va do'kon egasi nomidan yuboriladi.
+            </p>
+
+            <h2><i class="bi bi-shield-lock text-primary"></i> 5. Ma'lumotlar xavfsizligi va shifrlash</h2>
+            <p>Biz foydalanuvchilar ma'lumotlarini eng yuqori zamonaviy xavfsizlik standartlarida himoya qilamiz:</p>
+            <ul>
+                <li>Barcha tarmoq so'rovlari <strong>SSL / TLS 1.3 (HTTPS)</strong> shifrlangan protokoli orqali uzatiladi.</li>
+                <li>Foydalanuvchi parollari <strong>bcrypt</strong> kuchli xeshlash algoritmi orqali saqlanadi.</li>
+                <li>Ma'lumotlar bazasi zaxira nusxalari (Backups) doimiy ravishda xavfsiz serverlarda saqlanadi.</li>
+                <li>Har bir do'kon ma'lumotlari alohida ajratilgan (Multi-tenant data isolation) va boshqa do'konlar uchun butunlay yopiq.</li>
+            </ul>
+
+            <h2><i class="bi bi-trash3 text-primary"></i> 6. Ma'lumotlarni o'chirish huquqi (Account & Data Deletion)</h2>
+            <p>
+                Google Play Store talablari va xalqaro qonunlarga muvofiq, har bir foydalanuvchi o'z hisobini va unga tegishli barcha ma'lumotlarni to'liq o'chirish huquqiga ega.
+            </p>
+            <p>
+                Hisobingizni va do'koningiz ma'lumotlarini o'chirish uchun ilova ichidagi Profil bo'limidan murojaat qilishingiz yoki <strong>support@mark1.uz</strong> elektron pochtasiga so'rov yuborishingiz mumkin. So'rovingiz 48 soat ichida ko'rib chiqiladi va barcha shaxsiy ma'lumotlaringiz bazadan butunlay o'chirib tashlanadi.
+            </p>
+
+            <h2><i class="bi bi-envelope-at text-primary"></i> 7. Biz bilan bog'lanish</h2>
+            <p>Maxfiylik siyosati yoki ma'lumotlar xavfsizligi bo'yicha savollaringiz bo'lsa, quyidagi aloqa kanallari orqali murojaat qilishingiz mumkin:</p>
+            <ul>
+                <li><strong>Veb-sayt:</strong> <a href="https://mark1.uz" style="color: var(--mk-primary-text);">https://mark1.uz</a></li>
+                <li><strong>Elektron pochta:</strong> <a href="mailto:support@mark1.uz" style="color: var(--mk-primary-text);">support@mark1.uz</a> / <a href="mailto:sardordev2010@gmail.com" style="color: var(--mk-primary-text);">sardordev2010@gmail.com</a></li>
+                <li><strong>Manzil:</strong> Toshkent shahri, O'zbekiston Respublikasi</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-links">
+            <a href="/">Bosh sahifa</a>
+            <a href="/login">Kirish</a>
+            <a href="/signup">Ro'yxatdan o'tish</a>
+            <a href="/privacy">Maxfiylik Siyosati</a>
+        </div>
+        <p>&copy; 2026 MARK1 CRM. Barcha huquqlar himoyalangan.</p>
+    </footer>
+
+    <script>
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const themeIcon = themeToggleBtn.querySelector('i');
+
+        function updateIcon(isDark) {
+            if (isDark) {
+                themeIcon.className = 'bi bi-sun';
+            } else {
+                themeIcon.className = 'bi bi-moon-stars';
+            }
+        }
+
+        const isInitialDark = document.documentElement.classList.contains('dark-mode');
+        updateIcon(isInitialDark);
+
+        themeToggleBtn.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateIcon(isDark);
+        });
+    </script>
+</body>
+
+</html>
