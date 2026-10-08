@@ -80,7 +80,9 @@ class ApiResult<T> {
 
 // ─── Main Service ─────────────────────────────────────────────────
 class ApiService {
-  static const String _baseUrl = 'https://mark1-crm-sytem.onrender.com/api';
+  // Asosiy ishlayotgan backend (VPS). Render demo'i sovuq boshlanishi
+  // 25+ sekund edi va u yerda yangilash versiyasini boshqara olmasdik.
+  static const String _baseUrl = 'https://backend.mark1.uz/api';
   static const Duration _timeout = Duration(seconds: 20);
 
   static String? _cachedToken;

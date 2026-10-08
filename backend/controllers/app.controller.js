@@ -18,6 +18,10 @@ exports.getAppVersion = async (req, res) => {
     const changelog =
       process.env.APP_CHANGELOG ||
       "Yangi imkoniyatlar qo'shildi, xavfsizlik va tezkorlik oshirildi.";
+    // APK'ni to'g'ridan-to'g'ri serverdan yuklab o'rnatish uchun URL.
+    // Play Store'da ilova hali yo'q bo'lgani uchun asosiy yo'l shu —
+    // bo'sh qoldirilsa Flutter Play Store havolasiga tushadi.
+    const apkUrl = process.env.APK_URL || "";
 
     return res.status(200).json({
       success: true,
@@ -27,6 +31,7 @@ exports.getAppVersion = async (req, res) => {
         min_supported_version_code: minSupportedVersionCode,
         force_update: forceUpdate,
         play_store_url: playStoreUrl,
+        apk_url: apkUrl,
         title: "Yangi versiya mavjud! 🚀",
         message: changelog,
       },

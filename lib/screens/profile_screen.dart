@@ -263,7 +263,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 12),
 
                 Text(
-                  'MARK1 CRM v1.0.0',
+                  'MARK1 CRM v${UpdateService.currentVersionName}',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: AppColors.textHint(isDark),

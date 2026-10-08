@@ -2,7 +2,7 @@ name: markcrm
 description: "MARK1 - Aqlli CRM platformasi"
 publish_to: 'none'
 
-version: 1.0.0+5001
+version: 1.0.1+5002
 
 environment:
   sdk: ^3.13.2
