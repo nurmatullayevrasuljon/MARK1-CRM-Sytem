@@ -23,6 +23,8 @@ const StoreSchema = new mongoose.Schema(
     profile_picture: { type: String, default: null },
     otp: { type: String, default: null },
     otp_expires_at: { type: Date, default: null },
+    otp_attempts: { type: Number, default: 0 },
+    is_verified: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

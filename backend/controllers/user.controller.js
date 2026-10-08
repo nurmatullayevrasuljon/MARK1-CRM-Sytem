@@ -1,4 +1,5 @@
 const { default: mongoose } = require("mongoose");
+const bcrypt = require("bcryptjs");
 const User = require("../models/user.model");
 const {
   verifyRefreshToken,
@@ -19,21 +20,21 @@ exports.createUser = async (req, res) => {
         message: "Ushbu telefon raqam bilan xodim mavjud",
       });
     }
-    // const hashedPassword = await bcrypt.hash(password, 10);
 
-    if (password.length < 6) {
+    if (!password || password.length < 6) {
       return res.status(400).json({
         message: "Parol kamida 6 xonali bo'lishi kerak",
       });
     }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({
       store_id: id,
       user_name,
       user_phone,
       role,
-      // password: hashedPassword,
-      password,
+      password: hashedPassword,
       profile_picture,
     });
     return res.status(200).json({
@@ -63,22 +64,27 @@ exports.updateUser = async (req, res) => {
       });
     }
 
-    // const hashedPassword = await bcrypt.hash(password, 10);
-
-    if (password.length < 6) {
-      return res.status(400).json({
-        message: "Parol kamida 6 xonali bo'lishi kerak",
-      });
-    }
-
-    const editingUser = await User.findByIdAndUpdate(user_id, {
+    const updateFields = {
       user_name,
       user_phone,
       role,
-      // password: hashedPassword,
-      password,
       profile_picture,
-    });
+    };
+
+    if (password) {
+      if (password.length < 6) {
+        return res.status(400).json({
+          message: "Parol kamida 6 xonali bo'lishi kerak",
+        });
+      }
+      updateFields.password = await bcrypt.hash(password, 10);
+    }
+
+    const editingUser = await User.findOneAndUpdate(
+      { _id: user_id, store_id: id },
+      updateFields,
+      { new: true }
+    ).select("-password");
 
     if (!editingUser) {
       return res.status(400).json({ message: "Xodim topilmadi" });
@@ -95,9 +101,10 @@ exports.updateUser = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
   try {
+    const { id } = req.user;
     const { user_id } = req.query;
 
-    const deletingUser = await User.findByIdAndDelete(user_id);
+    const deletingUser = await User.findOneAndDelete({ _id: user_id, store_id: id });
     if (!deletingUser) {
       return res.status(400).json({ message: "Xodim topilmadi" });
     }
@@ -115,7 +122,7 @@ exports.getAllUsers = async (req, res) => {
     const { id } = req.user;
     const users = await User.find({
       store_id: id,
-    });
+    }).select("-password");
     return res.status(200).json(users);
   } catch (err) {
     console.log(err.message);
@@ -125,8 +132,12 @@ exports.getAllUsers = async (req, res) => {
 
 exports.getUserById = async (req, res) => {
   try {
+    const { id } = req.user;
     const { user_id } = req.query;
-    const user = await User.findById(user_id);
+    const user = await User.findOne({ _id: user_id, store_id: id }).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "Xodim topilmadi" });
+    }
     return res.status(200).json(user);
   } catch (err) {
     console.log(err.message);
@@ -141,7 +152,7 @@ exports.getUserByPhone = async (req, res) => {
     const user = await User.findOne({
       store_id: id,
       user_phone,
-    });
+    }).select("-password");
     return res.status(200).json(user);
   } catch (err) {
     console.log(err.message);
@@ -153,17 +164,29 @@ exports.signinUser = async (req, res) => {
   try {
     const { user_phone, password } = req.body;
     const user = await User.findOne({ user_phone });
+    
+    // CF-15 fix: Yagona xato xabari
     if (!user) {
       return res
         .status(400)
-        .json({ message: "Telefon raqam bo'yicha xodim topilmadi" });
+        .json({ message: "Telefon raqam yoki parol noto'g'ri" });
     }
 
-    // const isMatch = bcrypt.compare(password, user.password);
-    const isMatch = password.toString() === user.password;
+    // CF-03 fix: bcrypt taqqoslash + mavjud eski ochiq matn parollarni avtomatik yangilash
+    let isMatch = false;
+    try {
+      isMatch = await bcrypt.compare(password, user.password);
+    } catch {
+      isMatch = false;
+    }
+    if (!isMatch && password.toString() === user.password) {
+      isMatch = true;
+      user.password = await bcrypt.hash(password, 10);
+      await user.save();
+    }
 
     if (!isMatch) {
-      return res.status(400).json({ message: "Parol mos emas" });
+      return res.status(400).json({ message: "Telefon raqam yoki parol noto'g'ri" });
     }
 
     const refreshToken = generateRefreshToken({
@@ -180,7 +203,7 @@ exports.signinUser = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true, // FIX: Render odatda NODE_ENV=production'ni avtomatik o'rnatmaydi; shu sabab avvalgi shart doim false bo'lib, SameSite=None cookie brauzer tomonidan RAD ETILAR edi (refresh token hech qachon saqlanmasdi)
+      secure: true,
       sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/api/auth/user/refresh",
@@ -198,7 +221,7 @@ exports.signinUser = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).select("-password");
     if (!user) {
       return res.status(400).json({ message: "Xodim topilmadi" });
     }
@@ -238,6 +261,21 @@ exports.refreshUser = async (req, res) => {
     });
 
     return res.status(200).json({ access_token: newAccessToken });
+  } catch (err) {
+    console.log(err.message);
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+exports.logoutUser = async (req, res) => {
+  try {
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/api/auth/user/refresh",
+    });
+    return res.status(200).json({ message: "Muvaffaqiyatli chiqildi" });
   } catch (err) {
     console.log(err.message);
     return res.status(500).json({ message: err.message });

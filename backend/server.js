@@ -15,17 +15,52 @@ const indexRoutes = require("./routes/index");
 
 const { startReminderCron } = require("./config/reminder");
 
+const allowedOrigins = [
+  "https://mark1.uz",
+  "https://www.mark1.uz",
+  "https://admin.mark1.uz",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost:8080",
+  "http://127.0.0.1:5500",
+  "http://127.0.0.1:3000",
+];
+if (process.env.ALLOWED_ORIGINS) {
+  process.env.ALLOWED_ORIGINS.split(",").forEach((o) => {
+    const trimmed = o.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
+}
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
     origin: function (origin, callback) {
-      callback(null, true);
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS policy: Ushbu manbadan kirish taqiqlangan"));
+      }
     },
     credentials: true,
   }),
 );
-app.use("/api/uploads", express.static(path.join(__dirname, "uploads")));
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
+
+app.use("/api/uploads", express.static(path.join(__dirname, "uploads"), {
+  dotfiles: "ignore",
+  setHeaders: (res) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+  },
+}));
 app.use("/api", indexRoutes);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

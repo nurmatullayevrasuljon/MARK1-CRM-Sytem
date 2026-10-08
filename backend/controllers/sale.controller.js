@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Sale = require("../models/sale.model");
 const Product = require("../models/product.model");
+const Client = require("../models/client.model");
 const parseDate = require("../utils/date.util");
 const ExcelJS = require("exceljs");
 const sendSms = require("../utils/sms.util");
@@ -24,6 +25,17 @@ exports.createSale = async (req, res) => {
 
     if (paid_by_cash < 0 || paid_by_card < 0) {
       throw new Error("To'lov qiymatlari manfiy bo'lmasligi kerak");
+    }
+
+    // CF-10 fix: Mijoz mavjudligi va joriy do'konga tegishliligi tekshiruvi
+    if (client_id) {
+      const clientDoc = await Client.findOne({
+        _id: client_id,
+        store_id,
+      }).session(session);
+      if (!clientDoc) {
+        throw new Error("Tanlangan mijoz topilmadi yoki boshqa do'konga tegishli");
+      }
     }
 
     let sale;
@@ -54,7 +66,19 @@ exports.createSale = async (req, res) => {
       let total_purchase = 0;
       const total_paid = paid_by_card + paid_by_cash;
 
+      if (!Array.isArray(products) || products.length === 0) {
+        throw new Error("Savdoda kamida bitta mahsulot bo'lishi kerak");
+      }
+
       for (const item of products) {
+        // CF-11 fix: Manfiy yoki nol miqdor tekshiruvi
+        if (!item.quantity || item.quantity <= 0) {
+          throw new Error("Mahsulot miqdori 0 dan katta bo'lishi kerak");
+        }
+        if (item.selling_price < 0 || item.purchase_price < 0) {
+          throw new Error("Mahsulot narxi manfiy bo'lmasligi kerak");
+        }
+
         const product = await Product.findOne({
           _id: item.product_id,
           store_id,
@@ -157,6 +181,11 @@ exports.cancelSale = async (req, res) => {
       throw new Error("Sotuv topilmadi");
     }
 
+    // CF-09 fix: Qayta bekor qilish yoki zaxirani cheksiz ko'paytirishni bloklash
+    if (sale.status !== "active") {
+      throw new Error("Faqat faol sotuvni bekor qilish mumkin (allaqachon bekor qilingan yoki qaytarilgan)");
+    }
+
     for (const item of sale.products) {
       await Product.updateOne(
         {
@@ -195,7 +224,7 @@ exports.cancelSale = async (req, res) => {
 
     console.log(err.message);
 
-    return res.status(500).json({
+    return res.status(400).json({
       message: err.message,
     });
   } finally {
@@ -219,6 +248,11 @@ exports.returnSale = async (req, res) => {
 
     if (!sale) {
       throw new Error("Sotuv topilmadi");
+    }
+
+    // CF-09 fix: Qayta qaytarishni bloklash
+    if (sale.status !== "active") {
+      throw new Error("Faqat faol sotuvni qaytarish mumkin (allaqachon bekor qilingan yoki qaytarilgan)");
     }
 
     for (const item of sale.products) {
@@ -259,7 +293,7 @@ exports.returnSale = async (req, res) => {
 
     console.log(err.message);
 
-    return res.status(500).json({
+    return res.status(400).json({
       message: err.message,
     });
   } finally {
@@ -272,6 +306,13 @@ exports.addPayment = async (req, res) => {
     const { sale_id } = req.query;
     const { amount, payment_method } = req.body;
     const { store_id } = req.user;
+
+    // CF-13 fix: Manfiy yoki nol summa tekshiruvi
+    if (typeof amount !== "number" || isNaN(amount) || amount <= 0) {
+      return res.status(400).json({
+        message: "To'lov summasi musbat son bo'lishi kerak",
+      });
+    }
 
     const sale = await Sale.findOne({
       _id: sale_id,

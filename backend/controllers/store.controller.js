@@ -13,20 +13,9 @@ exports.signup = async (req, res) => {
     const { ceo_name, ceo_phone, store_name, password } = req.body;
     const existingStore = await Store.findOne({ ceo_phone });
 
-    // BUG FIX: avval faqat "existingStore bor-yo'qligi" tekshirilardi, hisob
-    // tasdiqlangan (otp === null) yoki hali tasdiqlanmagan (otp !== null,
-    // ya'ni foydalanuvchi SMS kodni hech qachon kiritmagan) ekani farqlanmasdi.
-    // Natijada bir marta signup qilib, OTP'ni tasdiqlamagan (masalan sahifani
-    // yopib yuborgan yoki avvalgi SMS xatoligi tufayli jarayon yarim qolgan)
-    // foydalanuvchi o'sha raqam bilan BOSHQA HECH QACHON ro'yxatdan o'ta
-    // olmasdi — garchi hisob hech qachon faollashtirilmagan bo'lsa ham.
-    //
-    // Endi: agar mavjud yozuv TASDIQLANGAN bo'lsa (otp === null) — haqiqatan
-    // ham band, xato qaytariladi. Agar hali TASDIQLANMAGAN bo'lsa (otp !==
-    // null) — bu eski, tugallanmagan urinish deb hisoblanadi va shu yozuv
-    // yangi ma'lumotlar (parol, OTP) bilan qayta ishlatiladi (yangi hujjat
-    // yaratilmaydi, mavjudi yangilanadi).
-    if (existingStore && existingStore.otp === null) {
+    // Xavfsizlik: Agar do'kon allaqachon tasdiqlangan bo'lsa (is_verified === true yoki otp bo'sh),
+    // uni hech qachon signup orqali qayta yozishga yo'l qo'yilmaydi (ATO himoyasi).
+    if (existingStore && (existingStore.is_verified || existingStore.otp === null)) {
       return res.status(400).json({
         message: "Ushbu telefon raqam bilan avval ro'yhatdan o'tilgan",
       });
@@ -40,8 +29,6 @@ exports.signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const { otp, otp_expires_at } = generateOtp();
-
-    // const SMS_TEMPLATE = `MARK1 ilovasiga ro‘yxatdan o‘tish uchun tasdiqlash kodingiz: ${otp}. Ushbu kodni hech kimga bermang.`;
 
     const result = await sendSms(
       ceo_phone,
@@ -65,6 +52,8 @@ exports.signup = async (req, res) => {
       existingStore.password = hashedPassword;
       existingStore.otp = otp;
       existingStore.otp_expires_at = otp_expires_at;
+      existingStore.otp_attempts = 0;
+      existingStore.is_verified = false;
       await existingStore.save();
     } else {
       await Store.create({
@@ -74,6 +63,8 @@ exports.signup = async (req, res) => {
         password: hashedPassword,
         otp,
         otp_expires_at,
+        otp_attempts: 0,
+        is_verified: false,
       });
     }
     return res.status(200).json({
@@ -109,11 +100,26 @@ exports.verify = async (req, res) => {
     }
 
     if (store.otp !== otp) {
-      return res.status(400).json({ message: "Kod xato" });
+      store.otp_attempts = (store.otp_attempts || 0) + 1;
+      if (store.otp_attempts >= 5) {
+        store.otp = null;
+        store.otp_expires_at = null;
+        store.otp_attempts = 0;
+        await store.save();
+        return res.status(400).json({
+          message: "Urinishlar soni tugadi (5 marta). Iltimos, yangi kod so'rang",
+        });
+      }
+      await store.save();
+      return res.status(400).json({
+        message: `Kod xato. Qolgan urinishlar: ${5 - store.otp_attempts}`,
+      });
     }
 
     store.otp = null;
     store.otp_expires_at = null;
+    store.otp_attempts = 0;
+    store.is_verified = true;
 
     await store.save();
 
@@ -131,7 +137,7 @@ exports.verify = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true, // FIX: Render odatda NODE_ENV=production'ni avtomatik o'rnatmaydi; shu sabab avvalgi shart doim false bo'lib, SameSite=None cookie brauzer tomonidan RAD ETILAR edi (refresh token hech qachon saqlanmasdi)
+      secure: true,
       sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/api/auth/store/refresh",
@@ -151,16 +157,20 @@ exports.signin = async (req, res) => {
   try {
     const { ceo_phone, password } = req.body;
     const store = await Store.findOne({ ceo_phone });
+    
+    // CF-15: Enumeration oracle himoyasi — yagona xato xabari
     if (!store) {
       return res
         .status(400)
-        .json({ message: "Telefon raqam bo'yicha do'kon topilmadi" });
+        .json({ message: "Telefon raqam yoki parol noto'g'ri" });
     }
 
     const isMatch = await bcrypt.compare(password, store.password);
 
     if (!isMatch) {
-      return res.status(400).json({ message: "Parol xato" });
+      return res
+        .status(400)
+        .json({ message: "Telefon raqam yoki parol noto'g'ri" });
     }
 
     const refreshToken = generateRefreshToken({
@@ -177,7 +187,7 @@ exports.signin = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true, // FIX: Render odatda NODE_ENV=production'ni avtomatik o'rnatmaydi; shu sabab avvalgi shart doim false bo'lib, SameSite=None cookie brauzer tomonidan RAD ETILAR edi (refresh token hech qachon saqlanmasdi)
+      secure: true,
       sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/api/auth/store/refresh",
@@ -250,7 +260,9 @@ exports.updateProfile = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
-    const store = await Store.findById(req.user.store_id);
+    const store = await Store.findById(req.user.store_id).select(
+      "-password -otp -otp_expires_at -otp_attempts",
+    );
     if (!store) {
       return res.status(400).json({ message: "Do'kon topilmadi" });
     }
@@ -274,10 +286,9 @@ exports.forgotPassword = async (req, res) => {
 
     ceo.otp = otp;
     ceo.otp_expires_at = otp_expires_at;
+    ceo.otp_attempts = 0;
 
     await ceo.save();
-
-    // const SMS_TEMPLATE = `MARK1 ilovasiga ro‘yxatdan o‘tish uchun tasdiqlash kodingiz: ${otp}. Ushbu kodni hech kimga bermang.`;
 
     const result = await sendSms(
       ceo_phone,
@@ -316,7 +327,7 @@ exports.resetPassword = async (req, res) => {
     if (store.otp === null) {
       return res
         .status(400)
-        .json({ message: "Do'kon allaqachon tasdiqlangan" });
+        .json({ message: "Kod so'ralmagan yoki muddati o'tgan" });
     }
 
     if (Date.now() > store.otp_expires_at) {
@@ -326,21 +337,56 @@ exports.resetPassword = async (req, res) => {
     }
 
     if (store.otp !== otp) {
-      return res.status(400).json({ message: "Kod xato" });
+      store.otp_attempts = (store.otp_attempts || 0) + 1;
+      if (store.otp_attempts >= 5) {
+        store.otp = null;
+        store.otp_expires_at = null;
+        store.otp_attempts = 0;
+        await store.save();
+        return res.status(400).json({
+          message: "Urinishlar soni tugadi (5 marta). Iltimos, yangi kod so'rang",
+        });
+      }
+      await store.save();
+      return res.status(400).json({
+        message: `Kod xato. Qolgan urinishlar: ${5 - store.otp_attempts}`,
+      });
     }
 
     const hashedPassword = await bcrypt.hash(new_password, 10);
 
     store.password = hashedPassword;
-
     store.otp = null;
     store.otp_expires_at = null;
+    store.otp_attempts = 0;
 
     await store.save();
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/api/auth/store/refresh",
+    });
 
     res.status(200).json({
       message: "Parol muvaffaqiyatli o'zgartirildi",
     });
+  } catch (err) {
+    console.log(err.message);
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+exports.logout = async (req, res) => {
+  try {
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/api/auth/store/refresh",
+    });
+    return res.status(200).json({ message: "Muvaffaqiyatli chiqildi" });
   } catch (err) {
     console.log(err.message);
     return res.status(500).json({ message: err.message });
