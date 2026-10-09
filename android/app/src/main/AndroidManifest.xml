@@ -7,9 +7,13 @@
          o'z manifestida BO'LMAGAN — boshqa qurilmalarda ruxsat so'ralmasdi
          yoki skaner "jimgina" ishlamasdi. Endi aniq e'lon qilindi. -->
     <uses-permission android:name="android.permission.CAMERA"/>
-    <!-- Yangilash: serverdan yuklab olingan APK'ni o'rnatish uchun.
-         Foydalanuvchi tizim oynasida "ruxsat berish" ni bosadi. -->
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <!--
+      REQUEST_INSTALL_PACKAGES ruxsati ATAYLAB YO'Q.
+      Google Play siyosati (support.google.com/android-developer/answer/12085295):
+      bu ruxsat ilova o'zini yangilash/modifikatsiya qilish uchun ishlatilishi
+      mumkin emas. Yangilanishni Google Play'ning o'zi bajaradi, shuning uchun
+      self-update yo'li (APK yuklab o'rnatish) butunlay olib tashlangan.
+    -->
     <!-- Kamera — ixtiyoriy: qurilmada yo'b bo'lsa ham ilova ishlaydi
          (shtrix-kod qo'lda kiritilishi mumkin). -->
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
@@ -52,16 +56,13 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- Yangilash: yuklab olingan APK'ni o'rnatish uchun FileProvider -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
+        <!--
+          FileProvider ham olib tashlangan: u faqat serverdan yuklangan
+          APK'ni tizim o'rnatuvchisiga ko'rsatish uchun kerak edi
+          (self-update). Endi yangilanish Play Store orqali.
+          (image_picker o'zining alohida
+          ${applicationId}.flutter.image_provider provider'iga ega.)
+        -->
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

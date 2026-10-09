@@ -1,10 +1,14 @@
 // lib/services/update_service.dart
-import 'dart:io';
-
+//
+// Yangilash yo'li: FAQAT Google Play orqali.
+//
+// Eslatma (Google Play siyosati):
+//   `REQUEST_INSTALL_PACKAGES` ruxsati ilova o'zini yangilash uchun
+//   ISHLATILMASLIGI kerak (support.google.com/android-developer/answer/12085295).
+//   Shuning uchun APK'ni serverdan yuklab o'rnatish yo'li olib tashlangan —
+//   yangilanishni Play Store'ning o'zi bajaradi.
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../constants/app_colors.dart';
@@ -15,11 +19,9 @@ class AppUpdateInfo {
   final int latestVersionCode;
   final int minSupportedVersionCode;
   final bool forceUpdate;
-  final String playStoreUrl;
 
-  /// To'g'ridan-to'g'ri serverdan APK yuklab olish URL'i.
-  /// Bo'sh bo'lsa — Play Store havolasiga o'tamiz.
-  final String apkUrl;
+  /// Google Play sahifasi (market:// yoki https://).
+  final String playStoreUrl;
   final String title;
   final String message;
 
@@ -29,20 +31,18 @@ class AppUpdateInfo {
     required this.minSupportedVersionCode,
     required this.forceUpdate,
     required this.playStoreUrl,
-    required this.apkUrl,
     required this.title,
     required this.message,
   });
 
   factory AppUpdateInfo.fromJson(Map<String, dynamic> json) {
     return AppUpdateInfo(
-      latestVersion: json['latest_version'] ?? '1.0.1',
-      latestVersionCode: json['latest_version_code'] ?? 5002,
-      minSupportedVersionCode: json['min_supported_version_code'] ?? 5002,
+      latestVersion: json['latest_version'] ?? '1.0.2',
+      latestVersionCode: json['latest_version_code'] ?? 5003,
+      minSupportedVersionCode: json['min_supported_version_code'] ?? 5003,
       forceUpdate: json['force_update'] ?? false,
       playStoreUrl: json['play_store_url'] ??
           'https://play.google.com/store/apps/details?id=uz.mark1.crm',
-      apkUrl: json['apk_url'] ?? '',
       title: json['title'] ?? 'Yangi versiya mavjud! 🚀',
       message: json['message'] ??
           'Ilovada yangi imkoniyatlar qo\'shildi va tezkorlik oshirildi.',
@@ -51,9 +51,9 @@ class AppUpdateInfo {
 }
 
 class UpdateService {
-  /// Joriy ilova versiya kodi (pubspec.yaml dagi 1.0.1+5002 bilan bir xil).
-  static const int currentVersionCode = 5002;
-  static const String currentVersionName = '1.0.1';
+  /// Joriy ilova versiya kodi (pubspec.yaml dagi 1.0.2+5003 bilan bir xil).
+  static const int currentVersionCode = 5003;
+  static const String currentVersionName = '1.0.2';
 
   /// Serverdan yangilanish borligini tekshiradi va kerak bo'lsa muloqot oynasini chiqaradi.
   static Future<void> checkForUpdate(
@@ -122,13 +122,13 @@ class _UpdateDialog extends StatefulWidget {
 }
 
 class _UpdateDialogState extends State<_UpdateDialog> {
-  static const MethodChannel _installChannel =
-      MethodChannel('uz.mark1.crm/install');
-
-  /// 0.0–1.0 yuklanish jarayoni, null = hali boshlanmagan.
-  double? _progress;
+  /// Play Store'ni ochishda xato bo'lsa — dialog ichida ko'rsatamiz.
   String? _error;
 
+  /// Google Play ilova sahifasini ochadi (avval market://, keyin https).
+  ///
+  /// Yangilanishni aynan Play bajaradi — ilova hech qanday APK'ni
+  /// mustaqil o'rnatmaydi.
   Future<void> _openPlayStore() async {
     final marketUri = Uri.parse('market://details?id=uz.mark1.crm');
     final webUri = Uri.parse(widget.info.playStoreUrl);
@@ -136,64 +136,26 @@ class _UpdateDialogState extends State<_UpdateDialog> {
     try {
       if (await canLaunchUrl(marketUri)) {
         await launchUrl(marketUri, mode: LaunchMode.externalApplication);
-      } else if (await canLaunchUrl(webUri)) {
+        if (mounted) Navigator.of(context).pop();
+        return;
+      }
+      if (await canLaunchUrl(webUri)) {
         await launchUrl(webUri, mode: LaunchMode.externalApplication);
+        if (mounted) Navigator.of(context).pop();
+        return;
       }
-    } catch (_) {}
-  }
-
-  /// Asosiy yo'l: APK'ni serverdan yuklab olish va tizim o'rnatuvchisini
-  /// ochish. Play Store'da ilova hali yo'q bo'lgani uchun aynan shu
-  /// yo'l ishlaydi — foydalanuvchi "Yangilash" ni bosadi, yangi versiya
-  /// o'rnatiladi.
-  Future<void> _downloadAndInstall() async {
-    final apkUrl = widget.info.apkUrl;
-    if (apkUrl.isEmpty) {
-      await _openPlayStore();
-      return;
-    }
-
-    setState(() {
-      _progress = 0;
-      _error = null;
-    });
-
-    try {
-      // Katalogni Android tomonidan olamiz — u yerda FileProvider ochilgan.
-      final dirPath = await _installChannel.invokeMethod<String>('getUpdateDir');
-      final destPath = '$dirPath/mark1-update.apk';
-
-      final client = http.Client();
-      final request = await client.send(http.Request('GET', Uri.parse(apkUrl)));
-      final total = request.contentLength ?? 0;
-      final bytes = <int>[];
-      var received = 0;
-
-      await for (final chunk in request.stream) {
-        bytes.addAll(chunk);
-        received += chunk.length;
-        if (total > 0 && mounted) {
-          setState(() => _progress = received / total);
-        }
-      }
-      client.close();
-
-      final file = File(destPath);
-      await file.writeAsBytes(bytes, flush: true);
-
-      if (!mounted) return;
-      setState(() => _progress = null);
-
-      await _installChannel.invokeMethod<bool>('installApk', {'path': destPath});
-      // O'rnatuvchi ochilgandan keyin dialog yopiladi — ilova tizim
-      // tomonidan yangilanadi va qayta ochiladi.
-      if (mounted) Navigator.of(context).pop();
-    } catch (e) {
       if (mounted) {
-        setState(() {
-          _progress = null;
-          _error = 'Yuklab bo\'lmadi. Internetni tekshiring va qayta urinib ko\'ring.';
-        });
+        setState(
+          () => _error =
+              'Google Play ochilmadi. Ilovani Play Store orqali yangilang.',
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _error =
+              'Google Play ochilmadi. Ilovani Play Store orqali yangilang.',
+        );
       }
     }
   }
@@ -203,7 +165,6 @@ class _UpdateDialogState extends State<_UpdateDialog> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final info = widget.info;
     final isForce = widget.isForce;
-    final downloading = _progress != null;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -278,7 +239,8 @@ class _UpdateDialogState extends State<_UpdateDialog> {
                 ),
               ),
             ),
-            // Xato xabari (yuklab bo'lmadi)
+
+            // Xato xabari (Play Store ochilmadi)
             if (_error != null) ...[
               const SizedBox(height: 12),
               Container(
@@ -301,82 +263,55 @@ class _UpdateDialogState extends State<_UpdateDialog> {
             ],
             const SizedBox(height: 24),
 
-            // Yuklanish jarayoni
-            if (downloading) ...[
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: _progress,
-                      minHeight: 8,
-                      backgroundColor: AppColors.border(isDark),
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Yuklanmoqda… ${(_progress! * 100).toStringAsFixed(0)}%',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSec(isDark),
-                    ),
-                  ),
-                ],
-              ),
-            ] else
-              // Buttons
-              Row(
-                children: [
-                  if (!isForce) ...[
-                    Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          side: BorderSide(color: AppColors.border(isDark)),
-                        ),
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text(
-                          'Keyinroq',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textSec(isDark),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                  ],
+            // Buttons
+            Row(
+              children: [
+                if (!isForce) ...[
                   Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: AppColors.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        elevation: 0,
+                        side: BorderSide(color: AppColors.border(isDark)),
                       ),
-                      onPressed: _downloadAndInstall,
+                      onPressed: () => Navigator.of(context).pop(),
                       child: Text(
-                        'Yangilash',
+                        'Keyinroq',
                         style: GoogleFonts.inter(
                           fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSec(isDark),
                         ),
                       ),
                     ),
                   ),
+                  const SizedBox(width: 12),
                 ],
-              ),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: _openPlayStore,
+                    child: Text(
+                      'Yangilash',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
