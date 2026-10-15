@@ -51,9 +51,9 @@ class AppUpdateInfo {
 }
 
 class UpdateService {
-  /// Joriy ilova versiya kodi (pubspec.yaml dagi 1.0.2+5003 bilan bir xil).
-  static const int currentVersionCode = 5003;
-  static const String currentVersionName = '1.0.2';
+  /// Joriy ilova versiya kodi (pubspec.yaml dagi 1.0.3+5005 bilan bir xil).
+  static const int currentVersionCode = 5005;
+  static const String currentVersionName = '1.0.3';
 
   /// Serverdan yangilanish borligini tekshiradi va kerak bo'lsa muloqot oynasini chiqaradi.
   static Future<void> checkForUpdate(
