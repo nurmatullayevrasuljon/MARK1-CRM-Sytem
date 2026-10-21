@@ -28,6 +28,8 @@
 <link rel="stylesheet" href="css/premium-theme.css?v=1790900001">
   <!-- ui-ux-pro-max review qatlamı: focus-visible, reduced-motion, touch targets -->
   <link rel="stylesheet" href="css/dashboard-polish.css?v=1791100002">
+  <!-- MARK1 Design System (yagona spacing/tipografiya/holatlar/responsive) -->
+  <link rel="stylesheet" href="css/mark1-system.css?v=1792580900">
   <script>
     // FOUC oldini olish: mavzuni sahifa chizilishidan oldin qo'llash.
     (function () {
@@ -48,11 +50,14 @@
   <div class="d-flex">
 
     <!-- SIDEBAR -->
-    <nav class="sidebar" aria-label="Asosiy navigatsiya">
+    <nav class="sidebar" id="sidebar-nav" aria-label="Asosiy navigatsiya">
       <!-- Logotip heading emas — h4 edi, ekran o'quvchilari uchun sarlavhalar
            tartibini buzardi (WCAG 1.3.1). Endi oddiy konteyner. -->
-      <div class="logo">
+      <div class="logo" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
         <img src="img/brand-l.png" alt="Mark1 CRM">
+        <button type="button" class="mk-mobile-menu" data-mk-drawer-close aria-label="Menyuni yopish">
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
       </div>
       <ul class="nav flex-column" role="menubar" aria-label="Bo'limlar">
         <li class="nav-item active" data-target="dashboard" role="menuitem" tabindex="0">
@@ -106,6 +111,14 @@
           Sozlamalar
         </li>
       </ul>
+      <!-- Sidebar pastki bloki: foydalanuvchi + do'kon -->
+      <div class="mk-sidebar-foot">
+        <div class="mk-avatar" id="sidebarAvatar" aria-hidden="true">M</div>
+        <div class="mk-user-meta">
+          <div class="mk-user-name" id="sidebarUserName">Foydalanuvchi</div>
+          <div class="mk-user-store" id="sidebarUserStore">Do'kon nomi</div>
+        </div>
+      </div>
     </nav>
     <!-- MOBILE BOTTOM NAV -->
     <nav class="mobile-bottom-nav" role="navigation" aria-label="Mobil navigatsiya">
@@ -134,8 +147,19 @@
     <!-- MAIN -->
     <main class="content" id="main-content" tabindex="-1">
       <div class="topbar">
-        <!-- Sahifaning yagona h1 sarlavhasi (WCAG 1.3.1 / 2.4.6) -->
-        <h1 id="pageTitle">Boshqaruv paneli</h1>
+        <div class="mk-topbar-left">
+          <button type="button" class="mk-mobile-menu" data-mk-menu aria-label="Navigatsiya menyusini ochish" aria-expanded="false" aria-controls="sidebar-nav">
+            <i class="bi bi-list" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="mk-sidebar-toggle" data-mk-sidebar-toggle aria-label="Yon panelni kichraytirish" aria-expanded="true">
+            <i class="bi bi-layout-sidebar-inset" aria-hidden="true"></i>
+          </button>
+          <div>
+            <!-- Sahifaning yagona h1 sarlavhasi (WCAG 1.3.1 / 2.4.6) -->
+            <h1 id="pageTitle">Boshqaruv paneli</h1>
+            <span class="mk-topbar-sub" id="pageSubtitle">Bugungi biznes ko'rsatkichlari</span>
+          </div>
+        </div>
         <div class="top-actions">
           <button class="theme-toggle-btn" id="themeToggleBtn" data-theme-icon="bi" title="Kunduzgi/tungi rejim (Shift+T)" aria-label="Mavzuni almashtirish"><i class="bi bi-moon-stars" aria-hidden="true"></i></button>
           <div class="profile-wrapper">
@@ -230,7 +254,7 @@
 
         <div class="row">
           <!-- 1. OYLIK DAROMAD -->
-          <div class="col-md-3 col-sm-6">
+          <div class="col-xl-2 col-md-4 col-sm-6">
             <div class="card-box">
               <small class="counter-smal">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -248,7 +272,7 @@
           </div>
 
           <!-- 2. KUNLIK DAROMAD -->
-          <div class="col-md-3 col-sm-6">
+          <div class="col-xl-2 col-md-4 col-sm-6">
             <div class="card-box">
               <small class="counter-smal">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -265,7 +289,7 @@
           </div>
 
           <!-- 3. OYLIK FOYDA (YANGI) -->
-          <div class="col-md-3 col-sm-6">
+          <div class="col-xl-2 col-md-4 col-sm-6">
             <div class="card-box">
               <small class="counter-smal">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -284,7 +308,7 @@
           </div>
 
           <!-- 4. INVENTAR BALANSI -->
-          <div class="col-md-3 col-sm-6">
+          <div class="col-xl-2 col-md-4 col-sm-6">
             <div class="card-box">
               <small class="counter-smal"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                   stroke-width="1.5" stroke="currentColor" class="svg-icon">
@@ -298,19 +322,83 @@
               <small class="text-muted">Ombordagi mahsulotlarning umumiy qiymati</small>
             </div>
           </div>
+
+          <!-- 5. MUDDATI O'TGAN QARZ -->
+          <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="card-box">
+              <small class="counter-smal">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                  stroke="currentColor" class="svg-icon">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                </svg>
+                Muddati o'tgan qarz
+              </small>
+              <h3 class="counter" id="overdueDebtKpi" data-count="0" data-last-value="0">
+                0 <small>UZS</small>
+              </h3>
+              <small class="counter-change" id="overdueDebtChange">Muddati o'tgan to'lov yo'q</small>
+            </div>
+          </div>
+
+          <!-- 6. KAM QOLGAN MAHSULOTLAR -->
+          <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="card-box">
+              <small class="counter-smal">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                  stroke="currentColor" class="svg-icon">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                </svg>
+                Kam qolgan
+              </small>
+              <h3 class="counter" id="lowStockKpi" data-count="0" data-last-value="0">
+                0 <small>ta</small>
+              </h3>
+              <small class="counter-change" id="lowStockChange">Zaxira yetarli</small>
+            </div>
+          </div>
         </div>
 
         <div class="row mt-4">
           <div class="col-lg-8">
             <div class="card-box">
-              <h3 class="h6">7 kunlik savdo trendi</h3>
-              <canvas id="weeklyChart"></canvas>
+              <div class="mk-chart-head">
+                <div>
+                  <h3>Savdo dinamikasi</h3>
+                  <p id="weeklyChartHint">Kunlik tushum, so'nggi 7 kun</p>
+                </div>
+                <div class="mk-seg" role="group" aria-label="Grafik davri">
+                  <button type="button" class="active" data-chart-range="7" aria-pressed="true">7 kun</button>
+                  <button type="button" data-chart-range="30" aria-pressed="false">30 kun</button>
+                </div>
+              </div>
+              <div class="mk-chart">
+                <canvas id="weeklyChart" role="img" aria-label="Savdo dinamikasi grafigi"></canvas>
+                <div class="mk-chart-empty" id="weeklyChartEmpty">
+                  <i class="bi bi-bar-chart-line" aria-hidden="true"></i>
+                  <strong>Ma'lumot yo'q</strong>
+                  <span>Sotuv qilingandan so'ng grafik shu yerda paydo bo'ladi.</span>
+                </div>
+              </div>
             </div>
           </div>
           <div class="col-lg-4">
             <div class="card-box">
-              <h3 class="h6">Kunlik daromad</h3>
-              <canvas id="dailyChart"></canvas>
+              <div class="mk-chart-head">
+                <div>
+                  <h3>Kunlik daromad</h3>
+                  <p>Bugungi soatlik tushum</p>
+                </div>
+              </div>
+              <div class="mk-chart mk-chart-sm">
+                <canvas id="dailyChart" role="img" aria-label="Kunlik daromad grafigi"></canvas>
+                <div class="mk-chart-empty" id="dailyChartEmpty">
+                  <i class="bi bi-graph-up" aria-hidden="true"></i>
+                  <strong>Bugun sotuv yo'q</strong>
+                  <span>Birinchi sotuvdan so'ng ko'rsatkich paydo bo'ladi.</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -362,45 +450,98 @@
           <div class="card-body p-4">
             <h3 class="h5 mb-4 fw-bold" style="color: var(--text-primary);"><i class="bi bi-cart-plus" aria-hidden="true"></i> Yangi sotuv</h3>
 
-            <div class="row">
-              <!-- Mahsulot tanlash -->
-              <div class="col-md-3">
-                <label class="form-label small fw-semibold text-uppercase text-muted" for="saleSearch">Mahsulot</label>
-                <div class="input-group mb-2 shadow-sm" style="border-radius: 8px; overflow: hidden; border: 1px solid var(--border-subtle);">
-                  <input type="text" id="saleSearch" class="form-control border-0" style="background: var(--bg-main); color: var(--text-primary); box-shadow: none;" placeholder="Mahsulot nomi yoki barkod...">
-                  <button class="btn border-0" style="background: var(--brand-primary); color: #fff; padding: 0 12px;" type="button" onclick="startScanner('saleSearch')" title="Kamera orqali skanerlash">
-                    <i class="bi bi-qr-code-scan"></i>
-                  </button>
+            <div class="mk-pos-grid">
+              <!-- Chap panel: mahsulot tanlash + savat -->
+              <div class="mk-pos-panel">
+                <h3><i class="bi bi-search" aria-hidden="true"></i> Mahsulot qo'shish</h3>
+
+                <div class="mb-2">
+                  <label class="form-label" for="saleSearch">Qidiruv (nom yoki barkod)</label>
+                  <div class="input-group">
+                    <input type="text" id="saleSearch" class="form-control" placeholder="Mahsulot nomi yoki barkod..." autocomplete="off">
+                    <button class="btn btn-outline-secondary" type="button" onclick="startScanner('saleSearch')" title="Kamera orqali skanerlash" aria-label="Kamera orqali skanerlash">
+                      <i class="bi bi-qr-code-scan" aria-hidden="true"></i>
+                    </button>
+                  </div>
                 </div>
-                <select id="saleProduct" class="form-select" aria-label="Mahsulot tanlash"></select>
+
+                <div class="mk-pos-product-row">
+                  <div>
+                    <label class="form-label" for="saleProduct">Mahsulot</label>
+                    <select id="saleProduct" class="form-select" aria-label="Mahsulot tanlash"></select>
+                  </div>
+                  <div>
+                    <label id="saleQtyLabel" class="form-label" for="saleQty">Miqdor</label>
+                    <input type="number" id="saleQty" class="form-control" step="0.01" min="0.01" value="1" placeholder="1" inputmode="decimal">
+                  </div>
+                  <div>
+                    <label class="form-label" for="salePrice">Narx</label>
+                    <input type="text" id="salePrice" class="form-control" disabled>
+                  </div>
+                </div>
+
+                <button type="button" class="btn btn-primary w-100 mk-mt-4" id="addToCartBtn">
+                  <i class="bi bi-cart-plus" aria-hidden="true"></i> Savatga qo'shish
+                </button>
+
+                <div class="mk-mt-4">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <strong style="font-size:14px;">Savat</strong>
+                    <span class="mk-muted" id="saleCartCount">0 ta mahsulot</span>
+                  </div>
+
+                  <div class="table-responsive">
+                    <table class="mk-cart" aria-label="Savat">
+                      <thead>
+                        <tr>
+                          <th scope="col">Mahsulot</th>
+                          <th scope="col" style="width:92px;">Miqdor</th>
+                          <th scope="col" style="width:110px;">Summa</th>
+                          <th scope="col" style="width:40px;"><span class="mk-sr-only">O'chirish</span></th>
+                        </tr>
+                      </thead>
+                      <tbody id="saleCartBody"></tbody>
+                    </table>
+                  </div>
+
+                  <div class="mk-empty" id="saleCartEmpty">
+                    <i class="bi bi-cart" aria-hidden="true"></i>
+                    <strong>Savat bo'sh</strong>
+                    <span>Mahsulotni tanlab, “Savatga qo'shish” tugmasini bosing.</span>
+                  </div>
+                </div>
               </div>
 
-              <!-- Miqdor -->
-              <div class="col-md-2">
-                <label id="saleQtyLabel" class="form-label small fw-semibold text-uppercase text-muted" for="saleQty">Miqdor</label>
-                <input type="number" id="saleQty" class="form-control" step="0.01" min="0.01"
-                  placeholder="Miqdorni kiriting" />
-              </div>
+              <!-- O'ng panel: yakunlash -->
+              <div class="mk-pos-panel">
+                <h3><i class="bi bi-wallet2" aria-hidden="true"></i> To'lov</h3>
 
-              <!-- Narx (disabled) -->
-              <div class="col-md-3">
-                <label class="form-label small fw-semibold text-uppercase text-muted" for="salePrice">Narx</label>
-                <input type="text" id="salePrice" class="form-control" disabled>
-              </div>
+                <div class="mk-cart-total">
+                  <span>Mahsulotlar</span>
+                  <span id="saleCartSubtotal">0 UZS</span>
+                </div>
+                <div class="mk-cart-total" style="padding-top:0;">
+                  <span>Jami to'lov</span>
+                  <strong id="saleCartTotal">0 UZS</strong>
+                </div>
 
-              <!-- To'lov turi tugmalari (Naqd / Karta / Qarzga — bitta qatorda) -->
-              <div class="col-md-4 d-flex align-items-end">
-                <div class="btn-group w-100">
+                <div class="mk-pay-grid">
                   <button class="btn btn-success" id="addSaleCash" title="Naqd bilan sotish">
                     <i class="bi bi-cash-stack" aria-hidden="true"></i> Naqd
                   </button>
                   <button class="btn btn-info" id="addSaleCard" title="Karta bilan sotish">
                     <i class="bi bi-credit-card" aria-hidden="true"></i> Karta
                   </button>
-                  <button class="btn btn-warning" id="addSaleDebt" title="Qarzga yoki qisman to'lov bilan sotish">
-                    <i class="bi bi-receipt" aria-hidden="true"></i> Qarzga
+                  <button class="btn btn-warning mk-pay-debt" id="addSaleDebt" title="Qarzga yoki qisman to'lov bilan sotish">
+                    <i class="bi bi-receipt" aria-hidden="true"></i> Qarzga sotish
                   </button>
                 </div>
+
+                <p class="mk-pos-hint">
+                  <i class="bi bi-info-circle" aria-hidden="true"></i>
+                  To'lov tugmasi bosilganda savatdagi barcha mahsulotlar bitta sotuv sifatida yoziladi.
+                  Qarzga sotishda mijoz va qaytarish muddati ko'rsatiladi.
+                </p>
               </div>
             </div>
 
@@ -412,6 +553,7 @@
                   <button class="close-modal-debtors" aria-label="Yopish" onclick="closeDebtSaleModal()">&times;</button>
                 </div>
                 <form id="debtSaleForm" onsubmit="handleDebtSaleSubmit(event)">
+                  <p class="mk-alert mk-alert-info" id="debtSaleTotalHint" style="margin-bottom:14px;">Sotuv summasi: 0 UZS</p>
                   <div class="form-group">
                     <label for="debtSaleClientSelect">Mijoz *</label>
                     <select id="debtSaleClientSelect" class="form-control" required onchange="toggleDebtSaleNewClientFields()">
@@ -447,6 +589,29 @@
                     <i class="bi bi-check-circle"></i> Qarzga sotish
                   </button>
                 </form>
+              </div>
+            </div>
+
+            <!-- Sotuv cheki (muvaffaqiyatli sotuvdan keyin) -->
+            <div class="modal-debtors" id="saleReceiptModal" role="dialog" aria-modal="true" aria-label="Sotuv cheki">
+              <div class="modal-debtors-content" style="max-width:460px;width:100%;">
+                <div class="modal-debtors-header">
+                  <h2><i class="bi bi-check-circle-fill text-success" aria-hidden="true"></i> Sotuv yakunlandi</h2>
+                  <button class="close-modal-debtors" aria-label="Yopish" onclick="closeSaleReceipt()">&times;</button>
+                </div>
+                <div class="mk-modal-body">
+                  <p class="mk-muted" style="margin-top:0;">Chek raqami: <strong id="receiptSaleId">—</strong></p>
+                  <div id="receiptItems" style="font-size:13px;"></div>
+                  <div class="mk-cart-total" style="border-top:1px solid var(--border-subtle);margin-top:10px;">
+                    <span>Jami</span>
+                    <strong id="receiptTotal" style="font-size:20px;">0 UZS</strong>
+                  </div>
+                  <p class="mk-muted" id="receiptMeta"></p>
+                </div>
+                <div class="mk-modal-foot">
+                  <button type="button" class="btn btn-outline-secondary" onclick="closeSaleReceipt()">Yangi sotuv</button>
+                  <button type="button" class="btn btn-primary" onclick="closeSaleReceipt(true)">Savdo tarixiga</button>
+                </div>
               </div>
             </div>
 
@@ -500,10 +665,27 @@
         <div class="card border-0 shadow-sm">
           <div class="card-body p-0">
             <div class="p-4 border-bottom" style="border-color: var(--border-subtle) !important;">
-              <div class="position-relative" style="max-width: 400px; width: 100%;">
-                <svg class="position-absolute" style="left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                <input type="text" id="productSearch" class="form-control" style="padding-left: 36px; background: var(--bg-main); border-color: var(--border-subtle); color: var(--text-primary);" placeholder="Mahsulot nomi yoki kodi bo'yicha qidirish..." aria-label="Mahsulot nomi yoki kodi bo'yicha qidirish">
+              <div class="mk-toolbar">
+                <div class="position-relative mk-toolbar-search">
+                  <svg class="position-absolute" style="left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                  <input type="text" id="productSearch" class="form-control" style="padding-left: 36px; background: var(--bg-main); border-color: var(--border-subtle); color: var(--text-primary);" placeholder="Mahsulot nomi yoki kodi bo'yicha qidirish..." aria-label="Mahsulot nomi yoki kodi bo'yicha qidirish">
+                </div>
+
+                <select id="productCategoryFilter" class="form-select mk-filter-select" aria-label="Kategoriya bo'yicha filtrlash">
+                  <option value="">Barcha kategoriyalar</option>
+                </select>
+
+                <select id="productStockFilter" class="form-select mk-filter-select" aria-label="Zaxira holati bo'yicha filtrlash">
+                  <option value="all">Barcha mahsulotlar</option>
+                  <option value="low">Kam qolgan</option>
+                  <option value="out">Tugagan</option>
+                </select>
+
+                <button type="button" class="btn btn-outline-primary mk-nowrap" id="exportProductsBtn">
+                  <i class="bi bi-download" aria-hidden="true"></i> CSV
+                </button>
               </div>
+              <p class="mk-toolbar-count" id="productFilterCount" aria-live="polite"></p>
             </div>
 
             <div class="table-responsive">
@@ -591,10 +773,17 @@
                   </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                  <select id="transactionFilter" class="form-select text-sm shadow-none" style="min-width: 140px; background: var(--bg-main); border-color: var(--border-subtle); color: var(--text-primary);" aria-label="Tranzaksiya filtri">
+                  <select id="transactionFilter" class="form-select text-sm shadow-none mk-filter-select" aria-label="Davr filtri">
                     <option value="daily" selected>Kunlik</option>
                     <option value="weekly">Haftalik</option>
                     <option value="monthly">Oylik</option>
+                    <option value="all">Barchasi</option>
+                  </select>
+                  <select id="transactionPaymentFilter" class="form-select text-sm shadow-none mk-filter-select" aria-label="To'lov turi filtri">
+                    <option value="all" selected>Barcha to'lovlar</option>
+                    <option value="cash">Naqd</option>
+                    <option value="card">Karta</option>
+                    <option value="debt">Qarz</option>
                   </select>
                   <button class="btn btn-primary d-flex align-items-center gap-2" onclick="exportTransactionsExcel()" id="exportTransactions" style="background: var(--brand-primary); border: none;">
                     <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
@@ -629,8 +818,11 @@
             <h2 class="h4 mb-0 fw-bold">Qarzdorlarni boshqarish</h2>
             <p class="text-muted mb-0 small">To'lov holatini va to'lanmagan qoldiqlarni kuzatib boring</p>
           </div>
-          <div class="d-flex gap-2">
+          <div class="d-flex gap-2 flex-wrap">
             <input type="text" id="searchInput" class="form-control shadow-sm" placeholder="Qidirish..." style="background: var(--bg-main); border-color: var(--border-subtle); color: var(--text-primary); max-width: 250px;" aria-label="Qidirish">
+            <button class="btn btn-outline-primary mk-nowrap" id="exportDebtorsBtn" title="Qarzdorlar ro'yxatini CSV faylga yuklash">
+              <i class="bi bi-download" aria-hidden="true"></i> CSV
+            </button>
             <button class="btn btn-primary px-4 py-2 fw-semibold shadow-sm" onclick="openModal()" style="background: var(--brand-primary); border: none;">+ Yangi qarzdor</button>
           </div>
         </div>
@@ -788,12 +980,49 @@
                 <label id="adjustAmountLabel" for="adjustAmount">Summa (so'm)</label>
                 <input type="number" id="adjustAmount" required step="1" min="1" placeholder="15000">
               </div>
+              <div class="form-group" id="adjustPaymentMethodGroup" hidden>
+                <label for="adjustPaymentMethod">To'lov usuli</label>
+                <select id="adjustPaymentMethod">
+                  <option value="cash">Naqd</option>
+                  <option value="card">Karta</option>
+                </select>
+              </div>
               <input type="hidden" id="adjustDebtorId" aria-label="adjustDebtorId">
               <input type="hidden" id="adjustType" aria-label="adjustType">
               <button type="submit" class="btn-submit" id="adjustSubmitBtn">
                 <i class="bi bi-check-circle"></i> Tasdiqlash
               </button>
             </form>
+          </div>
+        </div>
+
+        <!-- To'lovlar tarixi -->
+        <div class="modal-debtors" id="paymentHistoryModal" role="dialog" aria-modal="true" aria-label="To'lovlar tarixi">
+          <div class="modal-debtors-content" style="max-width:520px;width:100%;">
+            <div class="modal-debtors-header">
+              <h2>To'lovlar tarixi</h2>
+              <button class="close-modal-debtors" aria-label="Yopish" onclick="closePaymentHistory()">&times;</button>
+            </div>
+            <div class="mk-modal-body">
+              <p class="mk-muted" id="paymentHistoryDebtor" style="margin-top:0;"></p>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th scope="col">Sana</th>
+                      <th scope="col" class="text-end">Summa</th>
+                      <th scope="col" class="text-end">Qoldiq</th>
+                    </tr>
+                  </thead>
+                  <tbody id="paymentHistoryBody"></tbody>
+                </table>
+              </div>
+              <div class="mk-empty" id="paymentHistoryEmpty">
+                <i class="bi bi-clock-history" aria-hidden="true"></i>
+                <strong>To'lovlar yo'q</strong>
+                <span>Bu mijoz hali to'lov qilmagan.</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -850,33 +1079,33 @@
             <div class="card shadow-sm mb-4 border-0">
               <div class="card-body p-4">
                 <h3 class="h5 fw-bold mb-4">Shaxsiy profil</h3>
-                <form id="profileForm">
+                <form id="profileForm" novalidate>
                   <div class="row mb-3">
                     <div class="col-md-6">
                       <label class="form-label text-muted small fw-semibold" for="fullName">F.I.SH</label>
-                      <input type="text" id="fullName" class="form-control" placeholder="Ism Familiya">
+                      <input type="text" id="fullName" class="form-control" placeholder="Ism Familiya" autocomplete="name" required>
+                      <small class="mk-field-error" id="fullNameError" hidden></small>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label text-muted small fw-semibold" for="email">Email</label>
-                      <input type="email" id="email" class="form-control" placeholder="email@example.com">
+                      <label class="form-label text-muted small fw-semibold" for="company">Do'kon nomi</label>
+                      <input type="text" id="company" class="form-control" placeholder="Masalan: Mark1 Market" autocomplete="organization" required>
+                      <small class="mk-field-error" id="companyError" hidden></small>
                     </div>
                   </div>
                   <div class="row mb-4">
                     <div class="col-md-6">
                       <label class="form-label text-muted small fw-semibold" for="phone">Telefon raqam</label>
-                      <input type="tel" id="phone" class="form-control" placeholder="+998 90 123 45 67">
+                      <input type="tel" id="phone" class="form-control" readonly aria-describedby="phoneHelp">
+                      <small class="text-muted" id="phoneHelp" style="font-size:12px;">Telefon raqam tizimga kirish uchun ishlatiladi va bu yerda o'zgartirilmaydi.</small>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label text-muted small fw-semibold" for="department">Departament</label>
-                      <select id="department" class="form-select">
-                        <option value="boshqaruv">Boshqaruv</option>
-                        <option value="savdo">Savdo</option>
-                        <option value="it">IT</option>
-                      </select>
+                      <label class="form-label text-muted small fw-semibold" for="roleDisplay">Rol</label>
+                      <input type="text" id="roleDisplay" class="form-control" readonly value="—">
+                      <small class="text-muted" id="roleHelp" style="font-size:12px;">Rol backenddagi hisob turidan olinadi.</small>
                     </div>
                   </div>
                   <div class="d-flex justify-content-end">
-                    <button type="button" class="btn btn-primary px-4 py-2" onclick="saveChanges()" style="background: var(--brand-primary); border: none;">Saqlash</button>
+                    <button type="button" class="btn btn-primary px-4 py-2" id="saveProfileBtn" onclick="saveChanges()">Saqlash</button>
                   </div>
                 </form>
               </div>
@@ -934,12 +1163,12 @@
 
                 <div class="d-flex justify-content-between align-items-center mb-3">
                   <div>
-                    <h4 class="h6 mb-0 fw-semibold text-primary" style="color: var(--text-primary) !important;">Bildirishnomalar</h4>
-                    <small class="text-muted">Email va SMS</small>
+                    <h4 class="h6 mb-0 fw-semibold text-primary" style="color: var(--text-primary) !important;">Sotuvdan keyin chek</h4>
+                    <small class="text-muted">Chek oynasini avtomatik ko'rsatish</small>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="notifyToggle" checked
-                           aria-label="Email va SMS bildirishnomalarini yoqish yoki o'chirish"
+                    <input class="form-check-input" type="checkbox" role="switch" id="receiptToggle" checked
+                           aria-label="Sotuvdan keyin chek oynasini ko'rsatish"
                            style="position:static;margin:0;width:24px;height:24px;accent-color:var(--brand-primary);cursor:pointer;">
                   </div>
                 </div>
@@ -951,20 +1180,8 @@
             <div class="card shadow-sm border-0">
               <div class="card-body p-4">
                 <h3 class="h5 fw-bold mb-4">Ruxsatnomalar</h3>
-                <ul class="list-group list-group-flush" style="background: transparent;">
-                  <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3" style="background: transparent; border-color: var(--border-subtle);">
-                    <span style="color: var(--text-primary);">Tizimga kirish</span>
-                    <span class="badge rounded-pill" style="background: var(--success-bg); color: var(--success-text);">Faol</span>
-                  </li>
-                  <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3" style="background: transparent; border-color: var(--border-subtle);">
-                    <span style="color: var(--text-primary);">Foydalanuvchilarni qo'shish</span>
-                    <span class="badge rounded-pill" style="background: var(--success-bg); color: var(--success-text);">Faol</span>
-                  </li>
-                  <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3" style="background: transparent; border-color: var(--border-subtle);">
-                    <span style="color: var(--text-primary);">Hisobotlarni yuklab olish</span>
-                    <span class="badge rounded-pill" style="background: var(--success-bg); color: var(--success-text);">Faol</span>
-                  </li>
-                </ul>
+                <p class="text-muted small" id="permissionsRoleHint" style="font-size:12px;">Rol aniqlanmoqda…</p>
+                <ul class="list-group list-group-flush" id="permissionsList" style="background: transparent;" aria-live="polite"></ul>
               </div>
             </div>
           </div>
@@ -1125,9 +1342,9 @@
   <script src="https://cdn.jsdelivr.net/npm/axios@1.20.0/dist/axios.min.js?v=1789490310"></script>
   <script src="js/toast.js?v=1790606500"></script>
   <script src="js/ux-enhancements.js?v=1790900001"></script>
-  <script src="js/api-client.js?v=1789490310"></script>
+  <script src="js/api-client.js?v=1792579600"></script>
   <script src="index.js?v=1790606500" defer></script>
-  <script src="script.js?v=1790800001" defer></script>
+  <script src="script.js?v=1792579900" defer></script>
   <script defer>
   </script>
   <script defer>
@@ -1232,6 +1449,8 @@
       }
     })();
   </script>
+  <!-- MARK1 app shell: sidebar collapse/drawer, modal fokus, toast, confirm -->
+  <script src="js/app-shell.js?v=1792579600" defer></script>
 </body>
 
 </html>

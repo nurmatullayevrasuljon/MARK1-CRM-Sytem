@@ -1015,12 +1015,27 @@
     },
     addPayment: async function (saleId, amount, paymentMethod) {
 
+      // Idempotentlik kaliti — tarmoq xatosi yoki ikki marta bosishda
+      // to'lov ikki marta yozilmasligi uchun.
+      let paymentId = "";
+      try {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+          paymentId = window.crypto.randomUUID();
+        }
+      } catch (e) {
+        paymentId = "";
+      }
+      if (!paymentId) {
+        paymentId = `pay_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+      }
+
       try {
         const res = await crmApi.post(
           `/sale/payment/add?sale_id=${encodeURIComponent(saleId)}`,
           {
             amount,
-            payment_method: paymentMethod
+            payment_method: paymentMethod || "cash",
+            payment_id: paymentId
           }
         );
 

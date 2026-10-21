@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- POST_NOTIFICATIONS ATAYLAB YO'Q: ilova lokal bildirishnomalar
+         yubormaydi. Ruxsat e'lon qilinsa-yu ishlatilmasa, Play Console
+         Data Safety deklaratsiyasi bilan ziddiyatga tushadi. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <!-- Shtrix-kod skanerlash uchun kamera. Eski paket o'z manifestida

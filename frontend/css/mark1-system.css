@@ -1,0 +1,1057 @@
+/* ==========================================================================
+   MARK1 CRM — DESIGN SYSTEM LAYER (v1.0)
+   --------------------------------------------------------------------------
+   Bu fayl mavjud palitrani (premium-theme.css tokenlari) O'ZGARTIRMAYDI.
+   Faqat: spacing, tipografiya o'lchamlari, holatlar (hover/focus/disabled/
+   loading/empty/error), responsive qoidalar va komponent izchilligi.
+   Yuklanish tartibi: barcha sahifalarda ENG OXIRIDA.
+   ========================================================================== */
+
+/* ─── 1. Spacing / type / control tokens ─────────────────────────────────── */
+:root {
+  --mk-space-1: 4px;
+  --mk-space-2: 8px;
+  --mk-space-3: 12px;
+  --mk-space-4: 16px;
+  --mk-space-5: 20px;
+  --mk-space-6: 24px;
+  --mk-space-8: 32px;
+  --mk-space-10: 40px;
+
+  --mk-control-h: 44px;
+  --mk-control-h-sm: 36px;
+
+  --mk-fs-xs: 12px;
+  --mk-fs-sm: 13px;
+  --mk-fs-base: 14px;
+  --mk-fs-md: 16px;
+  --mk-fs-lg: 18px;
+  --mk-fs-xl: 24px;
+  --mk-fs-2xl: 28px;
+  --mk-fs-3xl: 32px;
+
+  --mk-focus-ring: 0 0 0 3px rgba(68, 85, 238, 0.35);
+  --mk-z-drawer: 1040;
+  --mk-z-overlay: 1030;
+}
+
+/* ─── 2. Accessibility: focus, motion, targets ───────────────────────────── */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--brand-primary, #4455EE);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  z-index: 2000;
+  padding: 10px 16px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+}
+.skip-link:focus {
+  left: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── 3. App shell: sidebar / content ────────────────────────────────────── */
+body > .d-flex {
+  min-height: 100vh;
+  align-items: stretch;
+}
+
+.sidebar {
+  flex: 0 0 232px;
+  width: 232px;
+  min-width: 232px;
+  min-height: 100vh;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-space-2);
+  padding: var(--mk-space-5) var(--mk-space-3);
+  border-right: 1px solid var(--border-subtle);
+  z-index: 20;
+}
+
+.sidebar .nav {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: var(--mk-space-4);
+}
+
+.sidebar .nav-item {
+  min-height: 42px;
+  margin: 0;
+  padding: 10px 12px;
+  font-size: var(--mk-fs-base);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar .nav-item:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Sidebar pastki qismi (foydalanuvchi + chiqish) */
+.mk-sidebar-foot {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--mk-space-3);
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+}
+.mk-sidebar-foot .mk-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--brand-surface);
+  color: var(--brand-text);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex: 0 0 34px;
+}
+.mk-sidebar-foot .mk-user-meta {
+  min-width: 0;
+  line-height: 1.2;
+}
+.mk-sidebar-foot .mk-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mk-sidebar-foot .mk-user-store {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Sidebar collapse (desktop) */
+.mk-sidebar-toggle {
+  display: none;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+body.mk-sidebar-collapsed .sidebar {
+  flex-basis: 76px;
+  width: 76px;
+  min-width: 76px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+body.mk-sidebar-collapsed .sidebar .nav-item {
+  justify-content: center;
+  padding: 10px 0;
+  font-size: 0;
+  gap: 0;
+}
+body.mk-sidebar-collapsed .sidebar .nav-item .svg-icon {
+  width: 22px;
+  height: 22px;
+}
+body.mk-sidebar-collapsed .sidebar .logo img {
+  max-width: 44px;
+}
+body.mk-sidebar-collapsed .sidebar .mk-sidebar-foot {
+  justify-content: center;
+}
+body.mk-sidebar-collapsed .sidebar .mk-user-meta,
+body.mk-sidebar-collapsed .sidebar .mk-sidebar-toggle span {
+  display: none;
+}
+body.mk-sidebar-collapsed .sidebar .nav-item::after {
+  content: attr(data-label);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: var(--shadow-card);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  z-index: 50;
+}
+body.mk-sidebar-collapsed .sidebar .nav-item:hover::after,
+body.mk-sidebar-collapsed .sidebar .nav-item:focus-visible::after {
+  opacity: 1;
+}
+
+/* ─── 4. Topbar ──────────────────────────────────────────────────────────── */
+.topbar {
+  min-height: 68px;
+  padding: 12px 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  box-shadow: none;
+  gap: var(--mk-space-3);
+  position: sticky;
+  top: 12px;
+  z-index: 30;
+}
+.topbar h1 {
+  font-size: var(--mk-fs-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.mk-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.mk-topbar-sub {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 2px;
+  /* Uzun izoh tor ekranda sarlavhani ikki qatorga bo'lib, topbar
+     balandligini o'zgartirmasligi uchun bir qatorda kesamiz. */
+  max-width: min(52vw, 420px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mk-mobile-menu {
+  display: none;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.theme-toggle-btn {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+/* ─── 5. Page rhythm ─────────────────────────────────────────────────────── */
+.content {
+  padding: var(--mk-space-5) var(--mk-space-6) var(--mk-space-10);
+  background: var(--bg-main);
+}
+.section > .row,
+.section .row {
+  --bs-gutter-x: 1rem;
+}
+.section h2.h4,
+.section > .d-flex h2 {
+  font-size: var(--mk-fs-xl);
+  letter-spacing: -0.02em;
+}
+.section p.text-muted {
+  font-size: var(--mk-fs-sm);
+  color: var(--text-muted) !important;
+}
+@media (min-width: 1600px) {
+  .content > .section {
+    max-width: 1560px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .content > .topbar {
+    max-width: 1560px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* ─── 6. Cards / KPI ─────────────────────────────────────────────────────── */
+.card,
+.card-box,
+.low-stock-section,
+.overdue-wrapper {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+.card-box {
+  padding: var(--mk-space-5);
+  height: 100%;
+}
+.card-box:hover {
+  transform: none;
+  box-shadow: var(--shadow-card);
+}
+.card-box h3.counter,
+.card-box h3.daily-c {
+  font-size: var(--mk-fs-2xl);
+  line-height: 1.15;
+  margin: 6px 0 4px;
+}
+.card-box h3.counter small,
+.card-box h3.daily-c small {
+  font-size: var(--mk-fs-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.card-box small.counter-smal {
+  font-size: var(--mk-fs-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.counter-change {
+  font-size: var(--mk-fs-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 18px;
+}
+.counter-change.positive::before { content: "▲"; font-size: 9px; }
+.counter-change.negative::before { content: "▼"; font-size: 9px; }
+.counter-change.neutral::before  { content: "•"; font-size: 12px; }
+
+/* ─── 7. Buttons / inputs / badges ───────────────────────────────────────── */
+.btn {
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: var(--mk-fs-base);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.btn-sm {
+  min-height: var(--mk-control-h-sm);
+  padding: 6px 12px;
+  font-size: var(--mk-fs-sm);
+}
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+}
+.btn.is-loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+.btn.is-loading::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: mk-spin 0.7s linear infinite;
+}
+@keyframes mk-spin { to { transform: rotate(360deg); } }
+
+.form-control,
+.form-select {
+  min-height: var(--mk-control-h);
+  font-size: var(--mk-fs-base);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.form-control::placeholder { font-size: var(--mk-fs-sm); }
+.form-label {
+  font-size: var(--mk-fs-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.form-control.is-invalid,
+.form-select.is-invalid {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+.mk-field-error {
+  display: none;
+  margin-top: 4px;
+  font-size: var(--mk-fs-xs);
+  color: var(--danger-text);
+}
+.mk-field-error.show { display: block; }
+
+.badge {
+  font-size: var(--mk-fs-xs);
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+/* ─── 8. Tables ──────────────────────────────────────────────────────────── */
+.table {
+  margin-bottom: 0;
+  font-size: var(--mk-fs-base);
+}
+.table thead th {
+  font-size: var(--mk-fs-xs);
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  color: var(--text-muted) !important;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 12px 14px;
+  white-space: nowrap;
+}
+.table tbody td {
+  padding: 12px 14px;
+  vertical-align: middle;
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+.table-hover tbody tr:hover > * {
+  background: var(--bg-hover);
+}
+.table-responsive {
+  border-radius: var(--radius-md);
+}
+
+/* Jadval ichidagi amal tugmalari */
+.table .btn-icon {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-radius: 8px;
+}
+
+/* ─── 9. Charts ──────────────────────────────────────────────────────────── */
+.mk-chart {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  min-height: 220px;
+}
+.mk-chart canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+.mk-chart-sm { height: 240px; }
+.mk-chart-empty {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  color: var(--text-muted);
+  background: linear-gradient(to bottom, transparent, var(--bg-card) 65%);
+  border-radius: var(--radius-md);
+  font-size: var(--mk-fs-sm);
+}
+.mk-chart-empty.show { display: flex; }
+.mk-chart-empty i { font-size: 26px; opacity: 0.7; }
+.mk-chart-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.mk-chart-head h3 { margin: 0; font-size: var(--mk-fs-md); font-weight: 700; }
+.mk-chart-head p { margin: 2px 0 0; font-size: var(--mk-fs-xs); color: var(--text-muted); }
+.mk-seg {
+  display: inline-flex;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+.mk-seg button {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--mk-fs-xs);
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  min-height: 30px;
+}
+.mk-seg button.active {
+  background: var(--bg-card);
+  color: var(--brand-text);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ─── 10. Alerts / empty / skeleton ──────────────────────────────────────── */
+.mk-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: var(--mk-fs-sm);
+  border: 1px solid transparent;
+}
+.mk-alert-error   { background: var(--danger-bg);  color: var(--danger-text);  border-color: rgba(239,68,68,.25); }
+.mk-alert-warning { background: var(--warning-bg); color: var(--warning-text); border-color: rgba(245,158,11,.25); }
+.mk-alert-success { background: var(--success-bg); color: var(--success-text); border-color: rgba(16,185,129,.25); }
+.mk-alert-info    { background: var(--brand-surface); color: var(--brand-text); border-color: rgba(68,85,238,.2); }
+
+.mk-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--mk-fs-sm);
+}
+.mk-empty i { font-size: 28px; opacity: 0.65; }
+.mk-empty strong { color: var(--text-primary); font-size: var(--mk-fs-base); }
+
+.mk-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-surface);
+  border-radius: 8px;
+}
+.mk-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+  animation: mk-shimmer 1.2s infinite;
+}
+.dark-mode .mk-skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
+}
+@keyframes mk-shimmer { to { transform: translateX(100%); } }
+
+/* ─── 11. Modals ─────────────────────────────────────────────────────────── */
+.modal-debtors-content,
+.modal-content {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-floating);
+}
+.modal-debtors-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-debtors-header h2 {
+  font-size: var(--mk-fs-lg);
+  margin: 0;
+  font-weight: 700;
+}
+.modal-debtors-content form,
+.modal-debtors-content .mk-modal-body {
+  padding: 20px;
+}
+.modal-debtors-content .form-group {
+  margin-bottom: 14px;
+}
+.modal-debtors-content label {
+  font-size: var(--mk-fs-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 6px;
+}
+.mk-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* ─── 12. POS cart ───────────────────────────────────────────────────────── */
+.mk-pos-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: var(--mk-space-4);
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .mk-pos-grid { grid-template-columns: 1fr; }
+}
+.mk-pos-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--mk-space-5);
+  box-shadow: var(--shadow-sm);
+}
+.mk-pos-panel h3 {
+  font-size: var(--mk-fs-md);
+  font-weight: 700;
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mk-pos-product-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px auto;
+  gap: 8px;
+  align-items: end;
+}
+@media (max-width: 520px) {
+  .mk-pos-product-row { grid-template-columns: 1fr; }
+}
+.mk-cart {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.mk-cart th {
+  font-size: var(--mk-fs-xs);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+}
+.mk-cart td {
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: var(--mk-fs-sm);
+  vertical-align: middle;
+}
+.mk-cart .mk-cart-name { font-weight: 600; color: var(--text-primary); }
+.mk-cart .mk-cart-sub { font-size: 12px; color: var(--text-muted); }
+.mk-cart-qty {
+  width: 74px;
+  min-height: 34px;
+  padding: 4px 8px;
+  text-align: center;
+}
+.mk-cart-remove {
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--danger);
+  cursor: pointer;
+}
+.mk-cart-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 14px 0 6px;
+  font-size: var(--mk-fs-sm);
+  color: var(--text-secondary);
+}
+.mk-cart-total strong {
+  font-size: var(--mk-fs-2xl);
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+.mk-pay-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.mk-pay-grid .btn { min-height: 46px; }
+.mk-pay-grid .mk-pay-debt { grid-column: 1 / -1; }
+.mk-pos-hint {
+  font-size: var(--mk-fs-xs);
+  color: var(--text-muted);
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+/* ─── 13. Toast ──────────────────────────────────────────────────────────── */
+#mk-toast-host {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: min(360px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.mk-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-floating);
+  font-size: var(--mk-fs-sm);
+  color: var(--text-primary);
+  animation: mk-toast-in 0.18s ease-out;
+  pointer-events: auto;
+}
+.mk-toast.is-error { border-left: 4px solid var(--danger); }
+.mk-toast.is-success { border-left: 4px solid var(--success); }
+.mk-toast.is-info { border-left: 4px solid var(--brand-primary); }
+@keyframes mk-toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── 14. Mobile: drawer, bottom nav, tables ─────────────────────────────── */
+@media (max-width: 991px) {
+  .mk-mobile-menu { display: inline-flex; }
+  .mk-sidebar-toggle { display: none; }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: min(300px, 84vw);
+    min-width: 0;
+    flex-basis: auto;
+    transform: translateX(-105%);
+    transition: transform 0.22s ease;
+    z-index: var(--mk-z-drawer);
+    box-shadow: var(--shadow-floating);
+  }
+  body.mk-nav-open .sidebar {
+    transform: translateX(0);
+    display: flex !important;
+  }
+  .mk-nav-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 15, 35, 0.5);
+    z-index: calc(var(--mk-z-drawer) - 1);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  body.mk-nav-open .mk-nav-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  body.mk-nav-open { overflow: hidden; }
+  .content { padding: 12px 12px 96px; }
+  .topbar { top: 8px; padding: 10px 12px; min-height: 60px; }
+  .topbar h1 { font-size: 16px; }
+}
+
+@media (max-width: 767px) {
+  .section h2.h4,
+  .section > .d-flex h2 { font-size: 20px; }
+  .card-box { padding: 16px; }
+  .card-box h3.counter,
+  .card-box h3.daily-c { font-size: 22px; }
+  .content { padding-left: 10px; padding-right: 10px; }
+  .mk-chart { height: 220px; }
+
+  /* Umumiy jadval → karta (data-label app-shell.js tomonidan qo'yiladi) */
+  .mk-cards-mobile thead { display: none; }
+  .mk-cards-mobile tbody tr {
+    display: block;
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    background: var(--bg-card);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .mk-cards-mobile tbody td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 6px 0;
+    border: 0;
+    text-align: right;
+    font-size: 13px;
+  }
+  .mk-cards-mobile tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: left;
+    flex: 0 0 auto;
+    max-width: 45%;
+  }
+  .mk-cards-mobile tbody td > * { min-width: 0; }
+}
+
+/* ─── 15. Dark mode consistency ──────────────────────────────────────────── */
+.dark-mode .card-box,
+.dark-mode .card {
+  background: var(--bg-card) !important;
+  border-color: var(--border-subtle) !important;
+}
+.dark-mode .table thead th {
+  background: var(--bg-surface) !important;
+  color: var(--text-secondary) !important;
+}
+.dark-mode .mk-seg { background: var(--bg-surface); }
+.dark-mode .mk-seg button.active { background: var(--bg-card); }
+.dark-mode .topbar { background: var(--bg-card); }
+
+/* ─── 16. Utility ────────────────────────────────────────────────────────── */
+.mk-hstack { display: flex; align-items: center; gap: 8px; }
+.mk-vstack { display: flex; flex-direction: column; gap: 8px; }
+.mk-wrap { flex-wrap: wrap; }
+.mk-grow { flex: 1 1 auto; min-width: 0; }
+.mk-muted { color: var(--text-muted); font-size: 12px; }
+.mk-nowrap { white-space: nowrap; }
+.mk-mt-2 { margin-top: 8px; }
+.mk-mt-4 { margin-top: 16px; }
+.mk-hidden { display: none !important; }
+.mk-sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
+}
+
+/* ─── 17. Product thumbnails / overdue cards ─────────────────────────────── */
+.product-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid var(--border-subtle, #E2E8F0);
+  background: var(--bg-surface, #F8FAFC);
+}
+.product-img-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted, #64748B);
+  font-size: 20px;
+  padding: 8px;
+  object-fit: contain;
+}
+.overdue-mini-phone {
+  font-size: 12px;
+  color: var(--text-muted, #64748B);
+  margin-top: 2px;
+}
+.overdue-mini-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.overdue-card-mini[role="button"] {
+  cursor: pointer;
+}
+.overdue-card-mini[role="button"]:focus-visible {
+  outline: 3px solid var(--brand-primary, #4455EE);
+  outline-offset: 2px;
+}
+
+/* ─── 18. Toolbar / filters ──────────────────────────────────────────────── */
+.mk-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.mk-toolbar-search {
+  flex: 1 1 260px;
+  max-width: 420px;
+  width: 100%;
+}
+.mk-filter-select {
+  min-width: 150px;
+  width: auto;
+  max-width: 100%;
+}
+.mk-toolbar-count {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--text-muted, #64748B);
+}
+@media (max-width: 575.98px) {
+  .mk-toolbar-search,
+  .mk-filter-select {
+    flex: 1 1 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .mk-toolbar .btn {
+    width: 100%;
+  }
+}
+
+/* ─── Planshet jadvallari ────────────────────────────────────────────────────
+   premium-theme.css 768px gacha jadvallarni kartaga aylantiradi. Telefonda
+   bu qulay, lekin 576–768px da 7 ustunli jadval juda uzun va chalkash
+   ko'rinadi. Shu oralig'da oddiy jadval qoldirib, gorizontal scroll
+   ishlatamiz (`.table-responsive` allaqachon mavjud). */
+@media (min-width: 576px) and (max-width: 768px) {
+  #productsSection .table { display: table; width: 100%; }
+  #productsSection .table thead { display: table-header-group; }
+  #productsSection .table tbody { display: table-row-group; }
+  #productsSection .table tbody tr {
+    display: table-row;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  #productsSection .table tbody td {
+    display: table-cell;
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid var(--border-subtle);
+    text-align: left;
+    vertical-align: middle;
+  }
+  #productsSection .table tbody td::before { content: none; display: none; }
+
+  /* Sahifa sarlavhasi + amallar qatori planshetda ustma-ust tushmasin */
+  #debtors > .d-flex.justify-content-between,
+  #productsSection > .d-flex.justify-content-between,
+  #daily-sales > .d-flex.justify-content-between {
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start !important;
+  }
+  #debtors > .d-flex.justify-content-between > div:last-child,
+  #productsSection > .d-flex.justify-content-between > div:last-child,
+  #daily-sales > .d-flex.justify-content-between > div:last-child {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  #searchInput { max-width: none !important; flex: 1 1 200px; }
+}
+
+/* ─── Qarzdorlar jadvalidagi amallar ────────────────────────────────────────
+   `.action-buttons-grid` uchun stil yo'q edi: tor ekranda 7 ta tugma
+   tasodifiy 3 ustunga o'ralib, karta juda uzun bo'lib ketardi. Endi
+   ular bir tekis flex qatoriga joylashadi. */
+.action-buttons-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+@media (max-width: 768px) {
+  #debtors .table tbody td[data-label="Amallar"] {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  #debtors .table tbody td[data-label="Amallar"]::before {
+    flex: 1 1 100%;
+    margin-bottom: 2px;
+  }
+  #debtors .table tbody td[data-label="Amallar"] .action-buttons-grid {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  /* style.css ning mobil media so'rovida `.action-btn { width: 100% }`
+     bor — flex qatorda bu har bir tugmani alohida qatorga tushirardi. */
+  #debtors .action-buttons-grid .action-btn {
+    width: 36px;
+    flex: 0 0 36px;
+  }
+}
+
+/* ─── Telefon: sahifa sarlavhasi va amallar ──────────────────────────────── */
+@media (max-width: 575.98px) {
+  #debtors > .d-flex.justify-content-between,
+  #productsSection > .d-flex.justify-content-between,
+  #daily-sales > .d-flex.justify-content-between {
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-start !important;
+  }
+  /* style.css mobil rejimda `.d-flex.gap-2` ni ustunga aylantiradi —
+     qidiruv + CSV + CTA uch qatorga bo'linib ketardi. Qidiruvni to'liq
+     qatorga, ikkita tugmani esa bitta qatorga joylaymiz. */
+  #debtors > .d-flex.justify-content-between > div:last-child {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 8px;
+    width: 100%;
+  }
+  #searchInput { flex: 1 1 100%; max-width: none !important; width: 100%; }
+  #exportDebtorsBtn { flex: 0 0 auto; width: auto; }
+  #debtors > .d-flex.justify-content-between > div:last-child .btn-primary {
+    flex: 1 1 140px;
+    width: auto;
+  }
+  #productsSection > .d-flex.justify-content-between > .btn {
+    width: 100%;
+  }
+}
+
+/* ─── Desktop/planshet: qarzdorlar sarlavhasidagi amallar bir qatorda ──────
+   Bootstrap `.form-control { width: 100% }` flex konteyner ichida qidiruv
+   maydonining bazaviy kengligini shishirib, "Yangi qarzdor" tugmasini
+   ikkinchi qatorga tushirib yuborardi. */
+@media (min-width: 576px) {
+  #debtors > .d-flex.justify-content-between > div:last-child {
+    flex-wrap: nowrap !important;
+  }
+  #searchInput {
+    flex: 0 0 240px;
+    width: 240px;
+  }
+}

@@ -286,6 +286,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="css/mark1-system.css?v=1791200001">
 </head>
 
 <body>
@@ -320,7 +321,7 @@
                 Ushbu Maxfiylik Siyosati <strong>"MARK1 CRM"</strong> platformasi (keyingi o'rinlarda <em>"Platforma"</em>, <em>"Ilova"</em> yoki <em>"Biz"</em>) tomonidan foydalanuvchilar (do'kon egalari, administratorlar, sotuvchilar va mijozlar) shaxsiy va biznes ma'lumotlarini qanday to'planishi, ishlatilishi, saqlanishi va himoya qilinishini belgilaydi.
             </p>
             <p>
-                Platformamizdan (veb-sayt: <strong>https://mark1.uz</strong> yoki Android/iOS mobil ilovasi) foydalanish orqali siz ushbu Maxfiylik Siyosati shartlariga to'liq rozilik bildirasiz.
+                Platformamizdan (veb-sayt: <strong>https://mark1.uz</strong> yoki Android mobil ilovasi) foydalanish orqali siz ushbu Maxfiylik Siyosati shartlariga to'liq rozilik bildirasiz.
             </p>
 
             <div class="highlight-box">
@@ -334,7 +335,7 @@
                 <li><strong>Xodimlar ma'lumotlari:</strong> Qo'shilgan sotuvchi va administratorlarning ismlari, telefon raqamlari va tizimdagi rollari.</li>
                 <li><strong>Biznes va savdo ma'lumotlari:</strong> Mahsulotlar katalogi, shtrix-kodlar, kirim va sotish narxlari, qoldiqlar, savdo cheklari, to'lov turlari (naqd/karta).</li>
                 <li><strong>Nasiya va qarzlar daftari:</strong> Do'koningiz orqali nasiyaga tovar olgan mijozlarning ismlari, telefon raqamlari, qarz summasi va to'lov muddatlari.</li>
-                <li><strong>Qurilma va texnik ma'lumotlar:</strong> Ilova versiyasi, operatsion tizim turi, IP-manzil va xatolik jurnallari (Crash logs).</li>
+                <li><strong>Texnik ma'lumotlar:</strong> IP-manzil, brauzer yoki ilova turi (User-Agent) va server xatolik jurnallari — faqat xavfsizlik va texnik diagnostika uchun.</li>
             </ul>
 
             <h2><i class="bi bi-camera text-primary"></i> 3. Qurilma ruxsatnomalari (Device Permissions)</h2>
@@ -342,7 +343,6 @@
             <ul>
                 <li><strong>Kamera (CAMERA):</strong> Faqatgina tovarlardagi shtrix-kodlar va QR-kodlarni bir zumda skanerlash hamda mahsulot/profil rasmlarini olish uchun ishlatiladi. Kamera orqali hech qanday video yoki maxfiy tasvirlar ruxsatsiz yozib olinmaydi.</li>
                 <li><strong>Internet (INTERNET):</strong> Ma'lumotlarni bulutli server bilan xavfsiz sinxronlash uchun.</li>
-                <li><strong>Bildirishnomalar (POST_NOTIFICATIONS):</strong> Qarz muddati kelganda yoki muhim biznes yangiliklari haqida eslatmalar yetkazish uchun.</li>
             </ul>
 
             <h2><i class="bi bi-chat-dots text-primary"></i> 4. SMS xizmatlari va eslatmalar</h2>
@@ -353,9 +353,9 @@
             <h2><i class="bi bi-shield-lock text-primary"></i> 5. Ma'lumotlar xavfsizligi va shifrlash</h2>
             <p>Biz foydalanuvchilar ma'lumotlarini eng yuqori zamonaviy xavfsizlik standartlarida himoya qilamiz:</p>
             <ul>
-                <li>Barcha tarmoq so'rovlari <strong>SSL / TLS 1.3 (HTTPS)</strong> shifrlangan protokoli orqali uzatiladi.</li>
+                <li>Barcha tarmoq so'rovlari <strong>HTTPS (TLS)</strong> shifrlangan protokoli orqali uzatiladi.</li>
                 <li>Foydalanuvchi parollari <strong>bcrypt</strong> kuchli xeshlash algoritmi orqali saqlanadi.</li>
-                <li>Ma'lumotlar bazasi zaxira nusxalari (Backups) doimiy ravishda xavfsiz serverlarda saqlanadi.</li>
+                <li>Ma'lumotlar MongoDB Atlas bulutli bazasida saqlanadi va faqat vakolatli xizmat hisobi orqali boshqariladi.</li>
                 <li>Har bir do'kon ma'lumotlari alohida ajratilgan (Multi-tenant data isolation) va boshqa do'konlar uchun butunlay yopiq.</li>
             </ul>
 
@@ -370,7 +370,6 @@
                 <li><strong>2-qadam:</strong> Xatda ilovada ro'yxatdan o'tgan <strong>telefon raqamingizni</strong> va do'kon nomini ko'rsating.</li>
                 <li><strong>3-qadam:</strong> So'rovingizni tasdiqlash uchun sizdan qo'shimcha ma'lumot so'rashimiz mumkin.</li>
                 <li><strong>4-qadam:</strong> So'rov <strong>48 soat</strong> ichida ko'rib chiqiladi va hisobingiz o'chirilishi tasdiqlanadi.</li>
-                <li>Yoki ilova ichida <strong>Profil → Yordam</strong> bo'limidan murojaat qilishingiz mumkin.</li>
             </ul>
 
             <p><strong>Qanday ma'lumotlar o'chiriladi:</strong></p>

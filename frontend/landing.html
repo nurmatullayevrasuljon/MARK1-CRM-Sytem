@@ -24,7 +24,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MARK1 - Aqlli CRM platformasi</title>
-    <meta name="description" content="MARK1 CRM — oziq-ovqat do'konlari uchun sotuvlar, ombor, mahsulot, qarzdorlar va moliyaviy hisobotlarni bitta joyda boshqaradigan aqlli CRM platformasi. 14 kunlik bepul sinov.">
+    <meta name="description" content="MARK1 CRM — do'konlar uchun sotuvlar, ombor, mahsulot, qarzdorlar va moliyaviy hisobotlarni bitta joyda boshqaradigan CRM platformasi. O'zbek tilida, web va Android.">
     <meta name="theme-color" content="#141a2e">
     <meta property="og:type" content="website">
     <meta property="og:title" content="MARK1 - Aqlli CRM platformasi">
@@ -1309,7 +1309,7 @@
 
         .mk-footer-grid {
             display: grid;
-            grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+            grid-template-columns: 1.6fr 1fr 1fr 1fr;
             gap: 40px;
             margin-bottom: 50px;
         }
@@ -1528,6 +1528,7 @@
     html:not(.dark-mode) .mk-logo img { filter: brightness(0); }
     
         </style>
+    <link rel="stylesheet" href="css/mark1-system.css?v=1791200001">
 
 </head>
 
@@ -1591,7 +1592,7 @@
                 <div class="mk-hero-buttons">
                     <a href="/signup" id="startBtn" class="mk-btn mk-btn-primary">Bepul sinab ko'ring <i
                             class="bi bi-arrow-right"></i></a>
-                    <a href="/signup" class="mk-btn mk-btn-secondary">Demo buyurtma qilish</a>
+                    <a href="#narx" class="mk-btn mk-btn-secondary">Narxlarni ko'rish</a>
                 </div>
                 <div class="mk-hero-trust">
                     <div>
@@ -1600,8 +1601,8 @@
                     </div>
                     <div class="mk-divider-v"></div>
                     <div>
-                        <b>24/7 qo'llab-quvvatlash</b>
-                        <span>Biz doim yoningizdamiz</span>
+                        <b>O'zbek tilida yordam</b>
+                        <span>support@mark1.uz</span>
                     </div>
                 </div>
             </div>
@@ -1641,20 +1642,20 @@
         <div class="mk-wrap">
             <div class="mk-stats-grid">
                 <div class="mk-stat-card mk-reveal" style="--mk-delay:0s;">
-                    <p class="mk-num mk-grad-text">5000+</p>
-                    <p class="mk-lbl">Faol biznes</p>
+                    <p class="mk-num mk-grad-text">1</p>
+                    <p class="mk-lbl">Yagona boshqaruv paneli</p>
                 </div>
                 <div class="mk-stat-card mk-reveal" style="--mk-delay:.08s;">
-                    <p class="mk-num mk-grad-text">2M+</p>
-                    <p class="mk-lbl">Amalga oshirilgan tranzaksiya</p>
+                    <p class="mk-num mk-grad-text">2</p>
+                    <p class="mk-lbl">Platforma: web va Android</p>
                 </div>
                 <div class="mk-stat-card mk-reveal" style="--mk-delay:.16s;">
-                    <p class="mk-num mk-grad-text">99.9%</p>
-                    <p class="mk-lbl">Ishlash kafolati</p>
+                    <p class="mk-num mk-grad-text">5</p>
+                    <p class="mk-lbl">Asosiy modul: sotuv, ombor, qarz, hisobot, sozlama</p>
                 </div>
                 <div class="mk-stat-card mk-reveal" style="--mk-delay:.24s;">
-                    <p class="mk-num mk-grad-text">24/7</p>
-                    <p class="mk-lbl">Mijozlarga yordam</p>
+                    <p class="mk-num mk-grad-text">UZ</p>
+                    <p class="mk-lbl">To'liq o'zbek tilidagi interfeys</p>
                 </div>
             </div>
         </div>
@@ -1705,9 +1706,9 @@
                     <p>Kam qolgan yoki ortiqcha mahsulotlar haqida darhol xabar oling.</p>
                 </div>
                 <div class="mk-feature-card mk-reveal" style="--mk-delay:.56s;">
-                    <div class="mk-feature-icon"><i class="bi bi-lightning-charge"></i></div>
-                    <h3>Avtomatlashtirish</h3>
-                    <p>Takrorlanuvchi vazifalarni avtomatlashtirib vaqtingizni tejang.</p>
+                    <div class="mk-feature-icon"><i class="bi bi-search"></i></div>
+                    <h3>Tezkor qidiruv</h3>
+                    <p>Mahsulot va qarzdorlarni nomi, kodi yoki telefoni bo'yicha bir zumda toping.</p>
                 </div>
                 <div class="mk-feature-card mk-reveal" style="--mk-delay:.64s;">
                     <div class="mk-feature-icon"><i class="bi bi-gear"></i></div>
@@ -1841,46 +1842,31 @@
         </div>
     </section>
 
-    <!-- TESTIMONIALS -->
+    <!-- SECURITY / TRUST -->
     <section class="mk-section mk-section-muted">
         <div class="mk-wrap">
             <div class="mk-section-head mk-reveal">
-                <h2>Bizneslar bizni yoqtiradi</h2>
-                <p>Mijozlarimiz MARK1 CRM haqida shunday deyishadi</p>
+                <h2>Xavfsizlik va ishonch</h2>
+                <p>Ma'lumotlaringiz qanday saqlanishi va kim tizimga kirishi mumkinligi — ochiq va tushunarli</p>
             </div>
             <div class="mk-card-grid-3">
                 <div class="mk-testi-card mk-reveal" style="--mk-delay:0s;">
-                    <div class="mk-testi-stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i
-                            class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                    </div>
-                    <p class="mk-quote">MARK1 CRM biznesimizni boshqarish tarzimizni o'zgartirdi. Omborni yaxshi nazorat
-                        qilamiz va tovar yo'qotmaymiz. 6 oyda daromad 40% ga oshdi!</p>
-                    <div class="mk-testi-author">
-                        <div class="mk-testi-avatar">👨‍💼</div>
-                        <div><b>Otabek Rahmonov</b><span>Egasi, Elite Kiyim Do'koni</span></div>
-                    </div>
+                    <div class="mk-feature-icon"><i class="bi bi-shield-lock"></i></div>
+                    <h3>Himoyalangan parollar</h3>
+                    <p class="mk-quote">Foydalanuvchi parollari ochiq matnda saqlanmaydi — ular bcrypt algoritmi bilan
+                        hashlangan holda saqlanadi.</p>
                 </div>
                 <div class="mk-testi-card mk-reveal" style="--mk-delay:.08s;">
-                    <div class="mk-testi-stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i
-                            class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                    </div>
-                    <p class="mk-quote">Real vaqt tahlili bizga nima sotilayotgani, nima sotilmayotganini aniqlashga
-                        yordam berdi. Yo'qotishlarni 30% kamaytirdik va pul aylanmasini yaxshiladik.</p>
-                    <div class="mk-testi-author">
-                        <div class="mk-testi-avatar">👩‍💼</div>
-                        <div><b>Zamira Karimova</b><span>Menejer, Karimova Elektronika</span></div>
-                    </div>
+                    <div class="mk-feature-icon"><i class="bi bi-person-badge"></i></div>
+                    <h3>Rolga asoslangan kirish</h3>
+                    <p class="mk-quote">Do'kon egasi, administrator va sotuvchi uchun alohida huquqlar. Har bir amal
+                        foydalanuvchi roliga qarab cheklanadi.</p>
                 </div>
                 <div class="mk-testi-card mk-reveal" style="--mk-delay:.16s;">
-                    <div class="mk-testi-stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i
-                            class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                    </div>
-                    <p class="mk-quote">Nihoyat, O'zbekiston bizneslari uchun mo'ljallangan CRM. Foydalanish oson, arzon
-                        va o'sish uchun kerakli ma'lumotlarni beradi. Juda yoqdi!</p>
-                    <div class="mk-testi-author">
-                        <div class="mk-testi-avatar">👨‍🔬</div>
-                        <div><b>Mirodil Hasanov</b><span>Direktor, Hasanov Savdo LLC</span></div>
-                    </div>
+                    <div class="mk-feature-icon"><i class="bi bi-database-check"></i></div>
+                    <h3>Alohida do'kon ma'lumotlari</h3>
+                    <p class="mk-quote">Har bir do'konning mahsulot, sotuv va qarzdor ma'lumotlari o'z hisobiga bog'langan
+                        holda bulutli bazada saqlanadi.</p>
                 </div>
             </div>
         </div>
@@ -1890,60 +1876,30 @@
     <section class="mk-section" id="narx">
         <div class="mk-wrap">
             <div class="mk-section-head mk-reveal">
-                <h2>Sodda va shaffof narxlar</h2>
-                <p>Biznesingiz uchun to'g'ri rejani tanlang. Doim moslashuvchan, doim adolatli.</p>
+                <h2>Narxlar</h2>
+                <p>MARK1 CRM hozircha bepul — barcha asosiy modullar to'lovsiz ochiq.</p>
             </div>
-            <div class="mk-pricing-grid">
-                <div class="mk-price-card mk-reveal" style="--mk-delay:0s;">
-                    <h3>Boshlang'ich</h3>
-                    <p class="mk-desc">Yangi ish boshlaganlar uchun juda mos</p>
-                    <div class="mk-price-value"><span class="mk-amount">299,999</span><span
-                            class="mk-period">so'm/oy</span></div>
-                    <p class="mk-price-note">14 kunlik bepul sinov, kredit karta talab etilmaydi</p>
-                    <a href="/signup" class="mk-btn mk-btn-secondary">Bepul sinab ko'ring</a>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 100 tagacha mahsulot</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 1 ta foydalanuvchi akkaunt</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Asosiy ombor nazorati</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Kunlik savdo hisobotlari</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Email orqali yordam</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 1 GB xotira</div>
-                </div>
-                <div class="mk-price-card mk-highlight mk-reveal" style="--mk-delay:.1s;">
-                    <div class="mk-price-badge">Eng ommabop</div>
-                    <h3>Biznes</h3>
-                    <p class="mk-desc">O'sib borayotgan bizneslar uchun kuchli yechim</p>
-                    <div class="mk-price-value"><span class="mk-amount">699,999</span><span
-                            class="mk-period">so'm/oy</span></div>
-                    <p class="mk-price-note">14 kunlik bepul sinov, kredit karta talab etilmaydi</p>
-                    <a href="/signup" class="mk-btn mk-btn-primary">Bepul sinab ko'ring</a>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz mahsulot</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 10 tagacha foydalanuvchi akkaunt</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Ilg'or ombor boshqaruvi</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Real vaqt tahlili</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Ustuvor email va telefon yordami</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 50 GB xotira</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Qarzdorlarni kuzatish</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Avtomatik ogohlantirishlar</div>
-                </div>
-                <div class="mk-price-card mk-reveal" style="--mk-delay:.2s;">
-                    <h3>Korporativ</h3>
-                    <p class="mk-desc">Yirik operatsiyalar uchun individual yechim</p>
-                    <div class="mk-price-value"><span class="mk-amount">Maxsus</span><span class="mk-period">narx</span>
-                    </div>
-                    <p class="mk-price-note">&nbsp;</p>
-                    <a href="#savollar" class="mk-btn mk-btn-secondary">Sotuv bo'limi bilan bog'lanish</a>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz hamma narsa</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz foydalanuvchi akkaunt</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Maxsus ish jarayonlari</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Kengaytirilgan API kirishi</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 24/7 telefon orqali yordam</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz xotira</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Maxsus integratsiyalar</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Shaxsiy menejer</div>
+            <div class="mk-pricing-grid" style="grid-template-columns:minmax(0,520px);justify-content:center;">
+                <div class="mk-price-card mk-highlight mk-reveal" style="--mk-delay:0s;">
+                    <div class="mk-price-badge">Bepul</div>
+                    <h3>To'liq kirish</h3>
+                    <p class="mk-desc">Do'kon egasi va xodimlar uchun barcha asosiy funksiyalar</p>
+                    <div class="mk-price-value"><span class="mk-amount">0</span><span class="mk-period">so'm</span></div>
+                    <p class="mk-price-note">Hozircha obuna to'lovi yo'q, kredit karta talab qilinmaydi</p>
+                    <a href="/signup" class="mk-btn mk-btn-primary">Hisob yaratish</a>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz mahsulot va kategoriya</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Sotuvlar, savat va chek</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Qarzdorlar va to'lovlar tarixi</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Kunlik, haftalik va oylik hisobotlar</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Excel va CSV eksport</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Web panel va Android ilova</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Rolga asoslangan xodimlar</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> To'liq o'zbek tilidagi interfeys</div>
                 </div>
             </div>
             <div class="mk-pricing-faq-link">
-                <p>Narxlar haqida savollaringiz bormi? <a href="#savollar">FAQ bo'limimizni ko'ring</a></p>
+                <p>Pullik tariflar joriy etilsa, foydalanuvchilar oldindan xabardor qilinadi. Savollar uchun <a
+                        href="mailto:support@mark1.uz">support@mark1.uz</a>.</p>
             </div>
         </div>
     </section>
@@ -1960,56 +1916,56 @@
                     <button class="mk-faq-q">MARK1 CRM'ni sozlash qancha vaqt oladi? <i
                             class="bi bi-chevron-down"></i></button>
                     <div class="mk-faq-a">
-                        <div class="mk-faq-a-inner">5 daqiqadan kamroq vaqtda akkauntingizni sozlab, ishlatishni
-                            boshlashingiz mumkin. Butun jarayon davomida bosqichma-bosqich yo'riqnoma va yordam beramiz.
-                        </div>
+                        <div class="mk-faq-a-inner">Ro'yxatdan o'tish bir daqiqadan kam vaqt oladi: telefon raqami va
+                            parol kifoya. So'ngra mahsulotlarni qo'shib, sotuvni darhol boshlash mumkin.</div>
                     </div>
                 </div>
                 <div class="mk-faq-item mk-reveal" style="--mk-delay:.06s;">
                     <button class="mk-faq-q">Mavjud ma'lumotlarimni import qila olamanmi? <i
                             class="bi bi-chevron-down"></i></button>
                     <div class="mk-faq-a">
-                        <div class="mk-faq-a-inner">Ha! Excel, CSV va boshqa keng tarqalgan formatlardan ma'lumot import
-                            qilishni qo'llab-quvvatlaymiz. Zarur bo'lsa, jamoamiz migratsiyada yordam beradi.</div>
+                        <div class="mk-faq-a-inner">Hozircha Excel va CSV formatida eksport qilish mumkin. Ma'lumot
+                            importi keyingi versiyalarda qo'shilishi rejalashtirilgan.</div>
                     </div>
                 </div>
                 <div class="mk-faq-item mk-reveal" style="--mk-delay:.12s;">
                     <button class="mk-faq-q">Mobil ilova bormi? <i class="bi bi-chevron-down"></i></button>
                     <div class="mk-faq-a">
-                        <div class="mk-faq-a-inner">MARK1 CRM to'liq moslashuvchan (responsive) va mobil brauzerlarda
-                            mukammal ishlaydi. Alohida mobil ilova yaqin orada chiqadi.</div>
+                        <div class="mk-faq-a-inner">Ha, Android ilovasi mavjud. Google Play'da nashr jarayoni
+                            yakunlangach, yuklab olish havolasi shu sahifada paydo bo'ladi. Web panel mobil brauzerda
+                            ham ishlaydi.</div>
                     </div>
                 </div>
                 <div class="mk-faq-item mk-reveal" style="--mk-delay:.18s;">
                     <button class="mk-faq-q">Qanday to'lov usullarini qabul qilasiz? <i
                             class="bi bi-chevron-down"></i></button>
                     <div class="mk-faq-a">
-                        <div class="mk-faq-a-inner">Barcha asosiy plastik kartalar, bank o'tkazmalari va raqamli to'lov
-                            usullarini qabul qilamiz. Korporativ to'lov shartlari uchun sotuv jamoamizga murojaat
-                            qiling.</div>
+                        <div class="mk-faq-a-inner">Hozircha CRM'dan foydalanish uchun to'lov olinmaydi. Do'kon
+                            ichidagi sotuvlarda naqd, karta va qarz to'lovlarini qayd etish mumkin.</div>
                     </div>
                 </div>
                 <div class="mk-faq-item mk-reveal" style="--mk-delay:.24s;">
                     <button class="mk-faq-q">Istalgan vaqtda bekor qila olamanmi? <i
                             class="bi bi-chevron-down"></i></button>
                     <div class="mk-faq-a">
-                        <div class="mk-faq-a-inner">Ha, obunani istalgan vaqtda, hech qanday jarima yoki yashirin
-                            to'lovlarsiz bekor qilishingiz mumkin. Ma'lumotlaringiz bekor qilingandan keyin 30 kun
-                            davomida saqlanadi.</div>
+                        <div class="mk-faq-a-inner">Hozircha obuna tizimi yo'q. Hisobni va ma'lumotlarni o'chirish
+                            bo'yicha ko'rsatmalar <a href="/privacy#account-deletion">Maxfiylik siyosatida</a>
+                            keltirilgan.</div>
                     </div>
                 </div>
                 <div class="mk-faq-item mk-reveal" style="--mk-delay:.3s;">
                     <button class="mk-faq-q">O'qitish va qo'llab-quvvatlash bormi? <i
                             class="bi bi-chevron-down"></i></button>
                     <div class="mk-faq-a">
-                        <div class="mk-faq-a-inner">Albatta! Onboarding sessiyalari, video qo'llanmalar, hujjatlar va
-                            24/7 mijozlarga yordam xizmatini taqdim etamiz.</div>
+                        <div class="mk-faq-a-inner">Yordam <a href="mailto:support@mark1.uz">support@mark1.uz</a>
+                            manzili orqali yozma ravishda ko'rsatiladi. Interfeys o'zbek tilida va iloji boricha oddiy
+                            qilingan.</div>
                     </div>
                 </div>
             </div>
             <div class="mk-faq-support">
                 <p>Hali ham savollaringiz bormi?</p>
-                <a href="#savollar">Qo'llab-quvvatlash jamoasi bilan bog'laning →</a>
+                <a href="mailto:support@mark1.uz">support@mark1.uz ga yozing →</a>
             </div>
         </div>
     </section>
@@ -2019,18 +1975,18 @@
         <div class="mk-blur-orb mk-orb-1"></div>
         <div class="mk-blur-orb mk-orb-2"></div>
         <div class="mk-wrap">
-            <h2>Biznesingizni o'zgartirishga tayyormisiz?</h2>
-            <p>MARK1 CRM bilan vaqtini tejayotgan, yo'qotishlarini kamaytirayotgan va tezroq o'sib borayotgan minglab
-                bizneslarga qo'shiling.</p>
+            <h2>Biznesingizni bitta panelda boshqarishga tayyormisiz?</h2>
+            <p>Sotuv, ombor va qarzlarni bitta joyda yuriting — hisob yaratish bir daqiqada, kredit karta talab
+                qilinmaydi.</p>
             <div class="mk-cta-buttons">
-                <a href="/signup" id="bottomStartBtn" class="mk-btn mk-btn-primary">Bepul sinashni boshlang <i
+                <a href="/signup" id="bottomStartBtn" class="mk-btn mk-btn-primary">Hisob yaratish <i
                         class="bi bi-arrow-right"></i></a>
-                <a href="/signup" class="mk-btn mk-btn-secondary">Demo buyurtma qilish</a>
+                <a href="#narx" class="mk-btn mk-btn-secondary">Narxlarni ko'rish</a>
             </div>
             <div class="mk-cta-trust">
-                <p><i class="bi bi-check-circle-fill"></i>14 kunlik bepul sinov, kredit karta talab etilmaydi</p>
-                <p><i class="bi bi-check-circle-fill"></i>Istalgan vaqtda bekor qiling, yashirin to'lovlar yo'q</p>
-                <p><i class="bi bi-check-circle-fill"></i>99.9% ishlash kafolati</p>
+                <p><i class="bi bi-check-circle-fill"></i>Kredit karta talab qilinmaydi</p>
+                <p><i class="bi bi-check-circle-fill"></i>Yashirin to'lovlar yo'q</p>
+                <p><i class="bi bi-check-circle-fill"></i>Ma'lumotlar himoyalangan bulutli bazada saqlanadi</p>
             </div>
         </div>
     </section>
@@ -2051,46 +2007,28 @@
                     <ul>
                         <li><a href="#xususiyatlar">Xususiyatlar</a></li>
                         <li><a href="#narx">Narxlar</a></li>
-                        <li><a href="#">Xavfsizlik</a></li>
-                        <li><a href="#">Yo'l xaritasi</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3>Kompaniya</h3>
-                    <ul>
-                        <li><a href="#">Biz haqimizda</a></li>
-                        <li><a href="#">Blog</a></li>
-                        <li><a href="#">Karyera</a></li>
-                        <li><a href="#">Matbuot</a></li>
+                        <li><a href="#savollar">Savol-javob</a></li>
+                        <li><a href="/login">Tizimga kirish</a></li>
                     </ul>
                 </div>
                 <div>
                     <h3>Qo'llab-quvvatlash</h3>
                     <ul>
-                        <li><a href="#">Yordam markazi</a></li>
-                        <li><a href="#">Aloqa</a></li>
-                        <li><a href="#">Holat</a></li>
-                        <li><a href="#">Hujjatlar</a></li>
+                        <li><a href="mailto:support@mark1.uz">support@mark1.uz</a></li>
+                        <li><a href="mailto:info@mark1.uz">info@mark1.uz</a></li>
+                        <li><a href="/signup">Hisob yaratish</a></li>
                     </ul>
                 </div>
                 <div>
                     <h3>Yuridik</h3>
                     <ul>
                         <li><a href="/privacy">Maxfiylik siyosati</a></li>
-                        <li><a href="#">Foydalanish shartlari</a></li>
-                        <li><a href="#">Cookie siyosati</a></li>
-                        <li><a href="#">Muvofiqlik</a></li>
+                        <li><a href="/privacy#account-deletion">Hisobni o'chirish</a></li>
                     </ul>
                 </div>
             </div>
             <div class="mk-footer-bottom">
                 <p>© <span id="mkFooterYear"></span> MARK1 CRM. Barcha huquqlar himoyalangan.</p>
-                <div class="mk-footer-social">
-                    <a href="#">Twitter</a>
-                    <a href="#">LinkedIn</a>
-                    <a href="#">Facebook</a>
-                    <a href="#">Instagram</a>
-                </div>
             </div>
         </div>
     </footer>
