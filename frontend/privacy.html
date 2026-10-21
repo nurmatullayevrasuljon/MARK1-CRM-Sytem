@@ -15,8 +15,8 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maxfiylik Siyosati — MARK1 CRM</title>
-    <meta name="description" content="MARK1 CRM platformasi va mobil ilovasining rasmiy Maxfiylik Siyosati (Privacy Policy). Foydalanuvchilar va biznes ma'lumotlari xavfsizligi.">
+    <title>Maxfiylik Siyosati | MARK1 CRM</title>
+    <meta name="description" content="MARK1 CRM platformasi va mobil ilovasining rasmiy Maxfiylik siyosati. Foydalanuvchilar va biznes ma'lumotlari xavfsizligi.">
     <meta name="theme-color" content="#141a2e">
     <link rel="shortcut icon" href="img/b-logo2.png" type="image/x-icon">
 
@@ -154,6 +154,44 @@
             font-size: 1.1rem;
         }
 
+        @media (max-width: 480px) {
+            /* 320px ekranda "Bosh sahifa" havolasi va mavzu tugmasi
+               navbarni chetga chiqarib, gorizontal skroll yaratardi.
+               Brend logotipi ham bosh sahifaga olib boradi. */
+            .navbar {
+                padding: 0.75rem 1rem;
+                gap: 0.5rem;
+            }
+
+            .brand {
+                gap: 0.5rem;
+                font-size: 1.05rem;
+            }
+
+            .brand img {
+                width: 32px;
+                height: 32px;
+            }
+
+            .nav-links {
+                gap: 0.6rem;
+            }
+
+            .nav-links .nav-link:first-child {
+                display: none;
+            }
+
+            .btn-primary {
+                padding: 0.45rem 0.85rem;
+                font-size: 0.85rem;
+            }
+
+            .theme-toggle-btn {
+                width: 32px;
+                height: 32px;
+            }
+        }
+
         .main-container {
             max-width: 900px;
             margin: 3rem auto;
@@ -286,7 +324,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="css/mark1-system.css?v=1792600000">
+    <link rel="stylesheet" href="css/mark1-system.css?v=1792700000">
 </head>
 
 <body>
@@ -311,7 +349,7 @@
             <div class="policy-badge">
                 <i class="bi bi-shield-check"></i> Rasmiy Xavfsizlik Hujjati
             </div>
-            <h1 class="policy-title">Maxfiylik Siyosati (Privacy Policy)</h1>
+            <h1 class="policy-title">Maxfiylik siyosati</h1>
             <p class="policy-meta">Kuchga kirish sanasi: <strong>2026-yil 1-oktabr</strong> | Oxirgi tahrir: <strong>2026-yil 8-oktabr</strong></p>
         </div>
 
@@ -335,19 +373,19 @@
                 <li><strong>Xodimlar ma'lumotlari:</strong> Qo'shilgan sotuvchi va administratorlarning ismlari, telefon raqamlari va tizimdagi rollari.</li>
                 <li><strong>Biznes va savdo ma'lumotlari:</strong> Mahsulotlar katalogi, shtrix-kodlar, kirim va sotish narxlari, qoldiqlar, savdo cheklari, to'lov turlari (naqd/karta).</li>
                 <li><strong>Nasiya va qarzlar daftari:</strong> Do'koningiz orqali nasiyaga tovar olgan mijozlarning ismlari, telefon raqamlari, qarz summasi va to'lov muddatlari.</li>
-                <li><strong>Texnik ma'lumotlar:</strong> IP-manzil, brauzer yoki ilova turi (User-Agent) va server xatolik jurnallari — faqat xavfsizlik va texnik diagnostika uchun.</li>
+                <li><strong>Texnik ma'lumotlar:</strong> IP-manzil, brauzer yoki ilova turi va server xatolik jurnallari — faqat xavfsizlik va texnik diagnostika uchun.</li>
             </ul>
 
-            <h2><i class="bi bi-camera text-primary"></i> 3. Qurilma ruxsatnomalari (Device Permissions)</h2>
+            <h2><i class="bi bi-camera text-primary"></i> 3. Qurilma ruxsatnomalari</h2>
             <p>Mobil ilova o'z funksiyalarini bajarishi uchun quyidagi ruxsatnomalarni so'raydi:</p>
             <ul>
-                <li><strong>Kamera (CAMERA):</strong> Faqatgina tovarlardagi shtrix-kodlar va QR-kodlarni bir zumda skanerlash hamda mahsulot/profil rasmlarini olish uchun ishlatiladi. Kamera orqali hech qanday video yoki maxfiy tasvirlar ruxsatsiz yozib olinmaydi.</li>
-                <li><strong>Internet (INTERNET):</strong> Ma'lumotlarni bulutli server bilan xavfsiz sinxronlash uchun.</li>
+                <li><strong>Kamera:</strong> Faqatgina tovarlardagi shtrix-kodlar va QR-kodlarni bir zumda skanerlash hamda mahsulot/profil rasmlarini olish uchun ishlatiladi. Kamera orqali hech qanday video yoki maxfiy tasvirlar ruxsatsiz yozib olinmaydi.</li>
+                <li><strong>Internet:</strong> Ma'lumotlarni bulutli server bilan xavfsiz sinxronlash uchun.</li>
             </ul>
 
             <h2><i class="bi bi-chat-dots text-primary"></i> 4. SMS xizmatlari va eslatmalar</h2>
             <p>
-                MARK1 CRM foydalanuvchining hisobini xavfsiz tasdiqlash (OTP) va do'kon egasining ko'rsatmasiga binoan qarzdor mijozlarga avtomatik/qo'lda SMS eslatmalar yuborish uchun rasmiy SMS-provayder shlyuzlaridan foydalanadi. SMS xabarlar faqat belgilangan maqsadlarda va do'kon egasi nomidan yuboriladi.
+                MARK1 CRM foydalanuvchining hisobini bir martalik kod orqali xavfsiz tasdiqlash va do'kon egasining ko'rsatmasiga binoan qarzdor mijozlarga avtomatik/qo'lda SMS eslatmalar yuborish uchun rasmiy SMS-provayder shlyuzlaridan foydalanadi. SMS xabarlar faqat belgilangan maqsadlarda va do'kon egasi nomidan yuboriladi.
             </p>
 
             <h2><i class="bi bi-shield-lock text-primary"></i> 5. Ma'lumotlar xavfsizligi va shifrlash</h2>
@@ -356,10 +394,10 @@
                 <li>Barcha tarmoq so'rovlari <strong>HTTPS (TLS)</strong> shifrlangan protokoli orqali uzatiladi.</li>
                 <li>Foydalanuvchi parollari <strong>bcrypt</strong> kuchli xeshlash algoritmi orqali saqlanadi.</li>
                 <li>Ma'lumotlar MongoDB Atlas bulutli bazasida saqlanadi va faqat vakolatli xizmat hisobi orqali boshqariladi.</li>
-                <li>Har bir do'kon ma'lumotlari alohida ajratilgan (Multi-tenant data isolation) va boshqa do'konlar uchun butunlay yopiq.</li>
+                <li>Har bir do'kon ma'lumotlari alohida saqlanadi va boshqa do'konlar uchun butunlay yopiq.</li>
             </ul>
 
-            <h2 id="account-deletion"><i class="bi bi-trash3 text-primary"></i> 6. "MARK1 CRM" hisobini va ma'lumotlarni o'chirish (Account & Data Deletion)</h2>
+            <h2 id="account-deletion"><i class="bi bi-trash3 text-primary"></i> 6. "MARK1 CRM" hisobini va ma'lumotlarni o'chirish</h2>
             <p>
                 Google Play Store talablari va xalqaro qonunlarga muvofiq, <strong>"MARK1 CRM"</strong> ilovasidan foydalanuvchi har bir foydalanuvchi o'z hisobini va unga tegishli barcha ma'lumotlarni to'liq o'chirish huquqiga ega.
             </p>
@@ -383,8 +421,8 @@
             <p><strong>Qaysi ma'lumotlar qisqa muddat saqlanadi va saqlash muddatlari:</strong></p>
             <ul>
                 <li><strong>Moliyiy hisobotlar va hisob-faktura ma'lumotlari:</strong> O'zbekiston Respublikasi soliq qonunchiligi talablariga muvofiq hisobga olish yozuvlari <strong>5 yil</strong> davomida saqlanadi (to'lov emas, faqat majburiy buxgalteriya yozuvi).</li>
-                <li><strong>Zaxira nusxalari (Backups):</strong> O'chirish so'rovidan keyin texnik zaxira nusxalarida ma'lumotlar <strong>30 kun</strong> ichida butunlay yo'qoladi. Bu muddat davomida ma'lumotlar qayta tiklanmaydi.</li>
-                <li><strong>Tizim jurnallari (Logs):</strong> Xavfsizlik maqsadida IP-manzil va xatolik jurnallari <strong>90 kun</strong> saqlanadi va keyin avtomatik o'chiriladi.</li>
+                <li><strong>Zaxira nusxalari:</strong> O'chirish so'rovidan keyin texnik zaxira nusxalarida ma'lumotlar <strong>30 kun</strong> ichida butunlay yo'qoladi. Bu muddat davomida ma'lumotlar qayta tiklanmaydi.</li>
+                <li><strong>Tizim jurnallari:</strong> Xavfsizlik maqsadida IP-manzil va xatolik jurnallari <strong>90 kun</strong> saqlanadi va keyin avtomatik o'chiriladi.</li>
             </ul>
 
             <div class="highlight-box">

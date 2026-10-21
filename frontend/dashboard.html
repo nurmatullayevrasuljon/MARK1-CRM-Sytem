@@ -29,7 +29,7 @@
   <!-- ui-ux-pro-max review qatlamı: focus-visible, reduced-motion, touch targets -->
   <link rel="stylesheet" href="css/dashboard-polish.css?v=1791100002">
   <!-- MARK1 Design System (yagona spacing/tipografiya/holatlar/responsive) -->
-  <link rel="stylesheet" href="css/mark1-system.css?v=1792600000">
+  <link rel="stylesheet" href="css/mark1-system.css?v=1792700000">
   <script>
     // FOUC oldini olish: mavzuni sahifa chizilishidan oldin qo'llash.
     (function () {
@@ -175,7 +175,7 @@
               </div>
               <div class="profile-info">
                 <span class="profile-name" id="profileName">Foydalanuvchi</span>
-                <span class="profile-store" id="profileEmail">Your Company Inc</span>
+                <span class="profile-store" id="profileEmail">Do'kon nomi</span>
               </div>
               <svg class="profile-dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -228,7 +228,7 @@
                       d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
                     </path>
                   </svg>
-                  Dashboard
+                  Boshqaruv paneli
                 </a>
 
                 <div class="dropdown-divider"></div>
@@ -269,7 +269,7 @@
                 Oylik tushum
               </small>
               <h3 class="counter" data-key="totalRevenue" data-count="0" data-last-value="0">
-                0 <small>UZS</small>
+                0 <small>so'm</small>
               </h3>
               <small class="counter-change" id="monthlyRevenueChange">Hali sotuv boshlanmagan</small>
             </div>
@@ -287,7 +287,7 @@
 
                 Bugungi savdo
               </small>
-              <h3 class="daily-c" id="dailySalesCounter">0 <small>UZS</small></h3>
+              <h3 class="daily-c" id="dailySalesCounter">0 <small>so'm</small></h3>
               <small class="counter-change" id="dailySalesChange">Bugun savdo yo'q</small>
             </div>
           </div>
@@ -305,7 +305,7 @@
                 Oylik foyda
               </small>
               <h3 class="counter" data-key="totalProfit" data-count="0" data-last-value="0">
-                0 <small>UZS</small>
+                0 <small>so'm</small>
               </h3>
               <small class="text-success">Kelgan va sotish narxi farqi</small>
             </div>
@@ -321,7 +321,7 @@
                 </svg>                Inventar balansi
               </small>
               <h3 class="counter" data-key="inventoryBalance" data-count="0" data-last-value="0">
-                0 <small>UZS</small>
+                0 <small>so'm</small>
               </h3>
               <small class="text-muted">Ombordagi mahsulotlarning umumiy qiymati</small>
             </div>
@@ -339,7 +339,7 @@
                 Muddati o'tgan qarz
               </small>
               <h3 class="counter" id="overdueDebtKpi" data-count="0" data-last-value="0">
-                0 <small>UZS</small>
+                0 <small>so'm</small>
               </h3>
               <small class="counter-change" id="overdueDebtChange">Muddati o'tgan to'lov yo'q</small>
             </div>
@@ -522,11 +522,11 @@
 
                 <div class="mk-cart-total">
                   <span>Mahsulotlar</span>
-                  <span id="saleCartSubtotal">0 UZS</span>
+                  <span id="saleCartSubtotal">0 so'm</span>
                 </div>
                 <div class="mk-cart-total" style="padding-top:0;">
                   <span>Jami to'lov</span>
-                  <strong id="saleCartTotal">0 UZS</strong>
+                  <strong id="saleCartTotal">0 so'm</strong>
                 </div>
 
                 <div class="mk-pay-grid">
@@ -557,7 +557,7 @@
                   <button class="close-modal-debtors" aria-label="Yopish" onclick="closeDebtSaleModal()">&times;</button>
                 </div>
                 <form id="debtSaleForm" onsubmit="handleDebtSaleSubmit(event)">
-                  <p class="mk-alert mk-alert-info" id="debtSaleTotalHint" style="margin-bottom:14px;">Sotuv summasi: 0 UZS</p>
+                  <p class="mk-alert mk-alert-info" id="debtSaleTotalHint" style="margin-bottom:14px;">Sotuv summasi: 0 so'm</p>
                   <div class="form-group">
                     <label for="debtSaleClientSelect">Mijoz *</label>
                     <select id="debtSaleClientSelect" class="form-control" required onchange="toggleDebtSaleNewClientFields()">
@@ -608,7 +608,7 @@
                   <div id="receiptItems" style="font-size:13px;"></div>
                   <div class="mk-cart-total" style="border-top:1px solid var(--border-subtle);margin-top:10px;">
                     <span>Jami</span>
-                    <strong id="receiptTotal" style="font-size:20px;">0 UZS</strong>
+                    <strong id="receiptTotal" style="font-size:20px;">0 so'm</strong>
                   </div>
                   <p class="mk-muted" id="receiptMeta"></p>
                 </div>
@@ -624,7 +624,7 @@
             <!-- Bugungi sotilgan mahsulotlar jadvali -->
             <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
               <h3 class="h6 mb-0 fw-bold" style="color: var(--text-primary);"><i class="bi bi-receipt" aria-hidden="true"></i> Bugungi sotilgan mahsulotlar</h3>
-              <small class="text-muted">Real vaqt rejimida yangilanadi</small>
+              <small class="text-muted">Haqiqiy vaqt rejimida yangilanadi</small>
             </div>
 
             <div class="table-responsive rounded border" style="border-color: var(--border-subtle) !important;">
@@ -646,7 +646,7 @@
             <!-- Jami summa -->
             <div class="d-flex justify-content-end mt-3">
               <div class="alert alert-success mb-0 py-2 px-4">
-                <strong>Jami daromad: <span id="totalSum" class="h5 mb-0">0 UZS</span></strong>
+                <strong>Jami daromad: <span id="totalSum" class="h5 mb-0">0 so'm</span></strong>
               </div>
             </div>
             <button class="btn btn-outline-secondary" onclick="startNewSale()" title="Jadval va formani tozalab, yangi hisobdan boshlash">
@@ -686,7 +686,7 @@
                 </select>
 
                 <button type="button" class="btn btn-outline-primary mk-nowrap" id="exportProductsBtn">
-                  <i class="bi bi-download" aria-hidden="true"></i> CSV
+                  <i class="bi bi-download" aria-hidden="true"></i> Yuklab olish
                 </button>
               </div>
               <p class="mk-toolbar-count" id="productFilterCount" aria-live="polite"></p>
@@ -806,7 +806,7 @@
                     <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Narx</th>
                     <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Sana / Vaqt</th>
                     <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">To'lov turi</th>
-                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Status</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Holati</th>
                   </tr>
                 </thead>
                 <tbody id="transactionsTableBody"></tbody>
@@ -824,8 +824,8 @@
           </div>
           <div class="d-flex gap-2 flex-wrap">
             <input type="text" id="searchInput" class="form-control shadow-sm" placeholder="Qidirish..." style="background: var(--bg-main); border-color: var(--border-subtle); color: var(--text-primary); max-width: 250px;" aria-label="Qidirish">
-            <button class="btn btn-outline-primary mk-nowrap" id="exportDebtorsBtn" title="Qarzdorlar ro'yxatini CSV faylga yuklash">
-              <i class="bi bi-download" aria-hidden="true"></i> CSV
+            <button class="btn btn-outline-primary mk-nowrap" id="exportDebtorsBtn" title="Qarzdorlar ro'yxatini faylga yuklash">
+              <i class="bi bi-download" aria-hidden="true"></i> Yuklab olish
             </button>
             <button class="btn btn-primary px-4 py-2 fw-semibold shadow-sm" onclick="openModal()" style="background: var(--brand-primary); border: none;">+ Yangi qarzdor</button>
           </div>
@@ -865,7 +865,7 @@
           <div class="card-header bg-transparent border-bottom-0 pt-4 pb-0">
             <div class="d-flex justify-content-between align-items-center">
               <div class="filter-tabs d-flex gap-2" style="overflow-x: auto;" role="group" aria-label="Qarzdorlar filtri">
-                <button class="btn btn-sm btn-outline-primary active px-3 rounded-pill" data-filter="all">Hammasi</button>
+                <button class="btn btn-sm btn-outline-primary active px-3 rounded-pill" data-filter="all" aria-pressed="true">Hammasi</button>
                 <button class="btn btn-sm btn-outline-danger px-3 rounded-pill" data-filter="overdue" aria-pressed="false">Muddati o'tgan</button>
                 <button class="btn btn-sm btn-outline-warning px-3 rounded-pill" data-filter="upcoming" aria-pressed="false">Yaqinlashmoqda</button>
                 <button class="btn btn-sm btn-outline-success px-3 rounded-pill" data-filter="normal" aria-pressed="false">Oddiy</button>
@@ -883,7 +883,7 @@
                     <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase">Olingan sana</th>
                     <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase" style="cursor:pointer;" onclick="sortTable('date')">Qaytarish sanasi</th>
                     <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase">Holati</th>
-                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase text-end">Amallar</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase">Amallar</th>
                   </tr>
                 </thead>
                 <tbody id="debtorTableBody">
@@ -1105,7 +1105,7 @@
                     <div class="col-md-6">
                       <label class="form-label text-muted small fw-semibold" for="roleDisplay">Rol</label>
                       <input type="text" id="roleDisplay" class="form-control" readonly value="—">
-                      <small class="text-muted" id="roleHelp" style="font-size:12px;">Rol backenddagi hisob turidan olinadi.</small>
+                      <small class="text-muted" id="roleHelp" style="font-size:12px;">Rol serverdagi hisob turidan olinadi.</small>
                     </div>
                   </div>
                   <div class="d-flex justify-content-end">
@@ -1235,14 +1235,14 @@
 
                   <!-- COST PRICE (Kelgan narxi) -->
                   <div class="col-md-5 mb-3">
-                    <label class="form-label small fw-semibold text-uppercase text-muted" for="productCostPrice">Kelgan narxi * <small class="text-muted">(UZS)</small></label>
+                    <label class="form-label small fw-semibold text-uppercase text-muted" for="productCostPrice">Kelgan narxi * <small class="text-muted">(so'm)</small></label>
                     <input type="number" id="productCostPrice" class="form-control" required placeholder="50000" min="0"
                       oninput="calculateProfitPreview()">
                   </div>
 
                   <!-- SALE PRICE (Sotish narxi) -->
                   <div class="col-md-5 mb-3">
-                    <label class="form-label small fw-semibold text-uppercase text-muted" for="productPrice">Sotish narxi * <small class="text-muted">(UZS)</small></label>
+                    <label class="form-label small fw-semibold text-uppercase text-muted" for="productPrice">Sotish narxi * <small class="text-muted">(so'm)</small></label>
                     <input type="number" id="productPrice" class="form-control" required placeholder="75000" min="0"
                       oninput="calculateProfitPreview()">
                   </div>
@@ -1251,7 +1251,7 @@
                   <div class="col-md-2 mb-3">
                     <label class="form-label small fw-semibold text-uppercase text-muted" for="productCurrency">Valyuta</label>
                     <select id="productCurrency" class="form-control">
-                      <option value="UZS" selected>UZS</option>
+                      <option value="UZS" selected>so'm</option>
                       <option value="$">$</option>
                       <option value="€">€</option>
                     </select>
@@ -1262,7 +1262,7 @@
                     <div class="alert alert-info mb-0 py-2">
                       <i class="bi bi-calculator"></i>
                       <small class="text-muted">Birlik foyda:</small>
-                      <strong id="profitPreview" style="margin-left:10px;">0 UZS</strong>
+                      <strong id="profitPreview" style="margin-left:10px;">0 so'm</strong>
                     </div>
                   </div>
 
@@ -1348,7 +1348,7 @@
   <script src="js/ux-enhancements.js?v=1790900001"></script>
   <script src="js/api-client.js?v=1792595000"></script>
   <script src="index.js?v=1792595000" defer></script>
-  <script src="script.js?v=1792600000" defer></script>
+  <script src="script.js?v=1792700000" defer></script>
   <script defer>
   </script>
   <script defer>

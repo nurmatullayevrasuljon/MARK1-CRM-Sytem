@@ -112,7 +112,7 @@ async function updateDailySalesPageCounter() {
           color:var(--text-muted);
           font-weight:400;
           margin-left:4px
-        ">UZS</small>
+        ">so'm</small>
       `;
     }, 1200);
 
@@ -188,25 +188,25 @@ function updateTotalDebtCounter() {
       if (totalDebt > lastShown) {
         current += step;
         if (current >= totalDebt) {
-          counterEl.innerHTML = `${totalDebt.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${totalDebt.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
           clearInterval(interval);
         } else {
-          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
         }
       } else {
         current -= step;
         if (current <= totalDebt) {
-          counterEl.innerHTML = `${totalDebt.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${totalDebt.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
           clearInterval(interval);
         } else {
-          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
         }
       }
     }, 20);
 
     counterEl.dataset.lastValue = totalDebt;
   } else {
-    counterEl.innerHTML = `${totalDebt.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+    counterEl.innerHTML = `${totalDebt.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
   }
 
   // Qarzdorlar sonini ko'rsatish
@@ -899,7 +899,7 @@ function checkAndResetDailyIfNeeded() {
     localStorage.setItem("currentSalesDate", today);
 
     const oldSales = sales.filter(s => getDateKey(s.date) !== today);
-    console.log(`Kun o'zgardi! Kechagi savdo: ${todayTotal} UZS`);
+    console.log(`Kun o'zgardi! Kechagi savdo: ${todayTotal} so'm`);
     console.log(`${oldSales.length} ta eski sotuv o'chirildi`);
 
     return true;
@@ -986,7 +986,7 @@ function updateMonthlyRevenueUI() {
   const firstSaleDate = getFirstSaleDate();
 
   if (!firstSaleDate) {
-    counterEl.innerHTML = `0 <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+    counterEl.innerHTML = `0 <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
     counterEl.dataset.lastValue = 0;
 
     if (changeEl) {
@@ -1013,25 +1013,25 @@ function updateMonthlyRevenueUI() {
       if (currentMonth > lastShown) {
         current += step;
         if (current >= currentMonth) {
-          counterEl.innerHTML = `${currentMonth.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${currentMonth.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
           clearInterval(interval);
         } else {
-          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
         }
       } else {
         current -= step;
         if (current <= currentMonth) {
-          counterEl.innerHTML = `${currentMonth.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${currentMonth.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
           clearInterval(interval);
         } else {
-          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
         }
       }
     }, 20);
 
     counterEl.dataset.lastValue = currentMonth;
   } else {
-    counterEl.innerHTML = `${currentMonth.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+    counterEl.innerHTML = `${currentMonth.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
   }
 
   if (changeEl) {
@@ -1111,7 +1111,7 @@ function updateDailySalesCounter() {
   const lastShown = Number(counterEl.dataset.lastValue || 0);
 
   if (dayChanged) {
-    counterEl.innerHTML = `0 <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+    counterEl.innerHTML = `0 <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
     counterEl.dataset.lastValue = 0;
     animateCounter(counterEl, 0, todayTotal);
   }
@@ -1125,7 +1125,7 @@ function updateDailySalesCounter() {
   counterEl.dataset.lastValue = todayTotal;
 
   setTimeout(() => {
-    counterEl.innerHTML = `${todayTotal.toLocaleString()} <small style="font-size:0.6em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+    counterEl.innerHTML = `${todayTotal.toLocaleString()} <small style="font-size:0.6em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
   }, 1200);
 
   if (todayTotal === 0 && yesterdayTotal === 0) {
@@ -1780,7 +1780,7 @@ if (exportProductsBtn) {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    showNotification("Mahsulotlar CSV faylga yuklandi", "success");
+    showNotification("Mahsulotlar fayli yuklab olindi", "success");
   });
 }
 
@@ -2673,7 +2673,7 @@ function renderSaleCart() {
       <tr data-cart-id="${mkEsc(item.product_id)}">
         <td>
           <div class="mk-cart-name">${mkEsc(item.name)}</div>
-          <div class="mk-cart-sub">${item.price.toLocaleString()} UZS / ${mkEsc(item.unit)}</div>
+          <div class="mk-cart-sub">${item.price.toLocaleString()} so'm / ${mkEsc(item.unit)}</div>
         </td>
         <td>
           <input type="number" class="form-control mk-cart-qty" data-cart-qty
@@ -2693,8 +2693,8 @@ function renderSaleCart() {
 
   const total = cartTotal();
   if (countEl) countEl.textContent = `${saleCart.length} ta mahsulot`;
-  if (totalEl) totalEl.textContent = `${total.toLocaleString()} UZS`;
-  if (subtotalEl) subtotalEl.textContent = `${total.toLocaleString()} UZS`;
+  if (totalEl) totalEl.textContent = `${total.toLocaleString()} so'm`;
+  if (subtotalEl) subtotalEl.textContent = `${total.toLocaleString()} so'm`;
 }
 
 function addCurrentSelectionToCart(silent) {
@@ -2818,11 +2818,11 @@ function showSaleReceipt(saleId, items, total, paymentType) {
     itemsEl.innerHTML = items.map(item => `
       <div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;">
         <span>${mkEsc(item.name)} <span class="mk-muted">× ${item.qty} ${mkEsc(item.unit)}</span></span>
-        <strong class="mk-nowrap">${(item.price * item.qty).toLocaleString()} UZS</strong>
+        <strong class="mk-nowrap">${(item.price * item.qty).toLocaleString()} so'm</strong>
       </div>
     `).join("");
   }
-  if (totalEl) totalEl.textContent = `${Number(total).toLocaleString()} UZS`;
+  if (totalEl) totalEl.textContent = `${Number(total).toLocaleString()} so'm`;
   if (metaEl) {
     const label = paymentType === "card" ? "Karta" : paymentType === "debt" ? "Qarz" : "Naqd";
     metaEl.textContent = `To'lov turi: ${label} · ${new Date().toLocaleString("uz-UZ")}`;
@@ -3132,7 +3132,7 @@ async function openDebtSaleModal() {
     const total = saleCart.length
       ? cartTotal()
       : (parseFloat(saleQty.value) || 0) * ((products.find(p => p.id == saleProduct.value) || {}).price || 0);
-    hint.textContent = `Sotuv summasi: ${Number(total).toLocaleString()} UZS`;
+    hint.textContent = `Sotuv summasi: ${Number(total).toLocaleString()} so'm`;
   }
 
   document.getElementById("debtSaleForm").reset();
@@ -3358,7 +3358,7 @@ function renderSales() {
         </td>
       </tr>
     `;
-    totalSum.innerHTML = `0 <span>UZS</span>`;
+    totalSum.innerHTML = `0 <span>so'm</span>`;
     return;
   }
 
@@ -3386,7 +3386,7 @@ function renderSales() {
     `;
   });
 
-  totalSum.innerHTML = `${sum.toLocaleString()} <span>UZS</span>`;
+  totalSum.innerHTML = `${sum.toLocaleString()} <span>so'm</span>`;
 }
 
 function startNewSale() {
@@ -3420,7 +3420,7 @@ function resetSaleSession() {
   }
 
   if (totalSum) {
-    totalSum.innerHTML = `0 <span>UZS</span>`;
+    totalSum.innerHTML = `0 <span>so'm</span>`;
   }
 
   if (saleQty) saleQty.value = "";
@@ -3632,25 +3632,25 @@ function updateProfitUI() {
       if (currentProfit > lastShown) {
         current += step;
         if (current >= currentProfit) {
-          counterEl.innerHTML = `${currentProfit.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${currentProfit.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
           clearInterval(interval);
         } else {
-          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
         }
       } else {
         current -= step;
         if (current <= currentProfit) {
-          counterEl.innerHTML = `${currentProfit.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${currentProfit.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
           clearInterval(interval);
         } else {
-          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+          counterEl.innerHTML = `${Math.floor(current).toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
         }
       }
     }, 20);
 
     counterEl.dataset.lastValue = currentProfit;
   } else {
-    counterEl.innerHTML = `${currentProfit.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+    counterEl.innerHTML = `${currentProfit.toLocaleString()} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
   }
 }
 
@@ -3673,7 +3673,7 @@ function updateInventoryBalanceUI() {
 
   const balance = Math.round(calculateInventoryBalance());
   counterEl.dataset.lastValue = balance;
-  counterEl.innerHTML = `${balance.toLocaleString("uz-UZ")} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">UZS</small>`;
+  counterEl.innerHTML = `${balance.toLocaleString("uz-UZ")} <small style="font-size:0.55em;color:var(--text-muted);font-weight:400;margin-left:4px">so'm</small>`;
 }
 
 // showNotification — 3910-qatordagi unified versiyaga ko'chirildi (FIX 4)
@@ -4105,7 +4105,7 @@ async function updateCharts(cachedRawSales) {
 
                 {
                   label:
-                    "Daromad (UZS)",
+                    "Daromad (so'm)",
 
                   data:
                     weeklyData,
@@ -4174,7 +4174,7 @@ async function updateCharts(cachedRawSales) {
                             context.parsed.y
                           ).toLocaleString()
                           +
-                          " UZS"
+                          " so'm"
                         );
 
                       }
@@ -4314,7 +4314,7 @@ async function updateCharts(cachedRawSales) {
                             context.parsed.y
                           ).toLocaleString()
                           +
-                          " UZS"
+                          " so'm"
                         );
 
                       }
@@ -4381,11 +4381,11 @@ function calculateProfitPreview() {
   if (!preview) return;
 
   if (profit > 0) {
-    preview.innerHTML = `<span style="color:#22c55e;font-weight:600">+${profit.toLocaleString()} UZS</span>`;
+    preview.innerHTML = `<span style="color:#22c55e;font-weight:600">+${profit.toLocaleString()} so'm</span>`;
   } else if (profit < 0) {
-    preview.innerHTML = `<span style="color:#ef4444;font-weight:600">${profit.toLocaleString()} UZS (Zarar!)</span>`;
+    preview.innerHTML = `<span style="color:#ef4444;font-weight:600">${profit.toLocaleString()} so'm (Zarar!)</span>`;
   } else {
-    preview.innerHTML = `<span style="color:var(--text-muted)">0 UZS</span>`;
+    preview.innerHTML = `<span style="color:var(--text-muted)">0 so'm</span>`;
   }
 }
 
@@ -5385,44 +5385,44 @@ function renderDebtors() {
 
     if (lastManualSms === today) {
       smsBadge = `
-        <div class="sms-status-badge sms-sent">
+        <div class="sms-status-badge sms-sent" title="Bugun qo'lda SMS yuborilgan">
           <i class="bi bi-check-circle-fill"></i>
-          <span>Bugun qo'lda SMS yuborilgan</span>
+          <span>Yuborilgan</span>
         </div>
       `;
     } else if (lastAutoSms === today) {
       smsBadge = `
-        <div class="sms-status-badge sms-sent">
+        <div class="sms-status-badge sms-sent" title="Bugun avtomatik eslatma yuborilgan">
           <i class="bi bi-robot"></i>
-          <span>Bugun avtomatik eslatma yuborilgan</span>
+          <span>Avto</span>
         </div>
       `;
     } else if (lastOverdueSms === today) {
       smsBadge = `
-        <div class="sms-status-badge sms-sent sms-overdue">
+        <div class="sms-status-badge sms-sent sms-overdue" title="Bugun muddati o'tgan eslatma yuborilgan">
           <i class="bi bi-exclamation-triangle-fill"></i>
-          <span>Bugun muddati o'tgan eslatma yuborilgan</span>
+          <span>Eslatma</span>
         </div>
       `;
     } else if (daysLeft === 1) {
       smsBadge = `
-        <div class="sms-status-badge sms-pending">
+        <div class="sms-status-badge sms-pending" title="Ertaga avtomatik SMS yuboriladi">
           <i class="bi bi-clock-fill"></i>
-          <span>Ertaga avtomatik SMS yuboriladi</span>
+          <span>Ertaga</span>
         </div>
       `;
     } else if (daysOverdue > 0 && daysOverdue % 3 === 0) {
       smsBadge = `
-        <div class="sms-status-badge sms-pending sms-overdue">
+        <div class="sms-status-badge sms-pending sms-overdue" title="Bugun eslatma yuboriladi">
           <i class="bi bi-bell-fill"></i>
-          <span>Bugun eslatma yuboriladi</span>
+          <span>Bugun</span>
         </div>
       `;
     } else {
       smsBadge = `
-        <div class="sms-status-badge sms-no-action">
+        <div class="sms-status-badge sms-no-action" title="SMS yuborilmagan">
           <i class="bi bi-dash-circle"></i>
-          <span>SMS yuborilmagan</span>
+          <span>SMS yo'q</span>
         </div>
       `;
     }
@@ -5430,16 +5430,16 @@ function renderDebtors() {
     return `
       <tr>
         <td data-label="Ism">
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            <strong style="font-size:1.05rem; color:var(--debtor-name-color, #1e293b);text-transform: capitalize;">${d.name}</strong>
+          <div style="display:flex; flex-direction:column; gap:5px; min-width:0;">
+            <strong style="font-size:1rem; line-height:1.2; color:var(--debtor-name-color, #1e293b); text-transform: capitalize; overflow-wrap:anywhere;">${d.name}</strong>
             ${smsBadge}
           </div>
         </td>
         <td data-label="Qarz">
-          <strong style="font-size:1.1rem; color:#dc2626;">${d.amount.toLocaleString()} so'm</strong>
+          <strong class="debtor-amount">${d.amount.toLocaleString()} so'm</strong>
         </td>
         <td data-label="Telefon">
-          <a href="tel:${d.phone}" style="color:#3b82f6; text-decoration:none; font-weight:500;">
+          <a href="tel:${d.phone}" class="debtor-phone">
             <i class="bi bi-telephone"></i> ${(() => {
               let p = (d.phone || "").replace(/\s+/g, '');
               if (p.startsWith("+998") && p.length === 13) {
@@ -5456,13 +5456,13 @@ function renderDebtors() {
           <strong>${d.debtDate ? formatDate(d.debtDate) : "—"}</strong>
         </td>
         <td data-label="Qaytarish sanasi">
-          <div style="display:flex; flex-direction:column;font-size:0.9rem; gap:4px;">
-            <strong>${hasReturnDate ? formatDate(d.returnDate) : "—"}</strong>
-            <span class="status-badge ${status.class}">${overdueText}</span>
-          </div>
+          <strong>${hasReturnDate ? formatDate(d.returnDate) : "—"}</strong>
         </td>
         <td data-label="Holat">
-          <span class="status-badge-large ${status.class}">${status.text}</span>
+          <div class="debtor-status-cell">
+            <span class="status-badge-large ${status.class}">${status.text}</span>
+            <span class="debtor-days">${overdueText}</span>
+          </div>
         </td>
         <td data-label="Amallar">
           <div class="action-buttons-grid">
@@ -5578,7 +5578,7 @@ function exportDebtorsCsv() {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 
-  showNotification("Qarzdorlar CSV faylga yuklandi", "success");
+  showNotification("Qarzdorlar fayli yuklab olindi", "success");
 }
 
 const exportDebtorsBtn = document.getElementById("exportDebtorsBtn");
@@ -5917,7 +5917,7 @@ function renderOverdueCards() {
   const overdueKpi = document.getElementById("overdueDebtKpi");
   const overdueChange = document.getElementById("overdueDebtChange");
   if (overdueKpi) {
-    overdueKpi.innerHTML = `${overdueTotal.toLocaleString()} <small>UZS</small>`;
+    overdueKpi.innerHTML = `${overdueTotal.toLocaleString()} <small>so'm</small>`;
   }
   if (overdueChange) {
     overdueChange.textContent = overdueDebtors.length
@@ -6101,7 +6101,7 @@ function getEffectiveRole() {
 }
 
 const ROLE_LABELS = {
-  ceo: "Do'kon egasi (CEO)",
+  ceo: "Do'kon egasi",
   admin: "Administrator",
   seller: "Sotuvchi"
 };
@@ -6580,9 +6580,9 @@ var NavigationManager = {
       settings: 'Sozlamalar',
       notifications: 'Bildirishnomalar',
       help: 'Yordam',
-      dashboard: 'Dashboard'
+      dashboard: 'Boshqaruv paneli'
     };
-    return titles[page] || 'Dashboard';
+    return titles[page] || 'Boshqaruv paneli';
   },
 
   init: function () {
@@ -7653,9 +7653,9 @@ window.logout = logout;
     return isFinite(n) ? n : 0;
   }
 
-  // Dashboarddagi mavjud kartalar bilan bir xil: raqam.toLocaleString("uz-UZ") + <small>UZS</small>
+  // Dashboarddagi mavjud kartalar bilan bir xil: raqam.toLocaleString("uz-UZ") + <small>so'm</small>
   function money(value) {
-    return esc(Math.round(num(value)).toLocaleString("uz-UZ")) + " <small>UZS</small>";
+    return esc(Math.round(num(value)).toLocaleString("uz-UZ")) + " <small>so'm</small>";
   }
 
   function getCard() {
@@ -7718,12 +7718,12 @@ window.logout = logout;
       '<div class="mk-ai-head">' +
         '<div class="mk-ai-title">' +
           '<span class="mk-ai-badge" aria-hidden="true"><i class="bi bi-stars"></i></span>' +
-          "<div><h3>MARK1 AI</h3><p>Bugungi biznes tahlili</p></div>" +
+          "<div><h3>MARK1 Aqlli yordamchi</h3><p>Bugungi biznes tahlili</p></div>" +
         "</div>" +
         '<div class="mk-ai-actions">' +
           '<span class="mk-ai-date" id="mk1AiDate"></span>' +
           '<button type="button" class="mk-ai-btn mk-ai-btn-primary" data-mk-ai="refresh">↻ Yangilash</button>' +
-          '<button type="button" class="mk-ai-btn" data-mk-ai="force" title="AI tahlilini qaytadan yaratadi">Qayta tahlil qilish</button>' +
+          '<button type="button" class="mk-ai-btn" data-mk-ai="force" title="Tahlilni qaytadan yaratadi">Qayta tahlil qilish</button>' +
         "</div>" +
       "</div>" +
       '<div class="mk-ai-body" id="mk1AiBody"></div>';
@@ -7748,7 +7748,7 @@ window.logout = logout;
       '<div class="mk-ai-loading" role="status">' +
         '<div class="mk-ai-spinner" aria-hidden="true"></div>' +
         "<div>" +
-          "<strong>AI biznesingizni tahlil qilmoqda...</strong>" +
+          "<strong>Aqlli yordamchi biznesingizni tahlil qilmoqda...</strong>" +
           '<ul class="mk-ai-steps">' +
             "<li>Savdolar tekshirilmoqda...</li>" +
             "<li>Ombor tekshirilmoqda...</li>" +
@@ -7763,7 +7763,7 @@ window.logout = logout;
   }
 
   function renderError(kind) {
-    var text = "AI tahlilini olishda xatolik yuz berdi.";
+    var text = "Tahlilni olishda xatolik yuz berdi.";
     if (kind === "network") text = "Server bilan aloqa o'rnatilmadi. Internet aloqasini tekshirib, qayta urinib ko'ring.";
     if (kind === "auth") text = "Sessiya muddati tugagan. Qaytadan kiring.";
     setBody(
@@ -7803,7 +7803,7 @@ window.logout = logout;
     }
 
     var html = '<div class="mk-ai-text">';
-    html += '<div class="mk-ai-section-title"><i class="bi bi-robot" aria-hidden="true"></i> MARK1 AI xulosasi</div>';
+    html += '<div class="mk-ai-section-title"><i class="bi bi-robot" aria-hidden="true"></i> MARK1 Aqlli yordamchi xulosasi</div>';
     if (heading) html += '<p class="mk-ai-heading">' + esc(heading) + "</p>";
     if (sentences.length) {
       html += '<ul class="mk-ai-sentences">';
@@ -7928,7 +7928,7 @@ window.logout = logout;
     var kind = (!err || !err.response) ? "network" : "server";
     if (hadData && state.data) {
       renderData();
-      notify("AI tahlilini yangilab bo'lmadi. Oldingi ma'lumot ko'rsatilmoqda.", "error");
+      notify("Tahlilni yangilab bo'lmadi. Oldingi ma'lumot ko'rsatilmoqda.", "error");
     } else {
       renderError(kind);
     }
@@ -8080,7 +8080,7 @@ async function changePassword(oldPassword, newPassword) {
 
     if (status === 404) {
       message =
-        "Parol API endpointi backendda topilmadi.";
+        "Parolni yangilash xizmati serverda topilmadi.";
     }
 
     return {
@@ -8474,7 +8474,7 @@ var DashboardStatisticsManager = {
                 ${this.formatMoney(
           data.monthly_revenue
         )}
-                <small>UZS</small>
+                <small>so'm</small>
                 `
 
     }
@@ -8510,7 +8510,7 @@ var DashboardStatisticsManager = {
                 ${this.formatMoney(
           data.daily_sales
         )}
-                <small>UZS</small>
+                <small>so'm</small>
                 `
     }
 
@@ -8547,7 +8547,7 @@ var DashboardStatisticsManager = {
                 ${this.formatMoney(
           data.monthly_profit
         )}
-                <small>UZS</small>
+                <small>so'm</small>
                 `
 
     }
@@ -8565,7 +8565,7 @@ var DashboardStatisticsManager = {
                 ${this.formatMoney(
           data.inventory_balance
         )}
-                <small>UZS</small>
+                <small>so'm</small>
                 `
 
     }
@@ -8599,7 +8599,7 @@ var DashboardStatisticsManager = {
                 <strong>
                     ${this.formatMoney(
         data.overdue_payments
-      )} UZS
+      )} so'm
                 </strong>
 
             </div>
@@ -9701,7 +9701,7 @@ function exportTransactionsExcel() {
               )
             : "",
 
-        "Status":
+        "Holati":
           sale.status === "sold"
             ? "Sotildi"
             : sale.status === "returned"

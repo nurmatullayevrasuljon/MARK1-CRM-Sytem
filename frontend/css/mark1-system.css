@@ -105,6 +105,9 @@ body > .d-flex {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* Planshet drawer'ida eski style.css qoidasi matnni markazga
+     surib yuborardi. Drawer ham, doimiy sidebar ham chapga tekis. */
+  justify-content: flex-start;
 }
 
 .sidebar .nav-item:focus-visible {
@@ -1217,4 +1220,167 @@ body.mk-sidebar-collapsed .sidebar .nav-item:focus-visible::after {
 @media (max-width: 575.98px) {
   .mk-empty-state { padding: 26px 14px; }
   .mk-empty-state .mk-empty-icon { width: 48px; height: 48px; font-size: 22px; }
+  /* Tor ekranda uzun izoh "..." bo'lib kesilardi. Sarlavha o'zi
+     bo'limni aniq bildiradi, shuning uchun izoh yashiriladi. */
+  .mk-topbar-sub { display: none; }
+}
+
+/* ─── Qarzdorlar: filtr tugmalari ──────────────────────────────────────────
+   Bootstrap'ning outline-hover qoidalari "Yaqinlashmoqda" tugmasini
+   to'liq sariq/oranj rangga bo'yab, u faol tugmadek ko'rinardi. Endi
+   hover faqat yumshoq fon beradi; faol holat esa bitta va aniq. */
+.filter-tabs {
+  gap: 8px;
+  margin-bottom: 0;
+}
+.filter-tabs .btn,
+.filter-tabs button {
+  min-height: 38px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  box-shadow: none;
+}
+.filter-tabs .btn:hover,
+.filter-tabs .btn:focus,
+.filter-tabs .btn:active {
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-subtle) !important;
+  box-shadow: none !important;
+}
+.filter-tabs .btn.active,
+.filter-tabs .btn[aria-pressed="true"] {
+  background: var(--brand-primary) !important;
+  color: #fff !important;
+  border-color: var(--brand-primary) !important;
+}
+.filter-tabs .btn:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+@media (max-width: 575.98px) {
+  /* Telefonda filtr tugmalari gorizontal skroll o'rniga 2 qatorga
+     chiroyli o'raladi — na kesilish, na yashirin tugma. */
+  .filter-tabs {
+    flex-wrap: wrap;
+    overflow-x: visible !important;
+  }
+}
+
+/* ─── Qarzdorlar jadvali: ixcham va tekis qatorlar ────────────────────────
+   Ilgari "Amallar" ustuni 90px ga siqilib, 7 ta tugma 313px balandlikda
+   ustma-ust tushardi; jadval esa konteynerdan chiqib ketardi. Endi
+   ustunlar foizda taqsimlangan, tugmalar 26px va bir necha qatorda. */
+@media (min-width: 769px) {
+  #debtors .table-responsive {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+  #debtors table {
+    width: 100%;
+    min-width: 810px;
+    table-layout: fixed;
+    margin-bottom: 0;
+  }
+  #debtors table th,
+  #debtors table td {
+    padding: 9px 8px;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+  }
+  #debtors table th {
+    white-space: normal;
+    line-height: 1.25;
+    font-size: 12px;
+  }
+  #debtors table th:nth-child(1),
+  #debtors table td:nth-child(1) { width: 15%; }
+  #debtors table th:nth-child(2),
+  #debtors table td:nth-child(2) { width: 12%; }
+  #debtors table th:nth-child(3),
+  #debtors table td:nth-child(3) { width: 15%; }
+  #debtors table th:nth-child(4),
+  #debtors table td:nth-child(4) { width: 11%; }
+  #debtors table th:nth-child(5),
+  #debtors table td:nth-child(5) { width: 12%; }
+  #debtors table th:nth-child(6),
+  #debtors table td:nth-child(6) { width: 15%; }
+  #debtors table th:nth-child(7),
+  #debtors table td:nth-child(7) { width: 20%; }
+
+  #debtors .action-buttons-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: flex-start;
+    width: 100%;
+  }
+  #debtors .action-buttons-grid .action-btn {
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
+    font-size: 12px;
+    border-radius: 7px;
+  }
+}
+
+/* Qator ichidagi holat va kun matni ustma-ust emas, ixcham ustunda. */
+#debtors .debtor-status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+#debtors .debtor-days {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.2;
+}
+#debtors .sms-status-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 4px;
+  width: auto;
+  max-width: 100%;
+  padding: 2px 6px;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#debtors .debtor-phone {
+  color: var(--brand-text, #3b82f6);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+#debtors .debtor-amount {
+  display: block;
+  color: var(--danger, #dc2626);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: normal;
+}
+#debtors td[data-label="Olingan sana"] strong,
+#debtors td[data-label="Qaytarish sanasi"] strong {
+  font-size: 12px;
+  white-space: nowrap;
+}
+@media (min-width: 769px) and (max-width: 1250px) {
+  /* 1150px atrofida telefon ustuni tor: ikonka o'rniga raqamning o'ziga
+     joy beramiz, aks holda raqam qo'shni ustunga chiqib ketadi. */
+  #debtors .debtor-phone i { display: none; }
 }
