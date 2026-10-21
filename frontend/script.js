@@ -245,14 +245,34 @@ function openPage(pageId, titleText) {
   const activeMobileNav = document.querySelector(`.mobile-bottom-nav button[data-target="${safePageId}"]`);
   const safeTitle = titleText || activeNav?.innerText.trim() || activeMobileNav?.innerText.trim() || "Boshqaruv paneli";
 
-  navItems.forEach(n => n.classList.remove("active"));
-  activeNav?.classList.add("active");
+  navItems.forEach(n => {
+    n.classList.remove("active");
+    n.removeAttribute("aria-current");
+  });
+  if (activeNav) {
+    activeNav.classList.add("active");
+    activeNav.setAttribute("aria-current", "page");
+  }
 
-  document.querySelectorAll(".mobile-bottom-nav button").forEach(n => n.classList.remove("active"));
-  activeMobileNav?.classList.add("active");
+  document.querySelectorAll(".mobile-bottom-nav button").forEach(n => {
+    n.classList.remove("active");
+    n.removeAttribute("aria-current");
+  });
+  if (activeMobileNav) {
+    activeMobileNav.classList.add("active");
+    activeMobileNav.setAttribute("aria-current", "page");
+  }
 
   sections.forEach(s => s.classList.remove("active"));
   targetSection.classList.add("active");
+
+  // Bo'lim almashganda sahifa yuqoridan boshlanadi — aks holda tab bar
+  // bilan boshqa bo'limga o'tilganda eski scroll pozitsiyasi qolib ketadi.
+  try {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  } catch (err) {
+    window.scrollTo(0, 0);
+  }
 
   if (pageTitle) {
     pageTitle.innerText = safeTitle;
@@ -7157,41 +7177,35 @@ function initProfile(user) {
 }
 
 // MOBILE BOTTOM NAV CONTROL (WITH STATE SAVE)
+// Tab bar — telefonda yagona navigatsiya. Har bir bosish openPage() orqali
+// section, active holat, sarlavha, subtitle va localStorage'ni bir xilda
+// yangilaydi (avval bu yerda takroriy mantiq bor edi va subtitle
+// yangilanmasdan qolardi).
 const MOBILE_PAGE_KEY = 'activeMobileSection';
+
+function mobileTabTitle(target, fallback) {
+  const sideItem = document.querySelector(
+    `.sidebar .nav-item[data-target="${target}"]`
+  );
+  const sideLabel = sideItem ? sideItem.textContent.trim() : "";
+  return sideLabel || fallback || "";
+}
 
 document.querySelectorAll('.mobile-bottom-nav button').forEach(btn => {
   btn.addEventListener('click', () => {
-    if(typeof $ !== "undefined") { $(".modal").modal("hide"); }
     const target = btn.dataset.target;
     if (!target) return;
-
-    // Sections
-    document.querySelectorAll('.section').forEach(s =>
-      s.classList.remove('active')
-    );
-    document.getElementById(target)?.classList.add('active');
-
-    // Nav buttons
-    document.querySelectorAll('.mobile-bottom-nav button').forEach(b =>
-      b.classList.remove('active')
-    );
-    btn.classList.add('active');
-
-    // Title
-    const title = btn.querySelector('span')?.innerText;
-    if (title) {
-      document.getElementById('pageTitle').innerText = title;
+    const shortLabel = btn.querySelector('span')?.textContent.trim();
+    if (typeof openPage === 'function') {
+      openPage(target, mobileTabTitle(target, shortLabel));
     }
-
-    // 💾 SAVE STATE
     localStorage.setItem(MOBILE_PAGE_KEY, target);
   });
 });
 
-// 🔁 RESTORE ACTIVE PAGE ON LOAD (MOBILE ONLY)
+// RESTORE ACTIVE PAGE ON LOAD (MOBILE ONLY)
 document.addEventListener('DOMContentLoaded', () => {
-  // faqat mobile uchun
-  if (window.innerWidth > 991) return;
+  if (window.innerWidth > 767) return;
 
   const savedSection = localStorage.getItem(MOBILE_PAGE_KEY);
   if (!savedSection) return;
@@ -7199,37 +7213,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const sectionEl = document.getElementById(savedSection);
   if (!sectionEl) return;
 
-  const navBtn = document.querySelector(
+  const tabBtn = document.querySelector(
     `.mobile-bottom-nav button[data-target="${savedSection}"]`
   );
-  // Pastki navigatsiyada yo'q bo'limlar (masalan "Sozlamalar") uchun
-  // sidebar variantidan foydalanamiz — aks holda restore jim bo'lib qolardi.
-  const sideBtn = document.querySelector(
-    `.sidebar .nav-item[data-target="${savedSection}"]`
-  );
-
-  // Sections
-  document.querySelectorAll('.section').forEach(s =>
-    s.classList.remove('active')
-  );
-  sectionEl.classList.add('active');
-
-  // Nav buttons
-  document.querySelectorAll('.mobile-bottom-nav button').forEach(b =>
-    b.classList.remove('active')
-  );
-  document.querySelectorAll('.sidebar .nav-item').forEach(b =>
-    b.classList.remove('active')
-  );
-  if (navBtn) navBtn.classList.add('active');
-  if (sideBtn) sideBtn.classList.add('active');
-
-  // Title
-  const title =
-    navBtn?.querySelector('span')?.innerText ||
-    sideBtn?.innerText.trim();
-  if (title) {
-    document.getElementById('pageTitle').innerText = title;
+  const shortLabel = tabBtn?.querySelector('span')?.textContent.trim();
+  if (typeof openPage === 'function') {
+    openPage(savedSection, mobileTabTitle(savedSection, shortLabel));
   }
 });
 

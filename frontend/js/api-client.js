@@ -1229,7 +1229,17 @@
     },
 
     isSessionValid: function () {
-      return !!getAccessToken() && !!getRole();
+      const token = getAccessToken();
+      const role = getRole();
+      if (!token || !role) return false;
+      // Muddati o'tgan JWT bilan dashboard "tirik" ko'rinib, keyin API 401
+      // sabab login/landing sahifasiga sakrardi. Endi "exp" shu yerda
+      // tekshiriladi va eskirgan sessiya darhol tozalanadi.
+      if (isTokenExpiringSoon(token, 0)) {
+        clearSession();
+        return false;
+      }
+      return true;
     },
 
     logout: async function () {

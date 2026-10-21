@@ -39,24 +39,16 @@
   var SIGNUP_PAGE = "/signup";
 
   // ==========================================================
-  // EARLY ROUTING: "/" (root) → landing.html yoki dashboard
-  // index.js barcha sahifalarda yuklanadi, shuning uchun root
-  // redirect shu yerda eng erta amalga oshadi.
-  // Session bor bo'lsa → dashboard, yo'q bo'lsa → landing page.
+  // EARLY ROUTING — OLIB TASHLANDI
+  // ----------------------------------------------------------
+  // Avval "/" va "/landing.html" da localStorage'da token stringi
+  // bo'lsa darhol /dashboard'ga redirect qilinardi. Token muddati
+  // o'tgan bo'lsa ham bu ishlab, foydalanuvchi landing sahifasini
+  // hech qachon ko'ra olmasdi: "/" → /dashboard → /login zanjiri.
+  // Marketing sahifasi har doim ochilishi kerak; sessiya bor-yo'qligi
+  // faqat /login va /signup sahifalarida (redirectIfLoggedIn orqali)
+  // tekshiriladi.
   // ==========================================================
-  (function earlyRootRedirect() {
-    try {
-      var p = window.location.pathname;
-      if (p !== "/" && p !== "" && p !== "/landing.html") return;
-      var hasSession = !!(
-        localStorage.getItem("crm_access_token") ||
-        sessionStorage.getItem("crm_access_token")
-      );
-      if (hasSession) {
-        window.location.replace(DASHBOARD_PAGE);
-      }
-    } catch (err) {}
-  })();
 
   // ==========================================================
   // PAGE TRANSITION MODULE

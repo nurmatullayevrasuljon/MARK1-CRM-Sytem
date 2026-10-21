@@ -1055,3 +1055,112 @@ body.mk-sidebar-collapsed .sidebar .nav-item:focus-visible::after {
     width: 240px;
   }
 }
+
+/* ─── 19. Telefon: sidebar o'rniga to'liq tab bar ───────────────────────────
+   Telefonda yon panel (drawer) va uning hamburger tugmasi butunlay
+   o'chiriladi. Navigatsiya faqat pastdagi 6 bo'limli tab bar orqali
+   ishlaydi: Asosiy, Mahsulot, Sotish, Tarix, Qarzlar, Sozlama.
+   Ranglar mavjud tokenlardan olinadi — palitra o'zgartirilmagan. */
+@media (max-width: 767px) {
+  .sidebar,
+  body.mk-nav-open .sidebar { display: none !important; }
+  .mk-mobile-menu { display: none !important; }
+  .mk-nav-backdrop { display: none !important; }
+  body.mk-nav-open { overflow: auto !important; }
+
+  .content {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mobile-bottom-nav {
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    align-items: stretch;
+    justify-content: initial;
+    gap: 0;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(68px + env(safe-area-inset-bottom, 0px));
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+    background: var(--bg-card, #fff);
+    border-top: 1px solid var(--border-subtle, #e2e8f0);
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.10);
+    z-index: 9999;
+    box-sizing: border-box;
+  }
+
+  .mobile-bottom-nav button {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 4px 0;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text-secondary, #64748B);
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.18s ease, background-color 0.18s ease;
+  }
+
+  .mobile-bottom-nav button i {
+    display: block;
+    font-size: 21px;
+    line-height: 1;
+  }
+
+  .mobile-bottom-nav button span {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+    line-height: 1.1;
+  }
+
+  .mobile-bottom-nav button.active,
+  .mobile-bottom-nav button:active {
+    color: var(--brand-primary, #4455EE);
+    background: transparent;
+  }
+
+  .mobile-bottom-nav button.active::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    width: 24px;
+    height: 3px;
+    border-radius: 0 0 999px 999px;
+    background: var(--brand-primary, #4455EE);
+    transform: translateX(-50%);
+  }
+
+  .mobile-bottom-nav button.active i { color: var(--brand-primary, #4455EE); }
+
+  .mobile-bottom-nav button:focus-visible {
+    outline: 2px solid var(--brand-primary, #4455EE);
+    outline-offset: -2px;
+  }
+}
+
+/* 320–359px: 6 bo'limni bitta qatorga sig'dirish */
+@media (max-width: 359.98px) {
+  .mobile-bottom-nav { padding-left: 2px; padding-right: 2px; }
+  .mobile-bottom-nav button span { letter-spacing: -0.3px; }
+  .mobile-bottom-nav button i { font-size: 20px; }
+}

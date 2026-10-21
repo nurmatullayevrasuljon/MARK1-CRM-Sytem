@@ -1349,7 +1349,17 @@
     },
 
     isSessionValid: function () {
-      return !!getAccessToken() && !!getRole();
+      const token = getAccessToken();
+      const role = getRole();
+      if (!token || !role) return false;
+      // Token string mavjudligi sessiya tirik degani emas: muddati o'tgan
+      // JWT bilan "/" → /dashboard → /login sakrashi landing sahifasini
+      // ochilmay qo'yadi. Shuning uchun "exp" ham tekshiriladi.
+      if (isTokenExpiringSoon(token, 0)) {
+        clearSession();
+        return false;
+      }
+      return true;
     },
 
     logout: function () {

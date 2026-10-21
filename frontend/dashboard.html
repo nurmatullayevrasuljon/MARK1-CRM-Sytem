@@ -29,7 +29,7 @@
   <!-- ui-ux-pro-max review qatlamı: focus-visible, reduced-motion, touch targets -->
   <link rel="stylesheet" href="css/dashboard-polish.css?v=1791100002">
   <!-- MARK1 Design System (yagona spacing/tipografiya/holatlar/responsive) -->
-  <link rel="stylesheet" href="css/mark1-system.css?v=1792580900">
+  <link rel="stylesheet" href="css/mark1-system.css?v=1792595000">
   <script>
     // FOUC oldini olish: mavzuni sahifa chizilishidan oldin qo'llash.
     (function () {
@@ -122,25 +122,29 @@
     </nav>
     <!-- MOBILE BOTTOM NAV -->
     <nav class="mobile-bottom-nav" role="navigation" aria-label="Mobil navigatsiya">
-      <button data-target="dashboard" aria-label="Boshqaruv paneli">
-        <i class="bi bi-house"></i>
+      <button type="button" data-target="dashboard" aria-label="Boshqaruv paneli">
+        <i class="bi bi-house-door" aria-hidden="true"></i>
         <span>Asosiy</span>
       </button>
-      <button data-target="productsSection" aria-label="Mahsulotlar">
-        <i class="bi bi-box"></i>
-        <span>Mahsulotlar</span>
+      <button type="button" data-target="productsSection" aria-label="Mahsulotlar">
+        <i class="bi bi-box-seam" aria-hidden="true"></i>
+        <span>Mahsulot</span>
       </button>
-      <button data-target="selling" aria-label="Sotish">
-        <i class="bi bi-cart"></i>
+      <button type="button" data-target="selling" aria-label="Sotish">
+        <i class="bi bi-cart3" aria-hidden="true"></i>
         <span>Sotish</span>
       </button>
-      <button data-target="daily-sales" aria-label="Savdo tarixi">
-        <i class="bi bi-receipt"></i>
+      <button type="button" data-target="daily-sales" aria-label="Savdo tarixi">
+        <i class="bi bi-receipt" aria-hidden="true"></i>
         <span>Tarix</span>
       </button>
-      <button data-target="debtors" aria-label="Qarzdorlar">
-        <i class="bi bi-people"></i>
+      <button type="button" data-target="debtors" aria-label="Qarzdorlar">
+        <i class="bi bi-people" aria-hidden="true"></i>
         <span>Qarzlar</span>
+      </button>
+      <button type="button" data-target="settings" aria-label="Sozlamalar">
+        <i class="bi bi-gear" aria-hidden="true"></i>
+        <span>Sozlama</span>
       </button>
     </nav>
 
@@ -1342,9 +1346,9 @@
   <script src="https://cdn.jsdelivr.net/npm/axios@1.20.0/dist/axios.min.js?v=1789490310"></script>
   <script src="js/toast.js?v=1790606500"></script>
   <script src="js/ux-enhancements.js?v=1790900001"></script>
-  <script src="js/api-client.js?v=1792579600"></script>
-  <script src="index.js?v=1790606500" defer></script>
-  <script src="script.js?v=1792579900" defer></script>
+  <script src="js/api-client.js?v=1792595000"></script>
+  <script src="index.js?v=1792595000" defer></script>
+  <script src="script.js?v=1792595000" defer></script>
   <script defer>
   </script>
   <script defer>
@@ -1450,7 +1454,7 @@
     })();
   </script>
   <!-- MARK1 app shell: sidebar collapse/drawer, modal fokus, toast, confirm -->
-  <script src="js/app-shell.js?v=1792579600" defer></script>
+  <script src="js/app-shell.js?v=1792595000" defer></script>
 </body>
 
 </html>
