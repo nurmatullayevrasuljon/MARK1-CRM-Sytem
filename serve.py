@@ -21,13 +21,13 @@ class CleanURLHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
-    def do_GET(self):
+    def _resolve_clean_url(self):
         path = self.path.split("?")[0].split("#")[0]
 
-        # Agar fayl to'g'ridan-to'g'ri mavjud bo'lsa
+        # Fayllar va assetlar uchun asl manzilni saqlaymiz.
         full = os.path.join(DIRECTORY, path.lstrip("/"))
         if os.path.isfile(full):
-            return super().do_GET()
+            return
 
         # Toza URL: /dashboard -> dashboard.html
         clean = path.rstrip("/").lstrip("/")
@@ -35,25 +35,31 @@ class CleanURLHandler(http.server.SimpleHTTPRequestHandler):
             html_file = clean + ".html"
             html_full = os.path.join(DIRECTORY, html_file)
             if os.path.isfile(html_full):
-                self.path = "/" + html_file
-                return super().do_GET()
+                suffix = self.path[len(path):]
+                self.path = "/" + html_file + suffix
+                return
 
         # Ildiz: / -> landing.html yoki index.html
         if path in ("/", ""):
             for candidate in ("landing.html", "index.html"):
                 if os.path.isfile(os.path.join(DIRECTORY, candidate)):
-                    self.path = "/" + candidate
-                    return super().do_GET()
+                    self.path = "/" + candidate + self.path[len(path):]
+                    return
 
-        return super().do_GET()
+    def do_GET(self):
+        self._resolve_clean_url()
+        super().do_GET()
 
     def do_HEAD(self):
-        return self.do_GET()
+        self._resolve_clean_url()
+        super().do_HEAD()
 
 
 if __name__ == "__main__":
     print(f"MARK1 mahalliy server: http://localhost:{PORT}")
     print(f"Papka: {DIRECTORY}")
     print(f"To'xtatish: Ctrl+C")
-    with http.server.HTTPServer(("127.0.0.1", PORT), CleanURLHandler) as httpd:
+    # Brauzer bir vaqtda HTML, CSS, JS va rasmlarni so'raydi. Threading server
+    # bitta sekin/uzilgan ulanish qolgan barcha so'rovlarni bloklashiga yo'l qo'ymaydi.
+    with http.server.ThreadingHTTPServer(("127.0.0.1", PORT), CleanURLHandler) as httpd:
         httpd.serve_forever()
