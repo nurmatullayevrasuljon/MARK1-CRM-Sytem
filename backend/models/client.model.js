@@ -20,4 +20,7 @@ const ClientSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+ClientSchema.index({ store_id: 1, createdAt: -1 });
+ClientSchema.index({ store_id: 1, client_phone: 1 });
+
 module.exports = mongoose.model("Client", ClientSchema);

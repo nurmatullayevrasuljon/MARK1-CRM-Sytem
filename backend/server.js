@@ -19,6 +19,7 @@ const allowedOrigins = [
   "https://mark1.uz",
   "https://www.mark1.uz",
   "https://admin.mark1.uz",
+  "https://mark1-crm.netlify.app",
   "http://localhost:3000",
   "http://localhost:5173",
   "http://localhost:8080",
@@ -38,12 +39,6 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: [
-      "https://mark1-crm.netlify.app",
-      "http://localhost:5173",
-      "http://localhost:3000",
-    ],
-
     origin: function (origin, callback) {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);

@@ -302,11 +302,11 @@ exports.returnSale = async (req, res) => {
 };
 
 exports.addPayment = async (req, res) => {
-  try {
-    const { sale_id } = req.query;
-    const { amount, payment_method } = req.body;
-    const { store_id } = req.user;
+  const { sale_id } = req.query;
+  const { amount, payment_method, payment_id } = req.body;
+  const { store_id } = req.user;
 
+  try {
     // CF-13 fix: Manfiy yoki nol summa tekshiruvi
     if (typeof amount !== "number" || isNaN(amount) || amount <= 0) {
       return res.status(400).json({
@@ -314,53 +314,113 @@ exports.addPayment = async (req, res) => {
       });
     }
 
-    const sale = await Sale.findOne({
-      _id: sale_id,
-      store_id,
-    });
+    // Eski mijozlar payment_method yubormasligi mumkin — naqd deb qabul qilamiz.
+    const method =
+      payment_method === undefined || payment_method === null || payment_method === ""
+        ? "cash"
+        : payment_method;
 
-    if (!sale) {
-      return res.status(404).json({
-        message: "Sotuv topilmadi",
-      });
-    }
-
-    if (sale.status !== "active") {
-      return res.status(400).json({
-        message: "Faqat faol sotuvga to'lov qo'shish mumkin",
-      });
-    }
-
-    if (amount > sale.total_remaining) {
-      return res.status(400).json({
-        message: "To'lov summasi qolgan qarzdan katta bo'lishi mumkin emas",
-      });
-    }
-
-    sale.payments.push({
-      amount,
-      paid_at: new Date(),
-    });
-
-    if (payment_method === "cash") {
-      sale.paid_by_cash += amount;
-    } else if (payment_method === "card") {
-      sale.paid_by_card += amount;
-    } else {
+    if (!["cash", "card"].includes(method)) {
       return res.status(400).json({
         message: "To'lov usuli xato",
       });
     }
-    sale.total_remaining -= amount;
-    sale.total_paid += amount;
 
-    await sale.save();
+    if (!mongoose.isValidObjectId(sale_id)) {
+      return res.status(400).json({
+        message: "Sotuv ID noto'g'ri",
+      });
+    }
+
+    // Idempotentlik: bir xil payment_id bilan takroriy so'rov kelsa,
+    // to'lovni ikkinchi marta yozmasdan mavjud sotuvni qaytaramiz.
+    if (payment_id) {
+      const existing = await Sale.findOne({
+        _id: sale_id,
+        store_id,
+        "payments.payment_id": payment_id,
+      });
+
+      if (existing) {
+        return res.status(200).json({
+          message: "To'lov allaqachon qo'shilgan",
+          sale: existing,
+          idempotent: true,
+        });
+      }
+    }
+
+    const inc = {
+      total_remaining: -amount,
+      total_paid: amount,
+    };
+    inc[method === "cash" ? "paid_by_cash" : "paid_by_card"] = amount;
+
+    // Atomar yangilash: qoldiq tekshiruvi va inkrementlar bitta
+    // MongoDB operatsiyasida bajariladi — parallel to'lovlarda
+    // qoldiq manfiyga tushmaydi.
+    const sale = await Sale.findOneAndUpdate(
+      {
+        _id: sale_id,
+        store_id,
+        status: "active",
+        $expr: { $lte: [amount, "$total_remaining"] },
+      },
+      {
+        $push: {
+          payments: {
+            amount,
+            paid_at: new Date(),
+            payment_method: method,
+            ...(payment_id ? { payment_id } : {}),
+          },
+        },
+        $inc: inc,
+      },
+      { returnDocument: "after" },
+    );
+
+    if (!sale) {
+      const existingSale = await Sale.findOne({ _id: sale_id, store_id });
+
+      if (!existingSale) {
+        return res.status(404).json({ message: "Sotuv topilmadi" });
+      }
+
+      if (existingSale.status !== "active") {
+        return res.status(400).json({
+          message: "Faqat faol sotuvga to'lov qo'shish mumkin",
+        });
+      }
+
+      return res.status(400).json({
+        message: "To'lov summasi qolgan qarzdan katta bo'lishi mumkin emas",
+      });
+    }
 
     return res.status(200).json({
       message: "To'lov muvaffaqiyatli qo'shildi",
       sale,
     });
   } catch (err) {
+    // Parallel so'rovlar bir xil payment_id bilan kelganda unique indeks
+    // 11000 xatosini beradi — bu holatda to'lov allaqachon yozilgan.
+    if (err && err.code === 11000 && payment_id) {
+      const existing = await Sale.findOne({
+        _id: sale_id,
+        store_id,
+        "payments.payment_id": payment_id,
+      });
+
+      if (existing) {
+        return res.status(200).json({
+          message: "To'lov allaqachon qo'shilgan",
+          sale: existing,
+          idempotent: true,
+        });
+      }
+    }
+
     console.log(err.message);
     return res.status(500).json({
       message: err.message,

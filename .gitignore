@@ -137,3 +137,6 @@ service-account*.json
 .DS_Store
 *.log
 .playwright-mcp/
+
+# Local QA artifacts (screenshots, audit output)
+audit/

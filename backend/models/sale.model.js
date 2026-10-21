@@ -55,6 +55,11 @@ const SaleSchema = new mongoose.Schema(
             default: "cash",
             enum: ["cash", "card"],
           },
+          // Idempotentlik kaliti: bir xil to'lov ikki marta yozilmasligi uchun.
+          // Qiymat bo'lmasa indeksga tushmaydi (sparse).
+          payment_id: {
+            type: String,
+          },
         },
       ],
       default: [],
@@ -66,6 +71,18 @@ const SaleSchema = new mongoose.Schema(
     },
   },
   { timestamps: true },
+);
+
+// Sotuvlar ro'yxati va filtrlar uchun asosiy indekslar
+SaleSchema.index({ store_id: 1, createdAt: -1 });
+SaleSchema.index({ store_id: 1, status: 1, createdAt: -1 });
+SaleSchema.index({ store_id: 1, client_id: 1 });
+SaleSchema.index({ store_id: 1, due_date: 1 });
+
+// Bir do'kon ichida payment_id takrorlanmasligi (idempotent to'lov)
+SaleSchema.index(
+  { store_id: 1, "payments.payment_id": 1 },
+  { unique: true, sparse: true },
 );
 
 module.exports = mongoose.model("Sale", SaleSchema);
