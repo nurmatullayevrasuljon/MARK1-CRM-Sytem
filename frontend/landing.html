@@ -1524,6 +1524,14 @@
             .mk-hero-preview-grid {
                 grid-template-columns: 1fr;
             }
+
+            /* 320px'da uzun CTA matni nowrap sabab ekrandan chiqib ketardi. */
+            .mk-btn {
+                max-width: 100%;
+                white-space: normal;
+                text-align: center;
+                line-height: 1.3;
+            }
         }
     html:not(.dark-mode) .mk-logo img { filter: brightness(0); }
     
