@@ -5345,10 +5345,12 @@ function renderDebtors() {
   if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">
-          <div style="font-size:3rem; margin-bottom:1rem;" aria-hidden="true"><i class="bi bi-inbox"></i></div>
-          <div style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem;">Qarzdor topilmadi</div>
-          <div style="font-size:0.9rem;">Yangi qarzdor qo'shish uchun yuqoridagi tugmani bosing</div>
+        <td colspan="7" class="mk-empty-cell">
+          <div class="mk-empty-state mk-empty-state-green" role="status">
+            <div class="mk-empty-icon" aria-hidden="true"><i class="bi bi-inbox"></i></div>
+            <div class="mk-empty-title">Qarzdor topilmadi</div>
+            <div class="mk-empty-text">Yangi qarzdor qo'shish uchun yuqoridagi tugmani bosing</div>
+          </div>
         </td>
       </tr>
     `;

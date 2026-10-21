@@ -1303,58 +1303,58 @@
             background: var(--mk-card);
             /* Pastki qatordagi ijtimoiy havolalarni suzuvchi mavzu
                tugmasi (position:fixed; bottom:24px; 52px) yopib qolmasligi
-               uchun pastki bo'shliq kengaytirildi. */
-            padding: 70px 0 96px;
+               uchun pastki bo'shliq saqlanadi, lekin footer biroz ixcham. */
+            padding: 46px 0 88px;
         }
 
         .mk-footer-grid {
             display: grid;
             grid-template-columns: 1.6fr 1fr 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 50px;
+            gap: 28px;
+            margin-bottom: 30px;
         }
 
         .mk-footer-brand-mark {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 14px;
+            gap: 9px;
+            margin-bottom: 10px;
         }
 
         .mk-footer-logo-sq {
-            width: 34px;
-            height: 34px;
-            border-radius: 9px;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
             background: linear-gradient(135deg, var(--mk-primary), var(--mk-secondary));
             color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
-            font-size: .8rem;
+            font-size: .74rem;
         }
 
         .mk-footer-grid ul li a {
             display: inline-block;
-            padding: 5px 0;
+            padding: 4px 0;
             min-height: 24px;
-            line-height: 1.4;
+            line-height: 1.35;
         }
 
         .mk-footer-grid h3 {
-            font-size: .95rem;
+            font-size: .86rem;
             font-weight: 700;
-            margin: 0 0 16px;
+            margin: 0 0 10px;
         }
 
         .mk-footer-grid li {
-            margin-bottom: 12px;
+            margin-bottom: 7px;
         }
 
         .mk-footer-grid a,
         .mk-footer-grid p {
             color: var(--mk-muted-fg);
-            font-size: .92rem;
+            font-size: .84rem;
         }
 
         .mk-footer-grid a:hover {
@@ -1363,28 +1363,28 @@
 
         .mk-footer-bottom {
             border-top: 1px solid var(--mk-border);
-            padding-top: 24px;
+            padding-top: 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 16px;
+            gap: 14px;
         }
 
         .mk-footer-bottom p {
             margin: 0;
             color: var(--mk-muted-fg);
-            font-size: .9rem;
+            font-size: .82rem;
         }
 
         .mk-footer-social {
             display: flex;
-            gap: 22px;
+            gap: 18px;
         }
 
         .mk-footer-social a {
             color: var(--mk-muted-fg);
-            font-size: .9rem;
+            font-size: .82rem;
             font-weight: 500;
             /* flex item sifatida display:block bo'lib 16px bo'lib qolgan edi —
                WCAG 2.5.8 (>=24px) uchun balandlik berildi, ko'rinishi o'zgarmadi */
@@ -1528,7 +1528,7 @@
     html:not(.dark-mode) .mk-logo img { filter: brightness(0); }
     
         </style>
-    <link rel="stylesheet" href="css/mark1-system.css?v=1792595000">
+    <link rel="stylesheet" href="css/mark1-system.css?v=1792600000">
 
 </head>
 
@@ -1876,30 +1876,61 @@
     <section class="mk-section" id="narx">
         <div class="mk-wrap">
             <div class="mk-section-head mk-reveal">
-                <h2>Narxlar</h2>
-                <p>MARK1 CRM hozircha bepul — barcha asosiy modullar to'lovsiz ochiq.</p>
+                <h2>Sodda va shaffof narxlar</h2>
+                <p>Biznesingiz uchun to'g'ri rejani tanlang. Doim moslashuvchan, doim adolatli.</p>
             </div>
-            <div class="mk-pricing-grid" style="grid-template-columns:minmax(0,520px);justify-content:center;">
-                <div class="mk-price-card mk-highlight mk-reveal" style="--mk-delay:0s;">
-                    <div class="mk-price-badge">Bepul</div>
-                    <h3>To'liq kirish</h3>
-                    <p class="mk-desc">Do'kon egasi va xodimlar uchun barcha asosiy funksiyalar</p>
-                    <div class="mk-price-value"><span class="mk-amount">0</span><span class="mk-period">so'm</span></div>
-                    <p class="mk-price-note">Hozircha obuna to'lovi yo'q, kredit karta talab qilinmaydi</p>
-                    <a href="/signup" class="mk-btn mk-btn-primary">Hisob yaratish</a>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz mahsulot va kategoriya</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Sotuvlar, savat va chek</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Qarzdorlar va to'lovlar tarixi</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Kunlik, haftalik va oylik hisobotlar</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Excel va CSV eksport</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Web panel va Android ilova</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Rolga asoslangan xodimlar</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> To'liq o'zbek tilidagi interfeys</div>
+            <div class="mk-pricing-grid">
+                <div class="mk-price-card mk-reveal" style="--mk-delay:0s;">
+                    <h3>Boshlang'ich</h3>
+                    <p class="mk-desc">Yangi ish boshlaganlar uchun juda mos</p>
+                    <div class="mk-price-value"><span class="mk-amount">199,000</span><span
+                            class="mk-period">so'm/oy</span></div>
+                    <p class="mk-price-note">14 kunlik bepul sinov, kredit karta talab etilmaydi</p>
+                    <a href="/signup" class="mk-btn mk-btn-secondary">Bepul sinab ko'ring</a>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 100 tagacha mahsulot</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 1 ta foydalanuvchi akkaunt</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Asosiy ombor nazorati</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Kunlik savdo hisobotlari</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Email orqali yordam</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 1 GB xotira</div>
+                </div>
+                <div class="mk-price-card mk-highlight mk-reveal" style="--mk-delay:.1s;">
+                    <div class="mk-price-badge">Eng ommabop</div>
+                    <h3>Biznes</h3>
+                    <p class="mk-desc">O'sib borayotgan bizneslar uchun kuchli yechim</p>
+                    <div class="mk-price-value"><span class="mk-amount">499,000</span><span
+                            class="mk-period">so'm/oy</span></div>
+                    <p class="mk-price-note">14 kunlik bepul sinov, kredit karta talab etilmaydi</p>
+                    <a href="/signup" class="mk-btn mk-btn-primary">Bepul sinab ko'ring</a>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz mahsulot</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 10 tagacha foydalanuvchi akkaunt</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Ilg'or ombor boshqaruvi</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Real vaqt tahlili</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Ustuvor email va telefon yordami</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 50 GB xotira</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Qarzdorlarni kuzatish</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Avtomatik ogohlantirishlar</div>
+                </div>
+                <div class="mk-price-card mk-reveal" style="--mk-delay:.2s;">
+                    <h3>Korporativ</h3>
+                    <p class="mk-desc">Yirik operatsiyalar uchun individual yechim</p>
+                    <div class="mk-price-value"><span class="mk-amount">Maxsus</span><span class="mk-period">narx</span>
+                    </div>
+                    <p class="mk-price-note">&nbsp;</p>
+                    <a href="mailto:support@mark1.uz?subject=MARK1%20Korporativ%20tarif"
+                        class="mk-btn mk-btn-secondary">Sotuv bo'limi bilan bog'lanish</a>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz hamma narsa</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz foydalanuvchi akkaunt</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Maxsus ish jarayonlari</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Kengaytirilgan API kirishi</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 24/7 telefon orqali yordam</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz xotira</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Maxsus integratsiyalar</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Shaxsiy menejer</div>
                 </div>
             </div>
             <div class="mk-pricing-faq-link">
-                <p>Pullik tariflar joriy etilsa, foydalanuvchilar oldindan xabardor qilinadi. Savollar uchun <a
-                        href="mailto:support@mark1.uz">support@mark1.uz</a>.</p>
+                <p>Narxlar haqida savollaringiz bormi? <a href="#savollar">FAQ bo'limimizni ko'ring</a></p>
             </div>
         </div>
     </section>
