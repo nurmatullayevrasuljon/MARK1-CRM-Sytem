@@ -4262,6 +4262,29 @@ async function updateCharts(cachedRawSales) {
     const dailyEmptyEl = document.getElementById("dailyChartEmpty");
     const dailyHasData = Number(dailySales) > 0;
 
+    // Kecha bilan solishtirish — mavjud sotuvlar massividan (soxta emas).
+    // Ilgari grafik bitta ustun bilan butun plotni to'ldirardi va "soatlik
+    // tushum" deb noto'g'ri ta'riflanardi (soatlik ma'lumot yo'q).
+    const yesterdaySales = (() => {
+      const y = new Date();
+      y.setDate(y.getDate() - 1);
+      const key = getDateKey(y);
+      let sum = 0;
+      (Array.isArray(sourceRawSales) ? sourceRawSales : []).forEach(sale => {
+        if (!sale || (sale.status && sale.status !== "active")) return;
+        const d = sale.createdAt || sale.updatedAt;
+        if (!d || getDateKey(d) !== key) return;
+        if (Array.isArray(sale.products)) {
+          sale.products.forEach(item => {
+            sum += (Number(item.quantity) || 0) * (Number(item.selling_price) || 0);
+          });
+        } else {
+          sum += Number(sale.total_price) || 0;
+        }
+      });
+      return Math.round(sum);
+    })();
+
     if (dailyEmptyEl) dailyEmptyEl.classList.toggle("show", !dailyHasData);
     if (dailyCanvas) dailyCanvas.style.display = dailyHasData ? "block" : "none";
 
@@ -4277,6 +4300,12 @@ async function updateCharts(cachedRawSales) {
           null;
       }
 
+      const themeCs = getComputedStyle(document.documentElement);
+      const todayColor = (themeCs.getPropertyValue("--success") || "").trim() || "#10B981";
+      const prevColor = (themeCs.getPropertyValue("--border-strong") || "").trim() || "#94A3B8";
+      const labelColor = (themeCs.getPropertyValue("--text-muted") || "").trim() || "#5F6B7F";
+      const gridColor = (themeCs.getPropertyValue("--border-subtle") || "").trim() || "#E8EAF0";
+
       chartInstances.daily =
         new Chart(
           dailyCanvas,
@@ -4288,23 +4317,33 @@ async function updateCharts(cachedRawSales) {
             data: {
 
               labels:
-                ["Bugun"],
+                ["Kecha", "Bugun"],
 
               datasets: [
 
                 {
 
                   label:
-                    "Kunlik daromad",
+                    "Tushum",
 
                   data:
-                    [dailySales],
+                    [yesterdaySales, dailySales],
 
                   backgroundColor:
-                    "#22c55e",
+                    [prevColor, todayColor],
 
                   borderRadius:
-                    8
+                    8,
+
+                  // Bitta ustun butun plotni egallamasin.
+                  maxBarThickness:
+                    72,
+
+                  categoryPercentage:
+                    0.62,
+
+                  barPercentage:
+                    0.9
                 }
 
               ]
@@ -4318,6 +4357,8 @@ async function updateCharts(cachedRawSales) {
 
               maintainAspectRatio:
                 false,
+
+              layout: { padding: { top: 8 } },
 
               animation: {
 
@@ -4361,19 +4402,36 @@ async function updateCharts(cachedRawSales) {
 
               scales: {
 
+                x: {
+
+                  grid: { display: false },
+
+                  ticks: { color: labelColor, font: { size: 12, weight: "600" } }
+
+                },
+
                 y: {
 
                   beginAtZero:
                     true,
 
+                  grid: { color: gridColor },
+
+                  border: { display: false },
+
                   ticks: {
+
+                    color: labelColor,
+
+                    maxTicksLimit: 5,
 
                     callback:
                       function(value) {
 
-                        return Number(
-                          value
-                        ).toLocaleString();
+                        const n = Number(value);
+                        if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, "") + " mln";
+                        if (n >= 1000) return Math.round(n / 1000) + " ming";
+                        return n.toLocaleString();
 
                       }
 

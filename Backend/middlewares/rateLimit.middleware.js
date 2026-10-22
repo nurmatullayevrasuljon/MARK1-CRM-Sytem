@@ -16,7 +16,7 @@ const rateLimit = require("express-rate-limit");
 // odatdagi foydalanuvchini cheklamaydi.
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 300,
+  limit: Number(process.env.API_RATE_LIMIT_MAX) || 300,
   standardHeaders: "draft-7", // RateLimit-* headerlari
   legacyHeaders: false,
   message: { message: "So'rovlar juda ko'p. Birozdan so'ng urinib ko'ring." },
@@ -26,7 +26,7 @@ const apiLimiter = rateLimit({
 // (Signup + verify + resend ketma-ket ham shu limit ichida.)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 10,
+  limit: Number(process.env.AUTH_RATE_LIMIT_MAX) || 10,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: {
@@ -38,7 +38,7 @@ const authLimiter = rateLimit({
 // SMS yuborish (qo'lda eslatma) uchun: bir IP dan 15 daqiqada 20 ta.
 const smsLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 20,
+  limit: Number(process.env.SMS_RATE_LIMIT_MAX) || 20,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { message: "SMS yuborish limiti oshib ketdi. Biroz kuting." },

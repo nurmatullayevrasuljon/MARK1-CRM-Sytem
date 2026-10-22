@@ -33,7 +33,18 @@
   --mk-focus-ring: 0 0 0 3px rgba(68, 85, 238, 0.35);
   --mk-z-drawer: 1040;
   --mk-z-overlay: 1030;
+
+  /* Yagona shrift qatlami. Inter dashboard.html'da <link> bilan yuklanadi,
+     lekin ilgari hech qayerda qo'llanilmagan — brauzer Arial/Liberation'ga
+     tushib qolardi va login/landing bilan tipografika mos kelmasdi. */
+  --mk-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mk-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
+
+html, body { font-family: var(--mk-font-sans); }
+/* Forma elementlari brauzer standart shriftini meros qilmaydi. */
+button, input, select, textarea, optgroup { font-family: inherit; }
+.mk-mono, code, kbd, pre, samp { font-family: var(--mk-font-mono); }
 
 /* ─── 2. Accessibility: focus, motion, targets ───────────────────────────── */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
@@ -356,6 +367,34 @@ body.mk-sidebar-collapsed .sidebar .nav-item:focus-visible::after {
 .counter-change.negative::before { content: "▼"; font-size: 9px; }
 .counter-change.neutral::before  { content: "•"; font-size: 12px; }
 
+/* AI tahlil kartasidagi o'sish/pasayish foizi.
+   premium-theme.css `.mk-ai-change.counter-up { color: var(--success) }` —
+   light rejimda #10B981 oq fonda faqat 2.54:1 (AA uchun 4.5 kerak).
+   Matn uchun to'qroq semantik token ishlatamiz. */
+.mk-ai-change.counter-up { color: var(--success-text, #065F46) !important; }
+.mk-ai-change.counter-down { color: var(--danger-text, #991B1B) !important; }
+html.dark-mode .mk-ai-change.counter-up { color: var(--success, #34D399) !important; }
+html.dark-mode .mk-ai-change.counter-down { color: var(--danger, #F87171) !important; }
+
+/* KPI kartalari: izoh (counter-change) har doim pastga tekislanadi.
+   Ilgari 3-kartada izoh qiymat ostida, qolganlarida eng pastda turardi —
+   bir qatordagi kartalar ritmi buzilardi. */
+.mk-stats .card-box {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.mk-stats .card-box .counter-change {
+  margin-top: auto;
+  padding-top: 10px;
+}
+/* 3 va 4-kartalarda izoh oddiy <small class="text-success|text-muted"> —
+   ular ham pastga tekislanishi kerak, aks holda qator ritmi buziladi. */
+.mk-stats .card-box > small:last-child {
+  margin-top: auto;
+  padding-top: 10px;
+}
+
 /* ─── 7. Buttons / inputs / badges ───────────────────────────────────────── */
 .btn {
   min-height: 40px;
@@ -416,15 +455,24 @@ body.mk-sidebar-collapsed .sidebar .nav-item:focus-visible::after {
 }
 
 /* Auth formalaridagi placeholder va disabled CTA o'qiladigan bo'lsin:
-   past opacity matnni ham, fonni ham birga yuvib yuboradi. */
+   past opacity matnni ham, fonni ham birga yuvib yuboradi.
+   MUHIM: disabled holat kulrang (#59657a) emas — brend tusli bo'lishi kerak,
+   aks holda asosiy CTA "o'chirilgan neytral tugma" bo'lib ko'rinadi va
+   login sahifasida brend butunlay yo'qoladi. */
 input.field-input::placeholder { color: #626d82; opacity: 1; }
 .dark-mode input.field-input::placeholder { color: #a3adc2; }
 .btn-primary-auth:disabled {
   opacity: 1;
-  background: #59657a;
-  color: #fff;
+  background: var(--mk-disabled-bg, #E7E9F8);
+  color: var(--mk-disabled-text, #565C86);
+  border: 1px solid var(--mk-disabled-border, #D6DAF3);
   cursor: not-allowed;
   box-shadow: none;
+}
+.dark-mode .btn-primary-auth:disabled {
+  background: #22304C;
+  color: #97A4C0;
+  border-color: #2E3D5C;
 }
 .mk-field-error {
   display: none;
@@ -1173,11 +1221,21 @@ input.field-input::placeholder { color: #626d82; opacity: 1; }
   }
 }
 
-/* 320–359px: 6 bo'limni bitta qatorga sig'dirish */
+/* 320–359px: 6 bo'limni bitta qatorga sig'dirish.
+   Bu yerda yorliq matni baribir kesiladi ("Sozlamal…"), shuning uchun
+   faqat ikonka qoldiriladi — tugmalarda aria-label bor, ya'ni ekran
+   o'quvchi uchun nom saqlanadi. */
 @media (max-width: 359.98px) {
   .mobile-bottom-nav { padding-left: 2px; padding-right: 2px; }
-  .mobile-bottom-nav button span { letter-spacing: -0.3px; }
-  .mobile-bottom-nav button i { font-size: 20px; }
+  .mobile-bottom-nav button { padding: 8px 0; }
+  .mobile-bottom-nav button span {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .mobile-bottom-nav button i { font-size: 22px; }
 }
 
 /* ─── 20. Bo'sh holat (Qarzdorlar) — yashil ajratilgan blok ───────────────── */
@@ -1811,6 +1869,26 @@ p { color: inherit; }
 }
 .table-hover tbody tr { transition: background .12s ease; }
 
+/* Qatorlarni ajratish: 8 ustunli jadvalda (mahsulotlar, savdo tarixi)
+   chiziqsiz qatorlar ko'z bilan kuzatishni qiyinlashtiradi. Faqat
+   desktopda — mobil "karta" rejimida bu chiziqlar kerak emas. */
+@media (min-width: 768px) {
+  .table > tbody > tr + tr > td {
+    border-top: 1px solid var(--border-subtle);
+  }
+}
+
+/* Mahsulotlar bo'limidagi asosiy amal — boshqa boshqaruv elementlari
+   kabi 44px balandlikda bo'lishi kerak (WCAG 2.5.8 / vizual izchillik). */
+#productsSection .mk-page-actions .btn {
+  min-height: var(--mk-control-h, 44px);
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
 /* Mahsulot rasmi: buzilgan img o'rniga ixcham fallback */
 .mk-thumb,
 .product-thumb {
@@ -1905,7 +1983,14 @@ img.mk-img-broken { display: none !important; }
   gap: 8px;
 }
 
-.mk-pos-grid { gap: 16px; grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr); }
+/* MUHIM: ikki ustunli POS faqat katta ekranlarda.
+   Ilgari bu qoida media-query'siz turardi va yuqoridagi
+   `@media (max-width: 1100px) { .mk-pos-grid { grid-template-columns: 1fr } }`
+   ni cascade bo'yicha bekor qilardi — natijada 768/390/320 px da chap panel
+   8px (320 px da 0px) ga siqilib, POS butunlay buzilardi. */
+@media (min-width: 1101px) {
+  .mk-pos-grid { gap: 16px; grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr); }
+}
 .mk-pos-panel {
   padding: 18px;
   border-radius: var(--mk-radius-md);
@@ -2058,7 +2143,7 @@ img.mk-img-broken { display: none !important; }
 
 /* ─── 33. Mobile density ─────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  .content { padding: 10px 12px 96px; }
+  .content { padding: 10px 16px 96px; }
   .topbar { top: 8px; padding: 8px 10px; border-radius: 12px; }
   .topbar h1 { font-size: 16px; }
   .mk-topbar-sub { display: none; }
@@ -2068,6 +2153,24 @@ img.mk-img-broken { display: none !important; }
   .card-box { padding: 12px 12px; min-height: 104px; border-radius: 12px; }
   .card-box small.counter-smal { font-size: 10px; gap: 6px; letter-spacing: .03em; }
   .card-box small.counter-smal .svg-icon { width: 24px; height: 24px; flex-basis: 24px; padding: 5px; }
+
+  /* KPI yorlig'i mobil 2 ustunda turlicha balandlikka o'ralib ketardi
+     (30 / 56 / 75px) — natijada qo'shni kartalardagi raqamlar turli
+     balandlikda boshlanardi. Ikonka endi matn bilan bir qatorda turadi,
+     yorliq maydoni esa 2 qatorga mo'ljallangan qat'iy balandlik oladi. */
+  .mk-stats .card-box small.counter-smal {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    line-height: 1.25;
+    min-height: 38px;
+  }
+  .mk-stats .card-box small.counter-smal .svg-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    padding: 4px;
+    margin-top: 1px;
+  }
   .card-box h3.counter,
   .card-box h3.daily-c { font-size: 19px; margin: 8px 0 2px; }
   .card-box h3.counter small,

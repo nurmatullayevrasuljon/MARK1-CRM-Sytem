@@ -79,10 +79,20 @@ SaleSchema.index({ store_id: 1, status: 1, createdAt: -1 });
 SaleSchema.index({ store_id: 1, client_id: 1 });
 SaleSchema.index({ store_id: 1, due_date: 1 });
 
-// Bir do'kon ichida payment_id takrorlanmasligi (idempotent to'lov)
+// Bir do'kon ichida payment_id takrorlanmasligi (idempotent to'lov).
+//
+// MUHIM: `sparse: true` bu yerda YETARLI EMAS. `payments: []` bo'lgan
+// sotuvda Mongo multikey indeksga `payments.payment_id = null` yozadi va
+// sparse uni baribir indekslaydi — natijada bir do'konda to'lovsiz IKKINCHI
+// sotuv yaratilganda `E11000 duplicate key ... payments.payment_id: null`
+// xatosi chiqadi (to'liq qarzga sotish / opening_record yo'li).
+// partialFilterExpression faqat haqiqiy string payment_id'larni indekslaydi.
 SaleSchema.index(
   { store_id: 1, "payments.payment_id": 1 },
-  { unique: true, sparse: true },
+  {
+    unique: true,
+    partialFilterExpression: { "payments.payment_id": { $type: "string" } },
+  },
 );
 
 module.exports = mongoose.model("Sale", SaleSchema);
