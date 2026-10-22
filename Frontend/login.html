@@ -20,8 +20,8 @@
   <!-- Prevent FOUC: apply theme before paint -->
   <script>
     (function () {
-      var t = localStorage.getItem('theme');
-      if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      // Auth sahifalari standart holatda kunduzgi (light) bo'ladi.
+      if (localStorage.getItem('theme') === 'dark') {
         document.documentElement.classList.add('dark-mode');
       }
     })();
@@ -246,6 +246,18 @@
       margin-bottom: 7px;
     }
     .field-wrap { position: relative; }
+
+    /* Mobil/planshetda brend belgisi (chap panel yashirilganda) */
+    .auth-mobile-brand {
+      display: none;
+      margin-bottom: 24px;
+      width: fit-content;
+    }
+    .auth-mobile-brand img { height: 26px; width: auto; }
+    @media (max-width: 1023px) {
+      .auth-mobile-brand { display: inline-flex; }
+    }
+    html.dark-mode .auth-mobile-brand img { filter: invert(1); }
     /* QA: premium-theme `input[type="tel"]` (0,1,1) dan kuchli bo'lishi uchun
        element + class ishlatildi — aks holda 12.25px ga tushardi. */
     input.field-input {
@@ -538,6 +550,9 @@
     <!-- ══════ RIGHT PANEL ══════ -->
     <main class="auth-right" id="main-content" tabindex="-1">
       <div class="auth-card">
+        <a class="auth-mobile-brand" href="/" aria-label="MARK1 bosh sahifasiga o'tish">
+          <img src="img/mark1-logo-navbar.png" alt="MARK1 CRM">
+        </a>
         <h1 class="auth-card-title">Qaytib kelganingizdan xursandmiz</h1>
         <p class="auth-card-subtitle">CRM platformasidagi hisobingizga kiring</p>
 

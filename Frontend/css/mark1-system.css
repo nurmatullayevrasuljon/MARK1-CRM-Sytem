@@ -1405,3 +1405,1022 @@ input.field-input::placeholder { color: #626d82; opacity: 1; }
      joy beramiz, aks holda raqam qo'shni ustunga chiqib ketadi. */
   #debtors .debtor-phone i { display: none; }
 }
+
+/* ==========================================================================
+   MARK1 DESIGN SYSTEM — v2 (Premium refinement layer)
+   --------------------------------------------------------------------------
+   Maqsad: mavjud tokenlarni saqlab, sahifalar orasidagi vizual ierarxiyani
+   bir xillashtirish: sahifa sarlavhalari, KPI panellari, jadvallar, bo'sh
+   holatlar, POS va mobil zichlik.
+   Yuklanish tartibi: barcha sahifalarda ENG OXIRIDA (bu fayl).
+   ========================================================================== */
+
+/* ─── 21. Token kengaytmasi ──────────────────────────────────────────────── */
+:root {
+  --mk-space-7: 28px;
+  --mk-space-9: 36px;
+  --mk-space-12: 48px;
+  --mk-space-16: 64px;
+
+  --mk-radius-xs: 6px;
+  --mk-radius-sm: 8px;
+  --mk-radius-md: 12px;
+  --mk-radius-lg: 16px;
+  --mk-radius-xl: 20px;
+
+  --mk-line: var(--border-subtle);
+  --mk-line-strong: var(--border-strong);
+  --mk-surface: var(--bg-card);
+  --mk-surface-2: var(--bg-surface);
+  --mk-surface-3: var(--bg-main);
+
+  --mk-ring: 0 0 0 3px rgba(68, 85, 238, 0.28);
+  --mk-shadow-xs: 0 1px 2px rgba(13, 15, 26, 0.05);
+  --mk-shadow-sm: 0 1px 3px rgba(13, 15, 26, 0.06), 0 1px 2px rgba(13, 15, 26, 0.04);
+  --mk-shadow-md: 0 4px 16px rgba(13, 15, 26, 0.07);
+  --mk-shadow-lg: 0 16px 48px rgba(13, 15, 26, 0.14);
+
+  --mk-sidebar-w: 248px;
+  --mk-topbar-h: 64px;
+  --mk-tap: 44px;
+}
+
+html.dark-mode {
+  --mk-ring: 0 0 0 3px rgba(143, 160, 255, 0.35);
+  --mk-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --mk-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+  --mk-shadow-md: 0 4px 18px rgba(0, 0, 0, 0.45);
+  --mk-shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.6);
+}
+
+/* ─── 22. Global typography & surface ────────────────────────────────────── */
+body {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  background: var(--bg-main);
+  color: var(--text-primary);
+}
+
+h1, h2, h3, h4, h5, h6 { color: var(--text-primary); }
+p { color: inherit; }
+
+::selection { background: var(--brand-surface); color: var(--brand-text); }
+
+/* ─── 23. App shell: sidebar + topbar ────────────────────────────────────── */
+@media (min-width: 1200px) {
+  .sidebar {
+    flex-basis: var(--mk-sidebar-w);
+    width: var(--mk-sidebar-w);
+    min-width: var(--mk-sidebar-w);
+    padding: 20px 14px;
+    background: var(--bg-sidebar);
+  }
+}
+
+.sidebar .logo {
+  padding: 4px 8px 18px;
+  margin-bottom: 4px;
+}
+.sidebar .logo img { max-height: 32px; width: auto; }
+
+.sidebar .nav { gap: 2px; }
+
+.sidebar .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 42px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  position: relative;
+  transition: background .15s ease, color .15s ease;
+}
+.sidebar .nav-item .svg-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  opacity: .85;
+}
+.sidebar .nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.sidebar .nav-item.active {
+  background: var(--brand-surface);
+  color: var(--brand-text);
+  font-weight: 600;
+}
+.sidebar .nav-item.active .svg-icon { opacity: 1; }
+.sidebar .nav-item.active::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--brand-primary);
+}
+
+.mk-nav-label {
+  list-style: none;
+  margin: 14px 0 4px;
+  padding: 0 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: .85;
+}
+.mk-nav-label:first-child { margin-top: 0; }
+
+.mk-sidebar-foot {
+  padding: 12px 4px 0;
+  gap: 10px;
+}
+.mk-sidebar-foot .mk-avatar {
+  width: 34px; height: 34px; flex: 0 0 34px;
+  border-radius: 10px;
+  font-size: 12.5px;
+}
+
+.topbar {
+  min-height: var(--mk-topbar-h);
+  padding: 10px 18px;
+  border-radius: var(--mk-radius-md);
+  background: color-mix(in srgb, var(--bg-card) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+  -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  box-shadow: var(--mk-shadow-xs);
+}
+.topbar h1 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+.mk-topbar-sub {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  max-width: min(58vw, 520px);
+}
+
+.theme-toggle-btn,
+.mk-mobile-menu,
+.mk-sidebar-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  align-items: center;
+  justify-content: center;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.theme-toggle-btn:hover,
+.mk-mobile-menu:hover,
+.mk-sidebar-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.profile-trigger {
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  transition: background .15s ease, border-color .15s ease;
+}
+.profile-trigger:hover {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+.profile-name { font-size: 13px; font-weight: 600; }
+.profile-store { font-size: 11.5px; }
+
+/* ─── 24. Page rhythm & header ───────────────────────────────────────────── */
+.content {
+  padding: 16px 24px 40px;
+  min-height: 100vh;
+}
+
+.content > .section { animation: mk-fade-in .22s ease both; }
+@keyframes mk-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Ichki sahifa sarlavhasi (topbar allaqachon h1 beradi).
+   Takroriy sarlavhalar olib tashlangan, amallar uchun ixcham qator qoladi. */
+.mk-page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: var(--mk-space-4);
+}
+.mk-page-actions .form-control { min-width: 220px; }
+.mk-page-actions .btn { white-space: nowrap; }
+
+.section > .d-flex.justify-content-between { margin-bottom: var(--mk-space-4) !important; }
+.section h2.h4 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* ─── 25. KPI / stat grid ────────────────────────────────────────────────── */
+.mk-stats {
+  display: grid !important;
+  gap: 12px;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+.mk-stats > [class*="col-"] {
+  width: auto !important;
+  max-width: none !important;
+  flex: 0 0 auto !important;
+  padding: 0 !important;
+}
+.mk-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mk-stats-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (min-width: 1600px) {
+  .mk-stats-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+@media (max-width: 991px) {
+  .mk-stats,
+  .mk-stats-6 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 479px) {
+  .mk-stats,
+  .mk-stats-6 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+}
+
+.card-box {
+  padding: 16px 18px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--mk-radius-md);
+  box-shadow: var(--mk-shadow-sm);
+  transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease;
+}
+.card-box:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--mk-shadow-md);
+}
+
+.card-box small.counter-smal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+.card-box small.counter-smal .svg-icon {
+  width: 28px;
+  height: 28px;
+  padding: 6px;
+  border-radius: 8px;
+  background: var(--brand-surface);
+  color: var(--brand-text);
+  flex: 0 0 28px;
+  stroke-width: 1.6;
+}
+
+.card-box h3.counter,
+.card-box h3.daily-c {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin: 10px 0 2px;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+.card-box h3.counter small,
+.card-box h3.daily-c small {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0;
+}
+
+.card-box .counter-change {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: auto;
+  padding-top: 8px;
+  line-height: 1.4;
+  display: block;
+}
+
+/* Daily-sales / debtors KPI kartalari (Bootstrap .card) */
+.mk-stats .card {
+  height: 100%;
+  border-radius: var(--mk-radius-md);
+  box-shadow: var(--mk-shadow-sm);
+  background: var(--bg-card);
+}
+.mk-stats .card-body {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  min-height: 120px;
+}
+.mk-stats .card-body > p:first-child {
+  font-size: 11px !important;
+  letter-spacing: .05em !important;
+  color: var(--text-muted) !important;
+  margin-bottom: 6px !important;
+}
+.mk-stats .card-body h3 {
+  font-size: 24px !important;
+  letter-spacing: -0.03em;
+  margin-bottom: 6px !important;
+  line-height: 1.15;
+}
+.mk-stats .card-body > p:last-child,
+.mk-stats .card-body > div:last-child {
+  font-size: 11.5px !important;
+  margin-top: auto;
+}
+
+/* ─── 26. Charts ─────────────────────────────────────────────────────────── */
+.mk-chart { height: 300px; }
+.mk-chart-sm { height: 300px; }
+.mk-chart-empty {
+  background: transparent;
+  gap: 4px;
+  color: var(--text-muted);
+}
+.mk-chart-empty i { font-size: 22px; opacity: .5; }
+.mk-chart-empty strong { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+.mk-chart-empty span { font-size: 12px; max-width: 260px; line-height: 1.5; }
+
+.mk-seg {
+  padding: 3px;
+  border-radius: 9px;
+  background: var(--bg-surface);
+}
+.mk-seg button {
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.mk-seg button.active {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: var(--mk-shadow-xs);
+}
+
+/* ─── 27. Tables ─────────────────────────────────────────────────────────── */
+.table thead th {
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text-muted) !important;
+  background: var(--bg-surface);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.table tbody td {
+  padding: 11px 14px;
+  font-size: 13.5px;
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+.table-hover tbody tr { transition: background .12s ease; }
+
+/* Mahsulot rasmi: buzilgan img o'rniga ixcham fallback */
+.mk-thumb,
+.product-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  object-fit: cover;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  overflow: hidden;
+}
+.mk-thumb img,
+.product-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mk-thumb.is-empty,
+.product-thumb.is-empty { color: var(--text-muted); font-size: 16px; }
+img.mk-img-broken { display: none !important; }
+
+/* Jadval amallari: xavfli amal kamroq "baqiradi" */
+.table .btn-danger,
+.table .btn-outline-danger {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--danger);
+  box-shadow: none;
+}
+.table .btn-danger:hover,
+.table .btn-outline-danger:hover {
+  background: var(--danger-bg);
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+  color: var(--danger-text);
+}
+
+/* ─── 28. Empty / error states ───────────────────────────────────────────── */
+.mk-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+.mk-empty .mk-empty-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+.mk-empty strong { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.mk-empty span { font-size: 12.5px; max-width: 320px; line-height: 1.55; }
+
+/* Qarzdorlar bo'sh holati: yashil dashed "drop-zone" ko'rinishi olib tashlandi */
+#debtors .empty-state,
+#debtors .empty-state-box,
+#debtors .debtor-empty,
+.mk-empty-dashed {
+  border: 0 !important;
+  border-radius: var(--mk-radius-md) !important;
+  background: var(--bg-surface) !important;
+  color: var(--text-muted) !important;
+  padding: 32px 20px !important;
+  box-shadow: none !important;
+}
+#debtors .empty-state h4,
+#debtors .empty-state strong { color: var(--text-primary) !important; }
+
+/* ─── 29. POS ────────────────────────────────────────────────────────────── */
+#selling > .card {
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--mk-radius-lg) !important;
+  box-shadow: var(--mk-shadow-sm) !important;
+  background: var(--bg-card) !important;
+}
+#selling > .card > .card-body { padding: 20px !important; }
+#selling > .card > .card-body > h3.h5 {
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  margin-bottom: 16px !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mk-pos-grid { gap: 16px; grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr); }
+.mk-pos-panel {
+  padding: 18px;
+  border-radius: var(--mk-radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: none;
+}
+.mk-pos-panel h3 { font-size: 14px; margin-bottom: 14px; }
+.mk-pos-panel h3 i { color: var(--brand-text); }
+
+/* Ichma-ich karta effektini yo'qotish */
+#selling .mk-pos-panel .card,
+#selling .mk-pos-panel .card-box {
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+}
+
+.mk-cart th { padding: 8px 8px; border-bottom: 1px solid var(--border-subtle); }
+.mk-cart td { padding: 10px 8px; }
+.mk-cart tbody tr:last-child td { border-bottom: 0; }
+
+#selling .mk-pay-grid { margin-top: 16px; }
+#selling .mk-pay-grid .btn { min-height: 44px; font-weight: 600; }
+
+/* ─── 30. Forms ──────────────────────────────────────────────────────────── */
+.form-control,
+.form-select {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  min-height: 42px;
+  font-size: 14px;
+  border-radius: 10px;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.form-control:hover,
+.form-select:hover { border-color: var(--text-muted); }
+.form-control:focus,
+.form-select:focus {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--brand-primary);
+  box-shadow: var(--mk-ring);
+  outline: none;
+}
+.form-control:disabled,
+.form-select:disabled {
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+.form-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.form-text { font-size: 12px; color: var(--text-muted); }
+
+.form-check.form-switch .form-check-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 44px !important;
+  height: 24px !important;
+  margin: 0 !important;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px !important;
+  background-color: var(--border-strong);
+  /* Chrome/Edge'da checkbox — almashtiriladigan element, shu sabab dumaloq
+     "thumb" radial-gradient bilan chiziladi (::after ishonchli ishlamaydi). */
+  background-image: radial-gradient(circle at 12px 50%, #fff 0 8px, transparent 8.5px) !important;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  cursor: pointer;
+  transition: background-color .18s ease, border-color .18s ease;
+}
+.form-check.form-switch .form-check-input:checked {
+  background-color: var(--brand-primary);
+  border-color: var(--brand-primary);
+  background-image: radial-gradient(circle at 32px 50%, #fff 0 8px, transparent 8.5px) !important;
+}
+.form-check.form-switch .form-check-input:focus-visible {
+  box-shadow: var(--mk-ring);
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* ─── 31. Buttons ────────────────────────────────────────────────────────── */
+.btn {
+  min-height: 40px;
+  border-radius: 10px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.btn-primary {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: #fff;
+}
+.btn-primary:hover,
+.btn-primary:focus {
+  background: var(--brand-hover);
+  border-color: var(--brand-hover);
+  color: #fff;
+}
+.btn-primary:active { transform: translateY(1px); }
+.btn-outline-primary {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  background: var(--bg-card);
+}
+.btn-outline-primary:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.btn-outline-secondary {
+  border-color: var(--border-strong);
+  color: var(--text-secondary);
+  background: var(--bg-card);
+}
+.btn-outline-secondary:hover { background: var(--bg-hover); color: var(--text-primary); }
+.btn-link { color: var(--brand-text); font-weight: 600; text-decoration: none; }
+.btn-link:hover { text-decoration: underline; }
+
+/* ─── 32. Modals & dropdowns ─────────────────────────────────────────────── */
+.modal-content {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--mk-radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--mk-shadow-lg);
+  color: var(--text-primary);
+}
+.modal-header,
+.modal-footer { border-color: var(--border-subtle); }
+.modal-title { font-size: 17px; font-weight: 700; }
+.modal-backdrop.show { opacity: .55; }
+
+.profile-dropdown {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--mk-radius-md);
+  box-shadow: var(--mk-shadow-lg);
+  background: var(--bg-card);
+}
+.dropdown-item { border-radius: 8px; font-size: 13.5px; }
+.dropdown-item:hover { background: var(--bg-hover); }
+.dropdown-item.logout { color: var(--danger); }
+
+/* ─── 33. Mobile density ─────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .content { padding: 10px 12px 96px; }
+  .topbar { top: 8px; padding: 8px 10px; border-radius: 12px; }
+  .topbar h1 { font-size: 16px; }
+  .mk-topbar-sub { display: none; }
+  .profile-info { display: none; }
+  .profile-trigger { padding: 3px; border: 0; }
+
+  .card-box { padding: 12px 12px; min-height: 104px; border-radius: 12px; }
+  .card-box small.counter-smal { font-size: 10px; gap: 6px; letter-spacing: .03em; }
+  .card-box small.counter-smal .svg-icon { width: 24px; height: 24px; flex-basis: 24px; padding: 5px; }
+  .card-box h3.counter,
+  .card-box h3.daily-c { font-size: 19px; margin: 8px 0 2px; }
+  .card-box h3.counter small,
+  .card-box h3.daily-c small { font-size: 10.5px; }
+  .card-box .counter-change { font-size: 10.5px; padding-top: 6px; }
+
+  .mk-stats .card-body { padding: 12px 12px; min-height: 104px; }
+  .mk-stats .card-body h3 { font-size: 19px !important; }
+
+  .mk-chart,
+  .mk-chart-sm { height: 240px; }
+
+  .mk-page-actions { justify-content: stretch; }
+  .mk-page-actions .form-control { min-width: 0; flex: 1 1 100%; }
+  .mk-page-actions .btn { flex: 1 1 auto; }
+
+  .mk-pos-panel { padding: 14px; }
+  .mk-pos-product-row { grid-template-columns: 1fr; }
+
+  .mobile-bottom-nav { padding-bottom: max(env(safe-area-inset-bottom), 6px); }
+}
+
+/* Planshet: sidebar drawer, kontent to'liq kenglik */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .content { padding: 16px 18px 40px; }
+  .mk-stats-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Katta ekran: kontent haddan tashqari cho'zilmasin */
+@media (min-width: 1920px) {
+  .content > .section,
+  .content > .topbar { max-width: 1640px; }
+}
+
+/* ─── 34. Dark mode: chuqurlik va kontrast ───────────────────────────────── */
+html.dark-mode .card-box,
+html.dark-mode .mk-pos-panel,
+html.dark-mode .mk-stats .card {
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
+  box-shadow: none;
+}
+html.dark-mode .card-box:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--mk-shadow-md);
+}
+html.dark-mode .topbar { background: color-mix(in srgb, var(--bg-card) 90%, transparent); }
+html.dark-mode .form-control,
+html.dark-mode .form-select {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+html.dark-mode .form-control:focus,
+html.dark-mode .form-select:focus { background: var(--bg-surface); }
+html.dark-mode .btn-outline-primary,
+html.dark-mode .btn-outline-secondary { background: transparent; }
+html.dark-mode .table thead th { background: var(--bg-surface); }
+html.dark-mode .mk-seg button.active { background: var(--bg-hover); }
+
+/* ─── 35. Print ──────────────────────────────────────────────────────────── */
+@media print {
+  .sidebar, .topbar, .mobile-bottom-nav, .no-print { display: none !important; }
+  .content { padding: 0; }
+  .card-box, .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+}
+
+/* ─── 36. Badge semantikasi (Bootstrap 4'da badge-info yo'q) ─────────────── */
+.badge-info {
+  background: rgba(37, 99, 235, .12);
+  color: #1D4ED8;
+}
+html.dark-mode .badge-info {
+  background: rgba(96, 165, 250, .16);
+  color: #93C5FD;
+}
+.badge-secondary { background: var(--bg-hover); color: var(--text-secondary); }
+.badge-success { background: var(--success-bg); color: var(--success-text); }
+.badge-warning { background: var(--warning-bg); color: var(--warning-text); }
+.badge-danger  { background: var(--danger-bg);  color: var(--danger-text); }
+html.dark-mode .badge-secondary { background: var(--bg-hover); color: var(--text-secondary); }
+
+/* ─── 37. Bo'sh holat: neytral, premium ko'rinish ────────────────────────── */
+.mk-empty-state,
+.mk-empty-state-green {
+  border: 0;
+  border-radius: var(--mk-radius-md);
+  background: transparent;
+  padding: 28px 20px;
+}
+.mk-empty-state .mk-empty-icon,
+.mk-empty-state-green .mk-empty-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+.mk-empty-state .mk-empty-title,
+.mk-empty-state-green .mk-empty-title {
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.mk-empty-state .mk-empty-text,
+.mk-empty-state-green .mk-empty-text {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  max-width: 40ch;
+  line-height: 1.55;
+}
+html.dark-mode .mk-empty-state,
+html.dark-mode .mk-empty-state-green { background: transparent; border-color: transparent; }
+html.dark-mode .mk-empty-state .mk-empty-icon,
+html.dark-mode .mk-empty-state-green .mk-empty-icon {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
+.mk-empty-cell { padding: 0 !important; border: 0 !important; }
+
+/* ─── 38. Zaxira progress ────────────────────────────────────────────────── */
+.stock-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--bg-hover);
+  overflow: hidden;
+  margin-top: 6px;
+  max-width: 120px;
+}
+.stock-progress .progress-bar { border-radius: 999px; }
+.stock-text { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+
+/* ─── 39. Mobil karta-jadval zichligi ────────────────────────────────────── */
+@media (max-width: 767px) {
+  .mk-cards-mobile tbody tr { padding: 8px 12px; }
+  .mk-cards-mobile tbody td { padding: 5px 0; align-items: center; }
+  .mk-cards-mobile tbody td::before {
+    font-size: 11px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .mk-cards-mobile tbody td[data-label="Rasm"] { justify-content: flex-end; }
+  .mk-cards-mobile tbody td[data-label="Rasm"]::before { content: "Rasm"; }
+  .mk-cards-mobile .product-img { width: 38px; height: 38px; }
+}
+
+/* ─── 40. Kontrast va izchillik tuzatishlari ─────────────────────────────── */
+/* style.css da qattiq yozilgan (hardcoded) ranglar dark mode'da o'qilmaydi. */
+.product-name { color: var(--text-primary); }
+.price-info { color: var(--text-primary); }
+.price-info .currency { color: var(--text-muted); }
+.qty-value { color: var(--brand-text); }
+.qty-unit { color: var(--text-secondary); }
+.product-category { color: var(--text-muted); }
+.transaction-row { border-bottom-color: var(--border-subtle); }
+.transaction-row:hover {
+  background: var(--bg-hover);
+  box-shadow: none;
+}
+html.dark-mode .transaction-row:hover { background: var(--bg-hover); }
+
+/* Bootstrap 4 da `gap-*` utility yo'q — KPI sarlavhasidagi ikonka
+   matnga yopishib qolmasligi uchun qo'lda gap beramiz. */
+.mk-stats .card-body > p.d-flex { gap: 8px !important; }
+.mk-stats .card-body > p.d-flex > span { flex: 0 0 auto; display: inline-flex; }
+
+/* Qarzdorlar KPI kartalari — dashboard bilan bir xil neytral ko'rinish,
+   faqat chap chegara rangi holatni bildiradi. */
+.mk-kpi {
+  border-left: 3px solid var(--border-subtle) !important;
+  height: 100%;
+}
+.mk-kpi-danger  { border-left-color: var(--danger)  !important; }
+.mk-kpi-warning { border-left-color: var(--warning) !important; }
+.mk-kpi-success { border-left-color: var(--success) !important; }
+.mk-kpi .card-body h3 { color: var(--text-primary) !important; }
+.mk-kpi .mk-kpi-hint { color: var(--text-secondary) !important; }
+.mk-kpi .mk-kpi-hint i { opacity: .85; }
+
+/* Qarzdorlar jadvalidagi 7 ta amal tugmasi — rangli kvadratlar o'rniga
+   neytral ghost tugmalar (funksiyalar o'zgarmaydi, faqat vizual shovqin
+   kamayadi). */
+#debtors .action-buttons-grid {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-start;
+}
+#debtors .action-buttons-grid .action-btn {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-subtle) !important;
+  background: var(--bg-hover) !important;
+  color: var(--text-secondary) !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+#debtors .action-buttons-grid .action-btn:hover {
+  background: var(--brand-surface) !important;
+  color: var(--brand-text) !important;
+  border-color: var(--brand-border) !important;
+}
+#debtors .action-buttons-grid .action-btn-delete:hover {
+  background: var(--danger-bg) !important;
+  color: var(--danger-text) !important;
+  border-color: transparent !important;
+}
+html.dark-mode #debtors .action-buttons-grid .action-btn { background: var(--bg-surface) !important; }
+
+/* Bootstrap 4 `.form-check-input` position:absolute — Bootstrap 5 switch
+   markup bilan birga ishlatilganda tugma kartadan chiqib ketardi. */
+.form-check.form-switch {
+  padding-left: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center;
+  min-height: 24px;
+  flex: 0 0 auto;
+}
+.form-check.form-switch .form-check-input {
+  position: static !important;
+  margin: 0 !important;
+  float: none !important;
+}
+
+/* KPI ichidagi qarzdorlar badge'i butun kenglikka cho'zilib, progress-bar
+   kabi ko'rinardi. */
+.mk-stats .debt-count-badge {
+  align-self: flex-start;
+  background: var(--bg-hover) !important;
+  color: var(--text-secondary) !important;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11.5px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 7 ta amal tugmasi 2 qatorga tekis joylashsin (6+1 o'rniga 4+3). */
+#debtors .action-buttons-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 30px);
+  gap: 4px;
+  justify-content: start;
+}
+
+/* ─── 41. Landing: suzuvchi tema tugmasi ─────────────────────────────────── */
+[data-theme-toggle]:focus-visible {
+  outline: 2px solid var(--brand, #4455EE);
+  outline-offset: 2px;
+}
+@media (max-width: 640px) {
+  [data-theme-toggle] {
+    width: 42px !important;
+    height: 42px !important;
+    bottom: 16px !important;
+    right: 16px !important;
+    font-size: 18px !important;
+    opacity: .92;
+  }
+}
+
+/* ─── 42. Auth sahifalar: checkbox'lar ───────────────────────────────────── */
+/* Brauzerning standart checkbox'i dark mode'da oq kvadrat bo'lib qolardi.
+   Yagona, brendga mos nazorat qilinadigan ko'rinishga keltiramiz. */
+.auth-check,
+.terms-check {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px;
+  margin: 0 !important;
+  border: 1.5px solid var(--auth-input-border, #cbd5e1) !important;
+  border-radius: 6px !important;
+  background: var(--auth-input-bg, #fff) !important;
+  display: inline-grid !important;
+  place-content: center;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.auth-check::before,
+.terms-check::before {
+  content: "";
+  width: 11px;
+  height: 11px;
+  transform: scale(0);
+  transition: transform .12s ease-in-out;
+  background: #fff;
+  clip-path: polygon(14% 46%, 0 62%, 40% 100%, 100% 18%, 85% 4%, 38% 73%);
+}
+.auth-check:checked,
+.terms-check:checked {
+  background: var(--auth-accent, #4455EE) !important;
+  border-color: var(--auth-accent, #4455EE) !important;
+}
+.auth-check:checked::before,
+.terms-check:checked::before {
+  transform: scale(1);
+}
+.auth-check:focus-visible,
+.terms-check:focus-visible {
+  outline: 2px solid var(--auth-accent, #4455EE);
+  outline-offset: 2px;
+}
+
+/* ─── 43. Kontrast tuzatishlari (WCAG 2.2 AA) ────────────────────────────── */
+/* Avtomatik kontrast skani topgan real muammolar. Gradient fonli
+   elementlar (badge'lar) hisobga olinmagan — ular o'z foni bilan yetarli. */
+
+/* Dark rejim: qorong'i matn qorong'i kartada qolib ketgan holatlar. */
+html.dark-mode .overdue-mini-name {
+  color: #E2E8F0;
+}
+html.dark-mode .overdue-mini-amount {
+  color: #F87171;
+}
+html.dark-mode .date-text {
+  color: #94A3B8;
+}
+
+/* "Naqd" tugmasi: oq matn yorqin yashil fonda 1.9–2.5:1 edi.
+   Bootstrap 5.3 rangni CSS o'zgaruvchilari orqali beradi — !important kerak. */
+.btn.btn-success,
+#addSaleCash,
+#debtSaleSubmitBtn {
+  background-color: #047857 !important;
+  border-color: #047857 !important;
+  color: #FFFFFF !important;
+}
+.btn.btn-success:hover,
+.btn.btn-success:focus-visible,
+#addSaleCash:hover,
+#addSaleCash:focus-visible,
+#debtSaleSubmitBtn:hover,
+#debtSaleSubmitBtn:focus-visible {
+  background-color: #065F46 !important;
+  border-color: #065F46 !important;
+}
+
+/* Qarzdorlar summasi: #EF4444 oq fonda 3.76:1 — quyuqlashtirildi. */
+html:not(.dark-mode) #debtors .debtor-amount {
+  color: #DC2626;
+}

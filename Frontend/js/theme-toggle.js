@@ -16,7 +16,12 @@
   function applySavedTheme() {
     var saved = localStorage.getItem("theme");
     var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    var isDark = saved ? saved === "dark" : prefersDark;
+    // Ichki CRM (#themeToggleBtn mavjud) — standart holatda tungi rejim.
+    // Marketing/auth sahifalari — standart holatda kunduzgi (light).
+    var isCrm = !!document.getElementById("themeToggleBtn");
+    var isDark = saved
+      ? saved === "dark"
+      : isCrm;
 
     if (isDark) {
       document.documentElement.classList.add("dark-mode");

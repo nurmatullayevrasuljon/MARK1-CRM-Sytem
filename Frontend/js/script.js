@@ -524,14 +524,27 @@ function getApiErrorMessage(error, fallback) {
   return fallback || "Server bilan bog'lanishda xatolik yuz berdi.";
 }
 
-function normalizeApiAssetUrl(url) {
-  if (
+// Buzilgan mahsulot rasmini ikonka bilan almashtiradi (404 → jadvalda
+// "singan rasm" belgisi qolmasligi uchun).
+function mkProductImgFallback(img) {
+  if (!img || !img.parentNode) return;
+  const box = document.createElement("div");
+  box.className = "product-img product-img-fallback";
+  box.setAttribute("aria-hidden", "true");
+  box.innerHTML = '<i class="bi bi-box-seam"></i>';
+  img.parentNode.replaceChild(box, img);
+}
+
+function normalizeApiAssetUrl(url) {  if (
     !url ||
     url === "null" ||
     url === "undefined" ||
     String(url).trim() === ""
   ) {
-    return "img/product.jpg";
+    // Mavjud bo'lmagan "img/product.jpg" 404 berib, jadvalda buzilgan
+    // rasm belgisi ko'rinardi. Endi bo'sh qiymat qaytaramiz — render
+    // qismi ikonka bilan almashtiradi.
+    return "";
   }
 
   const value = String(url).trim();
@@ -983,6 +996,14 @@ function updateMonthlyRevenueUI() {
 
   if (!counterEl) return;
 
+  // MUHIM: /statistics/full allaqachon haqiqiy oylik tushumni qaytargan bo'lsa,
+  // lokal `sales` massivi bo'sh (paginatsiya/xatolik) bo'lganda uni 0 ga
+  // qaytarib yubormaslik kerak. Aks holda KPI "0 so'm" ko'rsatardi.
+  if (
+    window.__mkDashboardStats &&
+    (!Array.isArray(sales) || sales.length === 0)
+  ) return;
+
   const firstSaleDate = getFirstSaleDate();
 
   if (!firstSaleDate) {
@@ -1101,6 +1122,13 @@ function updateDailySalesCounter() {
 
   if (!counterEl || !changeEl) return;
 
+  // /statistics/full dan kunlik savdo kelgan bo'lsa va lokal sales hali
+  // yuklanmagan bo'lsa — qiymatni 0 ga tushirmaymiz.
+  if (
+    window.__mkDashboardStats &&
+    (!Array.isArray(sales) || sales.length === 0)
+  ) return;
+
   const dayChanged = checkAndResetDailyIfNeeded();
 
   const today = getToday();
@@ -1167,7 +1195,7 @@ function getSalesStatus(product) {
   const baseStock = Number(product.initialStock ?? product.stock);
 
   if (!baseStock || isNaN(baseStock) || baseStock <= 0) {
-    return `<span class="badge badge-secondary">Stok noto'g'ri</span>`;
+    return `<span class="badge badge-danger" title="Omborda zaxira yo'q">Zaxira yo'q</span>`;
   }
 
   const sevenDaysAgo = new Date();
@@ -1187,20 +1215,20 @@ function getSalesStatus(product) {
   });
 
   if (sold === 0) {
-    return `<span class="badge badge-dark">0% – Sotilmayapti</span>`;
+    return `<span class="badge badge-secondary" title="So'nggi 7 kunda sotuv bo'lmagan">Sotuv yo'q</span>`;
   }
 
   const percent = Math.round((sold / baseStock) * 100);
 
   if (percent <= 10) {
-    return `<span class="badge badge-danger">${percent}% – Kam sotilgan</span>`;
+    return `<span class="badge badge-warning" title="${percent}% zaxira 7 kunda sotilgan">Sekin aylanma</span>`;
   }
 
   if (percent <= 50) {
-    return `<span class="badge badge-warning">${percent}% – O'rtacha</span>`;
+    return `<span class="badge badge-info" title="${percent}% zaxira 7 kunda sotilgan">O'rtacha</span>`;
   }
 
-  return `<span class="badge badge-success">${percent}% – Ko'p sotilgan</span>`;
+  return `<span class="badge badge-success" title="${percent}% zaxira 7 kunda sotilgan">Faol aylanma</span>`;
 }
 
 /* ===============================================
@@ -1337,7 +1365,7 @@ function renderProducts(list = products) {
         <td data-label="Rasm">
           ${p.image
             ? `<img src="${mkEsc(p.image)}" class="product-img" alt="${mkEsc(p.name)}" loading="lazy"
-                 onerror="this.onerror=null;this.classList.add('product-img-fallback');this.removeAttribute('src');this.alt='';this.setAttribute('aria-hidden','true')">`
+                 onerror="mkProductImgFallback(this)">`
             : `<div class="product-img product-img-fallback" aria-hidden="true"><i class="bi bi-box-seam"></i></div>`}
         </td>
 
@@ -2225,7 +2253,13 @@ function updateSaleFields() {
   }
 
   saleQty.value = p.unit === "kg" ? "" : "1";
-  salePrice.value = `${p.price.toLocaleString()} ${p.currency} / ${p.unit}`;
+  // Butun interfeys "so'm" ishlatadi; xom "UZS" faqat shu yerda ko'rinib
+  // qolardi. Boshqa valyutalar o'z nomi bilan qoladi.
+  const currencyLabel =
+    !p.currency || p.currency === "UZS"
+      ? "so'm"
+      : p.currency;
+  salePrice.value = `${p.price.toLocaleString()} ${currencyLabel} / ${p.unit}`;
 }
 
 if (saleProduct) {
@@ -5346,10 +5380,10 @@ function renderDebtors() {
     tbody.innerHTML = `
       <tr>
         <td colspan="7" class="mk-empty-cell">
-          <div class="mk-empty-state mk-empty-state-green" role="status">
+          <div class="mk-empty-state" role="status">
             <div class="mk-empty-icon" aria-hidden="true"><i class="bi bi-inbox"></i></div>
-            <div class="mk-empty-title">Qarzdor topilmadi</div>
-            <div class="mk-empty-text">Yangi qarzdor qo'shish uchun yuqoridagi tugmani bosing</div>
+            <div class="mk-empty-title">Hozircha qarzdor yo'q</div>
+            <div class="mk-empty-text">Qarzga sotilgan mahsulotlar shu yerda paydo bo'ladi. Yangi qarzdor qo'shish uchun yuqoridagi tugmani bosing.</div>
           </div>
         </td>
       </tr>
@@ -8763,6 +8797,10 @@ async function getDashboardStatistics() {
 
     console.log("✅ DASHBOARD STATISTICS");
     console.table([data]);
+
+    // API statistikasi mavjudligini belgilaymiz — lokal hisob-kitob bo'sh
+    // `sales` massivi bilan bu qiymatlarni 0 ga tushirib yubormasligi uchun.
+    window.__mkDashboardStats = { ...data, at: Date.now() };
 
     DashboardStatisticsManager.updateDashboard(data);
 

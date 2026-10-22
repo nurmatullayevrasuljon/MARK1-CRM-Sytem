@@ -5,9 +5,9 @@
     <!-- Prevent FOUC: apply theme before paint -->
     <script>
       (function () {
-        var t = localStorage.getItem('theme');
-        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (t === 'dark' || (!t && prefersDark)) {
+        // Marketing sahifalar standart holatda kunduzgi (light) bo'ladi.
+        // Tungi rejim faqat foydalanuvchi uni aniq tanlagan bo'lsa yoqiladi.
+        if (localStorage.getItem('theme') === 'dark') {
           document.documentElement.classList.add('dark-mode');
         }
       })();
@@ -83,6 +83,12 @@
 
         html {
             scroll-behavior: smooth;
+        }
+
+        /* Yopishqoq (sticky) navbar anchor havolalarni to'sib qolmasligi uchun. */
+        section[id],
+        [id="main-content"] {
+            scroll-margin-top: 88px;
         }
 
         /* Brauzerning standart 8px body margin'i sahifa atrofida va footer
@@ -602,9 +608,13 @@
             border-radius: 16px;
             border: 1px solid var(--mk-border);
             background: var(--mk-card);
-            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .6);
+            box-shadow: 0 24px 60px -28px rgba(15, 23, 42, .22);
             padding: 24px;
             position: relative;
+        }
+
+        html.dark-mode .mk-hero-preview {
+            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .6);
         }
 
         .mk-hero-preview .mk-blur-orb.mk-orb-a {
@@ -648,61 +658,81 @@
         }
 
         .mk-hero-metric {
+            position: relative;
             border-radius: 12px;
-            padding: 16px;
-            color: #fff;
-            animation: mkFloatY 3s ease-in-out infinite;
+            padding: 14px 16px 14px 18px;
+            background: var(--mk-card);
+            border: 1px solid var(--mk-border);
+            color: var(--mk-fg);
+            overflow: hidden;
+            animation: none;
+        }
+
+        .mk-hero-metric::before {
+            content: "";
+            position: absolute;
+            top: 12px;
+            bottom: 12px;
+            left: 0;
+            width: 3px;
+            border-radius: 0 3px 3px 0;
+            background: var(--mk-primary);
         }
 
         .mk-hero-metric p:first-child {
-            font-size: .75rem;
-            opacity: .75;
-            margin: 0 0 6px;
+            font-size: .6875rem;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--mk-muted-fg);
+            opacity: 1;
+            margin: 0 0 8px;
         }
 
         .mk-hero-metric p:last-child {
-            font-size: 1.4rem;
+            font-size: 1.25rem;
             font-weight: 700;
+            letter-spacing: -.02em;
+            color: var(--mk-fg);
             margin: 0;
         }
 
-        .mk-hero-metric.mk-m1 {
-            background: linear-gradient(135deg, #2563eb, #1d4ed8); /* oq matn: 5.17 */
-        }
+        .mk-hero-metric.mk-m1 { background: var(--mk-card); }
+        .mk-hero-metric.mk-m1::before { background: #4455EE; }
 
-        .mk-hero-metric.mk-m2 {
-            background: linear-gradient(135deg, #9333ea, #7e22ce); /* oq matn: 5.38 */
-            animation-delay: .2s;
-        }
+        .mk-hero-metric.mk-m2 { background: var(--mk-card); }
+        .mk-hero-metric.mk-m2::before { background: #7c3aed; }
 
-        .mk-hero-metric.mk-m3 {
-            background: linear-gradient(135deg, #4f46e5, #4338ca); /* oq matn: 6.29 */
-            animation-delay: .4s;
-        }
+        .mk-hero-metric.mk-m3 { background: var(--mk-card); }
+        .mk-hero-metric.mk-m3::before { background: #0ea5e9; }
 
-        .mk-hero-metric.mk-m4 {
-            background: linear-gradient(135deg, #db2777, #be185d); /* oq matn: 4.60 */
-            animation-delay: .6s;
-        }
+        .mk-hero-metric.mk-m4 { background: var(--mk-card); }
+        .mk-hero-metric.mk-m4::before { background: #e11d48; }
 
         .mk-hero-chart {
             position: relative;
             z-index: 1;
-            background: var(--mk-muted);
+            background:
+                linear-gradient(180deg, rgba(68, 85, 238, .08), rgba(68, 85, 238, 0) 72%),
+                var(--mk-muted);
+            border: 1px solid var(--mk-border);
             border-radius: 12px;
-            height: 110px;
+            height: 118px;
             display: flex;
             align-items: flex-end;
-            gap: 6px;
+            gap: 10px;
             justify-content: center;
-            padding: 10px;
+            padding: 16px 18px 0;
+            overflow: hidden;
         }
 
         .mk-hero-chart span {
-            width: 10px;
-            border-radius: 3px 3px 0 0;
-            background: var(--mk-primary);
-            opacity: .6;
+            flex: 1;
+            max-width: 26px;
+            width: auto;
+            border-radius: 4px 4px 0 0;
+            background: linear-gradient(180deg, var(--mk-primary), rgba(68, 85, 238, .45));
+            opacity: 1;
         }
 
         /* STATS */
@@ -859,13 +889,27 @@
             border: 1px solid var(--mk-border);
             background: var(--mk-card);
             color: var(--mk-muted-fg);
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            transition: background .18s ease, color .18s ease, border-color .18s ease;
+        }
+
+        .mk-tab-btn:hover {
+            color: var(--mk-fg);
+            border-color: var(--mk-primary);
         }
 
         .mk-tab-btn.mk-active {
-            background: linear-gradient(90deg, var(--mk-primary), var(--mk-secondary));
+            background: var(--mk-primary);
             color: #fff;
             border-color: transparent;
-            box-shadow: 0 8px 18px rgba(59, 91, 219, .25);
+            box-shadow: 0 8px 18px rgba(59, 91, 219, .22);
+        }
+
+        .mk-tab-btn:focus-visible {
+            outline: 2px solid var(--mk-primary);
+            outline-offset: 2px;
         }
 
         .mk-dash-preview {
@@ -934,38 +978,63 @@
         }
 
         .mk-dash-metric {
+            position: relative;
             border-radius: 14px;
-            padding: 16px;
-            color: #fff;
+            padding: 16px 16px 16px 20px;
+            background: var(--mk-bg);
+            border: 1px solid var(--mk-border);
+            color: var(--mk-fg);
+            overflow: hidden;
+        }
+
+        .mk-dash-metric::before {
+            content: "";
+            position: absolute;
+            top: 12px;
+            bottom: 12px;
+            left: 0;
+            width: 3px;
+            border-radius: 0 3px 3px 0;
+            background: var(--mk-accent, var(--mk-primary));
         }
 
         .mk-dash-metric p:first-child {
-            font-size: .72rem;
-            opacity: .75;
-            margin: 0 0 6px;
+            font-size: .6875rem;
+            font-weight: 600;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            color: var(--mk-muted-fg);
+            opacity: 1;
+            margin: 0 0 8px;
         }
 
         .mk-dash-metric p:last-child {
-            font-size: 1.3rem;
+            font-size: 1.15rem;
             font-weight: 700;
+            letter-spacing: -.02em;
             margin: 0;
         }
 
         .mk-dash-bars {
-            background: var(--mk-muted);
+            background:
+                linear-gradient(180deg, rgba(68, 85, 238, .07), rgba(68, 85, 238, 0) 75%),
+                var(--mk-muted);
+            border: 1px solid var(--mk-border);
             border-radius: 14px;
-            height: 130px;
+            height: 140px;
             display: flex;
             align-items: flex-end;
-            gap: 5px;
-            justify-content: center;
-            padding: 12px;
+            gap: 8px;
+            justify-content: space-between;
+            padding: 14px 22px 0;
+            overflow: hidden;
         }
 
         .mk-dash-bars span {
-            flex: 1;
-            max-width: 26px;
+            flex: 1 1 0;
+            max-width: 56px;
             border-radius: 4px 4px 0 0;
+            background: linear-gradient(180deg, var(--mk-primary), rgba(68, 85, 238, .45));
         }
 
         /* BENEFITS */
@@ -1679,18 +1748,18 @@
             <div class="mk-stats-grid">
                 <div class="mk-stat-card mk-reveal" style="--mk-delay:0s;">
                     <p class="mk-num mk-grad-text">1</p>
-                    <p class="mk-lbl">Yagona boshqaruv paneli</p>
+                    <p class="mk-lbl">Yagona boshqaruv paneli — barcha jarayon bir joyda</p>
                 </div>
                 <div class="mk-stat-card mk-reveal" style="--mk-delay:.08s;">
                     <p class="mk-num mk-grad-text">2</p>
-                    <p class="mk-lbl">Platforma: veb va Android</p>
+                    <p class="mk-lbl">Platforma: veb va Android — bitta hisob</p>
                 </div>
                 <div class="mk-stat-card mk-reveal" style="--mk-delay:.16s;">
                     <p class="mk-num mk-grad-text">5</p>
-                    <p class="mk-lbl">Asosiy modul: sotuv, ombor, qarz, hisobot, sozlama</p>
+                    <p class="mk-lbl">Modul: sotuv, ombor, qarz, hisobot, sozlama</p>
                 </div>
                 <div class="mk-stat-card mk-reveal" style="--mk-delay:.24s;">
-                    <p class="mk-num mk-grad-text">UZ</p>
+                    <p class="mk-num mk-grad-text">100%</p>
                     <p class="mk-lbl">To'liq o'zbek tilidagi interfeys</p>
                 </div>
             </div>
@@ -1803,21 +1872,21 @@
                 <p>Barcha biznes ma'lumotlaringiz bitta kuchli, tushunarli interfeysda</p>
             </div>
             <div class="mk-tabs-row" id="mkDashTabs">
-                <button class="mk-tab-btn mk-active" data-mktab="0">📊 Savdolar</button>
-                <button class="mk-tab-btn" data-mktab="1">📦 Ombor</button>
-                <button class="mk-tab-btn" data-mktab="2">🛍️ Mahsulotlar</button>
-                <button class="mk-tab-btn" data-mktab="3">👥 Qarzdorlar</button>
-                <button class="mk-tab-btn" data-mktab="4">📈 Tahlil</button>
-                <button class="mk-tab-btn" data-mktab="5">📋 Hisobotlar</button>
-                <button class="mk-tab-btn" data-mktab="6">⚙️ Sozlamalar</button>
+                <button class="mk-tab-btn mk-active" data-mktab="0"><i class="bi bi-graph-up" aria-hidden="true"></i> Savdolar</button>
+                <button class="mk-tab-btn" data-mktab="1"><i class="bi bi-box-seam" aria-hidden="true"></i> Ombor</button>
+                <button class="mk-tab-btn" data-mktab="2"><i class="bi bi-bag" aria-hidden="true"></i> Mahsulotlar</button>
+                <button class="mk-tab-btn" data-mktab="3"><i class="bi bi-people" aria-hidden="true"></i> Qarzdorlar</button>
+                <button class="mk-tab-btn" data-mktab="4"><i class="bi bi-bar-chart-line" aria-hidden="true"></i> Tahlil</button>
+                <button class="mk-tab-btn" data-mktab="5"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> Hisobotlar</button>
+                <button class="mk-tab-btn" data-mktab="6"><i class="bi bi-gear" aria-hidden="true"></i> Sozlamalar</button>
             </div>
 
             <div class="mk-dash-preview">
                 <div class="mk-blur-orb"></div>
                 <div class="mk-dash-preview-head">
                     <div>
-                        <h3 id="mkDashTitle">📊 Savdolar</h3>
-                        <p>Haqiqiy vaqt ma'lumotlari va boshqaruvi</p>
+                        <h3 id="mkDashTitle"><i class="bi bi-graph-up" aria-hidden="true"></i> Savdolar</h3>
+                        <p>Interfeys namunasi — demo ma'lumotlar</p>
                     </div>
                     <div class="mk-dash-dots">
                         <span style="background:#f8717155"></span><span style="background:#fbbf2455"></span><span
@@ -2132,13 +2201,41 @@
 
             // --- Dashboard showcase tablari ---
             var MK_DASH_PAGES = [
-                {name: 'Savdolar', icon: '📊', from: '#2563eb', to: '#1d4ed8'},
-                {name: 'Ombor', icon: '📦', from: '#9333ea', to: '#7e22ce'},
-                {name: 'Mahsulotlar', icon: '🛍️', from: '#db2777', to: '#be185d'},
-                {name: 'Qarzdorlar', icon: '👥', from: '#c2410c', to: '#9a3412'},
-                {name: 'Tahlil', icon: '📈', from: '#15803d', to: '#166534'},
-                {name: 'Hisobotlar', icon: '📋', from: '#4f46e5', to: '#4338ca'},
-                {name: 'Sozlamalar', icon: '⚙️', from: '#4b5563', to: '#374151'}
+                {
+                    name: "Savdolar", icon: "bi-graph-up", accent: "#4455EE",
+                    metrics: [["Bugungi savdo", "12 450 000"], ["Haftalik daromad", "84 920 000"], ["Naqd to'lov", "7 210 000"], ["Karta to'lovi", "5 240 000"]],
+                    bars: [42, 58, 35, 72, 64, 88, 54, 76, 95, 68, 82, 90]
+                },
+                {
+                    name: "Ombor", icon: "bi-box-seam", accent: "#0ea5e9",
+                    metrics: [["Umumiy mahsulot", "1 284"], ["Kam qolgan", "12"], ["Tugagan", "3"], ["Ombor qiymati", "128 500 000"]],
+                    bars: [70, 65, 80, 55, 60, 75, 50, 68, 62, 58, 72, 66]
+                },
+                {
+                    name: "Mahsulotlar", icon: "bi-bag", accent: "#7c3aed",
+                    metrics: [["Kategoriyalar", "18"], ["Faol mahsulot", "1 242"], ["O'rtacha narx", "10 500"], ["Yangi (7 kun)", "26"]],
+                    bars: [30, 45, 38, 60, 52, 70, 65, 80, 58, 74, 68, 85]
+                },
+                {
+                    name: "Qarzdorlar", icon: "bi-people", accent: "#e11d48",
+                    metrics: [["Umumiy qarz", "4 820 000"], ["Muddati o'tgan", "1 240 000"], ["Bugun to'langan", "860 000"], ["Qarzdorlar", "18"]],
+                    bars: [85, 78, 66, 72, 60, 55, 48, 52, 40, 46, 38, 30]
+                },
+                {
+                    name: "Tahlil", icon: "bi-bar-chart-line", accent: "#15803d",
+                    metrics: [["Oylik foyda", "18 400 000"], ["O'sish", "+12%"], ["O'rtacha chek", "38 000"], ["Sotuvlar", "1 024"]],
+                    bars: [40, 52, 48, 64, 58, 72, 68, 84, 76, 90, 82, 96]
+                },
+                {
+                    name: "Hisobotlar", icon: "bi-file-earmark-text", accent: "#4f46e5",
+                    metrics: [["Kunlik", "22"], ["Haftalik", "6"], ["Oylik", "2"], ["Eksport", "Excel / PDF"]],
+                    bars: [55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55]
+                },
+                {
+                    name: "Sozlamalar", icon: "bi-gear", accent: "#64748b",
+                    metrics: [["Foydalanuvchilar", "3"], ["Rol", "Do'kon egasi"], ["Til", "O'zbekcha"], ["Valyuta", "UZS"]],
+                    bars: [45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45]
+                }
             ];
             var mkDashTitle = document.getElementById('mkDashTitle');
             var mkDashMetrics = document.getElementById('mkDashMetrics');
@@ -2148,24 +2245,23 @@
             function mkRenderDash(idx) {
                 var page = MK_DASH_PAGES[idx];
                 if (!mkDashTitle || !mkDashMetrics || !mkDashBars) return;
-                mkDashTitle.textContent = page.icon + ' ' + page.name;
+                mkDashTitle.innerHTML = '<i class="bi ' + page.icon + '" aria-hidden="true"></i> ' + page.name;
                 mkDashMetrics.innerHTML = '';
-                for (var i = 0; i < 4; i++) {
-                    var val = Math.floor(Math.random() * 50000) + 10000;
+                page.metrics.forEach(function (m) {
                     var div = document.createElement('div');
                     div.className = 'mk-dash-metric';
-                    div.style.background = 'linear-gradient(135deg, ' + page.from + ', ' + page.to + ')';
-                    div.innerHTML = '<p>Asosiy ko\'rsatkich ' + (i + 1) + '</p><p>' + val.toLocaleString() + ' so\'m</p>';
+                    div.style.setProperty('--mk-accent', page.accent);
+                    div.innerHTML = '<p></p><p></p>';
+                    div.children[0].textContent = m[0];
+                    div.children[1].textContent = m[1];
                     mkDashMetrics.appendChild(div);
-                }
+                });
                 mkDashBars.innerHTML = '';
-                for (var j = 0; j < 12; j++) {
+                page.bars.forEach(function (h) {
                     var span = document.createElement('span');
-                    var h = 30 + Math.random() * 70;
                     span.style.height = h + '%';
-                    span.style.background = 'hsl(' + (210 + j * 10) + ', 70%, 50%)';
                     mkDashBars.appendChild(span);
-                }
+                });
             }
             mkDashTabs.forEach(function (tab) {
                 tab.addEventListener('click', function () {
