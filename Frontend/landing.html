@@ -381,9 +381,10 @@
             gap: 34px;
         }
 
-        .mk-logo img {
-            /* Tungi fon uchun logotipni oq rangga keltirish */
-            filter: brightness(0) invert(1);
+        /* Logotip fayli shaffof PNG (qora belgi). Yorug' rejimda filtr kerak emas,
+           tungi rejimda oq rangga o'giriladi. */
+        html.dark-mode .mk-logo img {
+            filter: invert(1);
         }
 
         .mk-nav-links a {
@@ -1561,7 +1562,6 @@
                 line-height: 1.3;
             }
         }
-    html:not(.dark-mode) .mk-logo img { filter: brightness(0); }
     
         </style>
     <link rel="stylesheet" href="css/mark1-system.css?v=1792700000">
