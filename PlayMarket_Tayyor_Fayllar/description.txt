@@ -1,0 +1,55 @@
+=== ILOVA NOMI (MAX 30 BELGI) ===
+Mark1 CRM - Savdo va Ombor
+
+=== QISQA TAVSIF (MAX 80 BELGI) ===
+Savdo, ombor, nasiya qarzlar hisobi va shtrix-kod skaneri bir joyda.
+
+=== TO'LIQ TAVSIF (MAX 4000 BELGI) ===
+Mark1 CRM — savdo do'konlari, chakana va ulgurji savdo nuqtalari, mini-marketlar hamda xizmat ko'rsatish shoxobchalari uchun mo'ljallangan zamonaviy va qulay boshqaruv tizimi.
+
+Ushbu ilova yordamida siz savdoni bir necha soniyada amalga oshirishingiz, ombordagi qoldiqlarni nazorat qilishingiz, qarz va nasiyalarni daftarsiz, xatosiz yuritishingiz mumkin.
+
+ASOSIY IMKONIYATLAR:
+
+⚡ TEZKOR SAVDO VA KASSA:
+• Tovarlarni shtrix-kod yoki nomi bo'yicha soniyada topish va savdoga qo'shish.
+• Naqd, plastik karta va nasiya (qarz) to'lovlarini qabul qilish.
+• Chegirmalar va to'lov turlarini oson boshqarish.
+• Qaytarilgan tovarlar (vozvrat) va savdo bekor qilish amaliyotlari.
+
+📦 OMBOR VA TOVARLAR NAZORATI:
+• Barcha tovarlar ro'yxati, kirim va sotish narxlari, qoldiq miqdori.
+• Kam qolgan tovarlar bo'yicha avtomatik ogohlantirish.
+• Kategoriyalar bo'yicha tovarlarni saralash va filtrlash.
+• Yangi tovarlarni qulay kiritish va tahrirlash.
+
+📋 NASIYA VA QARZLAR DAFTARI:
+• Har bir mijoz bo'yicha to'liq qarz tarixi va to'lov muddati.
+• Qarzdorlarga bir tugma orqali SMS eslatma yuborish.
+• Qisman to'lovlarni qabul qilish va qoldiq qarzni aniq hisoblash.
+• Muddati o'tgan qarzlar bo'yicha tezkor statistika.
+
+📊 STATISTIKA VA MOLIYAVIY HISOBOTLAR:
+• Kunlik, haftalik va oylik tushum hamda sof foyda ko'rsatkichlari.
+• Eng ko'p sotilgan tovarlar va rentabellik tahlili.
+• Grafiklar orqali biznes dinamikasini kuzatish.
+
+📱 SHTRIX-KOD SKANERI:
+• Telefon kamerasidan professional shtrix-kod skaneri sifatida foydalanish.
+• Shtrix-kodi yo'q tovarlar uchun avtomatik kod generatsiya qilish.
+
+👥 XODIMLAR VA KO'P FOYDALANUVCHILI TIZIM:
+• Do'kon egasi (CEO), administrator va sotuvchi (kassir) rollari.
+• Har bir xodimning savdo ko'rsatkichlari nazorati.
+
+🔒 XAVFSIZLIK VA ISHONCHLILIK:
+• Ma'lumotlar bulutda xavfsiz saqlanadi va qurilma yo'qolganda ham yo'qolmaydi.
+• Smena yopish va kassa hisob-kitoblarining shaffofligi.
+
+Mark1 CRM bilan savdongizni avtomatlashtiring va daromadingizni oshiring!
+
+=== YANGILANISH QAYDLARI (WHAT'S NEW / RELEASE NOTES) ===
+- Mark1 CRM v1.0.3.
+- Ilova yangilanishlari endi Google Play orqali amalga oshiriladi.
+- Yangilanish oynasi va Profil bo'limi qayta ishlab chiqildi.
+- Xatoliklar tuzatildi va umumiy barqarorlik oshirildi.
