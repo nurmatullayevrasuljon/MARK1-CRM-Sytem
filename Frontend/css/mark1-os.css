@@ -2033,19 +2033,28 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
   font-family: var(--m1-font);
 }
 
-/* Remove ornamental blur blobs & floating orbs */
+/* Remove ornamental blur blobs, floating orbs & artificial gradients */
 .mk-blur-orb { display: none !important; }
+.mk-root .mk-hero::before { display: none !important; }
+.mk-root .mk-hero-metric::before,
+.mk-root .mk-dash-metric::before { display: none !important; }
+.mk-root .mk-hero-metric,
+.mk-root .mk-dash-metric { animation: none !important; }
 
-/* Navbar */
+/* Navbar — Apple-style frosted glass */
 .mk-root #navbar {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--m1-surface) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
   border-bottom: 1px solid var(--m1-line) !important;
   box-shadow: none !important;
-  backdrop-filter: none !important;
   padding: 12px 0;
+}
+html.dark-mode .mk-root #navbar {
+  background: rgba(10, 14, 23, 0.88) !important;
 }
 .mk-root .mk-logo img {
   max-height: 28px;
@@ -2058,7 +2067,7 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
   transition: color var(--m1-dur) var(--m1-ease);
 }
 .mk-root .mk-nav-links a:hover {
-  color: var(--m1-ink) !important;
+  color: var(--m1-brand) !important;
 }
 
 /* Hero Section */
@@ -2072,7 +2081,7 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
+  padding: 5px 14px;
   border-radius: var(--m1-r-pill);
   background: var(--m1-brand-soft) !important;
   color: var(--m1-brand-ink) !important;
@@ -2121,6 +2130,10 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
   font-size: 14px !important;
   font-weight: 600 !important;
   box-shadow: none !important;
+  transition: transform 120ms ease, background 140ms ease !important;
+}
+.mk-root .mk-btn-primary:active {
+  transform: scale(0.97) !important;
 }
 .mk-root .mk-btn-primary:hover {
   background: var(--m1-brand-hover) !important;
@@ -2136,6 +2149,10 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
   font-size: 14px !important;
   font-weight: 600 !important;
   box-shadow: none !important;
+  transition: transform 120ms ease, background 140ms ease !important;
+}
+.mk-root .mk-btn-secondary:active {
+  transform: scale(0.97) !important;
 }
 .mk-root .mk-btn-secondary:hover {
   background: var(--m1-surface-3) !important;
@@ -2309,6 +2326,128 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
   flex: 1;
 }
 
+/* Stats: Single Continuous Ledger Strip */
+.mk-root .mk-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border: 1px solid var(--m1-line);
+  border-radius: var(--m1-r-lg);
+  background: var(--m1-surface);
+  overflow: hidden;
+  box-shadow: none !important;
+  margin: 20px 0 40px;
+}
+.mk-root .mk-stat-card {
+  border: 0 !important;
+  border-right: 1px solid var(--m1-line) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 24px 22px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+.mk-root .mk-stat-card:last-child {
+  border-right: 0 !important;
+}
+.mk-root .mk-stat-icon {
+  display: none !important;
+}
+.mk-root .mk-stat-card .mk-num {
+  font-size: 32px;
+  font-weight: 750;
+  letter-spacing: -0.04em;
+  color: var(--m1-ink) !important;
+  margin: 0 0 6px !important;
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 1.1;
+}
+.mk-root .mk-stat-card .mk-lbl {
+  font-size: 13px;
+  color: var(--m1-ink-3) !important;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* Feature Cards & Bento Box Structure */
+.mk-root .mk-section-head h2 {
+  font-size: clamp(26px, 2.5vw, 36px);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  color: var(--m1-ink) !important;
+  margin-bottom: 10px;
+}
+.mk-root .mk-section-head p {
+  font-size: 15px;
+  color: var(--m1-ink-3) !important;
+}
+.mk-root .mk-card-grid-3 {
+  gap: 16px;
+}
+.mk-root .mk-feature-card {
+  background: var(--m1-surface) !important;
+  border: 1px solid var(--m1-line) !important;
+  border-radius: var(--m1-r-lg) !important;
+  padding: 24px !important;
+  box-shadow: none !important;
+  transition: border-color var(--m1-dur) var(--m1-ease), transform var(--m1-dur) var(--m1-ease);
+}
+.mk-root .mk-feature-card:hover {
+  border-color: var(--m1-line-strong) !important;
+  transform: translateY(-2px) !important;
+}
+.mk-root .mk-feature-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--m1-r-md);
+  background: var(--m1-surface-3) !important;
+  color: var(--m1-brand) !important;
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+.mk-root .mk-feature-card h3 {
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--m1-ink) !important;
+  margin-bottom: 8px;
+}
+.mk-root .mk-feature-card p {
+  font-size: 13px;
+  color: var(--m1-ink-2) !important;
+  line-height: 1.55;
+}
+
+/* Bento Spans on Desktop */
+@media (min-width: 992px) {
+  .mk-root .mk-feature-card:nth-child(1) {
+    grid-column: span 2 !important;
+    background: #0B1120 !important;
+    border-color: #1F2939 !important;
+  }
+  .mk-root .mk-feature-card:nth-child(1) h3 {
+    color: #FFFFFF !important;
+    font-size: 18px !important;
+  }
+  .mk-root .mk-feature-card:nth-child(1) p {
+    color: #A6B0C3 !important;
+  }
+  .mk-root .mk-feature-card:nth-child(1) .mk-ai-points li {
+    color: #CBD5E1 !important;
+    font-size: 13px;
+  }
+  .mk-root .mk-feature-card:nth-child(1) .mk-ai-points i {
+    color: #34D399 !important;
+  }
+  .mk-root .mk-feature-card:nth-child(6) {
+    grid-column: span 2 !important;
+  }
+}
+
 /* Interactive Dashboard Showcase Section */
 .mk-root #mkDashTabs {
   display: flex;
@@ -2351,6 +2490,10 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
   box-shadow: var(--m1-shadow-2) !important;
   overflow: hidden;
 }
+.mk-root .mk-dash-dots span:nth-child(1) { background: #ff5f56 !important; }
+.mk-root .mk-dash-dots span:nth-child(2) { background: #ffbd2e !important; }
+.mk-root .mk-dash-dots span:nth-child(3) { background: #27c93f !important; }
+
 .mk-root .mk-dash-preview-head {
   display: flex;
   align-items: center;
@@ -2369,15 +2512,6 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
   font-size: 11.5px;
   color: var(--m1-ink-3);
   margin: 0;
-}
-.mk-root .mk-dash-dots {
-  display: flex;
-  gap: 6px;
-}
-.mk-root .mk-dash-dots span {
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
 }
 .mk-root .mk-dash-metrics {
   display: grid;
@@ -2427,103 +2561,6 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
   opacity: 1;
 }
 
-/* Stats: Single Continuous Ledger Strip */
-.mk-root .mk-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0;
-  border: 1px solid var(--m1-line);
-  border-radius: var(--m1-r-lg);
-  background: var(--m1-surface);
-  overflow: hidden;
-  box-shadow: none !important;
-  margin: 20px 0 40px;
-}
-.mk-root .mk-stat-card {
-  border: 0 !important;
-  border-right: 1px solid var(--m1-line) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 24px 22px !important;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-}
-.mk-root .mk-stat-card:last-child {
-  border-right: 0 !important;
-}
-.mk-root .mk-stat-icon {
-  display: none !important;
-}
-.mk-root .mk-stat-card .mk-num {
-  font-size: 32px;
-  font-weight: 750;
-  letter-spacing: -0.04em;
-  color: var(--m1-ink) !important;
-  margin: 0 0 6px !important;
-  font-variant-numeric: tabular-nums lining-nums;
-  line-height: 1.1;
-}
-.mk-root .mk-stat-card .mk-lbl {
-  font-size: 13px;
-  color: var(--m1-ink-3) !important;
-  line-height: 1.45;
-  margin: 0;
-}
-
-/* Feature Cards & Structure */
-.mk-root .mk-section-head h2 {
-  font-size: clamp(26px, 2.5vw, 36px);
-  font-weight: 750;
-  letter-spacing: -0.03em;
-  color: var(--m1-ink) !important;
-  margin-bottom: 10px;
-}
-.mk-root .mk-section-head p {
-  font-size: 15px;
-  color: var(--m1-ink-3) !important;
-}
-.mk-root .mk-card-grid-3 {
-  gap: 16px;
-}
-.mk-root .mk-feature-card {
-  background: var(--m1-surface) !important;
-  border: 1px solid var(--m1-line) !important;
-  border-radius: var(--m1-r-lg) !important;
-  padding: 24px !important;
-  box-shadow: none !important;
-  transition: border-color var(--m1-dur) var(--m1-ease);
-}
-.mk-root .mk-feature-card:hover {
-  border-color: var(--m1-line-strong) !important;
-  transform: none !important;
-  box-shadow: none !important;
-}
-.mk-root .mk-feature-icon {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: var(--m1-r-md);
-  background: var(--m1-surface-3) !important;
-  color: var(--m1-brand) !important;
-  font-size: 18px;
-  margin-bottom: 16px;
-}
-.mk-root .mk-feature-card h3 {
-  font-size: 16px;
-  font-weight: 650;
-  color: var(--m1-ink) !important;
-  margin-bottom: 8px;
-}
-.mk-root .mk-feature-card p {
-  font-size: 13px;
-  color: var(--m1-ink-2) !important;
-  line-height: 1.55;
-}
-
 /* Pricing Grid */
 .mk-root .mk-pricing-grid {
   gap: 16px;
@@ -2534,6 +2571,21 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
   border-radius: var(--m1-r-lg) !important;
   padding: 28px 24px !important;
   box-shadow: none !important;
+}
+.mk-root .mk-price-card.mk-highlight {
+  border: 2px solid var(--m1-brand) !important;
+  position: relative;
+  transform: scale(1.02);
+}
+.mk-root .mk-price-badge {
+  background: var(--m1-brand) !important;
+  color: #fff !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  padding: 4px 12px !important;
 }
 .mk-root .mk-price-card h3 {
   font-size: 18px;
