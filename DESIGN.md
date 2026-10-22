@@ -100,7 +100,7 @@ components:
 
 ## Overview
 
-MARK1 Business OS is a precision ledger visual design system built for retail shop management in Uzbekistan. The aesthetic treats software as a trusted commercial record: hairline-ruled surfaces, tabular numerals, a single brand accent (`#4455EE`), and calm, low-noise elevation. Decorative gradients, glassmorphism, neon outlines, glowing dropshadows, and unearned animations are rejected in favor of dense, legible data presentation.
+MARK1 Business OS is an Apple-inspired, precision ledger visual design system built for retail shop management in Uzbekistan. The aesthetic treats software as a trusted, high-craft commercial record: hairline-ruled surfaces, tabular numerals, a single brand accent (`#4455EE`), and calm, low-noise elevation. The marketing experience features an editorial Product Stage hero with live UI mockup, continuous 4-pillar ledger strips, and split storytelling for AI Analytics and POS speed. Decorative gradients, glassmorphism, neon outlines, glowing dropshadows, and unearned animations are rejected in favor of dense, legible, and tactile data presentation.
 
 ## Colors
 

@@ -2176,22 +2176,52 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
   overflow: hidden;
   padding: 0 !important;
 }
-.mk-root .mk-preview-note {
+.mk-root .mk-preview-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 18px;
-  margin: 0 !important;
+  padding: 10px 16px;
   background: var(--m1-surface-2) !important;
   border-bottom: 1px solid var(--m1-line);
+}
+.mk-root .mk-window-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mk-root .mk-window-dots span {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+}
+.mk-root .dot-red { background: #ff5f56; }
+.mk-root .dot-yellow { background: #ffbd2e; }
+.mk-root .dot-green { background: #27c93f; }
+.mk-root .mk-preview-note {
+  margin: 0 !important;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--m1-ink-3) !important;
 }
-.mk-root .mk-preview-note::before {
-  content: "MARK1 Business OS · Live Preview";
+.mk-root .mk-preview-note::before { content: none !important; }
+.mk-root .mk-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--m1-success-ink);
+  background: var(--m1-success-bg);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.mk-root .live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--m1-success);
 }
 .mk-root .mk-hero-preview-grid {
   display: grid;
@@ -2229,15 +2259,30 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
 .mk-root .mk-hero-metric.mk-m1 p:last-child {
   color: var(--m1-brand-ink) !important;
 }
+.mk-root .mk-hero-chart-wrap {
+  padding: 16px 20px 14px;
+  background: var(--m1-surface-inset);
+}
+.mk-root .mk-chart-legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--m1-ink-3);
+}
+.mk-root .mk-chart-val {
+  color: var(--m1-success-ink);
+  font-weight: 700;
+}
 .mk-root .mk-hero-chart {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 10px;
-  height: 110px;
-  padding: 20px 24px;
-  background: var(--m1-surface-inset);
-  border-radius: 0 !important;
+  height: 96px;
+  margin-bottom: 8px;
 }
 .mk-root .mk-hero-chart span {
   flex: 1;
@@ -2250,6 +2295,135 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
 .mk-root .mk-hero-chart span:nth-child(4),
 .mk-root .mk-hero-chart span:nth-child(6) {
   background: var(--m1-brand) !important;
+  opacity: 1;
+}
+.mk-root .mk-chart-days {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--m1-ink-3);
+  text-align: center;
+}
+.mk-root .mk-chart-days small {
+  flex: 1;
+}
+
+/* Interactive Dashboard Showcase Section */
+.mk-root #mkDashTabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 20px;
+  scrollbar-width: none;
+}
+.mk-root #mkDashTabs::-webkit-scrollbar { display: none; }
+.mk-root .mk-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--m1-line);
+  border-radius: 999px;
+  background: var(--m1-surface);
+  color: var(--m1-ink-2);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all var(--m1-dur) var(--m1-ease);
+}
+.mk-root .mk-tab-btn:hover {
+  background: var(--m1-surface-3);
+  color: var(--m1-ink);
+  border-color: var(--m1-line-strong);
+}
+.mk-root .mk-tab-btn.mk-active {
+  background: var(--m1-brand) !important;
+  border-color: var(--m1-brand) !important;
+  color: #fff !important;
+}
+.mk-root .mk-dash-preview {
+  background: var(--m1-surface) !important;
+  border: 1px solid var(--m1-line) !important;
+  border-radius: var(--m1-r-xl) !important;
+  box-shadow: var(--m1-shadow-2) !important;
+  overflow: hidden;
+}
+.mk-root .mk-dash-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--m1-surface-2);
+  border-bottom: 1px solid var(--m1-line);
+}
+.mk-root .mk-dash-preview-head h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 2px;
+  color: var(--m1-ink);
+}
+.mk-root .mk-dash-preview-head p {
+  font-size: 11.5px;
+  color: var(--m1-ink-3);
+  margin: 0;
+}
+.mk-root .mk-dash-dots {
+  display: flex;
+  gap: 6px;
+}
+.mk-root .mk-dash-dots span {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+}
+.mk-root .mk-dash-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--m1-line);
+  border-bottom: 1px solid var(--m1-line);
+}
+.mk-root .mk-dash-metric {
+  background: var(--m1-surface) !important;
+  padding: 18px 20px !important;
+  border: 0 !important;
+}
+.mk-root .mk-dash-metric p:first-child {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--m1-ink-3);
+  margin: 0 0 4px;
+}
+.mk-root .mk-dash-metric p:last-child {
+  font-size: 22px;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  color: var(--m1-ink);
+  font-variant-numeric: tabular-nums lining-nums;
+  margin: 0;
+}
+.mk-root .mk-dash-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  height: 140px;
+  padding: 24px;
+  background: var(--m1-surface-inset);
+}
+.mk-root .mk-dash-bars span {
+  flex: 1;
+  border-radius: 4px 4px 0 0;
+  background: var(--m1-brand);
+  opacity: 0.75;
+  transition: opacity 150ms;
+}
+.mk-root .mk-dash-bars span:hover {
   opacity: 1;
 }
 
