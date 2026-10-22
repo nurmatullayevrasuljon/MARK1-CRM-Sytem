@@ -124,9 +124,12 @@ exports.createProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
+    const { product_id } = req.query;
+    if (!product_id || !mongoose.Types.ObjectId.isValid(product_id)) {
+      return res.status(400).json({ message: "Tovar ID noto'g'ri" });
+    }
 
     let { product_barcode } = req.body;
-    const { product_id } = req.query;
 
     if (product_barcode !== undefined) {
       product_barcode = normalizeBarcode(product_barcode);
@@ -198,6 +201,9 @@ exports.updateProduct = async (req, res) => {
 exports.addStock = async (req, res) => {
   try {
     const { product_id } = req.query;
+    if (!product_id || !mongoose.Types.ObjectId.isValid(product_id)) {
+      return res.status(400).json({ message: "Tovar ID noto'g'ri" });
+    }
     const { adding_quantity } = req.body;
     if (adding_quantity <= 0) {
       return res.status(400).json({
@@ -210,7 +216,7 @@ exports.addStock = async (req, res) => {
       { new: true },
     );
     if (!product) {
-      return res.status(400).json({
+      return res.status(404).json({
         message: "Tovar topilmadi",
       });
     }
@@ -227,6 +233,9 @@ exports.addStock = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
   try {
     const { product_id } = req.query;
+    if (!product_id || !mongoose.Types.ObjectId.isValid(product_id)) {
+      return res.status(400).json({ message: "Tovar ID noto'g'ri" });
+    }
 
     const product = await Product.findOneAndDelete({
       _id: product_id,
@@ -234,7 +243,7 @@ exports.deleteProduct = async (req, res) => {
     });
 
     if (!product) {
-      return res.status(400).json({
+      return res.status(404).json({
         message: "Tovar topilmadi",
       });
     }
@@ -321,7 +330,8 @@ exports.getProducts = async (req, res) => {
         .populate("category_id", "category_name")
         .sort(sort)
         .skip(skip)
-        .limit(perPage),
+        .limit(perPage)
+        .lean(),
 
       Product.countDocuments(filter),
     ]);

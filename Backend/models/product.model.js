@@ -38,5 +38,6 @@ const ProductSchema = new mongoose.Schema(
 
 ProductSchema.index({ store_id: 1, createdAt: -1 });
 ProductSchema.index({ store_id: 1, product_barcode: 1 });
+ProductSchema.index({ store_id: 1, category_id: 1 });
 
 module.exports = mongoose.model("Product", ProductSchema);

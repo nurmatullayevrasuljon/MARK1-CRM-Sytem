@@ -51,6 +51,9 @@ exports.createClient = async (req, res) => {
 exports.updateClient = async (req, res) => {
   try {
     const { client_id } = req.query;
+    if (!client_id || !mongoose.Types.ObjectId.isValid(client_id)) {
+      return res.status(400).json({ message: "Xaridor ID noto'g'ri" });
+    }
     const { client_name, client_phone } = req.body;
     const { store_id } = req.user;
 
@@ -113,6 +116,9 @@ exports.updateClient = async (req, res) => {
 exports.deleteClient = async (req, res) => {
   try {
     const { client_id } = req.query;
+    if (!client_id || !mongoose.Types.ObjectId.isValid(client_id)) {
+      return res.status(400).json({ message: "Xaridor ID noto'g'ri" });
+    }
     const { store_id } = req.user;
 
     const client = await Client.findOneAndDelete({
@@ -154,6 +160,9 @@ exports.getClients = async (req, res) => {
     };
 
     if (client_id) {
+      if (!mongoose.Types.ObjectId.isValid(client_id)) {
+        return res.status(400).json({ message: "client_id noto'g'ri" });
+      }
       filter._id = new mongoose.Types.ObjectId(client_id);
     }
 

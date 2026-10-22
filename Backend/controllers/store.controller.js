@@ -398,6 +398,12 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
+    if (!new_password || typeof new_password !== "string" || new_password.length < 6) {
+      return res.status(400).json({
+        message: "Parol kamida 6 xonali bo'lishi kerak",
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(new_password, 10);
 
     store.password = hashedPassword;

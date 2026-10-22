@@ -176,12 +176,16 @@ exports.createSale = async (req, res) => {
 };
 
 exports.cancelSale = async (req, res) => {
+  const { sale_id } = req.query;
+  if (!sale_id || !mongoose.Types.ObjectId.isValid(sale_id)) {
+    return res.status(400).json({ message: "sale_id noto'g'ri" });
+  }
+
   const session = await mongoose.startSession();
 
   try {
     session.startTransaction();
 
-    const { sale_id } = req.query;
     const { store_id } = req.user;
 
     const sale = await Sale.findOne({
@@ -245,12 +249,16 @@ exports.cancelSale = async (req, res) => {
 };
 
 exports.returnSale = async (req, res) => {
+  const { sale_id } = req.query;
+  if (!sale_id || !mongoose.Types.ObjectId.isValid(sale_id)) {
+    return res.status(400).json({ message: "sale_id noto'g'ri" });
+  }
+
   const session = await mongoose.startSession();
 
   try {
     session.startTransaction();
 
-    const { sale_id } = req.query;
     const { store_id } = req.user;
 
     const sale = await Sale.findOne({
@@ -528,7 +536,8 @@ exports.getSales = async (req, res) => {
         .populate("products.product_id")
         .sort(sort)
         .skip(skip)
-        .limit(perPage),
+        .limit(perPage)
+        .lean(),
 
       Sale.countDocuments(filter),
     ]);
@@ -555,6 +564,9 @@ exports.getSales = async (req, res) => {
 exports.sendManualReminder = async (req, res) => {
   try {
     const { sale_id } = req.query;
+    if (!sale_id || !mongoose.Types.ObjectId.isValid(sale_id)) {
+      return res.status(400).json({ message: "sale_id noto'g'ri" });
+    }
     const { store_id } = req.user;
     const sale = await Sale.findOne({ _id: sale_id, store_id }).populate([
       { path: "client_id", select: "client_phone client_name" },

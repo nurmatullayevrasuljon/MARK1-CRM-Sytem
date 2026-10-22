@@ -120,7 +120,8 @@ exports.getDebts = async (req, res) => {
     const debts = await Sale.find(filter)
       .populate("client_id")
       .populate("products.product_id")
-      .sort(sort);
+      .sort(sort)
+      .lean();
 
     // ====
     // Add overdue_days_count
@@ -143,8 +144,9 @@ exports.getDebts = async (req, res) => {
         }
       }
 
+      const debtObj = typeof debt.toObject === "function" ? debt.toObject() : debt;
       return {
-        ...debt.toObject(),
+        ...debtObj,
         overdue_days_count,
       };
     });

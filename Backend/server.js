@@ -44,6 +44,8 @@ if (process.env.ALLOWED_ORIGINS) {
 }
 
 app.use(express.json());
+const sanitizeMiddleware = require("./middlewares/sanitize.middleware");
+app.use(sanitizeMiddleware);
 app.use(cookieParser());
 app.use(
   cors({
@@ -76,6 +78,26 @@ app.use("/api/uploads", express.static(uploadsDir, {
 }));
 app.use("/api", indexRoutes);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// 404 handler for unmatched API routes
+app.use("/api", (req, res) => {
+  res.status(404).json({ message: "Marshrut topilmadi" });
+});
+
+// Global error handler — stack trace'ni clientga oshkor qilmaydi
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err.message);
+  if (err.name === "CastError") {
+    return res.status(400).json({ message: "Noto'g'ri ID formati" });
+  }
+  if (err.type === "entity.parse.failed") {
+    return res.status(400).json({ message: "Noto'g'ri JSON formati" });
+  }
+  const statusCode = err.status || err.statusCode || 500;
+  res.status(statusCode).json({
+    message: statusCode === 500 ? "Serverda ichki xatolik yuz berdi" : err.message,
+  });
+});
 
 const PORT = process.env.PORT;
 

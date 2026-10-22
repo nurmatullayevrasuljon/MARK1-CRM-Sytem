@@ -76,4 +76,6 @@ const AiOverviewSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+AiOverviewSchema.index({ store_id: 1, date: -1 });
+
 module.exports = mongoose.model("AiOverview", AiOverviewSchema);
