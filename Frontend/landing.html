@@ -10,6 +10,9 @@
         if (localStorage.getItem('theme') === 'dark') {
           document.documentElement.classList.add('dark-mode');
         }
+        // Animatsiya tayyor: reveal effektlari faqat JS ishlaganda yoqiladi.
+        // JS o'chirilgan bo'lsa kontent darhol ko'rinadi (FOUC/progressive enhancement).
+        document.documentElement.classList.add('mk-js');
       })();
     </script>
 
@@ -186,14 +189,95 @@
             }
         }
 
+        @keyframes mkBarGrow {
+            from {
+                transform: scaleY(0);
+            }
+
+            to {
+                transform: scaleY(1);
+            }
+        }
+
+        @keyframes mkOrbFloat {
+
+            0%,
+            100% {
+                transform: translate3d(0, 0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate3d(0, -26px, 0) scale(1.06);
+            }
+        }
+
+        @keyframes mkLineGrow {
+            from {
+                transform: scaleX(0);
+            }
+
+            to {
+                transform: scaleX(1);
+            }
+        }
+
+        @keyframes mkShine {
+            0% {
+                transform: translateX(-140%) skewX(-18deg);
+            }
+
+            55%,
+            100% {
+                transform: translateX(240%) skewX(-18deg);
+            }
+        }
+
+        @keyframes mkAIGlow {
+
+            0%,
+            100% {
+                opacity: .45;
+            }
+
+            50% {
+                opacity: .9;
+            }
+        }
+
+        @keyframes mkBadgePop {
+            0% {
+                transform: scale(.6);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.08);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Scroll-reveal: faqat `html.mk-js` bo'lganda kontent yashiriladi.
+           JS o'chirilgan yoki xato bo'lsa hech narsa ko'rinmay qolmaydi. */
         .mk-reveal {
-            /* Matn va mahsulot kontenti animatsiya/JS tayyor bo'lishini
-               kutayotganda yashirin qolmasin (full-page, klaviatura va JSsiz). */
             opacity: 1;
             transform: none;
         }
 
-        .mk-reveal.mk-in {
+        html.mk-js .mk-reveal {
+            opacity: 0;
+            transform: translateY(22px);
+            transition:
+                opacity .65s cubic-bezier(.22, 1, .36, 1),
+                transform .65s cubic-bezier(.22, 1, .36, 1);
+            transition-delay: var(--mk-delay, 0s);
+        }
+
+        html.mk-js .mk-reveal.mk-in {
             opacity: 1;
             transform: translateY(0);
         }
@@ -216,6 +300,46 @@
             z-index: 0;
         }
 
+        /* ---- Motion extras: tugma yorug'ligi va orblar ---- */
+        .mk-root a.mk-btn-primary,
+        .mk-btn-primary {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mk-btn-primary::after {
+            content: "";
+            position: absolute;
+            top: -25%;
+            bottom: -25%;
+            left: 0;
+            width: 38%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .38), transparent);
+            transform: translateX(-140%) skewX(-18deg);
+            pointer-events: none;
+        }
+
+        .mk-btn-primary:hover::after,
+        .mk-btn-primary:focus-visible::after {
+            animation: mkShine .9s ease;
+        }
+
+        .mk-hero .mk-blur-orb.mk-orb-1 {
+            animation: mkOrbFloat 10s ease-in-out infinite;
+        }
+
+        .mk-hero .mk-blur-orb.mk-orb-2 {
+            animation: mkOrbFloat 12s ease-in-out infinite reverse;
+        }
+
+        .mk-hero-preview .mk-blur-orb.mk-orb-a {
+            animation: mkOrbFloat 7s ease-in-out infinite;
+        }
+
+        .mk-hero-preview .mk-blur-orb.mk-orb-b {
+            animation: mkOrbFloat 9s ease-in-out infinite reverse;
+        }
+
         @media (prefers-reduced-motion: reduce) {
 
             .mk-root *,
@@ -226,9 +350,11 @@
                 transition-duration: .001ms !important;
             }
 
-            .mk-reveal {
+            .mk-reveal,
+            html.mk-js .mk-reveal {
                 opacity: 1;
                 transform: none;
+                transition: none;
             }
         }
 
@@ -665,7 +791,7 @@
             border: 1px solid var(--mk-border);
             color: var(--mk-fg);
             overflow: hidden;
-            animation: none;
+            animation: mkFloatY 3s ease-in-out infinite;
         }
 
         .mk-hero-metric::before {
@@ -702,12 +828,15 @@
 
         .mk-hero-metric.mk-m2 { background: var(--mk-card); }
         .mk-hero-metric.mk-m2::before { background: #7c3aed; }
+        .mk-hero-metric.mk-m2 { animation-delay: .2s; }
 
         .mk-hero-metric.mk-m3 { background: var(--mk-card); }
         .mk-hero-metric.mk-m3::before { background: #0ea5e9; }
+        .mk-hero-metric.mk-m3 { animation-delay: .4s; }
 
         .mk-hero-metric.mk-m4 { background: var(--mk-card); }
         .mk-hero-metric.mk-m4::before { background: #e11d48; }
+        .mk-hero-metric.mk-m4 { animation-delay: .6s; }
 
         .mk-hero-chart {
             position: relative;
@@ -733,7 +862,16 @@
             border-radius: 4px 4px 0 0;
             background: linear-gradient(180deg, var(--mk-primary), rgba(68, 85, 238, .45));
             opacity: 1;
+            transform-origin: bottom;
+            animation: mkBarGrow .9s cubic-bezier(.22, 1, .36, 1) both;
         }
+
+        .mk-hero-chart span:nth-child(2) { animation-delay: .07s; }
+        .mk-hero-chart span:nth-child(3) { animation-delay: .14s; }
+        .mk-hero-chart span:nth-child(4) { animation-delay: .21s; }
+        .mk-hero-chart span:nth-child(5) { animation-delay: .28s; }
+        .mk-hero-chart span:nth-child(6) { animation-delay: .35s; }
+        .mk-hero-chart span:nth-child(7) { animation-delay: .42s; }
 
         /* STATS */
         .mk-stats-grid {
@@ -743,28 +881,100 @@
         }
 
         .mk-stat-card {
+            position: relative;
             text-align: center;
-            padding: 30px 16px;
+            padding: 26px 20px 24px;
             border-radius: var(--mk-radius);
             border: 1px solid var(--mk-border);
-            background: var(--mk-card);
+            background:
+                radial-gradient(120% 90% at 50% 0%, rgba(68, 85, 238, .07), transparent 62%),
+                var(--mk-card);
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
-            min-height: 140px;
+            min-height: 196px;
+            overflow: hidden;
+            transition:
+                transform .35s cubic-bezier(.22, 1, .36, 1),
+                box-shadow .35s ease,
+                border-color .35s ease;
+        }
+
+        .mk-stat-card::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--mk-primary), var(--mk-secondary));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform .45s cubic-bezier(.22, 1, .36, 1);
+        }
+
+        .mk-stat-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(68, 85, 238, .38);
+            box-shadow: 0 18px 40px -18px rgba(20, 30, 60, .28);
+        }
+
+        .mk-stat-card:hover::after {
+            transform: scaleX(1);
+        }
+
+        .mk-stat-card:focus-within {
+            border-color: rgba(68, 85, 238, .55);
+            box-shadow: 0 0 0 3px rgba(68, 85, 238, .18);
+        }
+
+        .mk-stat-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            margin-bottom: 14px;
+            font-size: 1.2rem;
+            color: var(--mk-primary);
+            background: linear-gradient(135deg, rgba(68, 85, 238, .14), rgba(124, 58, 237, .14));
+            transition:
+                transform .35s cubic-bezier(.22, 1, .36, 1),
+                background .35s ease,
+                color .35s ease;
+        }
+
+        .mk-stat-card:hover .mk-stat-icon {
+            transform: translateY(-2px) scale(1.07);
+            background: linear-gradient(135deg, var(--mk-primary), var(--mk-secondary));
+            color: #fff;
         }
 
         .mk-stat-card .mk-num {
-            font-size: 2.4rem;
+            font-size: 2.5rem;
+            line-height: 1;
             font-weight: 800;
-            margin: 0 0 6px;
+            letter-spacing: -.03em;
+            font-variant-numeric: tabular-nums;
+            margin: 0 0 10px;
         }
 
         .mk-stat-card .mk-lbl {
             color: var(--mk-muted-fg);
             font-weight: 500;
+            font-size: .875rem;
+            line-height: 1.5;
             margin: 0;
+            max-width: 220px;
+        }
+
+        /* Gradient matn qo'llab-quvvatlanmasa — raqam ko'rinmay qolmasin */
+        @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+            .mk-grad-text {
+                color: var(--mk-primary);
+                background: none;
+            }
         }
 
         /* FEATURES */
@@ -812,6 +1022,137 @@
             line-height: 1.6;
         }
 
+        .mk-feature-card:hover .mk-feature-icon {
+            transform: translateY(-2px) rotate(-3deg) scale(1.05);
+        }
+
+        .mk-feature-icon {
+            transition:
+                transform .35s cubic-bezier(.22, 1, .36, 1),
+                box-shadow .35s ease;
+        }
+
+        /* ---- AI Analytics — ajratilgan katta karta ---- */
+        .mk-feature-card.mk-feature-ai {
+            grid-column: 1 / -1;
+            position: relative;
+            display: grid;
+            grid-template-columns: 60px minmax(0, 1.4fr) minmax(0, 1fr);
+            gap: 24px;
+            align-items: center;
+            padding: 30px 34px;
+            border: 1px solid transparent;
+            background:
+                linear-gradient(var(--mk-card), var(--mk-card)) padding-box,
+                linear-gradient(120deg, var(--mk-primary), var(--mk-secondary), var(--mk-accent)) border-box;
+            overflow: hidden;
+        }
+
+        .mk-feature-card.mk-feature-ai::before {
+            content: "";
+            position: absolute;
+            top: -60%;
+            right: -10%;
+            width: 340px;
+            height: 240px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(124, 58, 237, .22), transparent 68%);
+            filter: blur(24px);
+            pointer-events: none;
+            animation: mkAIGlow 5s ease-in-out infinite;
+        }
+
+        .mk-feature-card.mk-feature-ai:hover {
+            border-color: transparent;
+            box-shadow: 0 22px 50px -20px rgba(68, 85, 238, .38);
+        }
+
+        .mk-feature-ai .mk-feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 18px;
+            margin: 0;
+            font-size: 1.6rem;
+            box-shadow: 0 10px 24px -8px rgba(68, 85, 238, .55);
+        }
+
+        .mk-feature-ai h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+
+        .mk-ai-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: .6875rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: #fff;
+            background: linear-gradient(90deg, var(--mk-primary), var(--mk-secondary));
+            animation: mkBadgePop .5s cubic-bezier(.22, 1, .36, 1) both;
+        }
+
+        .mk-ai-points {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .mk-ai-points li {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            color: var(--mk-muted-fg);
+            font-size: .875rem;
+            line-height: 1.5;
+        }
+
+        .mk-ai-points i {
+            color: var(--mk-primary);
+            font-size: 1rem;
+            margin-top: 1px;
+        }
+
+        .mk-feature-ai .mk-ai-body {
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .mk-feature-card.mk-feature-ai {
+                grid-template-columns: 60px minmax(0, 1fr);
+                gap: 18px 22px;
+            }
+
+            .mk-ai-points {
+                grid-column: 1 / -1;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .mk-feature-card.mk-feature-ai {
+                grid-template-columns: 1fr;
+                padding: 24px;
+                text-align: left;
+            }
+
+            .mk-ai-points {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* HOW IT WORKS */
         .mk-steps-row {
             display: grid;
@@ -829,6 +1170,8 @@
             height: 2px;
             background: linear-gradient(90deg, var(--mk-primary), var(--mk-secondary), var(--mk-accent));
             z-index: 0;
+            transform-origin: left;
+            animation: mkLineGrow 1.1s cubic-bezier(.22, 1, .36, 1) .25s both;
         }
 
         .mk-step {
@@ -1035,7 +1378,13 @@
             max-width: 56px;
             border-radius: 4px 4px 0 0;
             background: linear-gradient(180deg, var(--mk-primary), rgba(68, 85, 238, .45));
+            transform-origin: bottom;
+            animation: mkBarGrow .8s cubic-bezier(.22, 1, .36, 1) both;
         }
+
+        .mk-dash-bars span:nth-child(2n) { animation-delay: .06s; }
+        .mk-dash-bars span:nth-child(3n) { animation-delay: .12s; }
+        .mk-dash-bars span:nth-child(5n) { animation-delay: .18s; }
 
         /* BENEFITS */
         .mk-benefit-card {
@@ -1747,19 +2096,23 @@
         <div class="mk-wrap">
             <div class="mk-stats-grid">
                 <div class="mk-stat-card mk-reveal" style="--mk-delay:0s;">
-                    <p class="mk-num mk-grad-text">1</p>
+                    <div class="mk-stat-icon" aria-hidden="true"><i class="bi bi-window-stack"></i></div>
+                    <p class="mk-num mk-grad-text" data-mk-count="1">1</p>
                     <p class="mk-lbl">Yagona boshqaruv paneli — barcha jarayon bir joyda</p>
                 </div>
                 <div class="mk-stat-card mk-reveal" style="--mk-delay:.08s;">
-                    <p class="mk-num mk-grad-text">2</p>
+                    <div class="mk-stat-icon" aria-hidden="true"><i class="bi bi-phone"></i></div>
+                    <p class="mk-num mk-grad-text" data-mk-count="2">2</p>
                     <p class="mk-lbl">Platforma: veb va Android — bitta hisob</p>
                 </div>
                 <div class="mk-stat-card mk-reveal" style="--mk-delay:.16s;">
-                    <p class="mk-num mk-grad-text">5</p>
+                    <div class="mk-stat-icon" aria-hidden="true"><i class="bi bi-grid-3x3-gap"></i></div>
+                    <p class="mk-num mk-grad-text" data-mk-count="5">5</p>
                     <p class="mk-lbl">Modul: sotuv, ombor, qarz, hisobot, sozlama</p>
                 </div>
                 <div class="mk-stat-card mk-reveal" style="--mk-delay:.24s;">
-                    <p class="mk-num mk-grad-text">100%</p>
+                    <div class="mk-stat-icon" aria-hidden="true"><i class="bi bi-translate"></i></div>
+                    <p class="mk-num mk-grad-text" data-mk-count="100" data-mk-suffix="%">100%</p>
                     <p class="mk-lbl">To'liq o'zbek tilidagi interfeys</p>
                 </div>
             </div>
@@ -1775,7 +2128,20 @@
                 </p>
             </div>
             <div class="mk-card-grid-3">
-                <div class="mk-feature-card mk-reveal" style="--mk-delay:0s;">
+                <div class="mk-feature-card mk-feature-ai mk-reveal" style="--mk-delay:0s;">
+                    <div class="mk-feature-icon"><i class="bi bi-stars" aria-hidden="true"></i></div>
+                    <div class="mk-ai-body">
+                        <h3>AI Analytics <span class="mk-ai-badge">Yangi</span></h3>
+                        <p>Sun'iy intellekt kunlik savdo, foyda, qarzdorlik va ombor qoldiqlarini tahlil
+                            qiladi — muhim ogohlantirishlar va aniq tavsiyalar beradi.</p>
+                    </div>
+                    <ul class="mk-ai-points">
+                        <li><i class="bi bi-check2-circle" aria-hidden="true"></i> Kunlik avtomatik xulosa</li>
+                        <li><i class="bi bi-check2-circle" aria-hidden="true"></i> Ogohlantirish va tavsiyalar</li>
+                        <li><i class="bi bi-check2-circle" aria-hidden="true"></i> Eng ko'p sotilgan mahsulotlar</li>
+                    </ul>
+                </div>
+                <div class="mk-feature-card mk-reveal" style="--mk-delay:.08s;">
                     <div class="mk-feature-icon"><i class="bi bi-graph-up-arrow"></i></div>
                     <h3>Kunlik sotuvlar</h3>
                     <p>Har bir sotuvni real vaqt rejimida kuzating va tahlil qiling.</p>
@@ -2181,6 +2547,30 @@
         (function () {
             "use strict";
 
+            // --- Scroll-reveal (o'zimizning IntersectionObserver, .mk-reveal uchun) ---
+            // Eng boshida ishga tushadi: quyidagi boshqa funksiyalarda xato bo'lsa ham
+            // kontent yashirin qolib ketmaydi. Xato bo'lsa — hammasi darhol ko'rinadi.
+            (function mkInitReveal() {
+                var els = document.querySelectorAll('.mk-reveal:not(.mk-in)');
+                function showAll() {
+                    els.forEach(function (el) { el.classList.add('mk-in'); });
+                }
+                try {
+                    if (!('IntersectionObserver' in window)) { showAll(); return; }
+                    var observer = new IntersectionObserver(function (entries, obs) {
+                        entries.forEach(function (entry) {
+                            if (entry.isIntersecting) {
+                                entry.target.classList.add('mk-in');
+                                obs.unobserve(entry.target);
+                            }
+                        });
+                    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+                    els.forEach(function (el) { observer.observe(el); });
+                } catch (e) {
+                    showAll();
+                }
+            })();
+
             // Faqat shu sahifaga xos funksiyalar: rotating so'z, FAQ akkordeon,
             // dashboard-showcase tablari va scroll-reveal. Hammasi "mk" prefiksi
             // bilan — index.js yoki boshqa skriptlar bilan hech qanday umumiy
@@ -2272,20 +2662,45 @@
             });
             if (mkDashTabs.length) mkRenderDash(0);
 
-            // --- Scroll-reveal (o'zimizning IntersectionObserver, .mk-reveal uchun) ---
-            var mkRevealEls = document.querySelectorAll('.mk-reveal:not(.mk-in)');
+            // --- Count-up: stat kartalardagi raqamlar ---
+            var mkReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var mkCountEls = document.querySelectorAll('[data-mk-count]');
+
+            function mkRunCount(el) {
+                var target = parseInt(el.getAttribute('data-mk-count'), 10) || 0;
+                var suffix = el.getAttribute('data-mk-suffix') || '';
+                if (mkReducedMotion) {
+                    el.textContent = target + suffix;
+                    return;
+                }
+                var duration = 1100;
+                var startedAt = null;
+                function frame(ts) {
+                    if (startedAt === null) startedAt = ts;
+                    var progress = Math.min((ts - startedAt) / duration, 1);
+                    var eased = 1 - Math.pow(1 - progress, 3);
+                    el.textContent = Math.round(target * eased) + suffix;
+                    if (progress < 1) {
+                        requestAnimationFrame(frame);
+                    } else {
+                        el.textContent = target + suffix;
+                    }
+                }
+                requestAnimationFrame(frame);
+            }
+
             if ('IntersectionObserver' in window) {
-                var mkRevealObserver = new IntersectionObserver(function (entries, obs) {
+                var mkCountObserver = new IntersectionObserver(function (entries, obs) {
                     entries.forEach(function (entry) {
                         if (entry.isIntersecting) {
-                            entry.target.classList.add('mk-in');
+                            mkRunCount(entry.target);
                             obs.unobserve(entry.target);
                         }
                     });
-                }, {threshold: 0.15, rootMargin: '0px 0px -40px 0px'});
-                mkRevealEls.forEach(function (el) {mkRevealObserver.observe(el);});
+                }, {threshold: 0.4});
+                mkCountEls.forEach(function (el) { mkCountObserver.observe(el); });
             } else {
-                mkRevealEls.forEach(function (el) {el.classList.add('mk-in');});
+                mkCountEls.forEach(mkRunCount);
             }
 
             // --- Mobil panelni nav havolasi bosilganda yopish ---
