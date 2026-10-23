@@ -1339,13 +1339,13 @@ function renderProducts(list = products) {
       (productStockFilter && productStockFilter.value && productStockFilter.value !== "all");
     productTable.innerHTML = `
       <tr>
-        <td colspan="7" class="text-center text-muted py-4">
+        <td colspan="7" class="mk-empty-td text-center text-muted py-4"><div class="mk-empty-box">
           <div style="font-size:2.5rem; margin-bottom:0.5rem;" aria-hidden="true"><i class="bi bi-box-seam"></i></div>
           <div style="font-size:1.05rem; font-weight:600; color:inherit;">${hasActiveFilter ? "Filtrga mos mahsulot topilmadi" : "Hozircha mahsulot yo'q"}</div>
           ${hasActiveFilter
             ? `<div style="font-size:0.9rem;">Qidiruv yoki filtrlarni o'zgartirib ko'ring — barcha mahsulotlarni ko'rish uchun ularni tozalang.</div>`
             : `<div style="font-size:0.9rem;">Sotuvni boshlash uchun avval omboringizga mahsulot qo'shing.</div>
-               <button class="btn btn-info mt-2" onclick="openProductModalFromEmpty()">+ Mahsulot qo'shish</button>`}
+               <button class="btn btn-primary mt-2" onclick="openProductModalFromEmpty()">+ Mahsulot qo'shish</button></div>`}
         </td>
       </tr>
     `;
@@ -3406,12 +3406,12 @@ function renderSales() {
 
     salesTable.innerHTML += `
       <tr>
-        <td>${s.name}</td>
-        <td>${s.qty} ${s.unit}</td>
-        <td>${s.price.toLocaleString()} ${s.currency}</td>
-        <td>${s.total.toLocaleString()} ${s.currency}</td>
-        <td>${time}</td>
-        <td>
+        <td data-label="Mahsulot">${s.name}</td>
+        <td data-label="Miqdor">${s.qty} ${s.unit}</td>
+        <td data-label="Narx">${s.price.toLocaleString()} ${s.currency}</td>
+        <td data-label="Jami">${s.total.toLocaleString()} ${s.currency}</td>
+        <td data-label="Vaqt">${time}</td>
+        <td data-label="Harakatlar">
           <button class="btn btn-sm btn-danger" onclick="cancelSale('${s.id}')" title="Bekor qilish" aria-label="Sotuvni bekor qilish">
             <i class="bi bi-x-lg" aria-hidden="true"></i>
           </button>

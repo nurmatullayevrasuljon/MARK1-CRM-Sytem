@@ -3819,3 +3819,90 @@ html.dark-mode .auth-left {
   max-width: 460px !important;
   padding: 44px 40px !important;
 }
+
+/* ─── MOBILE FIXES FOR EMPTY STATE & SALES TABLE CARDS ─────────────────── */
+@media (max-width: 767.98px) {
+  /* 1. Empty state fix for products table */
+  #productTable tr:has(.mk-empty-td),
+  #productTable tr.mk-empty-tr,
+  #productTable .mk-empty-td {
+    display: block !important;
+    width: 100% !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  #productTable .mk-empty-td::before {
+    display: none !important;
+    content: none !important;
+  }
+  .mk-empty-box {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 32px 16px !important;
+    background: var(--m1-surface) !important;
+    border: 1px dashed var(--m1-line) !important;
+    border-radius: var(--m1-r-xl) !important;
+    box-shadow: var(--m1-shadow-1) !important;
+    width: 100% !important;
+  }
+  .mk-empty-box .btn {
+    margin-top: 12px !important;
+    min-height: 40px !important;
+  }
+
+  /* 2. Bugungi sotilgan mahsulotlar (#salesTable) kartalari to'g'irlanishi */
+  #salesTable tr {
+    display: flex !important;
+    flex-direction: column !important;
+    background: var(--m1-surface) !important;
+    border: 1px solid var(--m1-line) !important;
+    border-radius: var(--m1-r-lg) !important;
+    box-shadow: var(--m1-shadow-1) !important;
+    margin-bottom: 12px !important;
+    padding: 14px 16px !important;
+    width: 100% !important;
+  }
+  #salesTable td {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 6px 0 !important;
+    border: none !important;
+    border-bottom: 1px solid var(--m1-line-soft) !important;
+    font-size: 13.5px !important;
+    color: var(--m1-ink) !important;
+  }
+  #salesTable td:last-child {
+    border-bottom: none !important;
+    padding-top: 10px !important;
+    justify-content: flex-end !important;
+  }
+  #salesTable td:last-child::before {
+    display: none !important;
+    content: none !important;
+  }
+  #salesTable td::before {
+    content: attr(data-label) !important;
+    font-weight: 600 !important;
+    color: var(--m1-ink-3) !important;
+    font-size: 12.5px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.02em !important;
+  }
+  #salesTable td .btn-danger {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: var(--m1-r-md) !important;
+    padding: 0 !important;
+  }
+}
