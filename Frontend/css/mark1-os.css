@@ -2980,26 +2980,19 @@ html.dark-mode .mk-root #navbar {
 /* Bento Spans on Desktop */
 @media (min-width: 992px) {
   .mk-root .mk-feature-card:nth-child(1) {
-    grid-column: span 2 !important;
-    background: #0B1120 !important;
-    border-color: #1F2939 !important;
+    grid-column: span 1 !important;
+    background: var(--m1-surface) !important;
+    border-color: var(--m1-line) !important;
   }
   .mk-root .mk-feature-card:nth-child(1) h3 {
-    color: #FFFFFF !important;
+    color: var(--m1-ink) !important;
     font-size: 18px !important;
   }
   .mk-root .mk-feature-card:nth-child(1) p {
-    color: #A6B0C3 !important;
-  }
-  .mk-root .mk-feature-card:nth-child(1) .mk-ai-points li {
-    color: #CBD5E1 !important;
-    font-size: 13px;
-  }
-  .mk-root .mk-feature-card:nth-child(1) .mk-ai-points i {
-    color: #34D399 !important;
+    color: var(--m1-ink-3) !important;
   }
   .mk-root .mk-feature-card:nth-child(6) {
-    grid-column: span 2 !important;
+    grid-column: span 1 !important;
   }
 }
 
