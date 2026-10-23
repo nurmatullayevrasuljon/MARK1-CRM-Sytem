@@ -14,13 +14,13 @@
 
 /* ─── 01. TOKENS ─────────────────────────────────────────────────────────── */
 :root {
-  /* Brand — Crisp royal indigo/blue matching visual direction #3B5BF5 */
-  --m1-brand: #3B5BF5;
-  --m1-brand-hover: #2B48E8;
-  --m1-brand-press: #1F3CD4;
-  --m1-brand-soft: #EFF2FE;
-  --m1-brand-ink: #2643E0;
-  --m1-brand-line: #DCE3FD;
+  /* Brand — Canonical #4455EE brand foundation with refined interactive shades */
+  --m1-brand: #4455EE;
+  --m1-brand-hover: #3446D8;
+  --m1-brand-press: #2838B4;
+  --m1-brand-soft: #EEF1FE;
+  --m1-brand-ink: #2F3EB5;
+  --m1-brand-line: #D0D7FB;
 
   /* Ground and surfaces — Pristine clean canvas #F8FAFD and pure white card surfaces */
   --m1-canvas: #F8FAFD;
@@ -108,20 +108,20 @@
   --m1-sidebar-w-collapsed: 76px;
   --m1-topbar-h: 70px;
   --m1-content-max: 1560px;
-  --m1-focus: 0 0 0 3px rgba(59, 91, 245, 0.28);
+  --m1-focus: 0 0 0 3px rgba(68, 85, 238, 0.28);
 }
 
 html.dark-mode {
   color-scheme: dark;
 
-  --m1-brand: #4E6CF8;
-  --m1-brand-hover: #637DF9;
-  --m1-brand-press: #3A57EC;
-  --m1-brand-soft: rgba(78, 108, 248, 0.16);
-  --m1-brand-ink: #B4C2FE;
-  --m1-brand-line: rgba(78, 108, 248, 0.28);
+  --m1-brand: #5C6BF5;
+  --m1-brand-hover: #7381FA;
+  --m1-brand-press: #4958E4;
+  --m1-brand-soft: rgba(92, 107, 245, 0.16);
+  --m1-brand-ink: #A8B4FF;
+  --m1-brand-line: rgba(92, 107, 245, 0.32);
 
-  /* Dark palette matching reference image: deep navy dark #0D1117 / #161B22 */
+  /* Dark palette: deep navy dark #090D14 canvas with #101520 cards */
   --m1-canvas: #090D14;
   --m1-surface: #101520;
   --m1-surface-2: #161C2B;
@@ -154,7 +154,7 @@ html.dark-mode {
   --m1-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.3);
   --m1-shadow-2: 0 12px 28px -6px rgba(0, 0, 0, 0.5);
   --m1-shadow-3: 0 24px 44px -10px rgba(0, 0, 0, 0.7);
-  --m1-focus: 0 0 0 3px rgba(78, 108, 248, 0.38);
+  --m1-focus: 0 0 0 3px rgba(92, 107, 245, 0.42);
 }
 
 /* ─── 02. LEGACY REMAP ───────────────────────────────────────────────────── */
@@ -429,7 +429,7 @@ body.mk-sidebar-collapsed > .d-flex {
   background: var(--m1-brand) !important;
   color: #FFFFFF !important;
   font-weight: 600;
-  box-shadow: 0 4px 14px rgba(59, 91, 245, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(68, 85, 238, 0.35) !important;
 }
 .sidebar .nav-item.active .svg-icon { opacity: 1; color: #FFFFFF !important; }
 .sidebar .nav-item.active::before { display: none !important; }
