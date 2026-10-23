@@ -3412,6 +3412,33 @@ html.dark-mode .auth-left {
 }
 
 /* ─── TEMPLATE G — LANDING INNOVATION ADDITIONS ──────────────────────────── */
+.mk-card-grid-3 .mk-feature-card {
+  background: var(--m1-surface) !important;
+  color: var(--m1-ink) !important;
+  border: 1px solid var(--m1-line) !important;
+  border-radius: var(--m1-r-xl) !important;
+  padding: 32px 28px !important;
+  box-shadow: var(--m1-shadow-1) !important;
+  transition: all var(--m1-dur) var(--m1-ease) !important;
+}
+.mk-card-grid-3 .mk-feature-card:hover {
+  transform: translateY(-4px) !important;
+  border-color: var(--m1-brand-line) !important;
+  box-shadow: var(--m1-shadow-2) !important;
+}
+.mk-card-grid-3 .mk-feature-card h3 {
+  font-size: 18px !important;
+  font-weight: 750 !important;
+  color: var(--m1-ink) !important;
+  margin: 16px 0 8px !important;
+}
+.mk-card-grid-3 .mk-feature-card p {
+  font-size: 14px !important;
+  color: var(--m1-ink-3) !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+}
+
 .mk-hero-pill-badge {
   display: inline-flex;
   align-items: center;
