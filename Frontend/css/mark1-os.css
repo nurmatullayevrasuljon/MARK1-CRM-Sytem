@@ -712,57 +712,71 @@ main.content {
 }
 
 .mk-stats-6 {
-  grid-template-columns: minmax(210px, 1.4fr) repeat(5, minmax(0, 1fr));
-  gap: 0;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--m1-s3);
   margin: 0 0 var(--m1-s5) !important;
-  background: var(--m1-surface);
-  border: 1px solid var(--m1-line);
-  border-radius: var(--m1-r-lg);
-  overflow: hidden;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
 }
 .mk-stats-6 > [class*="col-"] { display: flex; min-width: 0; }
 .mk-stats-6 .card-box {
   width: 100%;
-  min-height: 128px;
-  padding: 14px 14px 12px;
-  border: 0 !important;
-  border-left: 1px solid var(--m1-line) !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  background: transparent !important;
+  min-height: 124px;
+  padding: 16px 18px 14px;
+  border: 1px solid var(--m1-line) !important;
+  border-radius: var(--m1-r-lg) !important;
+  background: var(--m1-surface) !important;
+  box-shadow: var(--m1-shadow-1) !important;
   display: flex;
   flex-direction: column;
+  transition: transform var(--m1-dur) var(--m1-ease), border-color var(--m1-dur) var(--m1-ease), box-shadow var(--m1-dur) var(--m1-ease);
 }
-.mk-stats-6 > [class*="col-"]:first-child .card-box { border-left: 0 !important; }
+.mk-stats-6 .card-box:hover {
+  transform: translateY(-2px);
+  border-color: var(--m1-line-strong) !important;
+  box-shadow: var(--m1-shadow-2) !important;
+}
 
-/* The dominant figure owns the strip — both light and dark. */
+/* Primary KPI card: subtle border & soft badge tint, not a flat color block */
 .mk-stats-6 > [class*="col-"]:first-child .card-box {
-  background: var(--m1-brand) !important;
-  color: var(--m1-on-brand) !important;
-  border-color: var(--m1-brand) !important;
+  border-color: var(--m1-brand-line) !important;
+  background: var(--m1-surface) !important;
+  position: relative;
+}
+.mk-stats-6 > [class*="col-"]:first-child .card-box::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: var(--m1-r-lg) var(--m1-r-lg) 0 0;
+  background: var(--m1-brand);
 }
 .mk-stats-6 > [class*="col-"]:first-child .card-box small.counter-smal {
-  color: var(--m1-on-brand-2) !important;
+  color: var(--m1-brand-ink) !important;
 }
 .mk-stats-6 > [class*="col-"]:first-child .card-box small.counter-smal .svg-icon {
-  background: rgba(255, 255, 255, 0.18) !important;
-  color: #fff !important;
+  background: var(--m1-brand-soft) !important;
+  color: var(--m1-brand) !important;
 }
 .mk-stats-6 > [class*="col-"]:first-child .card-box h3.counter,
 .mk-stats-6 > [class*="col-"]:first-child .card-box h3.daily-c {
-  color: #fff !important;
-  font-size: clamp(22px, 1.8vw, 30px);
+  color: var(--m1-ink) !important;
+  font-size: clamp(20px, 1.6vw, 26px);
   margin-top: 8px;
 }
 .mk-stats-6 > [class*="col-"]:first-child .card-box h3.counter small,
 .mk-stats-6 > [class*="col-"]:first-child .card-box h3.daily-c small {
-  color: var(--m1-on-brand-2) !important;
+  color: var(--m1-ink-3) !important;
 }
 .mk-stats-6 > [class*="col-"]:first-child .card-box .counter-change,
-.mk-stats-6 > [class*="col-"]:first-child .card-box .text-success,
+.mk-stats-6 > [class*="col-"]:first-child .card-box .text-success {
+  color: var(--m1-success-ink) !important;
+}
 .mk-stats-6 > [class*="col-"]:first-child .card-box .text-muted,
 .mk-stats-6 > [class*="col-"]:first-child .card-box small {
-  color: var(--m1-on-brand-2) !important;
+  color: var(--m1-ink-3) !important;
 }
 
 .card-box small.counter-smal {
@@ -1427,11 +1441,49 @@ input[aria-invalid="true"] {
 .mk-pay-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--m1-s2);
-  margin: var(--m1-s2) 0;
+  gap: var(--m1-s3);
+  margin: var(--m1-s3) 0;
 }
-.mk-pay-grid .btn { min-height: 46px; font-size: var(--m1-fs-13); }
-.mk-pay-grid .mk-pay-debt { grid-column: 1 / -1; }
+.mk-pay-grid .btn {
+  min-height: 48px;
+  font-size: var(--m1-fs-14);
+  font-weight: 650;
+  border-radius: var(--m1-r-md);
+  box-shadow: var(--m1-shadow-1);
+  transition: transform var(--m1-dur) var(--m1-ease), box-shadow var(--m1-dur) var(--m1-ease);
+}
+.mk-pay-grid .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--m1-shadow-2);
+}
+.mk-pay-grid .btn:active {
+  transform: translateY(1px);
+}
+.mk-pay-grid #addSaleCash {
+  background: var(--m1-success) !important;
+  border-color: var(--m1-success) !important;
+  color: #fff !important;
+}
+.mk-pay-grid #addSaleCash:hover {
+  background: #0B6844 !important;
+}
+.mk-pay-grid #addSaleCard {
+  background: var(--m1-brand) !important;
+  border-color: var(--m1-brand) !important;
+  color: #fff !important;
+}
+.mk-pay-grid #addSaleCard:hover {
+  background: var(--m1-brand-hover) !important;
+}
+.mk-pay-grid .mk-pay-debt {
+  grid-column: 1 / -1;
+  background: var(--m1-surface-2) !important;
+  border: 1px dashed var(--m1-warning) !important;
+  color: var(--m1-warning-ink) !important;
+}
+.mk-pay-grid .mk-pay-debt:hover {
+  background: var(--m1-warning-bg) !important;
+}
 .mk-pos-hint {
   display: flex;
   gap: var(--m1-s2);
@@ -1450,12 +1502,45 @@ input[aria-invalid="true"] {
 .mk-pos-grid + hr,
 #selling hr.my-4 { margin: var(--m1-s6) 0 !important; }
 
-/* ─── 15. DEBTORS / ACTION CLUSTER ──────────────────────────────────────── */
+/* Progress bar & Stock cells refinement */
+.stock-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.stock-text {
+  font-size: var(--m1-fs-13);
+  font-weight: 600;
+  color: var(--m1-ink);
+  font-variant-numeric: tabular-nums;
+}
+.progress.stock-progress {
+  height: 4px !important;
+  border-radius: var(--m1-r-pill) !important;
+  background: var(--m1-surface-3) !important;
+  overflow: hidden;
+  max-width: 110px;
+}
+.progress-bar {
+  border-radius: var(--m1-r-pill);
+  transition: width 300ms var(--m1-ease);
+}
+.progress-bar.bg-success {
+  background: var(--m1-success) !important;
+}
+.progress-bar.bg-warning {
+  background: var(--m1-warning) !important;
+}
+.progress-bar.bg-danger {
+  background: var(--m1-danger) !important;
+}
+
+/* Action cluster in tables: clean, subtle, distinct */
 .action-btn {
   display: inline-grid !important;
   place-items: center;
-  width: 30px !important;
-  height: 30px !important;
+  width: 32px !important;
+  height: 32px !important;
   padding: 0 !important;
   margin: 0 !important;
   border: 1px solid var(--m1-line) !important;
@@ -1465,23 +1550,92 @@ input[aria-invalid="true"] {
   font-size: 13px !important;
   line-height: 1;
   cursor: pointer;
-  transition: background var(--m1-dur) var(--m1-ease), border-color var(--m1-dur) var(--m1-ease), color var(--m1-dur) var(--m1-ease);
+  transition: all var(--m1-dur) var(--m1-ease);
 }
 .action-btn:hover {
   background: var(--m1-surface-3) !important;
   border-color: var(--m1-line-strong) !important;
   color: var(--m1-ink) !important;
+  transform: translateY(-1px);
 }
 .action-btn:focus-visible { outline: 2px solid var(--m1-brand); outline-offset: 1px; }
-.action-btn-call:hover { color: var(--m1-info-ink) !important; border-color: var(--m1-info) !important; }
-.action-btn-sms:hover { color: var(--m1-brand-ink) !important; border-color: var(--m1-brand) !important; }
-.action-btn-add:hover { color: var(--m1-success-ink) !important; border-color: var(--m1-success) !important; }
-.action-btn-reduce:hover { color: var(--m1-warning-ink) !important; border-color: var(--m1-warning) !important; }
-.action-btn-edit:hover { color: var(--m1-warning-ink) !important; border-color: var(--m1-warning) !important; }
-.action-btn-delete:hover { color: var(--m1-danger-ink) !important; border-color: var(--m1-danger) !important; }
-td .action-btn + .action-btn { margin-left: 4px !important; }
+.action-btn-call:hover { color: var(--m1-info-ink) !important; border-color: var(--m1-info) !important; background: var(--m1-info-bg) !important; }
+.action-btn-sms:hover { color: var(--m1-brand-ink) !important; border-color: var(--m1-brand) !important; background: var(--m1-brand-soft) !important; }
+.action-btn-add:hover { color: var(--m1-success-ink) !important; border-color: var(--m1-success) !important; background: var(--m1-success-bg) !important; }
+.action-btn-reduce:hover { color: var(--m1-warning-ink) !important; border-color: var(--m1-warning) !important; background: var(--m1-warning-bg) !important; }
+.action-btn-edit:hover { color: var(--m1-brand-ink) !important; border-color: var(--m1-brand) !important; background: var(--m1-brand-soft) !important; }
+.action-btn-delete:hover { color: var(--m1-danger-ink) !important; border-color: var(--m1-danger) !important; background: var(--m1-danger-bg) !important; }
+td .action-btn + .action-btn { margin-left: 5px !important; }
 
-/* Attention panels */
+/* Table action buttons (Edit & Delete in products table) */
+.table .btn-sm.btn-edit {
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  background: var(--m1-surface) !important;
+  border: 1px solid var(--m1-line) !important;
+  color: var(--m1-ink-2) !important;
+  border-radius: var(--m1-r-sm) !important;
+  box-shadow: none !important;
+  transition: all var(--m1-dur) var(--m1-ease) !important;
+}
+.table .btn-sm.btn-edit svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+.table .btn-sm.btn-edit:hover {
+  background: var(--m1-brand-soft) !important;
+  border-color: var(--m1-brand) !important;
+  color: var(--m1-brand-ink) !important;
+  transform: translateY(-1px) !important;
+}
+
+.table .btn-sm.btn-danger {
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  background: var(--m1-surface) !important;
+  border: 1px solid var(--m1-line) !important;
+  color: var(--m1-danger-ink) !important;
+  border-radius: var(--m1-r-sm) !important;
+  box-shadow: none !important;
+  transition: all var(--m1-dur) var(--m1-ease) !important;
+}
+.table .btn-sm.btn-danger svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+.table .btn-sm.btn-danger:hover {
+  background: var(--m1-danger-bg) !important;
+  border-color: var(--m1-danger) !important;
+  color: var(--m1-danger) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Attention panels & AI Assistant Card */
+.ai-summary-card,
+.ai-summary-card-inner {
+  border-radius: var(--m1-r-xl) !important;
+  background: var(--m1-surface) !important;
+  border: 1px solid var(--m1-brand-line) !important;
+  box-shadow: 0 4px 20px -6px rgba(68, 85, 238, 0.12) !important;
+  position: relative;
+  overflow: hidden;
+}
+.ai-summary-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--m1-brand), #8B5CF6);
+}
+
 .overdue-wrapper,
 .low-stock-section {
   height: 100%;
@@ -2309,12 +2463,12 @@ html.dark-mode .mk-root #navbar {
   box-shadow: none !important;
 }
 .mk-root .mk-hero h1 {
-  font-size: clamp(34px, 3.6vw, 50px);
+  font-size: clamp(32px, 3.2vw, 46px);
   font-weight: 750;
   letter-spacing: -0.035em;
-  line-height: 1.15;
+  line-height: 1.18;
   color: var(--m1-ink) !important;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 .mk-root .mk-hero h1 span,
 .mk-root .mk-grad-text {
