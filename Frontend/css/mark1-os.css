@@ -3800,44 +3800,32 @@ html.dark-mode .auth-left {
 }
 
 /* ─── AUTH BALANCED SPLIT-SCREEN & PADDING ───────────────────────────────── */
-.auth-shell {
-  grid-template-columns: minmax(360px, 460px) minmax(0, 1fr) !important;
+@media (min-width: 901px) {
+  .auth-shell {
+    grid-template-columns: minmax(360px, 460px) minmax(0, 1fr) !important;
+  }
+  .auth-left {
+    padding: 60px 48px !important;
+  }
+  .auth-card {
+    max-width: 460px !important;
+    padding: 44px 40px !important;
+  }
 }
-.auth-left {
-  padding: 60px 48px !important;
-}
-.auth-brand-logo {
-  max-height: 38px !important;
-  margin-bottom: 16px !important;
-}
-.auth-brand-tagline {
-  font-size: 15px !important;
-  color: #CBD5E1 !important;
-}
-.auth-features {
-  gap: 28px !important;
-}
-.auth-feature-item {
-  gap: 16px !important;
-}
-.auth-feature-icon {
-  width: 42px !important;
-  height: 42px !important;
-  flex: 0 0 42px !important;
-  border-radius: var(--m1-r-lg) !important;
-  font-size: 18px !important;
-}
-.auth-feature-text b {
-  font-size: 14.5px !important;
-  color: #F8FAFC !important;
-}
-.auth-feature-text span {
-  font-size: 13px !important;
-  color: #94A3B8 !important;
-}
-.auth-card {
-  max-width: 460px !important;
-  padding: 44px 40px !important;
+@media (max-width: 900px) {
+  .auth-shell {
+    grid-template-columns: 1fr !important;
+  }
+  .auth-right {
+    padding: 20px 12px !important;
+    width: 100% !important;
+  }
+  .auth-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 24px 16px !important;
+    box-sizing: border-box !important;
+  }
 }
 
 /* ─── MOBILE FIXES FOR EMPTY STATE & SALES TABLE CARDS ─────────────────── */
