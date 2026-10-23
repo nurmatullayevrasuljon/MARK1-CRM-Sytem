@@ -5,9 +5,10 @@
     <!-- Prevent FOUC: apply theme before paint -->
     <script>
       (function () {
-        // Marketing sahifalar standart holatda kunduzgi (light) bo'ladi.
-        // Tungi rejim faqat foydalanuvchi uni aniq tanlagan bo'lsa yoqiladi.
-        if (localStorage.getItem('theme') === 'dark') {
+        // Aniq tanlov (localStorage) ustun, u bo'lmasa tizim mavzusi.
+        var t = localStorage.getItem('theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (t === 'dark' || (!t && prefersDark)) {
           document.documentElement.classList.add('dark-mode');
         }
         // Animatsiya tayyor: reveal effektlari faqat JS ishlaganda yoqiladi.
@@ -1984,7 +1985,7 @@
         </style>
     <link rel="stylesheet" href="css/mark1-system.css?v=1793000000">
     <!-- MARK1 Business OS — precision-ledger design layer (final authority) -->
-    <link rel="stylesheet" href="css/mark1-os.css?v=1793100000">
+    <link rel="stylesheet" href="css/mark1-os.css?v=1793300000">
 
 </head>
 
@@ -2825,7 +2826,7 @@
     </script>
 
     <!-- Theme toggle -->
-    <script src="js/theme-toggle.js?v=1792900000"></script>
+    <script src="js/theme-toggle.js?v=1793200000"></script>
 
 </body>
 

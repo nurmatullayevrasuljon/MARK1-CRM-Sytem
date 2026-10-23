@@ -31,13 +31,15 @@
   <!-- MARK1 Design System (yagona spacing/tipografiya/holatlar/responsive) -->
   <link rel="stylesheet" href="css/mark1-system.css?v=1793000000">
   <!-- MARK1 Business OS — precision-ledger design layer (final authority) -->
-  <link rel="stylesheet" href="css/mark1-os.css?v=1793100000">
+  <link rel="stylesheet" href="css/mark1-os.css?v=1793300000">
   <script>
     // FOUC oldini olish: mavzuni sahifa chizilishidan oldin qo'llash.
-    // Ichki CRM standart holatda TUNGI rejimda ochiladi (light — tanlov).
+    // Qoida: aniq tanlov (localStorage) ustun — u bo'lmasa tizim mavzusi
+    // (prefers-color-scheme) asos bo'ladi.
     (function () {
       var t = localStorage.getItem('theme');
-      if (t !== 'light') {
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (t === 'dark' || (!t && prefersDark)) {
         document.documentElement.classList.add('dark-mode');
       }
     })();
@@ -1367,7 +1369,7 @@
   </div>
 
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript"></script>
-  <script src="js/theme-toggle.js?v=1792900000"></script>
+  <script src="js/theme-toggle.js?v=1793200000"></script>
   <!-- ui-ux-pro-max review qatlamı: klaviatura navigatsiyasi + aria sinxronizatsiyasi -->
   <script>
     (function () {

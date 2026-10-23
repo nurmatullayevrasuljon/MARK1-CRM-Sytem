@@ -16,12 +16,10 @@
   function applySavedTheme() {
     var saved = localStorage.getItem("theme");
     var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    // Ichki CRM (#themeToggleBtn mavjud) — standart holatda tungi rejim.
-    // Marketing/auth sahifalari — standart holatda kunduzgi (light).
-    var isCrm = !!document.getElementById("themeToggleBtn");
-    var isDark = saved
-      ? saved === "dark"
-      : isCrm;
+    // Yagona qoida (barcha sahifalar uchun):
+    // 1) Aniq tanlov (localStorage 'theme') — doim ustun.
+    // 2) Tanlov bo'lmasa — tizim mavzusi (prefers-color-scheme).
+    var isDark = saved ? saved === "dark" : prefersDark;
 
     if (isDark) {
       document.documentElement.classList.add("dark-mode");

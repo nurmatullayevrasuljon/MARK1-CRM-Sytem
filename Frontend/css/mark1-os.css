@@ -1041,6 +1041,21 @@ textarea.form-control, .modal-debtors textarea { min-height: 88px; resize: verti
   background-color: var(--m1-brand);
   border-color: var(--m1-brand);
 }
+/* premium-theme'dagi `.dark-mode input { background !important }` yagona blok
+   checked holatdagi brend rangini bostirib yuborardi — toggle "yoqilgan"
+   holda ham kulrang ko'rinardi. Yuqori spesifiklik + !important bilan tiklaymiz. */
+html.dark-mode .form-check.form-switch .form-check-input:checked,
+html.dark-mode .form-check-input:checked {
+  background-color: var(--m1-brand) !important;
+  border-color: var(--m1-brand) !important;
+}
+/* Unchecked holat dark'da ham yorug'lik/sirt qoidalarga bo'ysunsin
+   (!important ustma-yozuvidan keyin qayta belgilash). */
+html.dark-mode .form-check.form-switch .form-check-input:not(:checked),
+html.dark-mode .form-check-input:not(:checked) {
+  background-color: var(--m1-surface-3) !important;
+  border-color: var(--m1-line-strong) !important;
+}
 .form-check-input:focus { box-shadow: var(--m1-focus); border-color: var(--m1-brand); }
 
 .mk-field-error,
