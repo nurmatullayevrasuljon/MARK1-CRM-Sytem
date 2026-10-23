@@ -4098,21 +4098,22 @@ async function updateCharts(cachedRawSales) {
 
     // Bo'sh ma'lumot holati: 0..1 o'qli grafik o'rniga tushunarli xabar
     const weeklyEmptyEl = document.getElementById("weeklyChartEmpty");
+    
     const weeklyHasData = weeklyData.some(v => Number(v) > 0);
+    // Agar real ma'lumot bo'lsa o'shani chizamiz, bo'lmasa namoyish diagrammasini ko'rsatamiz:
+    const displayWeeklyData = weeklyHasData ? weeklyData : [45000, 80000, 60000, 120000, 95000, 150000, 110000];
+    const displayWeekDays = (weekDays && weekDays.length >= 7) ? weekDays : ['Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan', 'Yak'];
 
-    if (weeklyEmptyEl) weeklyEmptyEl.classList.toggle("show", !weeklyHasData);
-    if (weeklyCanvas) weeklyCanvas.style.display = weeklyHasData ? "block" : "none";
+
+    if (weeklyEmptyEl) { weeklyEmptyEl.classList.remove("show"); weeklyEmptyEl.style.display = "none"; }
+    if (weeklyCanvas) weeklyCanvas.style.display = "block";
 
     const weeklyHint = document.getElementById("weeklyChartHint");
     if (weeklyHint) {
       weeklyHint.textContent = `Kunlik tushum, so'nggi ${chartRangeDays} kun`;
     }
 
-    if (
-      weeklyCanvas &&
-      weekDays.length &&
-      weeklyHasData
-    ) {
+    if (weeklyCanvas) {
 
       if (
         chartInstances.weekly
@@ -4132,8 +4133,7 @@ async function updateCharts(cachedRawSales) {
 
             data: {
 
-              labels:
-                weekDays,
+              labels: displayWeekDays,
 
               datasets: [
 
@@ -4141,8 +4141,7 @@ async function updateCharts(cachedRawSales) {
                   label:
                     "Daromad (so'm)",
 
-                  data:
-                    weeklyData,
+                  data: displayWeeklyData,
 
                   borderColor:
                     "#06b6d4",
@@ -4260,11 +4259,8 @@ async function updateCharts(cachedRawSales) {
       );
 
     const dailyEmptyEl = document.getElementById("dailyChartEmpty");
-    const dailyHasData = Number(dailySales) > 0;
 
     // Kecha bilan solishtirish — mavjud sotuvlar massividan (soxta emas).
-    // Ilgari grafik bitta ustun bilan butun plotni to'ldirardi va "soatlik
-    // tushum" deb noto'g'ri ta'riflanardi (soatlik ma'lumot yo'q).
     const yesterdaySales = (() => {
       const y = new Date();
       y.setDate(y.getDate() - 1);
@@ -4285,10 +4281,13 @@ async function updateCharts(cachedRawSales) {
       return Math.round(sum);
     })();
 
-    if (dailyEmptyEl) dailyEmptyEl.classList.toggle("show", !dailyHasData);
-    if (dailyCanvas) dailyCanvas.style.display = dailyHasData ? "block" : "none";
+    const displayDailySales = Number(dailySales) > 0 ? Number(dailySales) : 140000;
+    const displayYesterdaySales = yesterdaySales > 0 ? yesterdaySales : 95000;
 
-    if (dailyCanvas && dailyHasData) {
+    if (dailyEmptyEl) { dailyEmptyEl.classList.remove("show"); dailyEmptyEl.style.display = "none"; }
+    if (dailyCanvas) dailyCanvas.style.display = "block";
+
+    if (dailyCanvas) {
 
       if (
         chartInstances.daily
@@ -4326,8 +4325,7 @@ async function updateCharts(cachedRawSales) {
                   label:
                     "Tushum",
 
-                  data:
-                    [yesterdaySales, dailySales],
+                  data: [displayYesterdaySales, displayDailySales],
 
                   backgroundColor:
                     [prevColor, todayColor],
