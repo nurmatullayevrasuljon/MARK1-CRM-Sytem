@@ -3020,10 +3020,6 @@ body {
   max-width: 100vw;
 }
 
-.d-flex {
-  align-items: stretch;
-}
-
 .content {
   min-width: 0;
   overflow-x: visible;
@@ -3597,10 +3593,6 @@ body {
 /* Debtors Table */
 @media (max-width: 767px) {
 
-  thead th {
-    display: none !important;
-  }
-
   #debtorTableBody tr {
     width: 95% !important;
     display: block;
@@ -4120,10 +4112,6 @@ html {
   background-color: #dc3545;
   color: white;
   border-left: 5px solid #bd2130;
-}
-
-.sale-alert.hidden {
-  display: none;
 }
 
 @keyframes slideInRight {

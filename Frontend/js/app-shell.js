@@ -149,6 +149,16 @@
         e.preventDefault();
       }
     });
+
+    // Backdrop: modal fon maydoniga bosilsa o'zining yopish tugmasi orqali
+    // yopilsin (har bir modal o'z logikasini saqlaydi — masalan receipt).
+    document.querySelectorAll(".modal-debtors").forEach(function (m) {
+      m.addEventListener("click", function (e) {
+        if (e.target !== m) return;
+        var closeBtn = m.querySelector(".close-modal-debtors");
+        if (closeBtn) closeBtn.click();
+      });
+    });
   }
 
   /* ── 4. Toast ──────────────────────────────────────────────────────────── */

@@ -629,7 +629,10 @@ main.content {
 
 .section { display: none; padding: var(--m1-s6) var(--m1-gutter) var(--m1-s10); max-width: var(--m1-content-max); }
 .section.active { display: block; }
-.content > .section { animation: m1-section-in 180ms var(--m1-ease-out) both; }
+/* Fill-mode 'both' animatsiyani abadiy ushlab, section'ga doimiy stacking
+   context berardi — modal (z=2000) qafasda qolib, sidebar/topbar undan
+   yuqori chiqardi. Fill-mode'siz (default) 180ms dan keyin context ochiladi. */
+.content > .section { animation: m1-section-in 180ms var(--m1-ease-out); }
 @keyframes m1-section-in {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -1504,35 +1507,6 @@ td .action-btn + .action-btn { margin-left: 4px !important; }
 .low-stock-item:last-child { border-bottom: 0; }
 
 /* ─── 16. OVERLAYS ───────────────────────────────────────────────────────── */
-.profile-dropdown {
-  border: 1px solid var(--m1-line);
-  border-radius: var(--m1-r-lg);
-  background: var(--m1-surface);
-  box-shadow: var(--m1-shadow-2);
-  padding: 0;
-  overflow: hidden;
-}
-.profile-dropdown-header {
-  padding: var(--m1-s4);
-  border-bottom: 1px solid var(--m1-line);
-  background: var(--m1-surface-2);
-}
-.profile-dropdown-menu { padding: var(--m1-s2); }
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: var(--m1-s3);
-  padding: 9px var(--m1-s3);
-  border-radius: var(--m1-r-sm);
-  color: var(--m1-ink-2);
-  font-size: var(--m1-fs-13);
-  font-weight: 500;
-  cursor: pointer;
-}
-.dropdown-item:hover { background: var(--m1-surface-3); color: var(--m1-ink); }
-.dropdown-item svg { width: 16px; height: 16px; opacity: 0.7; }
-.dropdown-item.logout { color: var(--m1-danger-ink); }
-/* ─── 16. OVERLAYS (MODALS, TOASTS, DROPDOWNS) ─────────────────────────── */
 .profile-dropdown {
   border: 1px solid var(--m1-line);
   border-radius: var(--m1-r-lg);

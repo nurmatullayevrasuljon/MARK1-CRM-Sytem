@@ -241,11 +241,6 @@
       <!-- Overlay -->
       <div class="dropdown-overlay" id="dropdownOverlay"></div>
 
-      <!-- Overlay -->
-      <div class="dropdown-overlay" id="dropdownOverlay"></div>
-
-      <div class="dropdown-overlay" id="dropdownOverlay"></div>
-
       <!-- DASHBOARD -->
       <section id="dashboard" class="section active">
 
@@ -387,20 +382,20 @@
               <!-- Mahsulot tanlash -->
               <div class="col-md-4">
                 <label class="font-weight-bold">Mahsulot</label>
-                <input type="text" id="saleSearch" class="form-control mb-2" placeholder="🔍 Mahsulot qidirish...">
-                <select id="saleProduct" class="form-control"></select>
+                <input type="text" id="saleSearch" class="form-control mb-2" aria-label="Mahsulot qidirish (nom yoki barkod)" placeholder="🔍 Mahsulot qidirish...">
+                <select id="saleProduct" class="form-control" aria-label="Mahsulot tanlash"></select>
               </div>
 
               <!-- Miqdor -->
               <div class="col-md-3">
-                <label id="saleQtyLabel" class="font-weight-bold">Miqdor</label>
+                <label id="saleQtyLabel" class="font-weight-bold" for="saleQty">Miqdor</label>
                 <input type="number" id="saleQty" class="form-control" step="0.01" min="0.01"
                   placeholder="Miqdorni kiriting" />
               </div>
 
               <!-- Narx (disabled) -->
               <div class="col-md-3">
-                <label class="font-weight-bold">Narx</label>
+                <label class="font-weight-bold" for="salePrice">Narx</label>
                 <input type="text" id="salePrice" class="form-control" disabled>
               </div>
 
@@ -523,7 +518,7 @@
         <div class="card">
           <div class="card-body">
 
-            <input type="text" id="productSearch" placeholder="Search by name or SKU...">
+            <input type="text" id="productSearch" aria-label="Mahsulot nomi yoki kodi bo'yicha qidirish" placeholder="Search by name or SKU...">
 
             <div class="table-responsive">
               <table class="table table-hover align-middle">
@@ -592,7 +587,7 @@
               <h5 class="mb-0">Tranzaksiya jurnali</h5>
               <div class="d-flex gap-2">
                 <!-- Filter Select -->
-                <select id="transactionFilter" class="form-control form-control-sm" style="width: 150px;">
+                <select id="transactionFilter" class="form-control form-control-sm" aria-label="Davr filtri" style="width: 150px;">
                   <option value="daily" selected>Kunlik</option>
                   <option value="weekly">Haftalik</option>
                   <option value="monthly">Oylik</option>
@@ -607,7 +602,7 @@
 
             <table class="table table-sm table-hover">
               <input type="text" id="transactionSearch" class="form-control form-control-sm tr-input"
-                style="width: 200px;" placeholder="Mahsulot nomi bo‘yicha qidirish...">
+                aria-label="Tranzaksiyalarni qidirish" style="width: 200px;" placeholder="Mahsulot nomi bo‘yicha qidirish...">
               <thead>
                 <tr>
                   <th>Mahsulot</th>
@@ -626,7 +621,7 @@
       <!-- Debtors -->
       <section id="debtors" class="section">
         <div class="container">
-          <h1>Qarzdorlarni boshqarish</h1>
+          <h2>Qarzdorlarni boshqarish</h2>
           <p>To'lov holatini va to'lanmagan qoldiqlarni kuzatib boring</p>
 
           <div class="stats-container">
@@ -659,7 +654,7 @@
           <div class="search-add-container">
             <div class="search-box">
               <i class="bi bi-search"></i>
-              <input type="text" id="searchInput" placeholder="Ism yoki telefon orqali qidirish...">
+              <input type="text" id="searchInput" aria-label="Qarzdorlarni ism yoki telefon orqali qidirish" placeholder="Ism yoki telefon orqali qidirish...">
             </div>
             <button class="btn-add-debt" onclick="openModal()">
               <i class="bi bi-plus-circle"></i> Yangi qarzdor qo'shish
@@ -850,7 +845,7 @@
 
           <!-- Header -->
           <div class="header">
-            <h1>Administrator profili</h1>
+            <h2>Administrator profili</h2>
             <p>Shaxsiy ma'lumotlaringiz, ruxsatnomalaringiz va sozlamalaringizni boshqaring</p>
           </div>
 
@@ -892,7 +887,7 @@
 
               <div>
                 <div class="form-group">
-                  <label class="form-label">To'liq ism</label>
+                  <label class="form-label" for="fullName">To'liq ism</label>
                   <div class="input-wrapper">
                     <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -904,7 +899,7 @@
                 </div>
 
                 <div class="form-group">
-                  <label class="form-label">E-pochta manzili</label>
+                  <label class="form-label" for="email">E-pochta manzili</label>
                   <div class="input-wrapper">
                     <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -917,7 +912,7 @@
                 </div>
 
                 <div class="form-group">
-                  <label class="form-label">Telefon raqami</label>
+                  <label class="form-label" for="phone">Telefon raqami</label>
                   <div class="input-wrapper">
                     <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -931,7 +926,7 @@
 
                 <div class="form-grid">
                   <div class="form-group">
-                    <label class="form-label">Departament</label>
+                    <label class="form-label" for="department">Departament</label>
                     <div class="input-wrapper">
                       <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -949,7 +944,7 @@
                   </div>
 
                   <div class="form-group">
-                    <label class="form-label">Kompaniya</label>
+                    <label class="form-label" for="company">Kompaniya</label>
                     <div class="input-wrapper">
                       <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1115,10 +1110,7 @@
                     </div>
                   </div>
 
-                  <!-- IMAGE -->
-                  <div class="col-md-12 mb-3">
-                    <label class="font-weight-bold">Mahsulot rasmi</label>
-                                      <!-- BARCODE (manufacturer barcode, optional) -->
+                  <!-- BARCODE (manufacturer barcode, optional) -->
                   <div class="col-md-12 mb-3">
                     <label class="font-weight-bold">Shtrix-kod</label>
                     <input type="text" id="productBarcode" class="form-control"
@@ -1128,8 +1120,6 @@
                   <!-- IMAGE -->
                   <div class="col-md-12 mb-3">
                     <label class="font-weight-bold">Mahsulot rasmi</label>
-                    <input type="file" id="productImage" class="form-control" accept="image/*">
-                  </div>
                     <input type="file" id="productImage" class="form-control" accept="image/*">
                   </div>
 
