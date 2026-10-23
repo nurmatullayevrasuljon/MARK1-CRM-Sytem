@@ -275,6 +275,13 @@ small { font-size: var(--m1-fs-12); }
 ::selection { background: var(--m1-brand); color: #fff; }
 html.dark-mode ::selection { background: #5C6BF5; color: #fff; }
 
+input, textarea {
+  caret-color: var(--m1-brand);
+}
+html.dark-mode input, html.dark-mode textarea {
+  caret-color: var(--m1-brand-hover);
+}
+
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--m1-brand);
   outline-offset: 2px;
