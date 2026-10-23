@@ -3906,3 +3906,88 @@ html.dark-mode .auth-left {
     padding: 0 !important;
   }
 }
+
+/* ─── MOBILE FIXES FOR CHARTS HEIGHT & TRANSACTIONS EMPTY STATE ─────────── */
+@media (max-width: 767.98px) {
+  /* 1. Dashboard grafiklari balandligini ixchamlashtirish (Image 1 fix) */
+  .mk-chart,
+  .mk-chart-sm {
+    height: 180px !important;
+  }
+  .mk-chart-empty {
+    padding: 14px 10px !important;
+    gap: 4px !important;
+  }
+  .mk-chart-empty i {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 20px !important;
+    margin-bottom: 0 !important;
+  }
+  .mk-chart-empty strong {
+    font-size: 13px !important;
+  }
+  .mk-chart-empty span {
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+    max-width: 260px !important;
+  }
+
+  /* 2. Savdo tarixi (#transactionsTableBody) bo'sh holati (Image 2 fix) */
+  #daily-sales .card .p-4.border-bottom {
+    padding: 16px 14px 14px !important;
+  }
+  #daily-sales .table-responsive {
+    border: none !important;
+    background: transparent !important;
+  }
+  #transactionsTableBody tr:has(.empty-state),
+  #transactionsTableBody tr:has(.mk-empty-td) {
+    display: block !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 14px 0 0 !important;
+  }
+  #transactionsTableBody tr:has(.empty-state):hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  #transactionsTableBody td.empty-state,
+  #transactionsTableBody td.mk-empty-td {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 36px 16px !important;
+    background: var(--m1-surface) !important;
+    border: 1px dashed var(--m1-line) !important;
+    border-radius: var(--m1-r-xl) !important;
+    box-shadow: var(--m1-shadow-1) !important;
+    width: 100% !important;
+  }
+  #transactionsTableBody td.empty-state::before,
+  #transactionsTableBody td.mk-empty-td::before {
+    display: none !important;
+    content: none !important;
+  }
+  #transactionsTableBody .empty-icon {
+    font-size: 36px !important;
+    color: var(--m1-brand) !important;
+    margin-bottom: 8px !important;
+  }
+  #transactionsTableBody .empty-title {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: var(--m1-ink) !important;
+    margin-bottom: 4px !important;
+  }
+  #transactionsTableBody .empty-subtitle {
+    font-size: 12px !important;
+    color: var(--m1-ink-3) !important;
+    max-width: 280px !important;
+    margin: 0 auto !important;
+  }
+}
