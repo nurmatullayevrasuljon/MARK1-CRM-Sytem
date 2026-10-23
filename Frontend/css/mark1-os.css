@@ -1271,6 +1271,125 @@ input[aria-invalid="true"] {
 .mk-chart-empty strong { font-size: var(--m1-fs-13); color: var(--m1-ink); }
 .mk-chart-empty span { font-size: var(--m1-fs-12); color: var(--m1-ink-3); max-width: 34ch; }
 
+/* ─── AI OVERVIEW CARD (DASHBOARD) ────────────────────────────── */
+.card-box.mk-ai-card,
+.mk-ai-card {
+  position: relative !important;
+  border-radius: var(--m1-r-xl) !important;
+  background: var(--m1-surface) !important;
+  border: 1px solid var(--m1-brand-line) !important;
+  box-shadow: 0 4px 24px -6px rgba(68, 85, 238, 0.14) !important;
+  padding: var(--m1-s5) var(--m1-s6) !important;
+  overflow: hidden !important;
+}
+.card-box.mk-ai-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--m1-brand), #8B5CF6);
+}
+.mk-ai-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: var(--m1-s4) !important;
+  padding-bottom: var(--m1-s3) !important;
+  border-bottom: 1px solid var(--m1-line-soft) !important;
+}
+.mk-ai-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: var(--m1-s3) !important;
+}
+.mk-ai-badge {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: var(--m1-r-md) !important;
+  background: var(--m1-brand-soft) !important;
+  color: var(--m1-brand) !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: 18px !important;
+}
+.mk-ai-title h3 {
+  font-size: var(--m1-fs-17) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--m1-ink) !important;
+  margin: 0 !important;
+}
+.mk-ai-title p {
+  font-size: var(--m1-fs-12) !important;
+  color: var(--m1-ink-3) !important;
+  margin: 0 !important;
+}
+.mk-ai-date {
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  padding: 4px 10px !important;
+  border-radius: var(--m1-r-pill) !important;
+  background: var(--m1-surface-3) !important;
+  border: 1px solid var(--m1-line) !important;
+  color: var(--m1-ink-2) !important;
+}
+.mk-ai-btn {
+  min-height: 36px !important;
+  padding: 0 16px !important;
+  border-radius: var(--m1-r-md) !important;
+  font-size: var(--m1-fs-13) !important;
+  font-weight: 600 !important;
+  background: var(--m1-surface) !important;
+  border: 1px solid var(--m1-line-strong) !important;
+  color: var(--m1-ink) !important;
+  transition: all var(--m1-dur) var(--m1-ease) !important;
+}
+.mk-ai-btn:hover {
+  background: var(--m1-surface-3) !important;
+  transform: translateY(-1px) !important;
+}
+.mk-ai-btn-primary {
+  background: var(--m1-brand) !important;
+  border-color: var(--m1-brand) !important;
+  color: #fff !important;
+}
+.mk-ai-btn-primary:hover {
+  background: var(--m1-brand-hover) !important;
+  border-color: var(--m1-brand-hover) !important;
+}
+
+.mk-ai-hero {
+  margin: var(--m1-s4) 0 var(--m1-s3) !important;
+}
+.mk-ai-value {
+  font-size: 26px !important;
+  font-weight: 750 !important;
+  letter-spacing: -0.03em !important;
+  color: var(--m1-ink) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+.mk-ai-tile {
+  background: var(--m1-surface-2) !important;
+  border: 1px solid var(--m1-line) !important;
+  border-radius: var(--m1-r-md) !important;
+  padding: 12px 14px !important;
+}
+.mk-ai-tvalue {
+  font-size: var(--m1-fs-15) !important;
+  font-weight: 700 !important;
+  color: var(--m1-ink) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+.mk-ai-reco {
+  margin-top: var(--m1-s3) !important;
+  background: var(--m1-brand-soft) !important;
+  border-left: 3px solid var(--m1-brand) !important;
+  border-radius: var(--m1-r-md) !important;
+  padding: 12px 16px !important;
+  font-size: var(--m1-fs-13) !important;
+  color: var(--m1-ink) !important;
+}
+
 /* ─── 13. STATES ─────────────────────────────────────────────────────────── */
 .mk-empty,
 .mk-empty-state {
