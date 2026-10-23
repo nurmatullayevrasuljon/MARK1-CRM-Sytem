@@ -1851,6 +1851,34 @@ td .action-btn + .action-btn { margin-left: 4px !important; }
 }
 #settings .form-switch .form-check-input { margin-left: 0; }
 
+/* ─── 17b. LEGACY COMPAT — index.html (qarzdorlar stat-card, sozlamalar tabs)
+   Eski style.css hardcode ranglari (oq .tabs-container, #6c757d .detail,
+   #ffc107 .amount) dark/light kontrast normalarini buzardi — 15 ta WCAG
+   fail. Bu klasslar faqat index.html'da ishlatiladi (boshqa sahifalarda yo'q);
+   yagona dizayn tokenlariga moslashtiramiz. ─────────────────────────────── */
+.tabs-container {
+  background: var(--m1-surface);
+  border: 1px solid var(--m1-line);
+  border-radius: var(--m1-r-md);
+  box-shadow: none;
+}
+.tabs { border-bottom-color: var(--m1-line); }
+.tab { color: var(--m1-ink-2); }
+.tab:hover { color: var(--m1-ink); background: var(--m1-surface-3); }
+.tab.active {
+  color: var(--m1-brand);
+  background: var(--m1-brand-soft);
+  border-bottom-color: var(--m1-brand);
+}
+/* Dark'da brend #4D5DEF sirt ustida (~2.9:1) — faqat active holat uchun
+   ochiq brend siyohi bilan almashtiramiz (~9:1). */
+html.dark-mode .tab.active { color: #C9CEFA; }
+
+.stat-card .detail { color: var(--m1-ink-3); }
+/* Sar#afiy sariq (#ffc107) oq sirt ustida 1.58:1 — light'da to'q amber. */
+.stat-card.upcoming .amount { color: #B45309; }
+html.dark-mode .stat-card.upcoming .amount { color: #FFC107; }
+
 /* ─── 18. MOBILE NAV / DRAWER / TABLET ADAPTATION ──────────────────────── */
 .mobile-bottom-nav {
   display: none;
