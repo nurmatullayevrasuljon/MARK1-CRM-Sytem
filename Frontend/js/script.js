@@ -8580,11 +8580,9 @@ var DashboardStatisticsManager = {
 
       if (!Number.isFinite(growth) || growth === 0) {
         revenueChange.textContent = "—";
-      } else if (growth > 0) {
-        revenueChange.textContent = `▲ ${growth}% o'sish`;
       } else {
-        revenueChange.textContent =
-          `▼ ${Math.abs(growth)}% kamayish`;
+        const roundedGrowth = Math.abs(growth) > 999 ? (growth > 0 ? "> 999%" : "< -999%") : (Math.round(growth * 10) / 10) + "%";
+        revenueChange.textContent = growth > 0 ? `▲ ${roundedGrowth} o'tgan oyga nisbatan` : `▼ ${roundedGrowth} o'tgan oyga nisbatan`;
       }
     }
     // 2. DAILY SALES
@@ -8615,12 +8613,9 @@ var DashboardStatisticsManager = {
 
       if (!Number.isFinite(change) || change === 0) {
         dailyChange.textContent = "—";
-      } else if (change > 0) {
-        dailyChange.textContent =
-          `▲ ${change}% kechaga nisbatan`;
       } else {
-        dailyChange.textContent =
-          `▼ ${Math.abs(change)}% kechaga nisbatan`;
+        const roundedChange = Math.abs(change) > 999 ? (change > 0 ? "> 999%" : "< -999%") : (Math.round(change * 10) / 10) + "%";
+        dailyChange.textContent = change > 0 ? `▲ ${roundedChange} kechaga nisbatan` : `▼ ${roundedChange} kechaga nisbatan`;
       }
     }
 
