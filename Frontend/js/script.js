@@ -416,7 +416,14 @@ async function detectBackendAvailability() {
     try {
       console.log(`🔌 Backend tekshirilmoqda (${attempt}/${maxAttempts})...`);
 
-      await window.crmApi.get("/store/profile/get", {
+      const currentRole =
+        localStorage.getItem("crm_role") ||
+        sessionStorage.getItem("crm_role") ||
+        "store";
+      const pingEndpoint =
+        currentRole === "user" ? "/user/profile/get" : "/store/profile/get";
+
+      await window.crmApi.get(pingEndpoint, {
         timeout: 45000
       });
 
@@ -6309,12 +6316,19 @@ function mapDepartmentFromApi(value) {
 // }
 async function loadProfile() {
   try {
-    const res = await window.crmApi.get("/store/profile/get");
+    const currentRole =
+      localStorage.getItem("crm_role") ||
+      sessionStorage.getItem("crm_role") ||
+      "store";
+    const profileEndpoint =
+      currentRole === "user" ? "/user/profile/get" : "/store/profile/get";
+
+    const res = await window.crmApi.get(profileEndpoint);
     const p = res.data || {};
 
     const mapped = {
-      fullName: p.ceo_name || "",
-      phone: p.ceo_phone || "",
+      fullName: p.ceo_name || p.user_name || "",
+      phone: p.ceo_phone || p.user_phone || "",
       company: p.store_name || "",
       avatarUrl: p.profile_picture || ""
     };
@@ -6398,7 +6412,7 @@ async function saveChanges() {
   const originalLabel = saveBtn ? saveBtn.innerHTML : "";
   if (saveBtn) {
     saveBtn.disabled = true;
-    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Saqlanmoqda…';
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true" style="margin-right: 8px;"></span> Saqlanmoqda…';
   }
 
   try {

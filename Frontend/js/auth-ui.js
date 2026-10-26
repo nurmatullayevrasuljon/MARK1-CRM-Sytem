@@ -448,7 +448,7 @@
 
     function setLoginButtonLoading() {
       loginBtn.disabled = true;
-      loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Kutilmoqda...';
+      loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" style="margin-right: 8px;"></span> Kutilmoqda...';
     }
 
     function resetLoginButton() {

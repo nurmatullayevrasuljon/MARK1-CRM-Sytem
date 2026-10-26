@@ -251,7 +251,7 @@
     
     if (isLoading) {
       if (!btn.dataset.originalText) btn.dataset.originalText = btn.innerHTML;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="margin-right: 5px;"></span> Kutib turing...';
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" style="margin-right: 8px;"></span> Kutib turing...';
       btn.disabled = true;
       btn.style.opacity = '0.7';
     } else {
@@ -264,56 +264,58 @@
   };
 
   // ============================================================
-  // PROMISE-BASED CONFIRM DIALOG
+  // PROMISE-BASED CONFIRM DIALOG (toast.js'da bo'lmasa fallback)
   // ============================================================
-  window.showConfirm = function(message, title, confirmText, cancelText, isDanger) {
-    return new Promise(function(resolve) {
-      if (!window.Toastify) {
-        var res = window.confirm(message);
-        resolve(res);
-        return;
-      }
-      
-      var id = 'confirm-' + Math.random().toString(36).substr(2, 9);
-      var colorClass = isDanger ? 'bg-danger' : 'bg-primary';
-      var titleHtml = title ? '<strong>' + title + '</strong><br>' : '';
-      
-      var html = '<div id="' + id + '" style="display:flex; flex-direction:column; gap:10px;">' +
-                 '<div>' + titleHtml + message + '</div>' +
-                 '<div style="display:flex; gap:10px; justify-content:flex-end; margin-top:5px;">' +
-                 '<button class="btn btn-sm btn-secondary" id="cancel-' + id + '">' + (cancelText || 'Bekor qilish') + '</button>' +
-                 '<button class="btn btn-sm text-white ' + colorClass + '" id="ok-' + id + '">' + (confirmText || 'Tasdiqlash') + '</button>' +
-                 '</div></div>';
-                 
-      var toast = Toastify({
-        text: html,
-        escapeMarkup: false,
-        duration: -1,
-        close: false,
-        gravity: "top",
-        position: "center",
-        className: "confirm-toast",
-        stopOnFocus: true,
-        style: {
-          background: "var(--mk-bg-elevated)",
-          color: "var(--mk-fg)",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-          borderRadius: "12px",
-          border: "1px solid var(--mk-border)",
-          padding: "20px",
-          minWidth: "300px"
+  if (!window.showConfirm) {
+    window.showConfirm = function(message, title, confirmText, cancelText, isDanger) {
+      return new Promise(function(resolve) {
+        if (!window.Toastify) {
+          var res = window.confirm(message);
+          resolve(res);
+          return;
         }
-      }).showToast();
-      
-      setTimeout(function() {
-        document.getElementById('cancel-' + id).addEventListener('click', function() {
-          toast.hideToast();
-          resolve(false);
-        });
-        document.getElementById('ok-' + id).addEventListener('click', function() {
-          toast.hideToast();
-          resolve(true);
-        });
-      }, 100);
-    });
-  };
+        
+        var id = 'confirm-' + Math.random().toString(36).substr(2, 9);
+        var colorClass = isDanger ? 'bg-danger' : 'bg-primary';
+        var titleHtml = title ? '<strong>' + title + '</strong><br>' : '';
+        
+        var html = '<div id="' + id + '" style="display:flex; flex-direction:column; gap:10px;">' +
+                   '<div>' + titleHtml + message + '</div>' +
+                   '<div style="display:flex; gap:10px; justify-content:flex-end; margin-top:5px;">' +
+                   '<button class="btn btn-sm btn-secondary" id="cancel-' + id + '">' + (cancelText || 'Bekor qilish') + '</button>' +
+                   '<button class="btn btn-sm text-white ' + colorClass + '" id="ok-' + id + '">' + (confirmText || 'Tasdiqlash') + '</button>' +
+                   '</div></div>';
+                   
+        var toast = Toastify({
+          text: html,
+          escapeMarkup: false,
+          duration: -1,
+          close: false,
+          gravity: "top",
+          position: "center",
+          className: "confirm-toast",
+          stopOnFocus: true,
+          style: {
+            background: "var(--mk-bg-elevated)",
+            color: "var(--mk-fg)",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+            borderRadius: "12px",
+            border: "1px solid var(--mk-border)",
+            padding: "20px",
+            minWidth: "300px"
+          }
+        }).showToast();
+        
+        setTimeout(function() {
+          document.getElementById('cancel-' + id).addEventListener('click', function() {
+            toast.hideToast();
+            resolve(false);
+          });
+          document.getElementById('ok-' + id).addEventListener('click', function() {
+            toast.hideToast();
+            resolve(true);
+          });
+        }, 100);
+      });
+    };
+  }

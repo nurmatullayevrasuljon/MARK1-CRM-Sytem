@@ -2,7 +2,17 @@
   "use strict";
 
   // ---------- 1) YAGONA MANBA: BASE URL ----------
-  const API_ROOT = "https://backend.mark1.uz";
+  // Production API manzili. QA/staging uchun override FAQAT localhost'da
+  // ishlaydi (localStorage: "crm_api_root"). Production domenida bu kalit
+  // e'tiborsiz qoldiriladi — aks holda begona havola orqali API almashtirilib,
+  // foydalanuvchi tokeni boshqa serverga yuborilishi mumkin bo'lardi.
+  const IS_LOCAL_HOST =
+    typeof location !== "undefined" &&
+    (location.hostname === "localhost" || location.hostname === "127.0.0.1");
+  const LOCAL_API_OVERRIDE = IS_LOCAL_HOST
+    ? localStorage.getItem("crm_api_root")
+    : null;
+  const API_ROOT = LOCAL_API_OVERRIDE || "https://backend.mark1.uz";
   const API_URL = API_ROOT + "/api";
                                       // Swagger sahifasining "Servers" bo'limidan tekshiring.
 
@@ -465,9 +475,9 @@
       }
     },
 
-    // Eski kod bilan moslik uchun: role bo'yicha avtomatik tanlaydi.
-    // Agar login sahifasida "store" yoki "user" ekanligi aniq bo'lsa,
-    // to'g'ridan-to'g'ri loginStore/loginUser ishlatilishi tavsiya etiladi.
+    // Eski kod bilan moslik uchun: agar qaysi tur ekani noma'lum bo'lsa,
+    // avval do'kon egasi (CEO) sifatida, o'xshamasa xodim (admin/seller)
+    // sifatida tizimga kirishga urinadi.
     login: async function (loginOrParams, password, remember) {
       let params = {};
       if (typeof loginOrParams === "object" && loginOrParams !== null) {
@@ -475,7 +485,13 @@
       } else {
         params = { login: loginOrParams, password, remember };
       }
-      return this.loginStore(params);
+      const storeRes = await this.loginStore(params);
+      if (storeRes && storeRes.success) return storeRes;
+
+      const userRes = await this.loginUser(params);
+      if (userRes && userRes.success) return userRes;
+
+      return storeRes;
     },
 
     // POST /auth/store/forgot-password
@@ -1232,6 +1248,12 @@
       const token = getAccessToken();
       const role = getRole();
       if (!token || !role) return false;
+      // Agar token JWT formatida bo'lmasa yoki buzilgan bo'lsa — sessiya yaroqsiz
+      const payload = decodeJwtPayload(token);
+      if (!payload || typeof payload.exp !== "number") {
+        clearSession();
+        return false;
+      }
       // Muddati o'tgan JWT bilan dashboard "tirik" ko'rinib, keyin API 401
       // sabab login/landing sahifasiga sakrardi. Endi "exp" shu yerda
       // tekshiriladi va eskirgan sessiya darhol tozalanadi.

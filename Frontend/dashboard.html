@@ -458,7 +458,12 @@
             <div class="mk-pos-grid">
               <!-- Chap panel: mahsulot tanlash + savat -->
               <div class="mk-pos-panel">
-                <h3><i class="bi bi-search" aria-hidden="true"></i> Mahsulot qo'shish</h3>
+                <div class="d-flex justify-content-between align-items-center mb-2 pb-2" style="border-bottom: 1px solid var(--m1-line, var(--border-subtle));">
+                  <h3 class="mb-0" style="border-bottom:none; padding-bottom:0;"><i class="bi bi-cart3" aria-hidden="true"></i> Mahsulot tanlash</h3>
+                  <button type="button" class="btn btn-sm btn-outline-primary" onclick="openProductModalFromEmpty()" title="Yangi mahsulot yaratish" style="font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 8px;">
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i> Mahsulot qo'shish
+                  </button>
+                </div>
 
                 <div class="mb-2">
                   <label class="form-label" for="saleSearch">Qidiruv (nom yoki barkod)</label>
@@ -583,8 +588,8 @@
                   </div>
                   <div class="form-group" id="debtSalePaymentTypeGroup" style="display:none;">
                     <label>To'langan summaning turi</label><br>
-                    <label class="mr-3"><input type="radio" name="debtSalePaymentType" value="cash" checked> <i class="bi bi-cash-stack" aria-hidden="true"></i> Naqd</label>
-                    <label><input type="radio" name="debtSalePaymentType" value="card"> <i class="bi bi-credit-card" aria-hidden="true"></i> Karta</label>
+                    <label class="mr-3" for="debtSalePaymentCash"><input type="radio" id="debtSalePaymentCash" name="debtSalePaymentType" value="cash" checked aria-label="Naqd to'lov"> <i class="bi bi-cash-stack" aria-hidden="true"></i> Naqd</label>
+                    <label for="debtSalePaymentCard"><input type="radio" id="debtSalePaymentCard" name="debtSalePaymentType" value="card" aria-label="Karta orqali to'lov"> <i class="bi bi-credit-card" aria-hidden="true"></i> Karta</label>
                   </div>
                   <div class="form-group">
                     <label for="debtSaleDueDate">Qaytarish muddati</label>
@@ -659,12 +664,6 @@
 
       <!-- PRODUCTS SECTION -->
       <section id="productsSection" class="section">
-        <div class="mk-page-actions">
-          <button class="btn btn-primary px-4 py-2 fw-semibold shadow-sm" id="openProductModal" style="background: var(--brand-primary); border: none;">
-            <i class="bi bi-plus-lg" aria-hidden="true"></i> Mahsulot qo'shish
-          </button>
-        </div>
-
         <div class="card border-0 shadow-sm">
           <div class="card-body p-0">
             <div class="p-4 border-bottom" style="border-color: var(--border-subtle) !important;">
@@ -686,6 +685,10 @@
 
                 <button type="button" class="btn btn-outline-primary mk-nowrap" id="exportProductsBtn">
                   <i class="bi bi-download" aria-hidden="true"></i> Yuklab olish
+                </button>
+
+                <button class="btn btn-primary px-4 py-2 fw-semibold shadow-sm ms-auto mk-nowrap" id="openProductModal" style="background: var(--brand-primary); border: none; min-height: 42px;">
+                  <i class="bi bi-plus-lg" aria-hidden="true"></i> Mahsulot qo'shish
                 </button>
               </div>
               <p class="mk-toolbar-count" id="productFilterCount" aria-live="polite"></p>
@@ -1177,12 +1180,12 @@
       </section>
 
       <!-- PRODUCT MODAL - Professional -->
-      <div class="modal fade" id="productModal" style="overflow: scroll;" role="dialog" aria-labelledby="productModalTitle" aria-modal="true">
+      <div class="modal fade" id="productModal" role="dialog" aria-labelledby="productModalTitle" aria-modal="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
           <div class="modal-content">
             <form id="productForm">
               <div class="modal-header">
-                <h2 class="modal-title"><i class="bi bi-box-seam" aria-hidden="true"></i> Mahsulot qo'shish</h2>
+                <h2 class="modal-title" id="productModalTitle"><i class="bi bi-box-seam" aria-hidden="true"></i> Mahsulot qo'shish</h2>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Yopish">&times;</button>
               </div>
 
@@ -1290,8 +1293,8 @@
           <div class="modal-content">
 
             <div class="modal-header">
-              <h2 class="modal-title">Kategoriya qo'shish</h2>
-              <button class="close" data-dismiss="modal">&times;</button>
+              <h2 class="modal-title" id="categoryModalTitle">Kategoriya qo'shish</h2>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Yopish">&times;</button>
             </div>
 
             <div class="modal-body">

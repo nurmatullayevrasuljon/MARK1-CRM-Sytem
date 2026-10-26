@@ -126,7 +126,7 @@
     }
 
     .auth-brand { position: relative; z-index: 1; }
-    .auth-brand-logo { width: 220px; margin-left: -8px; display: block; }
+    .auth-brand-logo { width: 200px; max-height: 52px; object-fit: contain; margin-left: -4px; display: block; }
     .auth-brand-tagline {
       margin-top: 16px;
       font-size: 15px;
@@ -220,9 +220,14 @@
       max-width: 420px;
       background: var(--auth-card-bg);
       border-radius: 24px;
+      border: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
       box-shadow: var(--auth-card-shadow);
       padding: 40px;
       transition: background .2s, box-shadow .2s;
+    }
+    @media (max-width: 600px) {
+      .auth-right { padding: 20px 16px; }
+      .auth-card { padding: 28px 20px; border-radius: 20px; }
     }
 
     .auth-card-title {
@@ -253,11 +258,13 @@
     .auth-mobile-brand {
       display: none;
       margin-bottom: 24px;
-      width: fit-content;
+      width: 100%;
+      justify-content: center;
     }
-    .auth-mobile-brand img { height: 26px; width: auto; }
+    .auth-mobile-brand img { height: 38px; width: auto; object-fit: contain; }
     @media (max-width: 1023px) {
-      .auth-mobile-brand { display: inline-flex; }
+      .auth-mobile-brand { display: flex; }
+      .auth-card-title, .auth-card-subtitle { text-align: center; }
     }
     html.dark-mode .auth-mobile-brand img { filter: invert(1); }
     /* QA: premium-theme `input[type="tel"]` (0,1,1) dan kuchli bo'lishi uchun
@@ -286,6 +293,17 @@
     }
     .field-input.has-toggle { padding-right: 48px; }
     .field-input.is-invalid { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.12); }
+
+    /* Chrome / Safari / Edge autofill yellow-tint fix */
+    input.field-input:-webkit-autofill,
+    input.field-input:-webkit-autofill:hover,
+    input.field-input:-webkit-autofill:focus,
+    input.field-input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px var(--auth-input-bg) inset !important;
+      -webkit-text-fill-color: var(--auth-text) !important;
+      caret-color: var(--auth-text) !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
 
     .pw-toggle-btn {
       position: absolute;
@@ -341,6 +359,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 8px;
       width: 100%;
       height: 50px;
       border-radius: 12px;
@@ -354,6 +373,7 @@
       box-shadow: 0 2px 8px rgba(91,106,240,.35);
       margin-bottom: 20px;
     }
+    .btn-primary-auth .spinner-border { margin-right: 8px; }
     .btn-primary-auth:hover:not(:disabled) {
       background: #4a59e8;
       box-shadow: 0 4px 16px rgba(91,106,240,.45);
@@ -498,7 +518,7 @@
     <aside class="auth-left">
       <div class="auth-brand">
         <img class="auth-brand-logo" src="img/brand-l.png" alt="Mark1 CRM">
-        <p class="auth-brand-tagline">Savdo, mahsulotlar va mijozlaringizni<br>samarali boshqaring</p>
+        <p class="auth-brand-tagline">Savdo, mahsulotlar va mijozlaringizni <br>samarali boshqaring</p>
       </div>
 
       <div class="auth-features">

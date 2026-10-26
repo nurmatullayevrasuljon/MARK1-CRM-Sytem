@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { randomUUID } = require("crypto");
 const Sale = require("../models/sale.model");
 const Product = require("../models/product.model");
 const Client = require("../models/client.model");
@@ -23,8 +24,19 @@ exports.createSale = async (req, res) => {
     } = req.body;
     const { store_id } = req.user;
 
-    if (paid_by_cash < 0 || paid_by_card < 0) {
-      throw new Error("To'lov qiymatlari manfiy bo'lmasligi kerak");
+    // QA-BUGFIX: to'lov qiymatlari faqat son bo'lishi va manfiy bo'lmasligi
+    // kerak. Avval faqat `paid_by_cash < 0` tekshirilardi — "abc" kabi
+    // qiymat NaN berib, hisob-kitobni butunlay buzardi.
+    for (const [field, value] of [
+      ["paid_by_cash", paid_by_cash],
+      ["paid_by_card", paid_by_card],
+      ["opening_record", opening_record],
+    ]) {
+      if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+        throw new Error(
+          `${field} manfiy bo'lmagan son bo'lishi kerak`,
+        );
+      }
     }
 
     // CF-10 fix: Mijoz mavjudligi va joriy do'konga tegishliligi tekshiruvi
@@ -42,6 +54,13 @@ exports.createSale = async (req, res) => {
 
     if (opening_record > 0) {
       // Eski qarzni POSga ko'chirish holati
+      // QA-BUGFIX: xaridorsiz "ochilish qarzi" yaratilsa, u hech bir
+      // qarzdorga bog'lanmaydi va qarzdorlar sahifasida ko'rinmay qoladi —
+      // pul esa haqiqatda qarz sifatida qoladi. Shuning uchun bloklaymiz.
+      if (!client_id) {
+        throw new Error("Qarz uchun xaridor tanlanishi kerak");
+      }
+
       sale = new Sale({
         store_id,
         client_id,
@@ -72,11 +91,23 @@ exports.createSale = async (req, res) => {
 
       for (const item of products) {
         // CF-11 fix: Manfiy yoki nol miqdor tekshiruvi
-        if (!item.quantity || item.quantity <= 0) {
-          throw new Error("Mahsulot miqdori 0 dan katta bo'lishi kerak");
+        // QA-BUGFIX: "abc"/null kabi qiymatlar ham rad etilishi kerak —
+        // aks holda `product.quantity -= "abc"` omborni NaN qilardi.
+        if (
+          typeof item.quantity !== "number" ||
+          !Number.isFinite(item.quantity) ||
+          item.quantity <= 0
+        ) {
+          throw new Error("Mahsulot miqdori 0 dan katta son bo'lishi kerak");
         }
-        if (item.selling_price < 0 || item.purchase_price < 0) {
-          throw new Error("Mahsulot narxi manfiy bo'lmasligi kerak");
+        if (
+          item.selling_price !== undefined &&
+          item.selling_price !== null &&
+          (typeof item.selling_price !== "number" ||
+            !Number.isFinite(item.selling_price) ||
+            item.selling_price < 0)
+        ) {
+          throw new Error("Mahsulot narxi manfiy bo'lmagan son bo'lishi kerak");
         }
 
         const product = await Product.findOne({
@@ -122,10 +153,30 @@ exports.createSale = async (req, res) => {
 
       const total_remaining = total_price - total_paid;
 
+      // QA-BUGFIX: ortiqcha to'lovni bloklash. Avval 1000 so'mlik savdoga
+      // 999 999 so'm to'lov qabul qilinib, total_remaining = -998 999 bo'lib
+      // qolardi — bu qarzdorlik statistikasini va kassani buzadi.
+      if (total_paid > total_price) {
+        throw new Error(
+          "To'lov summasi savdo summasidan katta bo'lishi mumkin emas",
+        );
+      }
+
+      // QA-BUGFIX: qoldiq > 0 bo'lsa, bu qarz — xaridor majburiy.
+      // Aks holda qarz hech bir qarzdorga bog'lanmay, "yo'qolgan" pul bo'lib qoladi.
+      if (total_remaining > 0 && !client_id) {
+        throw new Error("Qarz savdosi uchun xaridor tanlanishi kerak");
+      }
+
       const payments = [];
 
       if (paid_by_cash > 0) {
         payments.push({
+          // QA-BUGFIX: har bir to'lovga unikal payment_id beriladi.
+          // Sabab: {store_id, "payments.payment_id"} unique indeksida
+          // payment_id yo'q to'lovlar null bo'lib indekslanadi va bitta
+          // do'konda ikkinchi shunday hujjat E11000 (500) beradi.
+          payment_id: randomUUID(),
           amount: paid_by_cash,
           payment_method: "cash",
           paid_at: new Date(),
@@ -134,6 +185,7 @@ exports.createSale = async (req, res) => {
 
       if (paid_by_card > 0) {
         payments.push({
+          payment_id: randomUUID(),
           amount: paid_by_card,
           payment_method: "card",
           paid_at: new Date(),
@@ -392,7 +444,8 @@ exports.addPayment = async (req, res) => {
             amount,
             paid_at: new Date(),
             payment_method: method,
-            ...(payment_id ? { payment_id } : {}),
+            // QA-BUGFIX: har doim unikal id (null indeks to'qnashuvini yo'qotadi).
+            payment_id: payment_id || randomUUID(),
           },
         },
         $inc: inc,

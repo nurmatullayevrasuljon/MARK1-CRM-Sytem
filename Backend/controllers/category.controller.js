@@ -1,5 +1,21 @@
 const mongoose = require("mongoose");
 const Category = require("../models/category.model");
+const Product = require("../models/product.model");
+
+// QA-BUGFIX: bir xil nomli kategoriya ikki marta yaratilishi mumkin edi —
+// natijada mahsulotlar ikki xil "Ichimliklar" orasida bo'linib ketardi.
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+async function findDuplicateCategory(storeId, name, excludeId = null) {
+  const filter = {
+    store_id: storeId,
+    category_name: { $regex: `^${escapeRegex(name)}$`, $options: "i" },
+  };
+  if (excludeId) filter._id = { $ne: excludeId };
+  return Category.findOne(filter);
+}
 
 exports.createCategory = async (req, res) => {
   try {
@@ -8,9 +24,23 @@ exports.createCategory = async (req, res) => {
       return res.status(400).json({ message: "Kategoriya nomini kiriting" });
     }
 
+    const trimmedName = category_name.trim();
+
+    if (trimmedName.length > 60) {
+      return res
+        .status(400)
+        .json({ message: "Kategoriya nomi 60 belgidan oshmasligi kerak" });
+    }
+
+    if (await findDuplicateCategory(req.user.store_id, trimmedName)) {
+      return res
+        .status(400)
+        .json({ message: "Bu nomdagi kategoriya allaqachon mavjud" });
+    }
+
     const category = await Category.create({
       store_id: req.user.store_id,
-      category_name: category_name.trim(),
+      category_name: trimmedName,
     });
     return res
       .status(200)
@@ -34,6 +64,22 @@ exports.updateCategory = async (req, res) => {
       return res.status(400).json({ message: "Kategoriya nomini kiriting" });
     }
 
+    const trimmedName = category_name.trim();
+
+    if (trimmedName.length > 60) {
+      return res
+        .status(400)
+        .json({ message: "Kategoriya nomi 60 belgidan oshmasligi kerak" });
+    }
+
+    if (
+      await findDuplicateCategory(req.user.store_id, trimmedName, category_id)
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Bu nomdagi kategoriya allaqachon mavjud" });
+    }
+
     // Multi-tenant isolation: faqat joriy do'konning kategoriyasini tahrirlash mumkin
     const category = await Category.findOneAndUpdate(
       {
@@ -41,7 +87,7 @@ exports.updateCategory = async (req, res) => {
         store_id: req.user.store_id,
       },
       {
-        category_name: category_name.trim(),
+        category_name: trimmedName,
       },
       { new: true },
     );
@@ -67,8 +113,10 @@ exports.deleteCategory = async (req, res) => {
       return res.status(400).json({ message: "Kategoriya ID noto'g'ri" });
     }
 
-    // Multi-tenant isolation: faqat joriy do'konning kategoriyasini o'chirish mumkin
-    const category = await Category.findOneAndDelete({
+    // QA-BUGFIX: mahsuloti bor kategoriya o'chirilsa, mahsulotlar
+    // mavjud bo'lmagan category_id bilan "yetim" qolardi — ular
+    // filtrda va POS'da ko'rinmay qolishi mumkin edi.
+    const category = await Category.findOne({
       _id: category_id,
       store_id: req.user.store_id,
     });
@@ -76,6 +124,19 @@ exports.deleteCategory = async (req, res) => {
     if (!category) {
       return res.status(404).json({ message: "Kategoriya topilmadi" });
     }
+
+    const productsInCategory = await Product.countDocuments({
+      store_id: req.user.store_id,
+      category_id,
+    });
+
+    if (productsInCategory > 0) {
+      return res.status(400).json({
+        message: `Bu kategoriyada ${productsInCategory} ta mahsulot bor. Avval ularni boshqa kategoriyaga o'tkazing yoki o'chiring`,
+      });
+    }
+
+    await Category.deleteOne({ _id: category_id, store_id: req.user.store_id });
 
     return res
       .status(200)

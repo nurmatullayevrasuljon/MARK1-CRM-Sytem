@@ -1,22 +1,57 @@
 const mongoose = require("mongoose");
 const Client = require("../models/client.model");
+const Sale = require("../models/sale.model");
+
+// QA-BUGFIX: noto'g'ri telefon/bo'sh ism Mongoose validation xatosi bilan
+// 500 bo'lib qaytardi. Endi kirishda tekshiriladi va 400 qaytadi.
+function validateClientInput({ client_name, client_phone }) {
+  if (typeof client_name !== "string" || !client_name.trim()) {
+    return "Xaridor ismini kiriting";
+  }
+  if (client_name.trim().length > 80) {
+    return "Xaridor ismi 80 belgidan oshmasligi kerak";
+  }
+  if (
+    client_phone !== undefined &&
+    client_phone !== null &&
+    String(client_phone).trim() !== "" &&
+    !/^\d{9}$/.test(String(client_phone).trim())
+  ) {
+    return "Telefon raqam 9 xonali bo'lishi kerak (masalan: 901234567)";
+  }
+  return null;
+}
+
+function normalizePhone(client_phone) {
+  if (client_phone === undefined || client_phone === null) return null;
+  const value = String(client_phone).trim();
+  return value === "" ? null : value;
+}
 
 exports.createClient = async (req, res) => {
   try {
     const { client_name, client_phone } = req.body;
     const { store_id } = req.user;
 
+    const inputError = validateClientInput({ client_name, client_phone });
+    if (inputError) {
+      return res.status(400).json({ message: inputError });
+    }
+
+    const trimmedName = client_name.trim();
+    const phone = normalizePhone(client_phone);
+
     let existingClientName;
     let existingClientPhone;
 
     existingClientName = await Client.findOne({
-      client_name,
+      client_name: trimmedName,
       store_id,
     });
 
-    if (client_phone) {
+    if (phone) {
       existingClientPhone = await Client.findOne({
-        client_phone,
+        client_phone: phone,
         store_id,
       });
     }
@@ -35,8 +70,8 @@ exports.createClient = async (req, res) => {
 
     const client = await Client.create({
       store_id,
-      client_name,
-      client_phone,
+      client_name: trimmedName,
+      client_phone: phone,
     });
 
     return res
@@ -57,6 +92,14 @@ exports.updateClient = async (req, res) => {
     const { client_name, client_phone } = req.body;
     const { store_id } = req.user;
 
+    const inputError = validateClientInput({ client_name, client_phone });
+    if (inputError) {
+      return res.status(400).json({ message: inputError });
+    }
+
+    const trimmedName = client_name.trim();
+    const phone = normalizePhone(client_phone);
+
     const client = await Client.findOne({
       _id: client_id,
       store_id,
@@ -69,7 +112,7 @@ exports.updateClient = async (req, res) => {
     }
 
     const existingClientName = await Client.findOne({
-      client_name,
+      client_name: trimmedName,
       store_id,
       _id: { $ne: client_id },
     });
@@ -82,9 +125,9 @@ exports.updateClient = async (req, res) => {
 
     let existingClientPhone = null;
 
-    if (client_phone) {
+    if (phone) {
       existingClientPhone = await Client.findOne({
-        client_phone,
+        client_phone: phone,
         store_id,
         _id: { $ne: client_id },
       });
@@ -96,8 +139,8 @@ exports.updateClient = async (req, res) => {
       }
     }
 
-    client.client_name = client_name;
-    client.client_phone = client_phone;
+    client.client_name = trimmedName;
+    client.client_phone = phone;
 
     await client.save();
 
@@ -120,6 +163,23 @@ exports.deleteClient = async (req, res) => {
       return res.status(400).json({ message: "Xaridor ID noto'g'ri" });
     }
     const { store_id } = req.user;
+
+    // QA-BUGFIX: qarzi bor mijozni o'chirish qarzdorlikni "egasiz"
+    // qoldiradi — sale.client_id o'chirilgan hujjatga ishora qilib qoladi
+    // va qarzdorlar ro'yxatida kim qarzdor ekani ko'rinmay qoladi.
+    const activeDebt = await Sale.findOne({
+      store_id,
+      client_id: client_id,
+      status: "active",
+      total_remaining: { $gt: 0 },
+    }).select("_id");
+
+    if (activeDebt) {
+      return res.status(400).json({
+        message:
+          "Bu xaridorda faol qarzdorlik bor. Avval qarzni yoping yoki sotuvni bekor qiling",
+      });
+    }
 
     const client = await Client.findOneAndDelete({
       _id: client_id,

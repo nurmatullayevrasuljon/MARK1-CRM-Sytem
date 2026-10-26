@@ -7,10 +7,42 @@ const {
   generateRefreshToken,
 } = require("../utils/token.util");
 
+// QA-BUGFIX: noto'g'ri rol/telefon/ism Mongoose validatsiyasida 500 bo'lib
+// qaytardi. Endi 400 + tushunarli xabar.
+const USER_ROLES = ["admin", "seller"];
+
+function validateUserPayload({ user_name, user_phone, role }, { partial = false } = {}) {
+  if (!partial || user_name !== undefined) {
+    if (typeof user_name !== "string" || !user_name.trim()) {
+      return "Xodim ismini kiriting";
+    }
+    if (user_name.trim().length > 80) {
+      return "Xodim ismi 80 belgidan oshmasligi kerak";
+    }
+  }
+  if (!partial || user_phone !== undefined) {
+    if (!/^\d{9}$/.test(String(user_phone ?? ""))) {
+      return "Telefon raqam 9 xonali bo'lishi kerak (masalan: 901234567)";
+    }
+  }
+  if (!partial || role !== undefined) {
+    if (!USER_ROLES.includes(role)) {
+      return "Rol faqat 'admin' yoki 'seller' bo'lishi mumkin";
+    }
+  }
+  return null;
+}
+
 exports.createUser = async (req, res) => {
   try {
     const { id } = req.user;
     const { user_name, user_phone, password, role, profile_picture } = req.body;
+
+    const payloadError = validateUserPayload({ user_name, user_phone, role });
+    if (payloadError) {
+      return res.status(400).json({ message: payloadError });
+    }
+
     const existingUser = await User.findOne({
       store_id: id,
       user_phone,
@@ -31,7 +63,7 @@ exports.createUser = async (req, res) => {
 
     const newUser = await User.create({
       store_id: id,
-      user_name,
+      user_name: user_name.trim(),
       user_phone,
       role,
       password: hashedPassword,
@@ -52,11 +84,25 @@ exports.updateUser = async (req, res) => {
     const { user_id } = req.query;
     const { user_name, user_phone, password, role, profile_picture } = req.body;
 
-    const existingUser = await User.findOne({
-      store_id: id,
-      user_phone,
-      _id: { $ne: user_id },
-    });
+    if (!user_id || !mongoose.Types.ObjectId.isValid(user_id)) {
+      return res.status(400).json({ message: "Xodim ID noto'g'ri" });
+    }
+
+    const payloadError = validateUserPayload(
+      { user_name, user_phone, role },
+      { partial: true },
+    );
+    if (payloadError) {
+      return res.status(400).json({ message: payloadError });
+    }
+
+    const existingUser = user_phone
+      ? await User.findOne({
+          store_id: id,
+          user_phone,
+          _id: { $ne: user_id },
+        })
+      : null;
 
     if (existingUser) {
       return res.status(400).json({
@@ -65,11 +111,19 @@ exports.updateUser = async (req, res) => {
     }
 
     const updateFields = {
-      user_name,
+      user_name: user_name !== undefined ? user_name.trim() : undefined,
       user_phone,
       role,
       profile_picture,
     };
+
+    for (const key of Object.keys(updateFields)) {
+      if (updateFields[key] === undefined) delete updateFields[key];
+    }
+
+    if (Object.keys(updateFields).length === 0 && !password) {
+      return res.status(400).json({ message: "Yangilanadigan maydon yo'q" });
+    }
 
     if (password) {
       if (password.length < 6) {
@@ -104,6 +158,10 @@ exports.deleteUser = async (req, res) => {
     const { id } = req.user;
     const { user_id } = req.query;
 
+    if (!user_id || !mongoose.Types.ObjectId.isValid(user_id)) {
+      return res.status(400).json({ message: "Xodim ID noto'g'ri" });
+    }
+
     const deletingUser = await User.findOneAndDelete({ _id: user_id, store_id: id });
     if (!deletingUser) {
       return res.status(400).json({ message: "Xodim topilmadi" });
@@ -134,6 +192,11 @@ exports.getUserById = async (req, res) => {
   try {
     const { id } = req.user;
     const { user_id } = req.query;
+
+    if (!user_id || !mongoose.Types.ObjectId.isValid(user_id)) {
+      return res.status(400).json({ message: "Xodim ID noto'g'ri" });
+    }
+
     const user = await User.findOne({ _id: user_id, store_id: id }).select("-password");
     if (!user) {
       return res.status(404).json({ message: "Xodim topilmadi" });

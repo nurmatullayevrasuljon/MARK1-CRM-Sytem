@@ -17,6 +17,60 @@ function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// ============================================================
+// PAYLOAD VALIDATSIYASI (QA-BUGFIX)
+// ============================================================
+// Muammo: Mongoose'da `min`/`max` validatorlari yo'q edi, shu sababli
+// manfiy narx, manfiy ombor miqdori va 1e15 kabi absurd qiymatlar
+// bazaga tushib qolardi. Eng xavflisi — "bir xil nomli tovar" merge
+// yo'li: quantity: -50 yuborilsa, mavjud tovarning ombori KAMAYARDI.
+// Endi barcha sonli maydonlar controllerga kirishda tekshiriladi.
+const MAX_MONEY = 1e12; // 1 trillion so'm — real biznes chegarasidan ancha yuqori
+const MAX_QUANTITY = 1e9;
+const PRODUCT_NAME_MAX = 120;
+
+const NUMERIC_RULES = {
+  purchase_price: { label: "Tannarx", max: MAX_MONEY },
+  selling_price: { label: "Sotuv narxi", max: MAX_MONEY },
+  quantity: { label: "Miqdor", max: MAX_QUANTITY },
+  minimum_quantity: { label: "Minimal miqdor", max: MAX_QUANTITY },
+};
+
+/**
+ * @returns {string|null} xato xabari yoki null (valid).
+ */
+function validateProductPayload(body, { requireName = false } = {}) {
+  if (requireName || body.product_name !== undefined) {
+    if (typeof body.product_name !== "string" || !body.product_name.trim()) {
+      return "Tovar nomini kiriting";
+    }
+    if (body.product_name.trim().length > PRODUCT_NAME_MAX) {
+      return `Tovar nomi ${PRODUCT_NAME_MAX} belgidan oshmasligi kerak`;
+    }
+  }
+
+  for (const [field, rule] of Object.entries(NUMERIC_RULES)) {
+    const value = body[field];
+    if (value === undefined) continue; // qisman update'da maydon yo'q bo'lishi mumkin
+
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      return `${rule.label} son bo'lishi kerak`;
+    }
+    if (value < 0) {
+      return `${rule.label} manfiy bo'lmasligi kerak`;
+    }
+    if (value > rule.max) {
+      return `${rule.label} juda katta qiymat`;
+    }
+  }
+
+  if (body.unit !== undefined && !["dona", "kg"].includes(body.unit)) {
+    return "O'lchov birligi faqat 'dona' yoki 'kg' bo'lishi mumkin";
+  }
+
+  return null;
+}
+
 exports.createProduct = async (req, res) => {
   try {
     let { product_barcode } = req.body;
@@ -24,6 +78,17 @@ exports.createProduct = async (req, res) => {
       product_barcode = normalizeBarcode(product_barcode);
       req.body.product_barcode = product_barcode;
     }
+
+    const payloadError = validateProductPayload(req.body, { requireName: true });
+    if (payloadError) {
+      return res.status(400).json({ message: payloadError });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(req.body.category_id)) {
+      return res.status(400).json({ message: "Kategoriya ID noto'g'ri" });
+    }
+
+    req.body.product_name = req.body.product_name.trim();
 
     // BUG FIX: bir xil nomli mahsulot bir necha marta kiritilsa, har safar
     // ALOHIDA hujjat yaratilar edi — chunki shtrix-kod tekshiruvi faqat
@@ -134,6 +199,22 @@ exports.updateProduct = async (req, res) => {
     if (product_barcode !== undefined) {
       product_barcode = normalizeBarcode(product_barcode);
       req.body.product_barcode = product_barcode;
+    }
+
+    const payloadError = validateProductPayload(req.body);
+    if (payloadError) {
+      return res.status(400).json({ message: payloadError });
+    }
+
+    if (req.body.product_name !== undefined) {
+      req.body.product_name = req.body.product_name.trim();
+    }
+
+    if (
+      req.body.category_id !== undefined &&
+      !mongoose.Types.ObjectId.isValid(req.body.category_id)
+    ) {
+      return res.status(400).json({ message: "Kategoriya ID noto'g'ri" });
     }
 
     if (product_barcode) {
