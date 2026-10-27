@@ -102,6 +102,14 @@ body > .d-flex {
 
 .sidebar .nav {
   flex: 1 1 auto;
+  /* Flex kolonka ichida min-height:auto bo'lsa, kontent sig'masa nav
+     kengayib, oyoqchi (foot) pastga siqib ketadi va scroll ichkarida
+     emas, butun sidebar bo'ylab qo'shilardi. */
+  min-height: 0;
+  /* Bootstrap `.nav { flex-wrap: wrap }` tufayli balandlik kam bo'lganda
+     elementlar yangi "ustun"ga o'tib, ustma-ust tushardi (kuzatildi:
+     300px viewportda). Sidebar nav'ida wrap kerak emas. */
+  flex-wrap: nowrap;
   overflow-y: auto;
   overflow-x: hidden;
   padding-bottom: var(--mk-space-4);
@@ -204,7 +212,10 @@ body.mk-sidebar-collapsed .sidebar .logo img {
 body.mk-sidebar-collapsed .sidebar .mk-sidebar-foot {
   justify-content: center;
 }
-body.mk-sidebar-collapsed .sidebar .mk-user-meta,
+/* Eski qoldiq: bu yerda `display: none` tufayli hover kengayganda ham
+   user ismi qaytmas edi (opacity/max-width tranzitsiyasi ishlamay qolardi).
+   Endi yashirish mark1-os.css'dagi opacity/visibility/max-width orqali —
+   silliq chiqadi, "galti" sakrash yo'q. */
 body.mk-sidebar-collapsed .sidebar .mk-sidebar-toggle span {
   display: none;
 }
@@ -1596,6 +1607,10 @@ p { color: inherit; }
   text-transform: uppercase;
   color: var(--text-muted);
   opacity: .85;
+  /* Yig'ilgan ↔ kengaygan holat orasida silliq o'tish. */
+  transition: font-size var(--m1-dur, 120ms) var(--m1-ease, ease),
+              height var(--m1-dur, 120ms) var(--m1-ease, ease),
+              margin var(--m1-dur, 120ms) var(--m1-ease, ease);
 }
 .mk-nav-label:first-child { margin-top: 0; }
 

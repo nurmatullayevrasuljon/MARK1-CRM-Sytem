@@ -221,9 +221,29 @@ body {
 #productSearch {
   width: 100%;
   padding: 10px 14px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid #e5e7eb;
-  margin-bottom: 15px;
+  /* Eski margin-bottom: 15px qidiruv ustunini 15px balandroq qilib,
+     qolgan nishonlar markazdan 8px pastga siljishiga sabab bo'lgandi. */
+  margin-bottom: 0;
+  height: 42px;
+}
+
+/* ─── Filtr qatori: barcha boshqaruv bir xil balandlik va radius ────────
+   Ikkilik (40px vs 42px) va radius (10px vs 8px) farqi qatorni
+   g'altak ko'rinishga olib kelgan edi. */
+.mk-toolbar .form-control,
+.mk-toolbar .form-select {
+  height: 42px;
+  border-radius: 8px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.mk-toolbar .btn {
+  height: 42px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
 }
 
 /* counter */

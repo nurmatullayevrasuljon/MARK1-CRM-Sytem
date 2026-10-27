@@ -239,7 +239,7 @@ const PAGE_SUBTITLES = {
   settings: "Profil va do'kon sozlamalari"
 };
 
-function openPage(pageId, titleText) {
+function openPage(pageId, titleText, subtitleText) {
   if(typeof $ !== "undefined") { $(".modal").modal("hide"); }
   const targetSection = document.getElementById(pageId) || document.getElementById("dashboard");
   if (!targetSection) return;
@@ -283,7 +283,9 @@ function openPage(pageId, titleText) {
   }
 
   if (pageSubtitle) {
-    pageSubtitle.innerText = PAGE_SUBTITLES[safePageId] || "";
+    // subtitleText berilsa — u doim ustun (sahifaning statik izohi).
+    // Aks holda PAGE_SUBTITLES xaritasi ishlatiladi (ichki bo'lim almashganda).
+    pageSubtitle.innerText = subtitleText || PAGE_SUBTITLES[safePageId] || "";
   }
 
   localStorage.setItem("activePage", safePageId);
@@ -5791,10 +5793,19 @@ async function syncAllApiData() {
 =============================================== */
 document.addEventListener("DOMContentLoaded",
   () => {
-    const savedPage = localStorage.getItem("activePage") || "dashboard";
-    const savedTitle = localStorage.getItem("activePageTitle") || "Boshqaruv paneli";
+    // Sahifa endi alohida HTML fayllarga bo'lingan. localStorage'dagi eski
+    // "activePage/activePageTitle" qiymati noto'g'ri izoh ko'rsatishi mumkin
+    // edi (masalan /order sahifasida dashboard izohi). Shuning uchun faol
+    // bo'limni DOM'dan aniqlaymiz va sahifaning statik sarlavha/izohini
+    // ochiq-oydin saqlaymiz.
+    const activeSection =
+      document.querySelector(".section.active") || document.querySelector(".section");
+    const staticTitle = pageTitle ? pageTitle.innerText.trim() : "";
+    const staticSubtitle = pageSubtitle ? pageSubtitle.innerText.trim() : "";
 
-    openPage(savedPage, savedTitle);
+    if (activeSection) {
+      openPage(activeSection.id, staticTitle, staticSubtitle);
+    }
 
     // Sozlamalar bo'limi: rol, ruxsatlar va chek sozlamasi.
     // ROLE_LABELS const'i fayl oxirida e'lon qilinganligi uchun bu

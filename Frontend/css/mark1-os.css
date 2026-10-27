@@ -414,6 +414,10 @@ html.dark-mode .sidebar .logo {
   max-width: 140px;
   object-fit: contain;
   display: block;
+  /* Yig'ilgan ↔ kengaygan holat orasida silliq o'tish ("galti" emas). */
+  transition: opacity var(--m1-dur) var(--m1-ease),
+              max-width var(--m1-dur) var(--m1-ease),
+              visibility var(--m1-dur) var(--m1-ease);
 }
 
 .sidebar .nav-item {
@@ -494,7 +498,7 @@ html.dark-mode .sidebar .nav-item.active .svg-icon {
   font-weight: 700;
   letter-spacing: 0.02em;
 }
-.mk-user-meta { min-width: 0; line-height: 1.3; }
+.mk-user-meta { min-width: 0; line-height: 1.3; transition: opacity var(--m1-dur) var(--m1-ease), max-width var(--m1-dur) var(--m1-ease), visibility var(--m1-dur) var(--m1-ease); }
 .mk-user-name {
   font-size: var(--m1-fs-13);
   font-weight: 600;
@@ -524,9 +528,47 @@ body.mk-sidebar-collapsed .mk-nav-label::after {
   margin: 0 var(--m1-s2);
   background: var(--m1-line);
 }
-body.mk-sidebar-collapsed .mk-user-meta,
-body.mk-sidebar-collapsed .sidebar .logo img { display: none; }
+/* Eski holat: `display: none → block` aniq sakrab ko'rinardi ("galti").
+   Endi opacity/max-width orqali silliq o'tish. */
+body.mk-sidebar-collapsed .mk-user-meta {
+  opacity: 0;
+  visibility: hidden;
+  max-width: 0;
+  overflow: hidden;
+}
+body.mk-sidebar-collapsed .sidebar .logo img {
+  opacity: 0;
+  visibility: hidden;
+  max-width: 0;
+}
 body.mk-sidebar-collapsed .sidebar .logo { justify-content: center; padding-left: 0; padding-right: 0; }
+/* Bo'sh qutilik o'rniga ixcham "M1" belgisi (faqat yig'ilgan holatda). */
+body.mk-sidebar-collapsed .sidebar .logo::before {
+  content: "M1";
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--m1-brand);
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+/* Yig'ilgan holatda yorliq matni yashiriladi (font-size:0), lekin konteyner
+   25px balandlikda qolib "suzuvchi" bo'shliq hosil qilardi. Endi u ixcham
+   1px ajratgichga aylanadi — guruh ajralishi saqlanadi, teshik yo'qoladi. */
+body.mk-sidebar-collapsed .mk-nav-label {
+  height: 1px;
+  margin: 10px var(--m1-s2) !important;
+  padding: 0 !important;
+  overflow: hidden;
+  /* `line-height: 24px` bo'lsa, ko'rinmas matn qatori `::after` chizig'ini
+     1px konteynerdan tashqariga siqib chiqarar va u kesilardi. */
+  line-height: 0;
+  /* `overflow: hidden` tufayli flex'dagi `min-height: auto` 0 bo'ladi — nav
+     kontenti sig'maganda (qisqa viewport) flex yorliqni 1px → 0 siqib,
+     chizig'ini kesib tashlardi (kuzatildi: 1440×300 da chiziq yo'q edi).
+     Yorliq siqilmasin, nav ichki scroll'ga ketsin. */
+  flex-shrink: 0;
+}
+body.mk-sidebar-collapsed .mk-nav-label::after { margin: 0 !important; }
 body.mk-sidebar-collapsed .mk-sidebar-foot { justify-content: center; }
 body.mk-sidebar-collapsed .sidebar .nav-item:hover::after,
 body.mk-sidebar-collapsed .sidebar .nav-item:focus-visible::after {
@@ -570,16 +612,25 @@ body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .nav-item .svg-icon {
 body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-nav-label {
   font-size: var(--m1-fs-10);
   padding: 0 var(--m1-s1);
-  margin: var(--m1-s3) 0 var(--m1-s1);
+  margin: var(--m1-s3) 0 var(--m1-s1) !important;
+  /* Yig'ilgan holatdagi ixcham ajratgichni bekor qilamiz. */
+  height: auto !important;
+  overflow: visible !important;
+  line-height: 1.4;
 }
 body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-nav-label::after { content: none; }
 body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-user-meta,
-body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo img { display: block; }
+body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo img {
+  opacity: 1;
+  visibility: visible;
+  max-width: 140px;
+}
 body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo {
   justify-content: space-between;
   padding-left: var(--m1-s1);
   padding-right: var(--m1-s1);
 }
+body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo::before { content: none; }
 body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-sidebar-foot {
   justify-content: flex-start;
   padding-left: var(--m1-s1);
@@ -1718,7 +1769,11 @@ html.dark-mode .table-hover > tbody > tr:hover > * {
   box-shadow: none !important;
   margin-top: 0 !important;
 }
-#selling > .card > .card-body { padding: 0 !important; }
+/* Eski qiymat `0` edi: kontent karta qirrasiga tirqab, `.card { overflow:hidden;
+   border-radius:16px }` tufayli pastki qatordagi tugma/badge burchagi diagonal
+   kesilardi. Endi 20px ichki bo'shliq — barcha qatorlar radiusli burchakdan
+   xoli, ustunlar bir tekisda qoladi. */
+#selling > .card > .card-body { padding: var(--m1-s5) !important; }
 #selling > .card > .card-body > h3.h5 {
   margin: 0 0 var(--m1-s4) !important;
   padding: 0;
@@ -2767,7 +2822,13 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
     margin-top: 8px;
     padding-top: 8px !important;
     border-top: 1px solid var(--m1-line-soft) !important;
+    /* Eski holat: `justify-content: space-between` uchala bolani
+       (yorug' + edit + delete) yoyib yuborardi — edit tugmasi kartaning
+       o'rtasida ajralib turardi. Yorug' chapda, tugmalar o'ngda
+       yonma-yon guruhlanadi. */
+    justify-content: flex-start !important;
   }
+  #productTable td[data-label="Harakatlar"]::before { margin-right: auto; }
 
   /* Debtors toolbar and cards on mobile */
   #debtors .mk-page-actions {
