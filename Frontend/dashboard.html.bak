@@ -58,9 +58,14 @@
     <nav class="sidebar" id="sidebar-nav" aria-label="Asosiy navigatsiya">
       <!-- Logotip heading emas — h4 edi, ekran o'quvchilari uchun sarlavhalar
            tartibini buzardi (WCAG 1.3.1). Endi oddiy konteyner. -->
-      <div class="logo" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-        <img src="img/brand-l.png" alt="Mark1 CRM" class="mk-logo-full">
-        <img src="img/mark1-mark.png" alt="Mark1 CRM" class="mk-logo-mark" aria-hidden="true">
+      <div class="logo-wrapper" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <a href="/" class="logo" aria-label="Mark1 CRM — Bosh sahifaga o'tish" title="Mark1 Bosh sahifasi">
+          <img src="img/brand-l.png" alt="Mark1 CRM" class="mk-logo-full">
+          <img src="img/mark1-mark.png" alt="Mark1 CRM" class="mk-logo-mark" aria-hidden="true">
+        </a>
+        <button type="button" class="sidebar-toggle-btn" data-mk-sidebar-toggle aria-label="Yon panelni yig'ish" title="Yon panelni yig'ish / kengaytirish">
+          <i class="bi bi-layout-sidebar-inset" aria-hidden="true"></i>
+        </button>
         <button type="button" class="mk-mobile-menu" data-mk-drawer-close aria-label="Menyuni yopish">
           <i class="bi bi-x-lg" aria-hidden="true"></i>
         </button>
@@ -329,7 +334,7 @@
               <h3 class="counter" data-key="inventoryBalance" data-count="0" data-last-value="0">
                 0 <small>so'm</small>
               </h3>
-              <small class="text-muted">Ombordagi mahsulotlarning umumiy qiymati</small>
+              <small class="counter-change" id="inventoryBalanceChange">Zaxira hisobi</small>
             </div>
           </div>
 

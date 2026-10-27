@@ -28,39 +28,35 @@
       body.classList.add("mk-sidebar-collapsed");
     }
 
-    // Toggle tugmasi olib tashlandi (foydalanuvchi so'rovi) — endi sidebar
-    // logosi collapse boshqaruvchisi. Mobil drawer'dagi "yopish" tugmasi
-    // logo ichida turadi, u alohida ishlaydi (pastda).
-    var toggle = document.querySelector("[data-mk-sidebar-toggle]") ||
-      document.querySelector(".sidebar .logo");
-    if (!toggle) return;
+    // Sidebar collapse boshqaruvchisi.
+    // Logo esa har doim Bosh sahifaga (Landing page) ga olib o'tadi.
+    var toggle = document.querySelector("[data-mk-sidebar-toggle]");
 
     function setCollapsed(collapsed) {
       body.classList.toggle("mk-sidebar-collapsed", collapsed);
       localStorage.setItem(LS_COLLAPSE, collapsed ? "1" : "0");
-      var t = document.querySelector("[data-mk-sidebar-toggle]");
-      if (t) t.setAttribute("aria-expanded", String(!collapsed));
-      toggle.setAttribute("aria-expanded", String(!collapsed));
-      toggle.setAttribute("aria-label",
-        collapsed ? "Yon panelni kengaytirish" : "Yon panelni kichraytirish");
+      if (toggle) {
+        toggle.setAttribute("aria-expanded", String(!collapsed));
+        toggle.setAttribute("aria-label",
+          collapsed ? "Yon panelni kengaytirish" : "Yon panelni kichraytirish");
+      }
     }
 
-    // A11y: logoni bosiladigan qilamiz (WCAG 2.1.1 — klaviatura orqali ham).
-    if (!toggle.hasAttribute("tabindex")) toggle.setAttribute("tabindex", "0");
-    if (!toggle.hasAttribute("role")) toggle.setAttribute("role", "button");
-    toggle.setAttribute("aria-expanded", String(!body.classList.contains("mk-sidebar-collapsed")));
+    if (toggle) {
+      if (!toggle.hasAttribute("tabindex")) toggle.setAttribute("tabindex", "0");
+      if (!toggle.hasAttribute("role")) toggle.setAttribute("role", "button");
+      toggle.setAttribute("aria-expanded", String(!body.classList.contains("mk-sidebar-collapsed")));
 
-    function onToggleClick(ev) {
-      // Logodagi "menyuni yopish" tugmasi collapse chaqirmasligi kerak.
-      if (ev.target && ev.target.closest && ev.target.closest("[data-mk-drawer-close]")) return;
-      // Mobil/rejimda sidebar fixed drawer — collapse klass ishlatilmaydi.
-      if (window.matchMedia("(max-width: 991px)").matches) return;
-      setCollapsed(!body.classList.contains("mk-sidebar-collapsed"));
+      function onToggleClick(ev) {
+        if (ev.target && ev.target.closest && ev.target.closest("[data-mk-drawer-close]")) return;
+        if (window.matchMedia("(max-width: 991px)").matches) return;
+        setCollapsed(!body.classList.contains("mk-sidebar-collapsed"));
+      }
+      toggle.addEventListener("click", onToggleClick);
+      toggle.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onToggleClick(ev); }
+      });
     }
-    toggle.addEventListener("click", onToggleClick);
-    toggle.addEventListener("keydown", function (ev) {
-      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onToggleClick(ev); }
-    });
   }
 
   /* ── 2. Mobile drawer ──────────────────────────────────────────────────── */

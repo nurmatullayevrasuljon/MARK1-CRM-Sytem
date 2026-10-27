@@ -278,13 +278,64 @@
     phoneEl.addEventListener("input", function () {
       phoneEl.value = normalizeUzPhoneInput(phoneEl.value);
       validate();
+      if (typeof validateStep1 === "function") validateStep1();
     });
 
-    firstNameEl.addEventListener("input", validate);
-        passwordEl.addEventListener("input", validate);
+    firstNameEl.addEventListener("input", function () {
+      validate();
+      if (typeof validateStep1 === "function") validateStep1();
+    });
+    passwordEl.addEventListener("input", validate);
     storeEl.addEventListener("input", validate);
     termsEl.addEventListener("change", validate);
     termsEl.addEventListener("click", validate);
+
+    // ── 2-bosqichli qadamlar navigatsiyasi ──
+    var nextBtn = $("nextToStep2Btn");
+    var backBtn = $("backToStep1Btn");
+    var step1Pane = $("signupStep1");
+    var step2Pane = $("signupStep2");
+    var step1Ind = $("step1Indicator");
+    var step2Ind = $("step2Indicator");
+    var stepDivider = $("stepDivider");
+
+    function validateStep1() {
+      var ok = firstNameEl.value.trim().length >= 3 && isValidPhone(phoneEl.value);
+      if (nextBtn) {
+        if (ok) {
+          nextBtn.removeAttribute("disabled");
+          nextBtn.classList.add("active");
+        } else {
+          nextBtn.setAttribute("disabled", "disabled");
+          nextBtn.classList.remove("active");
+        }
+      }
+      return ok;
+    }
+
+    if (nextBtn && backBtn && step1Pane && step2Pane) {
+      nextBtn.addEventListener("click", function () {
+        if (!validateStep1()) return;
+        step1Pane.style.display = "none";
+        step2Pane.style.display = "block";
+        if (step1Ind) { step1Ind.classList.remove("active"); step1Ind.classList.add("completed"); }
+        if (step2Ind) { step2Ind.classList.add("active"); }
+        if (stepDivider) { stepDivider.classList.add("active"); }
+        if (storeEl) storeEl.focus();
+        validate();
+      });
+
+      backBtn.addEventListener("click", function () {
+        step2Pane.style.display = "none";
+        step1Pane.style.display = "block";
+        if (step1Ind) { step1Ind.classList.add("active"); step1Ind.classList.remove("completed"); }
+        if (step2Ind) { step2Ind.classList.remove("active"); }
+        if (stepDivider) { stepDivider.classList.remove("active"); }
+        validateStep1();
+      });
+
+      validateStep1();
+    }
 
     form.addEventListener("submit", async function (e) {
       e.preventDefault();

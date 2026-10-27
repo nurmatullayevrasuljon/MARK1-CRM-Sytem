@@ -382,6 +382,70 @@
     }
     .terms-label a { color: var(--auth-accent); text-decoration: none; font-weight: 500; }
 
+    /* ── Step Navigation ── */
+    .signup-steps-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 22px;
+      padding: 8px 14px;
+      background: var(--auth-input-bg);
+      border: 1px solid var(--auth-border);
+      border-radius: 30px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .signup-step {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--auth-label);
+      transition: color 0.2s ease;
+    }
+    .signup-step.active {
+      color: var(--auth-accent);
+    }
+    .signup-step.completed {
+      color: #0DAD78;
+    }
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--auth-card);
+      border: 1px solid var(--auth-border);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .signup-step.active .step-num {
+      background: var(--auth-accent);
+      color: #fff;
+      border-color: var(--auth-accent);
+    }
+    .signup-step.completed .step-num {
+      background: #0DAD78;
+      color: #fff;
+      border-color: #0DAD78;
+    }
+    .step-divider {
+      flex: 0 0 24px;
+      height: 2px;
+      background: var(--auth-border);
+      border-radius: 2px;
+    }
+    .step-divider.active {
+      background: var(--auth-accent);
+    }
+    .signup-step-pane {
+      animation: fadeIn 0.2s ease;
+    }
+
     /* ── Divider ── */
     .auth-divider {
       display: flex;
@@ -520,58 +584,85 @@
           <img src="img/mark1-logo-navbar.png" alt="MARK1 CRM">
         </a>
         <h1 class="auth-card-title">Hisob yaratish</h1>
-        <p class="auth-card-subtitle">Bugun bizning CRM platformamizga qo'shiling</p>
+        <p class="auth-card-subtitle">Bor-yo'g'i 2 ta oddiy qadamda tizimdan foydalanishni boshlang</p>
+
+        <!-- 2-bosqichli qulay indikator -->
+        <div class="signup-steps-nav" aria-label="Ro'yxatdan o'tish bosqichlari">
+          <div class="signup-step active" id="step1Indicator">
+            <span class="step-num">1</span>
+            <span class="step-text">Shaxsiy</span>
+          </div>
+          <div class="step-divider" id="stepDivider"></div>
+          <div class="signup-step" id="step2Indicator">
+            <span class="step-num">2</span>
+            <span class="step-text">Do'kon</span>
+          </div>
+        </div>
 
         <form id="signupForm" novalidate>
-          <!-- Full name -->
-          <div class="field-group">
-            <label class="field-label" for="firstName">To'liq ism</label>
-            <input id="firstName" name="firstName" class="field-input"
-              required minlength="3" placeholder="To'liq ism" autocomplete="name">
-            <div class="invalid-feedback">Iltimos ismingizni kiriting.</div>
-          </div>
-
-          <!-- Phone -->
-          <div class="field-group">
-            <label class="field-label" for="phone">Telefon raqam</label>
-            <input id="phone" name="phone" type="tel" class="field-input"
-              required placeholder="+998 90 123 45 67" maxlength="13" autocomplete="tel">
-            <div class="invalid-feedback">Iltimos telefon raqam kiriting.</div>
-          </div>
-
-          <!-- Store name -->
-          <div class="field-group">
-            <label class="field-label" for="storeName">Do'kon nomi</label>
-            <input id="storeName" name="storeName" class="field-input"
-              required minlength="2" placeholder="Do'kon nomi">
-            <div class="invalid-feedback">Iltimos do'kon nomini kiriting.</div>
-          </div>
-
-          <!-- Password -->
-          <div class="field-group">
-            <label class="field-label" for="password">Parol</label>
-            <div class="field-wrap">
-              <input id="password" name="password" type="password" class="field-input has-toggle"
-                required minlength="6" placeholder="Parolingizni kiriting" autocomplete="new-password">
-              <button type="button" class="pw-toggle-btn" data-pw-toggle="password" aria-label="Parolni ko'rsatish"><i class="bi bi-eye" aria-hidden="true"></i></button>
+          <!-- ═══ 1-BOSQICH: Shaxsiy ma'lumotlar ═══ -->
+          <div id="signupStep1" class="signup-step-pane">
+            <!-- Full name -->
+            <div class="field-group">
+              <label class="field-label" for="firstName">Ism va familiyangiz</label>
+              <input id="firstName" name="firstName" class="field-input"
+                required minlength="3" placeholder="Masalan: Sardor Aliyev" autocomplete="name">
+              <div class="invalid-feedback">Iltimos ismingizni kiriting (kamida 3 ta belgi).</div>
             </div>
-            <p class="form-help">Kamida 6 ta belgi</p>
-            <div class="invalid-feedback">Kamida 6 ta belgidan iborat parol kiriting.</div>
+
+            <!-- Phone -->
+            <div class="field-group">
+              <label class="field-label" for="phone">Telefon raqamingiz</label>
+              <input id="phone" name="phone" type="tel" class="field-input"
+                required placeholder="+998 90 123 45 67" maxlength="13" autocomplete="tel">
+              <div class="invalid-feedback">Iltimos to'g'ri telefon raqam kiriting.</div>
+            </div>
+
+            <button id="nextToStep2Btn" class="btn-primary-auth" type="button" disabled style="margin-top: 16px;">
+              Davom etish <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+            </button>
           </div>
 
-          <!-- Terms -->
-          <div class="terms-row">
-            <input id="terms" type="checkbox" class="terms-check" required>
-            <label for="terms" class="terms-label">
-              Hisob yaratish orqali men
-              <a href="/privacy" target="_blank" rel="noopener">Maxfiylik siyosati</a>ga roziman
-            </label>
-          </div>
+          <!-- ═══ 2-BOSQICH: Do'kon va Parol ═══ -->
+          <div id="signupStep2" class="signup-step-pane" style="display: none;">
+            <!-- Store name -->
+            <div class="field-group">
+              <label class="field-label" for="storeName">Do'koningiz nomi</label>
+              <input id="storeName" name="storeName" class="field-input"
+                required minlength="2" placeholder="Masalan: Baraka Market">
+              <div class="invalid-feedback">Iltimos do'kon nomini kiriting.</div>
+            </div>
 
-          <!-- Submit -->
-          <button id="createBtn" class="btn-primary-auth" type="submit" disabled>
-            Yangi hisob yaratish
-          </button>
+            <!-- Password -->
+            <div class="field-group">
+              <label class="field-label" for="password">Xavfsiz parol</label>
+              <div class="field-wrap">
+                <input id="password" name="password" type="password" class="field-input has-toggle"
+                  required minlength="6" placeholder="Kamida 6 ta belgi" autocomplete="new-password">
+                <button type="button" class="pw-toggle-btn" data-pw-toggle="password" aria-label="Parolni ko'rsatish"><i class="bi bi-eye" aria-hidden="true"></i></button>
+              </div>
+              <p class="form-help">Kamida 6 ta belgi</p>
+              <div class="invalid-feedback">Kamida 6 ta belgidan iborat parol kiriting.</div>
+            </div>
+
+            <!-- Terms -->
+            <div class="terms-row">
+              <input id="terms" type="checkbox" class="terms-check" checked required>
+              <label for="terms" class="terms-label">
+                Hisob yaratish orqali men
+                <a href="/privacy" target="_blank" rel="noopener">Maxfiylik siyosati</a>ga roziman
+              </label>
+            </div>
+
+            <!-- Submit -->
+            <button id="createBtn" class="btn-primary-auth" type="submit" disabled>
+              Hisob yaratish 🎉
+            </button>
+
+            <button type="button" id="backToStep1Btn" class="btn btn-link w-100 text-muted mt-2" style="font-size:13px;text-decoration:none;border:none;background:none;cursor:pointer;padding:8px 0;">
+              <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Ortga qaytish
+            </button>
+          </div>
 
           <!-- Footer -->
           <p class="auth-footer-text">
