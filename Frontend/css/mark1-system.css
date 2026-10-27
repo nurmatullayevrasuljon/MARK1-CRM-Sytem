@@ -319,15 +319,15 @@ body.mk-sidebar-collapsed .sidebar .nav-item:focus-visible::after {
   font-size: var(--mk-fs-sm);
   color: var(--text-muted) !important;
 }
+/* Katta ekranlarda ham kontent to'liq kenglikda ishlaydi — sidebar qisqarganda
+   kontent bo'shab qolgan butun maydonni to'liq egallaydi (kattalashadi). */
 @media (min-width: 1600px) {
   .content > .section {
-    max-width: 1560px;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: none !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
-  /* Topbar har doim sidebar bilan yaxlit ulanib turishi kerak (bo'shliqsiz).
-     Ilgari bu yerda .content > .topbar { max-width: 1560px; margin: auto; }
-     bo'lgani sababli 1600px+ ekranlarda sidebar va topbar orasida 100px+ uzilish bo'lardi. */
 }
 
 /* ─── 6. Cards / KPI ─────────────────────────────────────────────────────── */
@@ -2212,9 +2212,8 @@ img.mk-img-broken { display: none !important; }
   .mk-stats-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
-/* Katta ekran: bo'limlar haddan tashqari cho'zilmasin (topbar esa to'liq kenglikda ulanadi) */
 @media (min-width: 1920px) {
-  .content > .section { max-width: 1640px; }
+  .content > .section { max-width: none !important; width: 100% !important; margin: 0 !important; }
 }
 
 /* ─── 34. Dark mode: chuqurlik va kontrast ───────────────────────────────── */

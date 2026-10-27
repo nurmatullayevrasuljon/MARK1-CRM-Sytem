@@ -126,7 +126,7 @@
   --m1-sidebar-w: 240px;
   --m1-sidebar-w-collapsed: 72px;
   --m1-topbar-h: 56px;
-  --m1-content-max: 1200px;
+  --m1-content-max: none;
   --m1-focus: 0 0 0 2px rgba(59, 130, 246, 0.35);
 }
 
@@ -796,7 +796,7 @@ html.dark-mode .notification-dot {
 .profile-store { font-size: var(--m1-fs-11); color: var(--m1-ink-3); }
 .profile-dropdown-icon { width: 14px; height: 14px; color: var(--m1-ink-3); }
 
-.section { display: none; padding: var(--m1-s6) var(--m1-gutter) var(--m1-s10); max-width: var(--m1-content-max); }
+.section { display: none; padding: var(--m1-s6) var(--m1-gutter) var(--m1-s10); width: 100%; max-width: none; margin: 0; }
 .section.active { display: block; }
 /* Fill-mode 'both' animatsiyani abadiy ushlab, section'ga doimiy stacking
    context berardi — modal (z=2000) qafasda qolib, sidebar/topbar undan
