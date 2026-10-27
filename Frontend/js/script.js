@@ -135,17 +135,21 @@ async function updateDailySalesPageCounter() {
     else {
       const percent =
         ((todayTotal - yesterdayTotal) / yesterdayTotal) * 100;
+      const formattedPercent =
+        Math.abs(percent) > 999
+          ? (percent > 0 ? "> 999%" : "< -999%")
+          : `${Math.abs(percent).toFixed(1)}%`;
 
       if (percent > 0) {
         changeEl.innerText =
-          `▲ ${percent.toFixed(1)}% kechaga nisbatan`;
+          `▲ ${formattedPercent} kechaga nisbatan`;
         changeEl.className =
           "counter-change text-success";
       }
 
       else if (percent < 0) {
         changeEl.innerText =
-          `▼ ${Math.abs(percent).toFixed(1)}% kechaga nisbatan`;
+          `▼ ${formattedPercent} kechaga nisbatan`;
         changeEl.className =
           "counter-change text-danger";
       }
@@ -1080,13 +1084,17 @@ function updateMonthlyRevenueUI() {
       }
       else {
         const percent = ((currentMonth - previousMonth) / previousMonth) * 100;
+        const formattedPercent =
+          Math.abs(percent) > 999
+            ? (percent > 0 ? "> 999%" : "< -999%")
+            : `${Math.abs(percent).toFixed(1)}%`;
 
         if (percent > 0) {
-          changeEl.innerText = `▲ ${percent.toFixed(1)}% o'tgan oyga nisbatan`;
+          changeEl.innerText = `▲ ${formattedPercent} o'tgan oyga nisbatan`;
           changeEl.className = "counter-change text-success";
         }
         else if (percent < 0) {
-          changeEl.innerText = `▼ ${Math.abs(percent).toFixed(1)}% o'tgan oyga nisbatan`;
+          changeEl.innerText = `▼ ${formattedPercent} o'tgan oyga nisbatan`;
           changeEl.className = "counter-change text-danger";
         }
         else {
@@ -4107,8 +4115,8 @@ async function updateCharts(cachedRawSales) {
     const weeklyEmptyEl = document.getElementById("weeklyChartEmpty");
     
     const weeklyHasData = weeklyData.some(v => Number(v) > 0);
-    // Agar real ma'lumot bo'lsa o'shani chizamiz, bo'lmasa namoyish diagrammasini ko'rsatamiz:
-    const displayWeeklyData = weeklyHasData ? weeklyData : [45000, 80000, 60000, 120000, 95000, 150000, 110000];
+    // Real ma'lumotlar chiziladi — soxta raqamlar ko'rsatilmaydi
+    const displayWeeklyData = weeklyData.length >= 7 ? weeklyData : [0, 0, 0, 0, 0, 0, 0];
     const displayWeekDays = (weekDays && weekDays.length >= 7) ? weekDays : ['Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan', 'Yak'];
 
 
@@ -4288,8 +4296,8 @@ async function updateCharts(cachedRawSales) {
       return Math.round(sum);
     })();
 
-    const displayDailySales = Number(dailySales) > 0 ? Number(dailySales) : 140000;
-    const displayYesterdaySales = yesterdaySales > 0 ? yesterdaySales : 95000;
+    const displayDailySales = Number(dailySales) || 0;
+    const displayYesterdaySales = Number(yesterdaySales) || 0;
 
     if (dailyEmptyEl) { dailyEmptyEl.classList.remove("show"); dailyEmptyEl.style.display = "none"; }
     if (dailyCanvas) dailyCanvas.style.display = "block";
@@ -4490,15 +4498,23 @@ function calculateProfitPreview() {
    ✅ QARZDORLAR BOSHQARUVI (SMS TIZIMI BILAN)
 =============================================== */
 function getDaysOverdue(returnDate) {
+  if (!returnDate) return 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const dueDate = toLocalDate(returnDate);
+  if (isNaN(dueDate.getTime())) return 0;
   dueDate.setHours(0, 0, 0, 0);
   return Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24));
 }
 
 function getStatus(returnDate) {
+  if (!returnDate) {
+    return { class: 'normal', text: 'Muddatsiz', days: 0 };
+  }
   const days = getDaysOverdue(returnDate);
+  if (isNaN(days)) {
+    return { class: 'normal', text: 'Muddatsiz', days: 0 };
+  }
   if (days > 0) return { class: 'overdue', text: 'Muddati o\'tgan', days };
   if (days >= -7) return { class: 'upcoming', text: 'Yaqinlashmoqda', days: Math.abs(days) };
   return { class: 'normal', text: 'Oddiy', days: Math.abs(days) };
@@ -5501,18 +5517,25 @@ function renderDebtors() {
           <span>Eslatma</span>
         </div>
       `;
+    } else if (hasReturnDate && daysOverdue === 0) {
+      smsBadge = `
+        <div class="sms-status-badge sms-pending" title="Bugun to'lov muddati">
+          <i class="bi bi-calendar-event"></i>
+          <span>Bugun</span>
+        </div>
+      `;
     } else if (daysLeft === 1) {
       smsBadge = `
-        <div class="sms-status-badge sms-pending" title="Ertaga avtomatik SMS yuboriladi">
+        <div class="sms-status-badge sms-pending" title="Ertaga to'lov muddati">
           <i class="bi bi-clock-fill"></i>
           <span>Ertaga</span>
         </div>
       `;
-    } else if (daysOverdue > 0 && daysOverdue % 3 === 0) {
+    } else if (daysOverdue > 0) {
       smsBadge = `
-        <div class="sms-status-badge sms-pending sms-overdue" title="Bugun eslatma yuboriladi">
+        <div class="sms-status-badge sms-pending sms-overdue" title="${daysOverdue} kun kechikkan qarzdor">
           <i class="bi bi-bell-fill"></i>
-          <span>Bugun</span>
+          <span>Eslatma</span>
         </div>
       `;
     } else {

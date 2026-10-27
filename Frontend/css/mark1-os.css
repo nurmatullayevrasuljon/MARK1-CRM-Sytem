@@ -694,6 +694,11 @@ html.dark-mode .notification-dot {
   to { opacity: 1; }
 }
 
+.debtor-amount {
+  white-space: nowrap !important;
+  font-feature-settings: "tnum" 1;
+}
+
 /* Chrome / Safari / Edge autofill fix */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
