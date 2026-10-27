@@ -419,6 +419,15 @@ html.dark-mode .sidebar .logo {
               max-width var(--m1-dur) var(--m1-ease),
               visibility var(--m1-dur) var(--m1-ease);
 }
+/* Keng holatda ixcham M logosi yashirin turadi */
+.sidebar .logo .mk-logo-mark {
+  display: none;
+  width: 32px;
+  height: 32px;
+  max-width: 32px;
+  max-height: 32px;
+  object-fit: contain;
+}
 
 .sidebar .nav-item {
   position: relative;
@@ -536,20 +545,23 @@ body.mk-sidebar-collapsed .mk-user-meta {
   max-width: 0;
   overflow: hidden;
 }
-body.mk-sidebar-collapsed .sidebar .logo img {
+body.mk-sidebar-collapsed .sidebar .logo .mk-logo-full {
+  display: none !important;
   opacity: 0;
   visibility: hidden;
   max-width: 0;
 }
+body.mk-sidebar-collapsed .sidebar .logo .mk-logo-mark {
+  display: block !important;
+  opacity: 1;
+  visibility: visible;
+  margin: 0 auto;
+}
 body.mk-sidebar-collapsed .sidebar .logo { justify-content: center; padding-left: 0; padding-right: 0; }
-/* Bo'sh qutilik o'rniga ixcham "M1" belgisi (faqat yig'ilgan holatda). */
+/* Matnli "M1" o'rniga brendning rasmiy geometrik "M" belgisi qo'yildi */
 body.mk-sidebar-collapsed .sidebar .logo::before {
-  content: "M1";
-  font-size: 17px;
-  font-weight: 800;
-  color: var(--m1-brand);
-  letter-spacing: -0.05em;
-  line-height: 1;
+  content: none !important;
+  display: none !important;
 }
 /* Yig'ilgan holatda yorliq matni yashiriladi (font-size:0), lekin konteyner
    25px balandlikda qolib "suzuvchi" bo'shliq hosil qilardi. Endi u ixcham
@@ -620,17 +632,21 @@ body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-nav-label {
 }
 body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-nav-label::after { content: none; }
 body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-user-meta,
-body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo img {
+body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo .mk-logo-full {
+  display: block !important;
   opacity: 1;
   visibility: visible;
   max-width: 140px;
+}
+body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo .mk-logo-mark {
+  display: none !important;
 }
 body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo {
   justify-content: space-between;
   padding-left: var(--m1-s1);
   padding-right: var(--m1-s1);
 }
-body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo::before { content: none; }
+body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo::before { content: none !important; }
 body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-sidebar-foot {
   justify-content: flex-start;
   padding-left: var(--m1-s1);
@@ -649,7 +665,8 @@ main.content {
   background: var(--m1-canvas);
 }
 
-.topbar {
+.topbar,
+.content > .topbar {
   position: sticky;
   top: 0;
   z-index: 30;
@@ -658,11 +675,13 @@ main.content {
   justify-content: space-between;
   gap: var(--m1-s4);
   min-height: var(--m1-topbar-h);
-  margin: 0;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
   padding: 0 var(--m1-gutter);
   border: 0;
   border-bottom: 1px solid var(--m1-line);
-  border-radius: 0;
+  border-radius: 0 !important;
   background: var(--m1-surface);
   box-shadow: 0 1px 3px rgba(17, 24, 39, 0.03);
 }
@@ -2538,14 +2557,9 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
     padding: var(--m1-s3) var(--m1-s2) !important;
   }
   body.mk-sidebar-collapsed .sidebar .logo { justify-content: center !important; padding: 0 0 var(--m1-s3) !important; }
-  body.mk-sidebar-collapsed .sidebar .logo img { display: none !important; }
-  body.mk-sidebar-collapsed .sidebar .logo::before {
-    content: "M1";
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--m1-brand);
-    letter-spacing: -0.04em;
-  }
+  body.mk-sidebar-collapsed .sidebar .logo .mk-logo-full { display: none !important; }
+  body.mk-sidebar-collapsed .sidebar .logo .mk-logo-mark { display: block !important; width: 32px !important; height: 32px !important; margin: 0 auto !important; }
+  body.mk-sidebar-collapsed .sidebar .logo::before { content: none !important; display: none !important; }
   body.mk-sidebar-collapsed .sidebar .nav-item {
     justify-content: center !important;
     padding: 10px 0 !important;
@@ -2599,7 +2613,8 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
     padding-right: var(--m1-s1) !important;
   }
   body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo::before { content: none !important; }
-  body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo img { display: block !important; }
+  body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo .mk-logo-full { display: block !important; }
+  body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo .mk-logo-mark { display: none !important; }
   body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .nav-item {
     justify-content: flex-start !important;
     padding: 10px var(--m1-s3) !important;
