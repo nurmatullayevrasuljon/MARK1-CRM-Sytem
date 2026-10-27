@@ -546,6 +546,49 @@ body.mk-sidebar-collapsed .sidebar .nav-item:focus-visible::after {
   box-shadow: var(--m1-shadow-2);
 }
 
+/* Collapsed sidebar: hover'da vaqtincha kengayadi (labels + user info ko'rinadi) */
+body.mk-sidebar-collapsed .sidebar {
+  transition: width 0.2s ease, min-width 0.2s ease, box-shadow 0.2s ease;
+}
+body.mk-sidebar-collapsed:has(.sidebar:hover) > .d-flex {
+  grid-template-columns: var(--mk-sidebar-w, 248px) minmax(0, 1fr) !important;
+}
+body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar {
+  width: var(--mk-sidebar-w, 248px) !important;
+  min-width: var(--mk-sidebar-w, 248px) !important;
+  box-shadow: var(--m1-shadow-3, 0 4px 24px rgba(0,0,0,0.12));
+}
+body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .nav-item {
+  justify-content: flex-start;
+  padding: 10px var(--m1-s3);
+  gap: var(--m1-s3);
+  font-size: var(--m1-fs-14);
+}
+body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .nav-item .svg-icon {
+  width: 24px; height: 24px; flex-basis: 24px;
+}
+body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-nav-label {
+  font-size: var(--m1-fs-10);
+  padding: 0 var(--m1-s1);
+  margin: var(--m1-s3) 0 var(--m1-s1);
+}
+body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-nav-label::after { content: none; }
+body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-user-meta,
+body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo img { display: block; }
+body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo {
+  justify-content: space-between;
+  padding-left: var(--m1-s1);
+  padding-right: var(--m1-s1);
+}
+body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-sidebar-foot {
+  justify-content: flex-start;
+  padding-left: var(--m1-s1);
+  padding-right: var(--m1-s1);
+}
+body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-user-meta {
+  overflow: hidden;
+}
+
 /* ─── 05. MAIN / PAGE FRAME ──────────────────────────────────────────────── */
 main.content {
   grid-column: 2;
@@ -2483,6 +2526,50 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
   body.mk-sidebar-collapsed .mk-user-meta { display: none !important; }
   body.mk-sidebar-collapsed .mk-sidebar-foot { justify-content: center !important; padding: var(--m1-s2) 0 !important; }
 
+  /* Collapsed: hover'da vaqtincha kengayadi (tablet) */
+  body.mk-sidebar-collapsed .sidebar {
+    transition: width 0.2s ease, min-width 0.2s ease, box-shadow 0.2s ease !important;
+  }
+  body.mk-sidebar-collapsed:has(.sidebar:hover) > .d-flex {
+    grid-template-columns: var(--mk-sidebar-w, 248px) minmax(0, 1fr) !important;
+  }
+  body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar {
+    width: var(--mk-sidebar-w, 248px) !important;
+    min-width: var(--mk-sidebar-w, 248px) !important;
+    box-shadow: var(--m1-shadow-3, 0 4px 24px rgba(0,0,0,0.12)) !important;
+  }
+  body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo {
+    justify-content: space-between !important;
+    padding-left: var(--m1-s1) !important;
+    padding-right: var(--m1-s1) !important;
+  }
+  body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo::before { content: none !important; }
+  body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .logo img { display: block !important; }
+  body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .nav-item {
+    justify-content: flex-start !important;
+    padding: 10px var(--m1-s3) !important;
+    gap: var(--m1-s3) !important;
+    font-size: var(--m1-fs-14, 14px) !important;
+  }
+  body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .nav-item .svg-icon {
+    width: 24px; height: 24px; flex-basis: 24px;
+  }
+  body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .nav-item:hover::after,
+  body.mk-sidebar-collapsed:has(.sidebar:hover) .sidebar .nav-item:focus-visible::after {
+    content: none !important;
+  }
+  body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-nav-label {
+    font-size: 10px !important;
+    padding: 0 var(--m1-s3) !important;
+    margin: var(--m1-s4) 0 var(--m1-s2) !important;
+  }
+  body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-nav-label::after { display: none !important; }
+  body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-user-meta { display: block !important; }
+  body.mk-sidebar-collapsed:has(.sidebar:hover) .mk-sidebar-foot {
+    justify-content: flex-start !important;
+    padding: var(--m1-s2) var(--m1-s1) !important;
+  }
+
   .section { padding: var(--m1-s4) var(--m1-s5) var(--m1-s8) !important; }
   .mk-stats-6 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
   .mk-stats-6 > [class*="col-"]:nth-child(n+4) .card-box { border-top: 1px solid var(--m1-line) !important; }
@@ -2527,8 +2614,9 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
     padding-right: 0 !important;
   }
   .mk-sidebar-toggle { display: none !important; }
-  .mk-mobile-menu { display: inline-flex !important; }
-  [data-mk-drawer-close] { display: inline-flex !important; }
+  /* Hamburger olib tashlandi — mobil navigatsiya pastki nav orqali */
+  .mk-mobile-menu { display: none !important; }
+  [data-mk-drawer-close] { display: none !important; }
   .mobile-bottom-nav {
     position: fixed;
     left: 0; right: 0; bottom: 0;
@@ -4189,4 +4277,16 @@ html.dark-mode .auth-left {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+}
+
+/* Landing hero metrika raqamlari mobilda qatga bo'linmasin (4-rasm) */
+@media (max-width: 767.98px) {
+  .mk-root .mk-hero-metric p:last-child {
+    font-size: 15px !important;
+    white-space: nowrap;
+    letter-spacing: -0.02em;
+  }
+  .mk-root .mk-hero-metric {
+    padding: 12px 12px !important;
+  }
 }

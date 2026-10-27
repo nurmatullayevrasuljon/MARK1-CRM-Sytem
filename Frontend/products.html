@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-BXGWP6X57J"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-BXGWP6X57J');
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mahsulotlar | Mark1 CRM</title>
+  <meta name="description" content="Mark1 CRM — Mahsulotlar ro'yxati va boshqaruvi.">
+  <!-- Dashboard himoyalangan sahifa: indekslashdan chiqariladi -->
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="shortcut icon" href="img/b-logo2.png" type="image/x-icon">
+
+  <link rel="stylesheet" href="vendor/css/bootstrap.css?v=1789490310">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css?v=1789490310">
+  <link rel="stylesheet" href="css/style.css?v=1795300000">
+  <link rel="stylesheet" href="css/dark-theme.css?v=1789490310">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="css/premium-theme.css?v=1790900001">
+  <!-- ui-ux-pro-max review qatlamı: focus-visible, reduced-motion, touch targets -->
+  <link rel="stylesheet" href="css/dashboard-polish.css?v=1791100002">
+  <!-- MARK1 Design System (yagona spacing/tipografiya/holatlar/responsive) -->
+  <link rel="stylesheet" href="css/mark1-system.css?v=1795300000">
+  <!-- MARK1 Business OS — precision-ledger design layer (final authority) -->
+  <link rel="stylesheet" href="css/mark1-os.css?v=1795300000">
+  <script>
+    // FOUC oldini olish: mavzuni sahifa chizilishidan oldin qo'llash.
+    // Qoida: aniq tanlov (localStorage) ustun — u bo'lmasa tizim mavzusi
+    // (prefers-color-scheme) asos bo'ladi.
+    (function () {
+      var t = localStorage.getItem('theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (t === 'dark' || (!t && prefersDark)) {
+        document.documentElement.classList.add('dark-mode');
+      }
+    })();
+  </script>
+
+</head>
+
+<body>
+  <!-- Skip-link: klaviatura foydalanuvchisi sidebar'tsiz to'g'ridan-to'g'ri
+       asosiy mazmunga o'tadi (WCAG 2.4.1). -->
+  <a href="#main-content" class="skip-link">Asosiy mazmunga o'tish</a>
+  <div class="d-flex">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar-nav" aria-label="Asosiy navigatsiya">
+      <!-- Logotip heading emas — h4 edi, ekran o'quvchilari uchun sarlavhalar
+           tartibini buzardi (WCAG 1.3.1). Endi oddiy konteyner. -->
+      <div class="logo" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <img src="img/brand-l.png" alt="Mark1 CRM">
+        <button type="button" class="mk-mobile-menu" data-mk-drawer-close aria-label="Menyuni yopish">
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+      </div>
+      <ul class="nav flex-column" role="menubar" aria-label="Bo'limlar">
+        <li class="mk-nav-label" role="presentation" aria-hidden="true">Asosiy</li>
+        <li class="nav-item" data-target="dashboard" role="menuitem" tabindex="0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="svg-icon">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M6 13.5V3.75m0 9.75a1.5 1.5 0 0 1 0 3m0-3a1.5 1.5 0 0 0 0 3m0 3.75V16.5m12-3V3.75m0 9.75a1.5 1.5 0 0 1 0 3m0-3a1.5 1.5 0 0 0 0 3m0 3.75V16.5m-6-9V3.75m0 3.75a1.5 1.5 0 0 1 0 3m0-3a1.5 1.5 0 0 0 0 3m0 9.75V10.5" />
+          </svg>
+          Boshqaruv paneli
+        </li>
+        <li class="mk-nav-label" role="presentation" aria-hidden="true">Savdo</li>
+        <li class="nav-item" data-target="selling" role="menuitem" tabindex="0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="svg-icon">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+          </svg>
+          Sotish
+        </li>
+        <li class="nav-item active" data-target="productsSection" role="menuitem" tabindex="0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="svg-icon">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+          </svg>
+          Mahsulotlar
+        </li>
+        <li class="nav-item" data-target="daily-sales" role="menuitem" tabindex="0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="svg-icon">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          </svg>
+          Savdo tarixi
+        </li>
+        <li class="nav-item" data-target="debtors" role="menuitem" tabindex="0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="svg-icon">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
+          </svg>
+          Qarzdorlar
+        </li>
+        <li class="mk-nav-label" role="presentation" aria-hidden="true">Tizim</li>
+        <li class="nav-item" data-target="settings" role="menuitem" tabindex="0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="svg-icon">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+          </svg>
+
+          Sozlamalar
+        </li>
+      </ul>
+      <!-- Sidebar pastki bloki: foydalanuvchi + do'kon -->
+      <div class="mk-sidebar-foot">
+        <div class="mk-avatar" id="sidebarAvatar" aria-hidden="true">M</div>
+        <div class="mk-user-meta">
+          <div class="mk-user-name" id="sidebarUserName">Foydalanuvchi</div>
+          <div class="mk-user-store" id="sidebarUserStore">Do'kon nomi</div>
+        </div>
+      </div>
+    </nav>
+    <!-- MOBILE BOTTOM NAV -->
+    <nav class="mobile-bottom-nav" role="navigation" aria-label="Mobil navigatsiya">
+      <button type="button" data-target="dashboard" aria-label="Boshqaruv paneli">
+        <i class="bi bi-house-door" aria-hidden="true"></i>
+        <span>Asosiy</span>
+      </button>
+      <button type="button" data-target="productsSection" class="active" aria-label="Mahsulotlar">
+        <i class="bi bi-box-seam" aria-hidden="true"></i>
+        <span>Mahsulot</span>
+      </button>
+      <button type="button" data-target="selling" aria-label="Sotish">
+        <i class="bi bi-cart3" aria-hidden="true"></i>
+        <span>Sotish</span>
+      </button>
+      <button type="button" data-target="daily-sales" aria-label="Savdo tarixi">
+        <i class="bi bi-receipt" aria-hidden="true"></i>
+        <span>Tarix</span>
+      </button>
+      <button type="button" data-target="debtors" aria-label="Qarzdorlar">
+        <i class="bi bi-people" aria-hidden="true"></i>
+        <span>Qarzlar</span>
+      </button>
+      <button type="button" data-target="settings" aria-label="Sozlamalar">
+        <i class="bi bi-gear" aria-hidden="true"></i>
+        <span>Sozlama</span>
+      </button>
+    </nav>
+
+    <!-- MAIN -->
+    <main class="content" id="main-content" tabindex="-1">
+      <div class="topbar">
+        <div class="mk-topbar-left">
+          <button type="button" class="mk-mobile-menu" data-mk-menu aria-label="Navigatsiya menyusini ochish" aria-expanded="false" aria-controls="sidebar-nav">
+            <i class="bi bi-list" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="mk-sidebar-toggle" data-mk-sidebar-toggle aria-label="Yon panelni kichraytirish" aria-expanded="true">
+            <i class="bi bi-layout-sidebar-inset" aria-hidden="true"></i>
+          </button>
+          <div>
+            <!-- Sahifaning yagona h1 sarlavhasi (WCAG 1.3.1 / 2.4.6) -->
+            <h1 id="pageTitle">Mahsulotlar</h1>
+            <span class="mk-topbar-sub" id="pageSubtitle">Mahsulotlar ro'yxati va boshqaruvi</span>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button class="theme-toggle-btn" id="themeToggleBtn" data-theme-icon="bi" title="Kunduzgi/tungi rejim (Shift+T)" aria-label="Mavzuni almashtirish"><i class="bi bi-moon-stars" aria-hidden="true"></i></button>
+          <div class="profile-wrapper">
+            <div class="profile-trigger" id="profileTrigger">
+              <div class="profile-avatar-wrapper">
+                <img id="topbarAvatar" class="profile-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'/%3E" alt="Avatar" width="32" height="32">
+                <div id="topbarAvatarFallback" class="profile-avatar-fallback">AU</div>
+                <div class="notification-dot" aria-hidden="true"></div>
+              </div>
+              <div class="profile-info">
+                <span class="profile-name" id="profileName">Foydalanuvchi</span>
+                <span class="profile-store" id="profileEmail">Do'kon nomi</span>
+              </div>
+              <svg class="profile-dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+
+            <div class="profile-dropdown" id="profileDropdown">
+              <div class="profile-dropdown-header">
+                <div class="profile-dropdown-avatar-wrapper">
+                  <img id="dropdownAvatar" class="profile-dropdown-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'/%3E" alt="Avatar" width="40" height="40">
+                  <div id="dropdownAvatarFallback" class="profile-dropdown-avatar-fallback">AU</div>
+                  <div class="profile-dropdown-info">
+                    <div id="dropdownName">Foydalanuvchi</div>
+                    <p id="dropdownEmail"></p>
+                    <p id="dropdownPhone" style="font-size: 12px; margin-bottom: 6px;"></p>
+                    <span class="profile-badge" id="dropdownRole">Boshqaruv</span>
+                  </div>
+                </div>
+
+                <div class="profile-dropdown-stats profile-dropdown-stats-single">
+                  <div class="stat-item">
+                    <span class="stat-label stat-label-date" id="todayLabel">Bugun</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="profile-dropdown-menu">
+                <a class="dropdown-item" data-page="profile">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                  </svg>
+                  Shaxsiy profil
+                </a>
+
+                <a class="dropdown-item" data-page="settings">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                    </path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                  Sozlamalar
+                </a>
+
+                <a class="dropdown-item" data-page="dashboard">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                    </path>
+                  </svg>
+                  Boshqaruv paneli
+                </a>
+
+                <div class="dropdown-divider"></div>
+
+                <a class="dropdown-item logout" id="logoutBtn">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                    </path>
+                  </svg>
+                  Chiqish
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay -->
+      <div class="dropdown-overlay" id="dropdownOverlay"></div>
+
+      <!-- DASHBOARD -->
+      
+<section id="productsSection" class="section active">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-0">
+            <div class="p-4 border-bottom" style="border-color: var(--border-subtle) !important;">
+              <div class="mk-toolbar">
+                <div class="position-relative mk-toolbar-search">
+                  <svg class="position-absolute" style="left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                  <input type="text" id="productSearch" class="form-control" style="padding-left: 36px; background: var(--bg-main); border-color: var(--border-subtle); color: var(--text-primary);" placeholder="Mahsulot nomi yoki kodi bo'yicha qidirish..." aria-label="Mahsulot nomi yoki kodi bo'yicha qidirish">
+                </div>
+
+                <select id="productCategoryFilter" class="form-select mk-filter-select" aria-label="Kategoriya bo'yicha filtrlash">
+                  <option value="">Barcha kategoriyalar</option>
+                </select>
+
+                <select id="productStockFilter" class="form-select mk-filter-select" aria-label="Zaxira holati bo'yicha filtrlash">
+                  <option value="all">Barcha mahsulotlar</option>
+                  <option value="low">Kam qolgan</option>
+                  <option value="out">Tugagan</option>
+                </select>
+
+                <button type="button" class="btn btn-outline-primary mk-nowrap" id="exportProductsBtn">
+                  <i class="bi bi-download" aria-hidden="true"></i> Yuklab olish
+                </button>
+
+                <button class="btn btn-primary px-4 py-2 fw-semibold shadow-sm ms-auto mk-nowrap" id="openProductModal" style="background: var(--brand-primary); border: none; min-height: 42px;">
+                  <i class="bi bi-plus-lg" aria-hidden="true"></i> Mahsulot qo'shish
+                </button>
+              </div>
+              <p class="mk-toolbar-count" id="productFilterCount" aria-live="polite"></p>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase px-4 py-3">Rasm</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Nomi</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Turi</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Narxi</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Soni</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Sotuv holati</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Harakatlar</th>
+                  </tr>
+                </thead>
+                <tbody id="productTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- PRODUCT MODAL - Professional -->
+      <div class="modal fade" id="productModal" role="dialog" aria-labelledby="productModalTitle" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+            <form id="productForm">
+              <div class="modal-header">
+                <h2 class="modal-title" id="productModalTitle"><i class="bi bi-box-seam" aria-hidden="true"></i> Mahsulot qo'shish</h2>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Yopish">&times;</button>
+              </div>
+
+              <div class="modal-body">
+                <div class="row">
+                  <!-- NAME -->
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label small fw-semibold text-uppercase text-muted" for="productName">Mahsulot nomi *</label>
+                    <input id="productName" class="form-control" required placeholder="Masalan: Olma">
+                  </div>
+
+                  <!-- BARCODE -->
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label small fw-semibold text-uppercase text-muted" for="productBarcode">Shtrix-kod <small>(Ixtiyoriy)</small></label>
+                    <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden; border: 1px solid var(--border-subtle);">
+                      <input id="productBarcode" class="form-control border-0" style="background: var(--bg-main); color: var(--text-primary); box-shadow: none;" placeholder="Skanerlang yoki yozing">
+                      <button class="btn border-0" style="background: var(--brand-primary); color: #fff; padding: 0 12px;" type="button" onclick="startScanner('productBarcode')" title="Kamera orqali skanerlash">
+                        <i class="bi bi-qr-code-scan"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- CATEGORY -->
+                  <div class="col-md-12 mb-3">
+                    <label class="form-label small fw-semibold text-uppercase text-muted" for="productCategory">Kategoriya *</label>
+                    <div class="d-flex gap-2">
+                      <select id="productCategory" class="form-control" required></select>
+                      <button type="button" class="btn btn-outline-info" id="openCategoryModal"
+                        title="Kategoriya qo'shish">
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- COST PRICE (Kelgan narxi) -->
+                  <div class="col-md-5 mb-3">
+                    <label class="form-label small fw-semibold text-uppercase text-muted" for="productCostPrice">Kelgan narxi * <small class="text-muted">(so'm)</small></label>
+                    <input type="number" id="productCostPrice" class="form-control" required placeholder="50000" min="0"
+                      oninput="calculateProfitPreview()">
+                  </div>
+
+                  <!-- SALE PRICE (Sotish narxi) -->
+                  <div class="col-md-5 mb-3">
+                    <label class="form-label small fw-semibold text-uppercase text-muted" for="productPrice">Sotish narxi * <small class="text-muted">(so'm)</small></label>
+                    <input type="number" id="productPrice" class="form-control" required placeholder="75000" min="0"
+                      oninput="calculateProfitPreview()">
+                  </div>
+
+                  <!-- CURRENCY -->
+                  <div class="col-md-2 mb-3">
+                    <label class="form-label small fw-semibold text-uppercase text-muted" for="productCurrency">Valyuta</label>
+                    <select id="productCurrency" class="form-control">
+                      <option value="UZS" selected>so'm</option>
+                      <option value="$">$</option>
+                      <option value="€">€</option>
+                    </select>
+                  </div>
+
+                  <!-- PROFIT PREVIEW (Real-time) -->
+                  <div class="col-md-12 mb-3">
+                    <div class="alert alert-info mb-0 py-2">
+                      <i class="bi bi-calculator"></i>
+                      <small class="text-muted">Birlik foyda:</small>
+                      <strong id="profitPreview" style="margin-left:10px;">0 so'm</strong>
+                    </div>
+                  </div>
+
+                  <!-- STOCK -->
+                  <div class="col-md-12 mb-3">
+                    <label class="form-label small fw-semibold text-uppercase text-muted" for="productStock">Miqdori *</label>
+                    <div class="d-flex gap-2">
+                      <input type="number" id="productStock" class="form-control" required placeholder="100" min="0">
+                      <select id="productUnit" class="form-control" style="max-width:120px" aria-label="O'lchov birligi">
+                        <option value="ta">dona</option>
+                        <option value="kg">kg</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- IMAGE (ixtiyoriy) -->
+                  <div class="col-md-12 mb-3">
+                    <label class="form-label small fw-semibold text-uppercase text-muted" for="productImage">Mahsulot rasmi <small class="text-muted">(ixtiyoriy — keyin ham qo'shish mumkin)</small></label>
+                    <input type="file" id="productImage" class="form-control" accept="image/*">
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                  Bekor qilish
+                </button>
+                <button type="submit" class="btn btn-success">
+                  <i class="bi bi-check-circle"></i> Saqlash
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- CATEGORY MODAL -->
+      <div class="modal fade" id="categoryModal" role="dialog" aria-labelledby="categoryModalTitle" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+
+            <div class="modal-header">
+              <h2 class="modal-title" id="categoryModalTitle">Kategoriya qo'shish</h2>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Yopish">&times;</button>
+            </div>
+
+            <div class="modal-body">
+
+              <label class="form-label small fw-semibold text-uppercase text-muted" for="categoryList">Mavjud kategoriyalar</label>
+              <select id="categoryList" class="form-control mb-3"></select>
+
+              <label class="form-label small fw-semibold text-uppercase text-muted" for="newCategory">Yangi kategoriya nomi</label>
+              <input id="newCategory" class="form-control" placeholder="Masalan: Ichimliklar" />
+
+            </div>
+
+            <div class="modal-footer d-flex justify-content-between">
+              <div>
+                <button class="btn btn-danger btn-sm" id="deleteCategory">
+                  O'chirish
+                </button>
+              </div>
+
+              <div>
+                <button class="btn btn-secondary btn-sm" id="updateCategory">
+                  Yangilash
+                </button>
+                <button class="btn btn-info btn-sm" id="saveCategory">
+                  Qo'shish
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js?v=1789490310"></script> -->
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.20.0/dist/axios.min.js?v=1789490310"></script>
+  <script src="js/toast.js?v=1790606500"></script>
+  <script src="js/ux-enhancements.js?v=1790900001"></script>
+  <script src="js/api-client.js?v=1792595000"></script>
+  <script src="js/index.js?v=1792595000" defer></script>
+  <script src="js/script.js?v=1795300000" defer></script>
+  <script defer>
+  </script>
+  <script defer>
+    (function () {if (document.readyState === 'loading') {document.addEventListener('DOMContentLoaded', function () {setTimeout(function () {AuthSystem.protectPage();}, 100);});} else {setTimeout(function () {AuthSystem.protectPage();}, 100);} })();
+  </script>
+  <!-- JQUERY (SHART) — slim yetarli (faqat .modal() API ishlatiladi) -->
+  <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js?v=1790606700" defer></script>
+  <!-- POPPER (BOOTSTRAP 4 UCHUN) -->
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js?v=1789490310" defer></script>
+  <!-- BOOTSTRAP JS -->
+  <!-- Bootstrap JS 4.6.x — lokal CSS (v4.6.1) bilan bir xil liniya.
+       Avvalgi stackpath CDN 4.5.2 edi (eski va qo'llab-quvvatlanmaydigan
+       host) — CSS/JS versiyalari ham mos kelmagan. -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js?v=1790606700" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js?v=1789490310" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js?v=1789490310" defer></script>
+  <!-- Theme toggle -->
+  <!-- Scanner Modal -->
+  <div class="modal fade" id="scannerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="background: var(--bg-surface); border-radius: 16px;">
+        <div class="modal-header border-0 pb-0">
+          <h2 class="modal-title fw-bold" style="color: var(--text-primary);">Kamera orqali skanerlash</h2>
+          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Yopish" onclick="stopScanner()"></button>
+        </div>
+        <div class="modal-body text-center">
+          <div id="reader" style="width: 100%; min-height: 300px;"></div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-secondary rounded-pill px-4" data-dismiss="modal" onclick="stopScanner()">Yopish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript"></script>
+  <script src="js/theme-toggle.js?v=1793200000"></script>
+  <!-- ui-ux-pro-max review qatlamı: klaviatura navigatsiyasi + aria sinxronizatsiyasi -->
+  <script>
+    (function () {
+      "use strict";
+
+      /* ── 1. Sidebar menubar klaviaturasi (WAI-ARIA APG):
+            ArrowUp/ArrowDown — fokus, Home/End — birinchi/oxirgi,
+            Enter/Space — bo'limni ochish (li elementi o'zi press bo'lmaydi) ── */
+      var SIDEBAR_SEL = ".sidebar .nav-item[role='menuitem']";
+      document.addEventListener("keydown", function (e) {
+        var el = document.activeElement;
+        if (!el || !el.matches || !el.matches(SIDEBAR_SEL)) return;
+        var items = Array.prototype.slice.call(document.querySelectorAll(SIDEBAR_SEL));
+        var i = items.indexOf(el);
+        if (i < 0) return;
+
+        var next = -1;
+        if (e.key === "ArrowDown") next = (i + 1) % items.length;
+        else if (e.key === "ArrowUp") next = (i - 1 + items.length) % items.length;
+        else if (e.key === "Home") next = 0;
+        else if (e.key === "End") next = items.length - 1;
+        else if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+          e.preventDefault();
+          el.click();
+          return;
+        }
+        if (next >= 0) {
+          e.preventDefault();
+          items[next].focus();
+        }
+      });
+
+      /* ── 2. aria-current="page" — faol bo'lim e'lon qilinadi (WCAG 4.1.2) ── */
+      var NAV_SEL = ".sidebar .nav-item[data-target], .mobile-bottom-nav button[data-target]";
+      function syncAriaCurrent() {
+        document.querySelectorAll(NAV_SEL).forEach(function (el) {
+          if (el.classList.contains("active")) el.setAttribute("aria-current", "page");
+          else el.removeAttribute("aria-current");
+        });
+      }
+
+      /* ── 3. Filter tablari: aria-pressed holati class'dan o'qiladi ── */
+      function syncAriaPressed() {
+        document.querySelectorAll(".filter-tabs button").forEach(function (btn) {
+          btn.setAttribute("aria-pressed", btn.classList.contains("active") ? "true" : "false");
+        });
+      }
+
+      function initA11ySync() {
+        syncAriaCurrent();
+        syncAriaPressed();
+        var mo = new MutationObserver(function () {
+          syncAriaCurrent();
+          syncAriaPressed();
+        });
+        document.querySelectorAll(".sidebar .nav, .mobile-bottom-nav, .filter-tabs").forEach(function (root) {
+          mo.observe(root, { subtree: true, attributes: true, attributeFilter: ["class"] });
+        });
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initA11ySync);
+      } else {
+        initA11ySync();
+      }
+    })();
+  </script>
+  <!-- MARK1 app shell: sidebar collapse/drawer, modal fokus, toast, confirm -->
+  <script src="js/app-shell.js?v=1792900000" defer></script>
+
+  <!-- Cross-page navigatsiya: bo'lim boshqa sahifada bo'lsa, URL ga o'tish -->
+  <script>
+  (function () {
+    var PAGE_URLS = {
+      dashboard: "/dashboard",
+      selling: "/order",
+      productsSection: "/products",
+      "daily-sales": "/history",
+      debtors: "/debtors",
+      settings: "/settings"
+    };
+    var CURRENT = "productsSection";
+
+    function go(url) { window.location.href = url; }
+
+    // Sidebar nav itemlari
+    document.querySelectorAll(".sidebar .nav-item[data-target]").forEach(function (el) {
+      var t = el.dataset.target;
+      if (t !== CURRENT && PAGE_URLS[t]) {
+        el.style.cursor = "pointer";
+        el.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          go(PAGE_URLS[t]);
+        });
+      }
+    });
+
+    // Mobile bottom nav tugmalari
+    document.querySelectorAll(".mobile-bottom-nav button[data-target]").forEach(function (btn) {
+      var t = btn.dataset.target;
+      if (t !== CURRENT && PAGE_URLS[t]) {
+        btn.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          go(PAGE_URLS[t]);
+        });
+      }
+    });
+  })();
+  </script>
+</body>
+
+</html>
