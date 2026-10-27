@@ -8,23 +8,23 @@
 
 /* ─── 01. TOKENS ─────────────────────────────────────────────────────────── */
 :root {
-  /* Core DESIGN.md palette */
-  --ink: #080D17;
-  --navy: #14283A;
-  --steel: #24445B;
-  --mute: #6B91AC;
+  /* Core Apple-inspired Premium SaaS palette (§1.1) */
+  --ink: #101828;
+  --navy: #1D2939;
+  --steel: #526780;
+  --mute: #6A839A;
   --mist: #B4D0E2;
-  --snow: #EAF3F8;
+  --snow: #F3F7FB;
   --white: #FFFFFF;
-  --action: #3B66F0;
-  --action-hover: #2A4CC0;
+  --action: #4455EE;
+  --action-hover: #3344DD;
 
-  /* Semantic status colors (DESIGN.md §2.3) */
-  --ok: #10B981;
-  --warn: #F59E0B;
-  --err: #EF4444;
-  --err-solid: #DC2626;
-  --info: #3B82F6;
+  /* Semantic status colors (§1.1) */
+  --ok: #0DAD78;
+  --warn: #E9A23B;
+  --err: #E5484D;
+  --err-solid: #D9383D;
+  --info: #4455EE;
 
   /* Typography families (DESIGN.md §3) */
   --font-display: 'Manrope', system-ui, sans-serif;
@@ -104,12 +104,12 @@
   --m1-s16: 64px;
   --m1-gutter: 24px;
 
-  /* Shape: DESIGN.md §4 */
+  /* Shape: §1.3 (Apple card radius 14-16px, inputs 10px) */
   --m1-r-xs: 4px;
-  --m1-r-sm: 4px;
-  --m1-r-md: 8px;
-  --m1-r-lg: 12px;
-  --m1-r-xl: 16px;
+  --m1-r-sm: 6px;
+  --m1-r-md: 10px;
+  --m1-r-lg: 14px;
+  --m1-r-xl: 18px;
   --m1-r-pill: 999px;
 
   /* Elevation: DESIGN.md §4 */
@@ -133,40 +133,40 @@
 html.dark-mode {
   color-scheme: dark;
 
-  /* Dark mode Navy Ladder: Ink -> Navy -> Steel */
-  --m1-brand: var(--action);
-  --m1-brand-hover: var(--action-hover);
-  --m1-brand-press: #172B73;
-  --m1-brand-soft: rgba(59, 102, 240, 0.18);
-  --m1-brand-ink: #8FAEF9;
-  --m1-brand-line: rgba(143, 174, 249, 0.35);
+  /* Dark mode Palette (§1.1) */
+  --m1-brand: #4169F5;
+  --m1-brand-hover: #2E56E2;
+  --m1-brand-press: #1F42BD;
+  --m1-brand-soft: rgba(65, 105, 245, 0.18);
+  --m1-brand-ink: #9BB3FA;
+  --m1-brand-line: rgba(155, 179, 250, 0.35);
 
-  --m1-canvas: var(--ink);
-  --m1-surface: #0E1B2B;
-  --m1-surface-2: var(--navy);
-  --m1-surface-3: var(--steel);
-  --m1-surface-inset: #09121E;
+  --m1-canvas: #080F19;
+  --m1-surface: #0F1C2B;
+  --m1-surface-2: #152A3B;
+  --m1-surface-3: #1D3A50;
+  --m1-surface-inset: #060B12;
 
-  --m1-ink: var(--snow);
-  --m1-ink-2: var(--mist);
-  --m1-ink-3: var(--mute);
+  --m1-ink: #ECF3FA;
+  --m1-ink-2: #91AFC5;
+  --m1-ink-3: #67879F;
   --m1-on-brand: var(--white);
   --m1-on-brand-2: var(--white);
 
-  --m1-line: var(--steel);
-  --m1-line-strong: var(--mute);
-  --m1-line-soft: rgba(36, 68, 91, 0.6);
+  --m1-line: #25465B;
+  --m1-line-strong: #345C75;
+  --m1-line-soft: #193140;
 
-  /* Status chip dark tints (DESIGN.md §2.3) */
-  --m1-success: #34D399;
-  --m1-success-bg: #0F3D34;
-  --m1-success-ink: #34D399;
-  --m1-warning: #FBBF24;
-  --m1-warning-bg: #3F2F10;
-  --m1-warning-ink: #FBBF24;
-  --m1-danger: #F87171;
-  --m1-danger-bg: #44201F;
-  --m1-danger-ink: #F87171;
+  /* Status chip dark tints (§1.1) */
+  --m1-success: #19C994;
+  --m1-success-bg: rgba(25, 201, 148, 0.15);
+  --m1-success-ink: #19C994;
+  --m1-warning: #F4B740;
+  --m1-warning-bg: rgba(244, 183, 64, 0.15);
+  --m1-warning-ink: #F4B740;
+  --m1-danger: #FF6269;
+  --m1-danger-bg: rgba(255, 98, 105, 0.15);
+  --m1-danger-ink: #FF6269;
   --m1-info: #93B4FA;
   --m1-info-bg: #172F5C;
   --m1-info-ink: #93B4FA;
@@ -687,7 +687,7 @@ main.content {
 }
 .mk-topbar-left { display: flex; align-items: center; gap: var(--m1-s3); min-width: 0; }
 .topbar h1 {
-  font-size: var(--m1-fs-20);
+  font-size: clamp(21px, 1.8vw, 26px);
   font-weight: 750;
   letter-spacing: -0.025em;
   line-height: 1.25;
@@ -1001,7 +1001,7 @@ input:-webkit-autofill:active {
 .card-box h3.counter,
 .card-box h3.daily-c {
   margin: 8px 0 4px;
-  font-size: clamp(17px, 1.35vw, 22px);
+  font-size: clamp(22px, 1.6vw, 28px);
   font-weight: 750;
   letter-spacing: -0.025em;
   line-height: 1.18;
@@ -1046,9 +1046,6 @@ input:-webkit-autofill:active {
   background: var(--m1-danger-bg);
   color: var(--m1-danger-ink) !important;
 }
-  line-height: 1.35;
-  color: var(--m1-ink-3);
-}
 
 /* Three-up KPI groups (sales history / debtors) */
 .mk-stats-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--m1-s4); margin-bottom: var(--m1-s5) !important; }
@@ -1066,7 +1063,7 @@ input:-webkit-autofill:active {
 }
 .mk-stats .card h3 {
   margin: var(--m1-s2) 0 4px !important;
-  font-size: clamp(20px, 1.7vw, 26px) !important;
+  font-size: clamp(22px, 1.8vw, 30px) !important;
   letter-spacing: -0.035em;
   line-height: 1.12;
 }
@@ -1077,7 +1074,7 @@ input:-webkit-autofill:active {
   align-items: center;
   justify-content: center;
   gap: var(--m1-s2);
-  min-height: 40px;
+  min-height: 42px;
   padding: 10px 18px;
   border: 1px solid transparent;
   border-radius: var(--m1-r-md);
@@ -1237,7 +1234,7 @@ label {
 .modal-debtors input,
 .modal-debtors select,
 .modal-debtors textarea {
-  min-height: 42px;
+  min-height: 44px;
   padding: 9px var(--m1-s3);
   border: 1px solid var(--m1-line-strong);
   border-radius: var(--m1-r-md);
@@ -2747,14 +2744,47 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
     margin-top: 6px !important;
   }
 
-  /* KPI rows on mobile */
-  .mk-stats-6 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  .mk-stats-6 > [class*="col-"]:first-child { grid-column: 1 / -1 !important; }
-  .mk-stats-6 > [class*="col-"]:first-child .card-box { border-left: 0 !important; }
-  .mk-stats-6 > [class*="col-"]:nth-child(2) .card-box { border-left: 0 !important; }
-  .mk-stats-6 > [class*="col-"]:nth-child(2n+1) .card-box { border-left: 0 !important; }
-  .mk-stats-6 > [class*="col-"]:nth-child(n+2) .card-box { border-top: 1px solid var(--m1-line) !important; }
-  .mk-stats-6 > [class*="col-"]:nth-child(2) .card-box { border-top: 0 !important; }
+  /* KPI rows on mobile: clean 2-column balanced grid (3 rows x 2 cols, no lonely 6th card) */
+  .mk-stats-6 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+  .mk-stats-6 > [class*="col-"] {
+    grid-column: span 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .mk-stats-6 .card-box {
+    min-height: 110px !important;
+    padding: 12px 14px 10px !important;
+    border-radius: var(--m1-r-md) !important;
+  }
+  .mk-stats-6 .card-box h3.counter,
+  .mk-stats-6 .card-box h3.daily-c,
+  .mk-stats-6 > [class*="col-"]:first-child .card-box h3.counter {
+    font-size: 20px !important;
+    margin: 6px 0 2px !important;
+  }
+  .card-box small.counter-smal {
+    font-size: 10.5px !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+  }
+  .card-box small.counter-smal .svg-icon {
+    width: 24px !important;
+    height: 24px !important;
+    padding: 4px !important;
+  }
+  .card-box .counter-change,
+  .card-box small.text-muted,
+  .card-box small.text-success {
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+    white-space: normal !important;
+    line-height: 1.25 !important;
+    margin-top: auto !important;
+  }
 
   /* Debtors 3 KPI on mobile */
   .mk-stats-3 {
@@ -2906,13 +2936,6 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
 @media (max-width: 767.98px) {
   .mk-gutter { padding-left: var(--m1-s4); padding-right: var(--m1-s4); }
   .mk-stats-3 { grid-template-columns: 1fr; }
-  .mk-stats-6 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .mk-stats-6 > [class*="col-"]:first-child { grid-column: 1 / -1; }
-  .mk-stats-6 > [class*="col-"]:first-child .card-box { border-left: 0; }
-  .mk-stats-6 > [class*="col-"]:nth-child(2) .card-box { border-left: 0; }
-  .mk-stats-6 > [class*="col-"]:nth-child(2n+1) .card-box { border-left: 0; }
-  .mk-stats-6 > [class*="col-"]:nth-child(n+2) .card-box { border-top: 1px solid var(--m1-line); }
-  .mk-stats-6 > [class*="col-"]:nth-child(2) .card-box { border-top: 0; }
   .mk-chart, .mk-chart-sm { height: 240px; }
   .mk-pos-product-row { grid-template-columns: 1fr 84px; }
   .mk-pos-product-row > div:last-child { grid-column: 1 / -1; }
@@ -2929,11 +2952,7 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
 @media (max-width: 479.98px) {
   .section { padding: var(--m1-s3) var(--m1-s3) var(--m1-s10); }
   .topbar { padding: 0 var(--m1-s3); }
-  .mk-stats-6 { grid-template-columns: 1fr; }
-  .mk-stats-6 > [class*="col-"] .card-box { border-left: 0 !important; border-top: 1px solid var(--m1-line); }
-  .mk-stats-6 > [class*="col-"]:first-child .card-box { border-top: 0; }
-  .mk-stats-6 .card-box { min-height: 128px; }
-  .card-box h3.counter, .card-box h3.daily-c { font-size: 22px; }
+  .card-box h3.counter, .card-box h3.daily-c { font-size: 20px; }
   .mk-pos-panel { padding: var(--m1-s4); }
   .mk-pos-product-row { grid-template-columns: 1fr; }
   .mk-pos-product-row > div:last-child { grid-column: auto; }
