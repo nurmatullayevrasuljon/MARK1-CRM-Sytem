@@ -1989,7 +1989,7 @@ img.mk-img-broken { display: none !important; }
   background: var(--bg-card) !important;
 }
 #selling > .card > .card-body { padding: 20px !important; }
-#selling > .card > .card-body > h3.h5 {
+#selling > .card > .card-body > :is(h2, h3).h5 {
   font-size: 15px;
   letter-spacing: -0.01em;
   margin-bottom: 16px !important;

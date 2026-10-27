@@ -1774,14 +1774,14 @@ html.dark-mode .table-hover > tbody > tr:hover > * {
    kesilardi. Endi 20px ichki bo'shliq — barcha qatorlar radiusli burchakdan
    xoli, ustunlar bir tekisda qoladi. */
 #selling > .card > .card-body { padding: var(--m1-s5) !important; }
-#selling > .card > .card-body > h3.h5 {
+#selling > .card > .card-body > :is(h2, h3).h5 {
   margin: 0 0 var(--m1-s4) !important;
   padding: 0;
   font-size: var(--m1-fs-20);
   font-weight: 650;
   letter-spacing: -0.02em;
 }
-#selling > .card > .card-body > h3.h5 i { color: var(--m1-ink-3); margin-right: 4px; }
+#selling > .card > .card-body > :is(h2, h3).h5 i { color: var(--m1-ink-3); margin-right: 4px; }
 
 .mk-pos-grid {
   display: grid;
@@ -2425,7 +2425,7 @@ td .action-btn + .action-btn { margin-left: 5px !important; }
 
 /* ─── 17. SETTINGS ───────────────────────────────────────────────────────── */
 #settings .card { box-shadow: none; }
-#settings .card-body > h3.h5 {
+#settings .card-body > :is(h2, h3).h5 {
   display: flex;
   align-items: center;
   gap: var(--m1-s2);
