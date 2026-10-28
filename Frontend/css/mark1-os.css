@@ -2442,6 +2442,83 @@ td .action-btn + .action-btn { margin-left: 5px !important; }
 .mk-kpi-warning,
 .mk-kpi-success {
   border-left: 1px solid var(--m1-line) !important;
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--m1-dur) var(--m1-ease), box-shadow var(--m1-dur) var(--m1-ease);
+}
+/* VIVID: har bir KPI holatiga o'z rangli ohangi */
+.mk-kpi-danger {
+  border-left: 3px solid #EF4444 !important;
+  background:
+    radial-gradient(140% 120% at 0% 0%, rgba(239, 68, 68, 0.08), transparent 55%),
+    var(--m1-surface) !important;
+}
+.mk-kpi-warning {
+  border-left: 3px solid #F59E0B !important;
+  background:
+    radial-gradient(140% 120% at 0% 0%, rgba(245, 158, 11, 0.09), transparent 55%),
+    var(--m1-surface) !important;
+}
+.mk-kpi-success {
+  border-left: 3px solid #10B981 !important;
+  background:
+    radial-gradient(140% 120% at 0% 0%, rgba(16, 185, 129, 0.08), transparent 55%),
+    var(--m1-surface) !important;
+}
+html.dark-mode .mk-kpi-danger {
+  background:
+    radial-gradient(140% 120% at 0% 0%, rgba(255, 98, 105, 0.14), transparent 55%),
+    var(--m1-surface) !important;
+}
+html.dark-mode .mk-kpi-warning {
+  background:
+    radial-gradient(140% 120% at 0% 0%, rgba(244, 183, 64, 0.13), transparent 55%),
+    var(--m1-surface) !important;
+}
+html.dark-mode .mk-kpi-success {
+  background:
+    radial-gradient(140% 120% at 0% 0%, rgba(25, 201, 148, 0.13), transparent 55%),
+    var(--m1-surface) !important;
+}
+
+/* VIVID: Savdo tarixi sahifasidagi 3 ta yuqori karta (mk-stats-3) */
+.mk-stats-3 > [class*="col-"] .card {
+  position: relative;
+  overflow: hidden;
+  border-top: 3px solid transparent !important;
+}
+.mk-stats-3 > [class*="col-"]:nth-child(1) .card {
+  border-top-color: #10B981 !important;
+  background:
+    radial-gradient(140% 120% at 0% 0%, rgba(16, 185, 129, 0.10), transparent 55%),
+    var(--m1-surface) !important;
+}
+.mk-stats-3 > [class*="col-"]:nth-child(2) .card {
+  border-top-color: #F59E0B !important;
+  background:
+    radial-gradient(140% 120% at 0% 0%, rgba(245, 158, 11, 0.11), transparent 55%),
+    var(--m1-surface) !important;
+}
+.mk-stats-3 > [class*="col-"]:nth-child(3) .card {
+  border-top-color: var(--m1-brand) !important;
+  background:
+    radial-gradient(140% 120% at 0% 0%, rgba(68, 85, 238, 0.10), transparent 55%),
+    var(--m1-surface) !important;
+}
+html.dark-mode .mk-stats-3 > [class*="col-"]:nth-child(1) .card {
+  background:
+    radial-gradient(140% 120% at 0% 0%, rgba(25, 201, 148, 0.12), transparent 55%),
+    var(--m1-surface) !important;
+}
+html.dark-mode .mk-stats-3 > [class*="col-"]:nth-child(2) .card {
+  background:
+    radial-gradient(140% 120% at 0% 0%, rgba(244, 183, 64, 0.12), transparent 55%),
+    var(--m1-surface) !important;
+}
+html.dark-mode .mk-stats-3 > [class*="col-"]:nth-child(3) .card {
+  background:
+    radial-gradient(140% 120% at 0% 0%, rgba(99, 102, 241, 0.13), transparent 55%),
+    var(--m1-surface) !important;
 }
 
 /* Bootstrap modal (product form, category modal, scanner) */
@@ -4484,4 +4561,226 @@ html.dark-mode .auth-left {
   .mk-root .mk-hero-metric {
     padding: 12px 12px !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VIVID REFRESH — panel va umumiy qatlam (dizayn yangilash)
+   Har bir KPI kartasiga o'z rangli ohangi, gradient tugmalar, boyroq
+   sidebar aktiv holati, temalangan selection/caret/scrollbar/focus.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── A. KPI kartalari: per-card yumshoq gradient tint + rangli aksent ───── */
+.mk-stats-6 > [class*="col-"] .card-box {
+  position: relative;
+}
+.mk-stats-6 > [class*="col-"]:nth-child(1) .card-box {
+  --kpi-tint: rgba(68, 85, 238, 0.09);
+  --kpi-bar1: #4455EE;
+  --kpi-bar2: #7c3aed;
+  --kpi-soft: rgba(68, 85, 238, 0.05);
+}
+.mk-stats-6 > [class*="col-"]:nth-child(2) .card-box {
+  --kpi-tint: rgba(59, 130, 246, 0.09);
+  --kpi-bar1: #3B82F6;
+  --kpi-bar2: #06B6D4;
+  --kpi-soft: rgba(59, 130, 246, 0.05);
+}
+.mk-stats-6 > [class*="col-"]:nth-child(3) .card-box {
+  --kpi-tint: rgba(16, 185, 129, 0.10);
+  --kpi-bar1: #10B981;
+  --kpi-bar2: #06B6D4;
+  --kpi-soft: rgba(16, 185, 129, 0.05);
+}
+.mk-stats-6 > [class*="col-"]:nth-child(4) .card-box {
+  --kpi-tint: rgba(139, 92, 246, 0.09);
+  --kpi-bar1: #8B5CF6;
+  --kpi-bar2: #6366F1;
+  --kpi-soft: rgba(139, 92, 246, 0.05);
+}
+.mk-stats-6 > [class*="col-"]:nth-child(5) .card-box {
+  --kpi-tint: rgba(239, 68, 68, 0.09);
+  --kpi-bar1: #EF4444;
+  --kpi-bar2: #F43F5E;
+  --kpi-soft: rgba(239, 68, 68, 0.05);
+}
+.mk-stats-6 > [class*="col-"]:nth-child(6) .card-box {
+  --kpi-tint: rgba(245, 158, 11, 0.11);
+  --kpi-bar1: #F59E0B;
+  --kpi-bar2: #F97316;
+  --kpi-soft: rgba(245, 158, 11, 0.06);
+}
+
+.mk-stats-6 > [class*="col-"] .card-box {
+  background:
+    radial-gradient(130% 100% at 100% 0%, var(--kpi-tint), transparent 58%),
+    var(--m1-surface) !important;
+}
+.mk-stats-6 > [class*="col-"] .card-box::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--m1-r-lg) var(--m1-r-lg) 0 0;
+  background: linear-gradient(90deg, var(--kpi-bar1), var(--kpi-bar2)) !important;
+  opacity: 0.55;
+  transition: opacity var(--m1-dur) var(--m1-ease);
+}
+.mk-stats-6 > [class*="col-"] .card-box:hover::before {
+  opacity: 1;
+}
+.mk-stats-6 > [class*="col-"] .card-box:hover {
+  border-color: color-mix(in srgb, var(--kpi-bar1) 42%, transparent) !important;
+}
+
+html.dark-mode .mk-stats-6 > [class*="col-"]:nth-child(1) .card-box { --kpi-tint: rgba(99, 102, 241, 0.18); --kpi-soft: rgba(99, 102, 241, 0.1); }
+html.dark-mode .mk-stats-6 > [class*="col-"]:nth-child(2) .card-box { --kpi-tint: rgba(59, 130, 246, 0.16); --kpi-soft: rgba(59, 130, 246, 0.1); }
+html.dark-mode .mk-stats-6 > [class*="col-"]:nth-child(3) .card-box { --kpi-tint: rgba(25, 201, 148, 0.15); --kpi-soft: rgba(25, 201, 148, 0.1); }
+html.dark-mode .mk-stats-6 > [class*="col-"]:nth-child(4) .card-box { --kpi-tint: rgba(167, 139, 250, 0.16); --kpi-soft: rgba(167, 139, 250, 0.1); }
+html.dark-mode .mk-stats-6 > [class*="col-"]:nth-child(5) .card-box { --kpi-tint: rgba(255, 98, 105, 0.15); --kpi-soft: rgba(255, 98, 105, 0.1); }
+html.dark-mode .mk-stats-6 > [class*="col-"]:nth-child(6) .card-box { --kpi-tint: rgba(244, 183, 64, 0.15); --kpi-soft: rgba(244, 183, 64, 0.1); }
+
+/* KPI ikonka fonlarini dark rejimda ham o'zgarishiga moslashtirish */
+html.dark-mode .mk-stats-6 > [class*="col-"] .card-box small.counter-smal .svg-icon {
+  background: var(--kpi-soft) !important;
+}
+html.dark-mode .mk-stats-6 > [class*="col-"]:nth-child(1) .card-box small.counter-smal .svg-icon { color: #8294ff !important; }
+html.dark-mode .mk-stats-6 > [class*="col-"]:nth-child(2) .card-box small.counter-smal .svg-icon { color: #7db3fb !important; }
+html.dark-mode .mk-stats-6 > [class*="col-"]:nth-child(3) .card-box small.counter-smal .svg-icon { color: #4ade9f !important; }
+html.dark-mode .mk-stats-6 > [class*="col-"]:nth-child(4) .card-box small.counter-smal .svg-icon { color: #b89dfb !important; }
+html.dark-mode .mk-stats-6 > [class*="col-"]:nth-child(5) .card-box small.counter-smal .svg-icon { color: #ff8a8f !important; }
+html.dark-mode .mk-stats-6 > [class*="col-"]:nth-child(6) .card-box small.counter-smal .svg-icon { color: #fbcf6a !important; }
+
+/* ─── B. Primary tugma: boy gradient + ichki yorug'lik ───────────────────── */
+.btn-primary {
+  background: linear-gradient(100deg, #4455EE 0%, #5647e8 52%, #7c3aed 100%) !important;
+  border-color: transparent !important;
+  box-shadow:
+    0 6px 16px -6px rgba(68, 85, 238, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+.btn-primary:hover {
+  background: linear-gradient(100deg, #3a4be0 0%, #4b3ddd 52%, #6f2fe0 100%) !important;
+  box-shadow:
+    0 10px 22px -6px rgba(68, 85, 238, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+html.dark-mode .btn-primary {
+  box-shadow:
+    0 6px 16px -6px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+}
+
+/* ─── C. Sidebar aktiv holati: gradient ohangli pill ─────────────────────── */
+.sidebar .nav-item.active {
+  background: linear-gradient(135deg, #DCE6FD, #E6E9FC) !important;
+  box-shadow: inset 3px 0 0 var(--m1-brand) !important;
+  color: #23307a !important;
+}
+.sidebar .nav-item.active .svg-icon {
+  color: var(--m1-brand) !important;
+}
+html.dark-mode .sidebar .nav-item.active {
+  background: linear-gradient(135deg, rgba(65, 105, 245, 0.24), rgba(124, 58, 237, 0.16)) !important;
+  box-shadow: inset 3px 0 0 #8294ff !important;
+  color: #dfe7ff !important;
+}
+html.dark-mode .sidebar .nav-item.active .svg-icon {
+  color: #a5b4fc !important;
+}
+
+/* ─── D. Temalangan tanlov, kursor, skrollbar, fokus ────────────────────── */
+html:not(.dark-mode) ::selection {
+  background: rgba(68, 85, 238, 0.22);
+  color: inherit;
+}
+html.dark-mode ::selection {
+  background: rgba(130, 148, 255, 0.32);
+  color: inherit;
+}
+
+body {
+  caret-color: var(--m1-brand);
+}
+
+html:not(.dark-mode)::-webkit-scrollbar,
+html:not(.dark-mode) *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+html:not(.dark-mode)::-webkit-scrollbar-track,
+html:not(.dark-mode) *::-webkit-scrollbar-track {
+  background: transparent;
+}
+html:not(.dark-mode)::-webkit-scrollbar-thumb,
+html:not(.dark-mode) *::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #b9c4e8, #9aa8dd);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+html:not(.dark-mode)::-webkit-scrollbar-thumb:hover,
+html:not(.dark-mode) *::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #8f9fe0, #7a8ad4);
+  background-clip: content-box;
+}
+html.dark-mode::-webkit-scrollbar,
+html.dark-mode *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+html.dark-mode::-webkit-scrollbar-track,
+html.dark-mode *::-webkit-scrollbar-track {
+  background: transparent;
+}
+html.dark-mode::-webkit-scrollbar-thumb,
+html.dark-mode *::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #2c4a63, #233c53);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* Kontekstual fokus halqasi — matn havolalari va tugmalar uchun */
+a:focus-visible,
+[role="button"]:focus-visible,
+summary:focus-visible,
+button:not(.btn):focus-visible {
+  outline: 2px solid var(--m1-brand);
+  outline-offset: 3px;
+}
+html.dark-mode a:focus-visible,
+html.dark-mode [role="button"]:focus-visible,
+html.dark-mode summary:focus-visible,
+html.dark-mode button:not(.btn):focus-visible {
+  outline-color: #8294ff;
+}
+
+/* ─── E. Jadval qatorlari: yumshoq hover va satrik ajratish ─────────────── */
+.table tbody tr {
+  transition: background var(--m1-dur) var(--m1-ease);
+}
+html:not(.dark-mode) .table tbody tr:hover {
+  background: rgba(68, 85, 238, 0.04);
+}
+html.dark-mode .table tbody tr:hover {
+  background: rgba(99, 102, 241, 0.09);
+}
+
+/* ─── F. Bo'sh holatlar va kichik kartalar uchun nozik aksent ───────────── */
+.section-header h4 {
+  position: relative;
+  padding-left: 12px;
+}
+.section-header h4::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 3px;
+  bottom: 3px;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--m1-brand), var(--m1-brand-press));
+  opacity: 0.75;
 }

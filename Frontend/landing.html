@@ -1982,7 +1982,438 @@
                 line-height: 1.3;
             }
         }
-    
+
+        /* ═══════════════════════════════════════════════════════════════
+           VIVID REFRESH — MARK1 landing'ni boyroq, rangliroq, zamonaviyroq
+           qilish qatlami. DOM o'zgarmaydi, faqat vizual qatlam.
+           ═══════════════════════════════════════════════════════════════ */
+
+        /* ── 1. Fon tizimi: indigo ohangli, sofroq ── */
+        html:not(.dark-mode) {
+            --mk-bg: #f3f5fc;
+        }
+
+        /* ── 2. Bo'lim fonlari: tekis kulrang o'rniga yumshoq rangli yuvinishlar ── */
+        html:not(.dark-mode) .mk-section-muted {
+            background:
+                radial-gradient(900px 420px at 88% -40px, rgba(124, 58, 237, .09), transparent 60%),
+                radial-gradient(760px 420px at 4% 46%, rgba(14, 165, 233, .08), transparent 62%),
+                linear-gradient(180deg, #eef1fd 0%, #e9edfb 55%, #eef2fd 100%);
+        }
+
+        html.dark-mode .mk-section-muted {
+            background:
+                radial-gradient(900px 420px at 88% -40px, rgba(124, 58, 237, .18), transparent 60%),
+                radial-gradient(760px 420px at 4% 46%, rgba(34, 211, 238, .10), transparent 62%),
+                linear-gradient(180deg, #141d38 0%, #131b34 55%, #111931 100%);
+        }
+
+        /* Muammolar bo'limi (faqat sarlavha qismi uchun nozik rangli yuvinish) */
+        html:not(.dark-mode) #qulayliklar {
+            background:
+                radial-gradient(760px 380px at 100% 0%, rgba(14, 165, 233, .07), transparent 62%),
+                radial-gradient(660px 380px at 0% 100%, rgba(16, 185, 129, .06), transparent 62%),
+                var(--mk-bg);
+        }
+
+        /* ── 3. Hero: kuchliroq aurora + uchinchi orb ── */
+        html:not(.dark-mode) .mk-hero::before {
+            background:
+                radial-gradient(560px 440px at 88% 6%, rgba(68, 85, 238, .15), transparent 62%),
+                radial-gradient(520px 420px at 6% 92%, rgba(124, 58, 237, .13), transparent 60%),
+                radial-gradient(480px 380px at 52% 44%, rgba(14, 165, 233, .08), transparent 65%);
+        }
+
+        html.dark-mode .mk-hero::before {
+            background:
+                radial-gradient(560px 440px at 88% 6%, rgba(77, 93, 239, .28), transparent 62%),
+                radial-gradient(520px 420px at 6% 92%, rgba(124, 58, 237, .24), transparent 60%),
+                radial-gradient(480px 380px at 52% 44%, rgba(34, 211, 238, .12), transparent 65%);
+        }
+
+        .mk-hero .mk-blur-orb.mk-orb-1 {
+            opacity: .20;
+            width: 400px;
+            height: 400px;
+        }
+
+        .mk-hero .mk-blur-orb.mk-orb-2 {
+            opacity: .18;
+            width: 380px;
+            height: 380px;
+        }
+
+        html.dark-mode .mk-hero .mk-blur-orb.mk-orb-1 { opacity: .26; }
+        html.dark-mode .mk-hero .mk-blur-orb.mk-orb-2 { opacity: .22; }
+
+        /* ── 4. Hero highlight: gradient matn (avval CSS'i umuman yo'q edi!) ── */
+        .mk-hero-highlight {
+            background: linear-gradient(100deg, #4455EE 8%, #7c3aed 48%, #0ea5e9 92%);
+            background-size: 180% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: mkHighlightFlow 8s ease-in-out infinite alternate;
+        }
+
+        html.dark-mode .mk-hero-highlight {
+            background: linear-gradient(100deg, #8294ff 8%, #a78bfa 48%, #38bdf8 92%);
+            background-size: 180% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        @keyframes mkHighlightFlow {
+            from { background-position: 0% 50%; }
+            to { background-position: 100% 50%; }
+        }
+
+        /* Gradient matn qo'llab-quvvatlanmasa — matn ko'rinmay qolmasin */
+        @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+            .mk-hero-highlight {
+                color: var(--mk-primary-text);
+                background: none;
+                animation: none;
+            }
+        }
+
+        /* ── 5. Hero pill-badge: shisha effektli premium yorliq
+              (avval bu klass uchun CSS umuman yo'q edi!) ── */
+        .mk-hero-pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 18px 7px 8px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, .72);
+            border: 1px solid rgba(68, 85, 238, .22);
+            box-shadow: 0 8px 24px -10px rgba(68, 85, 238, .35);
+            color: var(--mk-primary-text);
+            font-size: .85rem;
+            font-weight: 600;
+            margin-bottom: 26px;
+            -webkit-backdrop-filter: blur(10px) saturate(1.4);
+            backdrop-filter: blur(10px) saturate(1.4);
+            transition: transform .3s ease, box-shadow .3s ease;
+        }
+
+        .mk-hero-pill-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 30px -10px rgba(68, 85, 238, .45);
+        }
+
+        html.dark-mode .mk-hero-pill-badge {
+            background: rgba(16, 24, 48, .6);
+            border-color: rgba(130, 148, 255, .3);
+            box-shadow: 0 8px 24px -10px rgba(0, 0, 0, .5);
+        }
+
+        .mk-pill-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #4455EE, #7c3aed);
+            color: #fff;
+            font-size: .85rem;
+            flex: 0 0 auto;
+            box-shadow: 0 4px 12px -4px rgba(68, 85, 238, .6);
+        }
+
+        /* ── 6. Bo'lim sarlavhasi: markaziy gradient chiziq ── */
+        .mk-section-head h2::after {
+            content: "";
+            display: block;
+            width: 64px;
+            height: 4px;
+            border-radius: 999px;
+            margin: 14px auto 0;
+            background: linear-gradient(90deg, var(--mk-primary), var(--mk-accent));
+        }
+
+        /* ── 7. Ikonklasslari: haqiqiy rangli gradientlar (avval e'lon qilingan,
+              lekin CSS'i yozilmagan edi — hammasi bir xil ko'k chiqayotgan edi!) ── */
+        .mk-feature-icon.mk-icon-purple {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            box-shadow: 0 10px 24px -8px rgba(139, 92, 246, .55);
+        }
+
+        .mk-feature-icon.mk-icon-blue {
+            background: linear-gradient(135deg, #4455EE, #2c3fd4);
+            box-shadow: 0 10px 24px -8px rgba(68, 85, 238, .55);
+        }
+
+        .mk-feature-icon.mk-icon-cyan {
+            background: linear-gradient(135deg, #0891b2, #155e75);
+            box-shadow: 0 10px 24px -8px rgba(8, 145, 178, .55);
+        }
+
+        .mk-feature-icon.mk-icon-green {
+            background: linear-gradient(135deg, #059669, #047857);
+            box-shadow: 0 10px 24px -8px rgba(5, 150, 105, .55);
+        }
+
+        .mk-feature-icon.mk-icon-indigo {
+            background: linear-gradient(135deg, #6366f1, #4338ca);
+            box-shadow: 0 10px 24px -8px rgba(99, 102, 241, .55);
+        }
+
+        .mk-feature-icon.mk-icon-amber {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            box-shadow: 0 10px 24px -8px rgba(217, 119, 6, .55);
+        }
+
+        /* ── 8. Feature kartalari: har biriga o'z akcenti (:has() bilan) ── */
+        .mk-feature-card:not(.mk-feature-ai) {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mk-feature-card:not(.mk-feature-ai)::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--mk-primary), var(--mk-secondary));
+            opacity: 0;
+            transform: scaleX(.3);
+            transform-origin: left;
+            transition: opacity .3s ease, transform .5s cubic-bezier(.22, 1, .36, 1);
+        }
+
+        .mk-feature-card:not(.mk-feature-ai):hover::before {
+            opacity: 1;
+            transform: scaleX(1);
+        }
+
+        .mk-feature-card:has(.mk-icon-purple):hover {
+            border-color: rgba(139, 92, 246, .45);
+            box-shadow: 0 18px 40px -18px rgba(139, 92, 246, .4);
+        }
+
+        .mk-feature-card:has(.mk-icon-purple):not(.mk-feature-ai)::before {
+            background: linear-gradient(90deg, #8b5cf6, #a855f7);
+        }
+
+        .mk-feature-card:has(.mk-icon-blue):hover {
+            border-color: rgba(68, 85, 238, .45);
+            box-shadow: 0 18px 40px -18px rgba(68, 85, 238, .4);
+        }
+
+        .mk-feature-card:has(.mk-icon-blue):not(.mk-feature-ai)::before {
+            background: linear-gradient(90deg, #4455EE, #5b6ef0);
+        }
+
+        .mk-feature-card:has(.mk-icon-cyan):hover {
+            border-color: rgba(8, 145, 178, .45);
+            box-shadow: 0 18px 40px -18px rgba(8, 145, 178, .4);
+        }
+
+        .mk-feature-card:has(.mk-icon-cyan):not(.mk-feature-ai)::before {
+            background: linear-gradient(90deg, #0891b2, #22d3ee);
+        }
+
+        .mk-feature-card:has(.mk-icon-green):hover {
+            border-color: rgba(5, 150, 105, .45);
+            box-shadow: 0 18px 40px -18px rgba(5, 150, 105, .4);
+        }
+
+        .mk-feature-card:has(.mk-icon-green):not(.mk-feature-ai)::before {
+            background: linear-gradient(90deg, #059669, #34d399);
+        }
+
+        .mk-feature-card:has(.mk-icon-indigo):hover {
+            border-color: rgba(99, 102, 241, .45);
+            box-shadow: 0 18px 40px -18px rgba(99, 102, 241, .4);
+        }
+
+        .mk-feature-card:has(.mk-icon-indigo):not(.mk-feature-ai)::before {
+            background: linear-gradient(90deg, #6366f1, #818cf8);
+        }
+
+        .mk-feature-card:has(.mk-icon-amber):hover {
+            border-color: rgba(217, 119, 6, .45);
+            box-shadow: 0 18px 40px -18px rgba(217, 119, 6, .4);
+        }
+
+        .mk-feature-card:has(.mk-icon-amber):not(.mk-feature-ai)::before {
+            background: linear-gradient(90deg, #d97706, #f59e0b);
+        }
+
+        /* ── 9. Stat kartalari: har biriga o'z rangli ohangi ── */
+        .mk-stat-card {
+            background:
+                radial-gradient(120% 90% at 50% 0%, var(--stint, rgba(68, 85, 238, .07)), transparent 62%),
+                var(--mk-card);
+        }
+
+        .mk-stats-grid .mk-stat-card:nth-child(1) {
+            --sc1: #4455EE;
+            --sc2: #6d5ae8;
+            --stint: rgba(68, 85, 238, .10);
+        }
+
+        .mk-stats-grid .mk-stat-card:nth-child(2) {
+            --sc1: #059669;
+            --sc2: #10b981;
+            --stint: rgba(16, 185, 129, .10);
+        }
+
+        .mk-stats-grid .mk-stat-card:nth-child(3) {
+            --sc1: #b45309;
+            --sc2: #f59e0b;
+            --stint: rgba(245, 158, 11, .12);
+        }
+
+        .mk-stats-grid .mk-stat-card:nth-child(4) {
+            --sc1: #e11d48;
+            --sc2: #f43f5e;
+            --stint: rgba(244, 63, 94, .10);
+        }
+
+        html.dark-mode .mk-stats-grid .mk-stat-card:nth-child(1) { --stint: rgba(99, 102, 241, .18); }
+        html.dark-mode .mk-stats-grid .mk-stat-card:nth-child(2) { --stint: rgba(16, 185, 129, .16); }
+        html.dark-mode .mk-stats-grid .mk-stat-card:nth-child(3) { --stint: rgba(245, 158, 11, .16); }
+        html.dark-mode .mk-stats-grid .mk-stat-card:nth-child(4) { --stint: rgba(244, 63, 94, .16); }
+
+        .mk-stats-grid .mk-stat-card .mk-stat-icon {
+            color: var(--sc1, var(--mk-primary));
+            background: linear-gradient(135deg, var(--stint, rgba(68, 85, 238, .14)), transparent 130%);
+        }
+
+        .mk-stats-grid .mk-stat-card:hover {
+            border-color: color-mix(in srgb, var(--sc1, #4455EE) 40%, transparent);
+        }
+
+        .mk-stats-grid .mk-stat-card:hover .mk-stat-icon {
+            background: linear-gradient(135deg, var(--sc1, var(--mk-primary)), var(--sc2, var(--mk-secondary)));
+            color: #fff;
+        }
+
+        .mk-stats-grid .mk-stat-card::after {
+            background: linear-gradient(90deg, var(--sc1, var(--mk-primary)), var(--sc2, var(--mk-secondary)));
+        }
+
+        /* ── 10. Tugmalar: boy gradient + ichki yorug'lik ── */
+        .mk-root a.mk-btn-primary,
+        .mk-btn-primary {
+            background: linear-gradient(100deg, #4455EE 0%, #5647e8 52%, #7c3aed 100%) !important;
+            box-shadow:
+                0 10px 26px -8px rgba(68, 85, 238, .5),
+                inset 0 1px 0 rgba(255, 255, 255, .18) !important;
+        }
+
+        .mk-root a.mk-btn-primary:hover,
+        .mk-btn-primary:hover {
+            box-shadow:
+                0 14px 34px -8px rgba(68, 85, 238, .6),
+                inset 0 1px 0 rgba(255, 255, 255, .22) !important;
+            transform: translateY(-2px);
+        }
+
+        html:not(.dark-mode) .mk-root a.mk-btn-secondary,
+        html:not(.dark-mode) .mk-btn-secondary {
+            background: rgba(255, 255, 255, .65);
+            border-color: rgba(68, 85, 238, .32);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+        }
+
+        html.dark-mode .mk-root a.mk-btn-secondary,
+        html.dark-mode .mk-btn-secondary {
+            background: rgba(16, 24, 48, .55);
+            border-color: rgba(130, 148, 255, .32);
+        }
+
+        /* ── 11. CTA bo'limi: boyroq rangli pannel ── */
+        html:not(.dark-mode) .mk-cta-section::before {
+            background: linear-gradient(120deg, rgba(68, 85, 238, .16), rgba(124, 58, 237, .14) 52%, rgba(14, 165, 233, .14));
+        }
+
+        html.dark-mode .mk-cta-section::before {
+            background: linear-gradient(120deg, rgba(77, 93, 239, .3), rgba(124, 58, 237, .24) 52%, rgba(34, 211, 238, .18));
+        }
+
+        .mk-cta-section .mk-blur-orb.mk-orb-1 { opacity: .18; }
+        .mk-cta-section .mk-blur-orb.mk-orb-2 { opacity: .16; }
+        html.dark-mode .mk-cta-section .mk-blur-orb.mk-orb-1 { opacity: .24; }
+        html.dark-mode .mk-cta-section .mk-blur-orb.mk-orb-2 { opacity: .2; }
+
+        /* ── 12. Benefit kartalari: rangli ikon ohanglari ── */
+        html:not(.dark-mode) .mk-benefit-card:nth-child(1) .mk-benefit-icon {
+            background: linear-gradient(135deg, rgba(68, 85, 238, .16), rgba(124, 58, 237, .14));
+            color: #4455EE;
+        }
+
+        html:not(.dark-mode) .mk-benefit-card:nth-child(2) .mk-benefit-icon {
+            background: linear-gradient(135deg, rgba(16, 185, 129, .16), rgba(6, 182, 212, .14));
+            color: #047857;
+        }
+
+        html:not(.dark-mode) .mk-benefit-card:nth-child(3) .mk-benefit-icon {
+            background: linear-gradient(135deg, rgba(245, 158, 11, .18), rgba(244, 63, 94, .12));
+            color: #b45309;
+        }
+
+        html.dark-mode .mk-benefit-card:nth-child(1) .mk-benefit-icon {
+            background: linear-gradient(135deg, rgba(99, 102, 241, .22), rgba(124, 58, 237, .18));
+            color: #a5b4fc;
+        }
+
+        html.dark-mode .mk-benefit-card:nth-child(2) .mk-benefit-icon {
+            background: linear-gradient(135deg, rgba(16, 185, 129, .2), rgba(34, 211, 238, .16));
+            color: #6ee7b7;
+        }
+
+        html.dark-mode .mk-benefit-card:nth-child(3) .mk-benefit-icon {
+            background: linear-gradient(135deg, rgba(245, 158, 11, .2), rgba(244, 63, 94, .16));
+            color: #fcd34d;
+        }
+
+        /* ── 13. Narx va FAQ: aksentli ochilish holati ── */
+        .mk-price-card.mk-highlight {
+            box-shadow: 0 26px 60px -26px rgba(68, 85, 238, .5);
+        }
+
+        .mk-faq-item:hover {
+            border-color: rgba(68, 85, 238, .35);
+        }
+
+        html.dark-mode .mk-faq-item:hover {
+            border-color: rgba(130, 148, 255, .35);
+        }
+
+        .mk-faq-item.mk-open {
+            border-color: rgba(68, 85, 238, .45);
+            box-shadow: 0 12px 30px -16px rgba(68, 85, 238, .35);
+        }
+
+        html.dark-mode .mk-faq-item.mk-open {
+            border-color: rgba(130, 148, 255, .4);
+            box-shadow: 0 12px 30px -16px rgba(0, 0, 0, .5);
+        }
+
+        /* ── 14. Footer: yumshoq gradient yuvinish ── */
+        html:not(.dark-mode) .mk-footer {
+            background: linear-gradient(180deg, #f6f8fe, #edf1fb);
+        }
+
+        html.dark-mode .mk-footer {
+            background: linear-gradient(180deg, #0d1426, #0b111f);
+        }
+
+        /* ── 15. Harakatni kamaytirish sozlamasi hurmat qilinadi ── */
+        @media (prefers-reduced-motion: reduce) {
+            .mk-hero-highlight {
+                animation: none !important;
+            }
+        }
+
         </style>
     <link rel="stylesheet" href="css/mark1-system.css?v=1795300000">
     <!-- MARK1 Business OS — precision-ledger design layer (final authority) -->
