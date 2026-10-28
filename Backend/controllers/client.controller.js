@@ -4,12 +4,25 @@ const Sale = require("../models/sale.model");
 
 // QA-BUGFIX: noto'g'ri telefon/bo'sh ism Mongoose validation xatosi bilan
 // 500 bo'lib qaytardi. Endi kirishda tekshiriladi va 400 qaytadi.
+// Shuningdek, spam/bema'ni so'zlar (kjshfsgdfd, aaaa) rad etiladi.
 function validateClientInput({ client_name, client_phone }) {
   if (typeof client_name !== "string" || !client_name.trim()) {
     return "Xaridor ismini kiriting";
   }
-  if (client_name.trim().length > 80) {
+  const trimmed = client_name.trim().replace(/\s+/g, " ");
+  if (trimmed.length < 2) {
+    return "Xaridor ismi kamida 2 ta belgidan iborat bo'lishi kerak";
+  }
+  if (trimmed.length > 80) {
     return "Xaridor ismi 80 belgidan oshmasligi kerak";
+  }
+  // Ism faqat harflar, raqamlar, probel, chiziqcha, nuqta, apostrofdan iborat bo'lishi mumkin
+  const allowed = /^[A-Za-z0-9\u0400-\u04FF\u0450-\u045F\u0490\u0491\u04A2\u04A3\u04B0\u04B1\u04BA\u04BB\u04C0\u04C1\u04D8\u04D9\u04E8\u04E9\u04EE\u04EF\u04F8\u04F9\x27\u2019\u02BC\s\-\.]+$/;
+  if (!allowed.test(trimmed)) {
+    return "Xaridor ismida ruxsat berilmagan belgilar mavjud";
+  }
+  if (/(.)\1{3,}/.test(trimmed)) {
+    return "Noto'g'ri ism kiritildi (ketma-ket takrorlangan harflar)";
   }
   if (
     client_phone !== undefined &&

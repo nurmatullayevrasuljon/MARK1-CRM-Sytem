@@ -348,13 +348,13 @@
             </div>
             <form id="debtorForm" onsubmit="handleSubmit(event)">
               <div class="form-group">
-                <label for="debtorName">Qarzdor ismi *</label>
+                <label for="debtorName">Qarzdor ismi va familiyasi *</label>
                 <input type="text" id="debtorName" required placeholder="Davron Kabulov"
                   style="text-transform: capitalize;">
               </div>
               <div class="form-group">
                 <label for="debtorPhone">Telefon raqami *</label>
-                <input type="tel" id="debtorPhone" required placeholder="+998 90 123 45 67" maxlength="9">
+                <input type="tel" id="debtorPhone" required placeholder="+998 90 123 45 67" maxlength="17">
               </div>
               <div class="form-group">
                 <label for="debtAmount">Qarz summasi (so'm) *</label>
@@ -487,12 +487,12 @@
             <form id="editDebtorForm" onsubmit="handleEditDebtorSubmit(event)">
               <input type="hidden" id="editDebtorId" aria-label="editDebtorId">
               <div class="form-group">
-                <label for="editDebtorName">Ism *</label>
-                <input type="text" id="editDebtorName" required>
+                <label for="editDebtorName">Ism va familiya *</label>
+                <input type="text" id="editDebtorName" required placeholder="Davron Kabulov" style="text-transform: capitalize;">
               </div>
               <div class="form-group">
                 <label for="editDebtorPhone">Telefon raqami *</label>
-                <input type="tel" id="editDebtorPhone" required>
+                <input type="tel" id="editDebtorPhone" required placeholder="+998 90 123 45 67" maxlength="17">
               </div>
               <div class="form-group">
                 <label for="editDebtAmount">Qarz summasi</label>

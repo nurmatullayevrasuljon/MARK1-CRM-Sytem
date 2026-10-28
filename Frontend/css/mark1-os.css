@@ -4784,3 +4784,242 @@ html.dark-mode .table tbody tr:hover {
   background: linear-gradient(180deg, var(--m1-brand), var(--m1-brand-press));
   opacity: 0.75;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBIL VA PLANSHET UCHUN TO'LIQ MUKAMMAL DESIGN (PHONE & TABLET ULTRA-FIX)
+   - Tarix paneli: izlanish + 2 ta select yonma-yon + Yuklab olish
+   - Mahsulotlar paneli: izlanish + 2 ta select yonma-yon + 2 ta tugma yonma-yon
+   - Qarzdorlik paneli: izlanish + 2 ta tugma yonma-yon
+   - Qarzdor qo'shish/tahrirlash modallari: mobil telefonda qulay fullscreen sheet,
+     ichki scroll YO'Q, to'liq ekranga mos, bo'shliqlar toza
+   - Topbar: mobil telefonda elementlar bir-biriga minmasligi, sarlavha toza,
+     profil ma'lumotlari sig'ishi
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 767.98px) {
+  /* 1. Tarix (Savdo jurnali) toolbar mobil tartibi */
+  .card .p-4.border-bottom > .d-flex.justify-content-between.align-items-center.flex-wrap.gap-3 {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+  .card .p-4.border-bottom > .d-flex > .d-flex.align-items-center.gap-3.flex-grow-1,
+  .card .p-4.border-bottom > .d-flex > .d-flex.align-items-center.gap-3.flex-grow-1 > div {
+    max-width: none !important;
+    width: 100% !important;
+  }
+  .card .p-4.border-bottom > .d-flex > .d-flex.align-items-center.gap-2 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+  .card .p-4.border-bottom > .d-flex > .d-flex.align-items-center.gap-2 select.mk-filter-select {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    font-size: 13px !important;
+  }
+  .card .p-4.border-bottom > .d-flex > .d-flex.align-items-center.gap-2 #exportTransactions {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    justify-content: center !important;
+    min-height: 42px !important;
+    font-weight: 600 !important;
+  }
+
+  /* 2. Mahsulotlar toolbar mobil tartibi */
+  #productsSection .mk-toolbar {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  #productsSection .mk-toolbar-search {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+  }
+  #productsSection .mk-filter-select {
+    grid-column: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    font-size: 13px !important;
+  }
+  #productsSection #exportProductsBtn {
+    grid-column: 1 / 2 !important;
+    width: 100% !important;
+    min-height: 42px !important;
+    font-size: 13px !important;
+    padding: 0 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  #productsSection #openProductModal {
+    grid-column: 2 / 3 !important;
+    width: 100% !important;
+    min-height: 42px !important;
+    font-size: 13px !important;
+    padding: 0 8px !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* 3. Qarzdorlar toolbar mobil tartibi */
+  #debtors .mk-page-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  #debtors .mk-page-actions #searchInput {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+  #debtors .mk-page-actions #exportDebtorsBtn {
+    grid-column: 1 / 2 !important;
+    width: 100% !important;
+    min-height: 42px !important;
+    font-size: 13px !important;
+    padding: 0 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  #debtors .mk-page-actions button.btn-primary {
+    grid-column: 2 / 3 !important;
+    width: 100% !important;
+    min-height: 42px !important;
+    font-size: 13px !important;
+    padding: 0 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* 4. Qarzdor qo'shish va tahrirlash modallari: mobil ekranda to'liq
+     moslashuvchan sheet (ichki alohida scrol yo'q, butun oyna bir tekis
+     ko'rinadi yoki butun modal bo'yicha tabiiy aylanadi) */
+  .modal-debtors {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+  .modal-debtors-content {
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 94vh !important;
+    height: auto !important;
+    margin: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-top-left-radius: 20px !important;
+    border-top-right-radius: 20px !important;
+    padding: 18px 18px max(18px, env(safe-area-inset-bottom)) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .modal-debtors-content form,
+  .modal-debtors-content .mk-modal-body {
+    overflow-y: visible !important;
+    max-height: none !important;
+    padding: 0 !important;
+    gap: 12px !important;
+  }
+  .modal-debtors-content .form-group input,
+  .modal-debtors-content .form-group select,
+  .modal-debtors-content .form-group textarea {
+    font-size: 15px !important;
+    padding: 10px 14px !important;
+    min-height: 44px !important;
+    border-radius: 10px !important;
+  }
+  .modal-debtors-content .form-group textarea {
+    min-height: 70px !important;
+  }
+  .modal-debtors-content .btn-submit {
+    min-height: 46px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    margin-top: 4px !important;
+  }
+
+  /* 5. Topbar mobil moslashuvi: elementlar minmasligi */
+  .topbar {
+    padding: 0 12px !important;
+    gap: 8px !important;
+    min-height: 56px !important;
+  }
+  .mk-topbar-left {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    overflow: hidden !important;
+  }
+  .mk-topbar-left > div {
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+  .topbar h1 {
+    font-size: 16px !important;
+    line-height: 1.2 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  .mk-topbar-sub {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    max-width: 100% !important;
+  }
+  .top-actions {
+    flex: 0 0 auto !important;
+    gap: 6px !important;
+  }
+  .profile-trigger {
+    padding: 3px 6px !important;
+    gap: 6px !important;
+  }
+  .profile-avatar, .profile-avatar-fallback {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 12px !important;
+  }
+  .profile-info {
+    display: none !important;
+  }
+  .profile-dropdown-icon {
+    display: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PLANSHET (768px - 1024px) TARTIBI:
+   Ustunlar 2 ta bo'lib qolishi yoki torayib ketmasligi uchun chiroyli grid
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .topbar {
+    padding: 0 var(--m1-s5) !important;
+  }
+  .topbar h1 {
+    font-size: 20px !important;
+  }
+  .card .p-4.border-bottom > .d-flex.justify-content-between.align-items-center.flex-wrap.gap-3 {
+    gap: 12px !important;
+  }
+  #productsSection .mk-toolbar {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+  #productsSection .mk-toolbar-search {
+    flex: 1 1 240px !important;
+    min-width: 200px !important;
+  }
+  #productsSection .mk-filter-select {
+    flex: 0 1 180px !important;
+    min-width: 140px !important;
+  }
+}

@@ -3293,14 +3293,21 @@ async function handleDebtSaleSubmit(event) {
     const newName = document.getElementById("debtSaleNewClientName").value.trim();
     const newPhone = document.getElementById("debtSaleNewClientPhone").value.trim();
 
-    if (!newName) {
-      showSaleAlert("Yangi mijoz ismini kiriting", "error");
+    const nameErr = validateDebtorFullName(newName);
+    if (nameErr) {
+      showSaleAlert(nameErr, "error");
+      return;
+    }
+
+    const normPhone = normalizeDebtPhone(newPhone).replace(/^\+998/, "");
+    if (!normPhone || !/^\d{9}$/.test(normPhone)) {
+      showSaleAlert("Telefon raqami 9 xonali bo'lishi kerak (masalan: 901234567)", "error");
       return;
     }
 
     const clientResult = await AuthSystem.createClient({
       client_name: newName,
-      client_phone: newPhone || undefined
+      client_phone: normPhone
     });
 
     if (!clientResult || !clientResult.success) {
@@ -4548,6 +4555,42 @@ function normalizeDebtPhone(value) {
   return phone;
 }
 
+/**
+ * Qarzdor ism-familiyasini qat'iy tekshirish:
+ * - Ham ism, ham familiya majburiy (kamida 2 ta so'z)
+ * - Bema'ni spam (kjshfsgdfd, aaaa bbbb) rad etiladi
+ * - Faqat harflar, apostrof va chiziqcha ruxsat etiladi
+ */
+function validateDebtorFullName(fullName) {
+  if (typeof fullName !== "string" || !fullName.trim()) {
+    return "Iltimos, qarzdorning ism va familiyasini kiriting";
+  }
+  var trimmed = fullName.trim().replace(/\s+/g, " ");
+  if (trimmed.length < 5) {
+    return "Ism va familiya kamida 5 ta harfdan iborat bo'lishi kerak";
+  }
+  if (trimmed.length > 80) {
+    return "Ism va familiya 80 belgidan oshmasligi kerak";
+  }
+  var parts = trimmed.split(" ");
+  if (parts.length < 2) {
+    return "Iltimos, to'liq ism va familiyani kiriting (masalan: Ali Valiyev)";
+  }
+  for (var i = 0; i < parts.length; i++) {
+    if (parts[i].length < 2) {
+      return "Ism va familiyaning har biri kamida 2 ta harfdan iborat bo'lishi kerak";
+    }
+  }
+  var allowed = /^[A-Za-z\u0400-\u04FF\u0450-\u045F\u0490\u0491\u04A2\u04A3\u04B0\u04B1\u04BA\u04BB\u04C0\u04C1\u04D8\u04D9\u04E8\u04E9\u04EE\u04EF\u04F8\u04F9\x27\u2019\u02BC\s\-]+$/;
+  if (!allowed.test(trimmed)) {
+    return "Ism va familiyada faqat harflar ishlatilishi mumkin";
+  }
+  if (/(.)\1{3,}/.test(trimmed)) {
+    return "Noto'g'ri ism-familiya kiritildi (ketma-ket takrorlangan harflar)";
+  }
+  return null;
+}
+
 async function apiLoadDebtors() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━");
   console.log("📋 LIST DEBTORS API");
@@ -4760,19 +4803,26 @@ async function handleSubmit(event) {
     return;
   }
 
+  const rawName = document.getElementById('debtorName').value.trim();
+  const nameError = validateDebtorFullName(rawName);
+  if (nameError) {
+    alert(nameError);
+    return;
+  }
+
+  if (!phone || !/^\+998\d{9}$/.test(phone)) {
+    alert("Telefon raqamini to'g'ri kiriting (masalan: +998 90 123 45 67 yoki 901234567)");
+    return;
+  }
+
   const newDebtor = {
-    name: document.getElementById('debtorName').value.trim(),
+    name: rawName,
     phone: phone,
     amount: parseFloat(document.getElementById('debtAmount').value),
     debtDate: document.getElementById('debtDate').value,
     returnDate: document.getElementById('returnDate').value,
     notes: document.getElementById('debtNotes').value.trim() || ''
   };
-
-  if (!newDebtor.name || !newDebtor.phone || !/^\+998\d{9}$/.test(newDebtor.phone)) {
-    alert("Ismni yozing va telefon raqamini to'g'ri kiriting (masalan: 901234567)");
-    return;
-  }
 
   if (isNaN(newDebtor.amount) || newDebtor.amount <= 0) {
     alert("Qarz summasini to'g'ri kiriting!");
@@ -5033,8 +5083,14 @@ async function handleEditDebtorSubmit(event) {
   const returnDate = document.getElementById("editReturnDate").value;
   const notes = document.getElementById("editDebtNotes").value.trim();
 
-  if (!name || !phone || !/^\+998\d{9}$/.test(phone)) {
-    alert("Ism va telefon raqamni to'g'ri kiriting!");
+  const nameError = validateDebtorFullName(name);
+  if (nameError) {
+    alert(nameError);
+    return;
+  }
+
+  if (!phone || !/^\+998\d{9}$/.test(phone)) {
+    alert("Telefon raqamni to'g'ri kiriting (masalan: +998 90 123 45 67 yoki 901234567)!");
     return;
   }
 
