@@ -41,36 +41,34 @@
   <style>
     /* ── Auth CSS Variables ── */
     :root {
-      --auth-bg: #f0f2f8;
-      --auth-left-bg: linear-gradient(160deg, #0f1629 0%, #1a2650 50%, #0d1b3e 100%);
+      --auth-bg: #f3f7fb;
+      --auth-left-bg: radial-gradient(circle at 10% 20%, rgba(68, 85, 238, 0.28) 0%, transparent 45%), radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.22) 0%, transparent 50%), #0b1120;
       --auth-card-bg: #ffffff;
-      --auth-card-shadow: 0 4px 6px -1px rgba(0,0,0,.06), 0 24px 48px -8px rgba(0,0,0,.12);
-      --auth-input-bg: #f7f8fb;
-      --auth-input-border: #e2e5ef;
+      --auth-card-shadow: 0 10px 30px -5px rgba(20, 30, 60, 0.08), 0 20px 40px -15px rgba(20, 30, 60, 0.05);
+      --auth-input-bg: #f7f9fc;
+      --auth-input-border: #dbe4ee;
       --auth-input-focus-border: #4455EE;
-      --auth-input-focus-shadow: 0 0 0 3px rgba(91,106,240,.14);
-      --auth-label: #6b7280;
-      /* Link/akcent matni: oq fonda 5.56 (AA) */
+      --auth-input-focus-shadow: 0 0 0 3px rgba(68, 85, 238, 0.15);
+      --auth-label: #526780;
       --auth-accent: #4455EE;
-      --auth-text: #111827;
-      --auth-feature-bg: rgba(255,255,255,.07);
-      --auth-feature-border: rgba(255,255,255,.1);
-      --auth-feature-icon-bg: rgba(91,106,240,.25);
-      --auth-feature-icon-color: #818cf8;
+      --auth-text: #101828;
+      --auth-feature-bg: rgba(255,255,255,.05);
+      --auth-feature-border: rgba(255,255,255,.08);
+      --auth-feature-icon-bg: rgba(68,85,238,.2);
+      --auth-feature-icon-color: #8da2fb;
     }
     :root.dark-mode {
-      --auth-bg: #0c0f1a;
-      --auth-left-bg: linear-gradient(160deg, #06080f 0%, #0f1629 50%, #080d1a 100%);
-      --auth-card-bg: #141828;
-      --auth-card-shadow: 0 4px 6px -1px rgba(0,0,0,.4), 0 24px 48px -8px rgba(0,0,0,.5);
-      --auth-input-bg: #1c2235;
-      --auth-input-border: #2a3250;
-      --auth-input-focus-border: #818cf8;
-      --auth-input-focus-shadow: 0 0 0 3px rgba(129,140,248,.18);
-      --auth-label: #94a3b8;
-      /* #4455EE quyuq karta #141828 ustida 3.17 edi — AA uchun ochroq kerak */
-      --auth-accent: #8FA0FF;
-      --auth-text: #f1f5f9;
+      --auth-bg: #080f19;
+      --auth-left-bg: radial-gradient(circle at 10% 20%, rgba(65, 105, 245, 0.2) 0%, transparent 45%), radial-gradient(circle at 90% 80%, rgba(124, 58, 237, 0.18) 0%, transparent 50%), #060b13;
+      --auth-card-bg: #0f1c2b;
+      --auth-card-shadow: 0 20px 50px -10px rgba(0,0,0,.6), 0 0 0 1px #25465b;
+      --auth-input-bg: #152a3b;
+      --auth-input-border: #25465b;
+      --auth-input-focus-border: #4169F5;
+      --auth-input-focus-shadow: 0 0 0 3px rgba(65,105,245,.2);
+      --auth-label: #91afc5;
+      --auth-accent: #6b8cff;
+      --auth-text: #ecf3fa;
     }
 
     *, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -357,6 +355,188 @@
     .btn-primary-auth:active:not(:disabled) { transform: scale(.98); }
     .btn-primary-auth:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
 
+    /* ── Mode Switcher ── */
+    .auth-mode-switch {
+      display: flex;
+      background: var(--auth-input-bg);
+      border: 1px solid var(--auth-input-border);
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      gap: 4px;
+    }
+    .auth-mode-btn {
+      flex: 1;
+      text-align: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--auth-label);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .auth-mode-btn.active {
+      background: var(--auth-card-bg);
+      color: var(--auth-accent);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    .auth-mode-btn:hover:not(.active) {
+      color: var(--auth-text);
+    }
+
+    /* ── Live Showcase Card ── */
+    .auth-live-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      padding: 20px 22px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      margin-bottom: 20px;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4);
+    }
+    .auth-live-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .auth-live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.18);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #34d399;
+    }
+    .auth-live-pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+      animation: pulseDot 2s infinite;
+    }
+    .auth-live-tag {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.45);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .auth-live-lbl {
+      font-size: 12.5px;
+      color: rgba(255, 255, 255, 0.65);
+      margin-bottom: 4px;
+    }
+    .auth-live-val {
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff !important;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+    .auth-live-val small {
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.6);
+      margin-left: 4px;
+    }
+    .auth-live-growth {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.12);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .auth-live-mini-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 36px;
+      margin-top: 14px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .auth-live-mini-bars span {
+      flex: 1;
+      background: linear-gradient(180deg, #4455EE, #818cf8);
+      border-radius: 3px 3px 0 0;
+      opacity: 0.85;
+    }
+
+    /* ── Social Proof Footer ── */
+    .auth-social-proof {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .auth-avatars {
+      display: flex;
+      flex-shrink: 0;
+    }
+    .avatar-pill {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      border: 2px solid #0b1120;
+      margin-left: -8px;
+    }
+    .avatar-pill:first-child { margin-left: 0; }
+    .auth-social-text b {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.3;
+    }
+    .auth-social-text span {
+      display: block;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* ── Form Inputs With Icons ── */
+    .field-wrap .field-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--auth-label);
+      font-size: 16px;
+      pointer-events: none;
+      transition: color 0.15s ease;
+      z-index: 2;
+    }
+    .field-wrap:focus-within .field-icon {
+      color: var(--auth-accent);
+    }
+    input.field-input.with-icon {
+      padding-left: 42px !important;
+    }
+
     /* ── Terms Row ── */
     .terms-row {
       display: flex;
@@ -524,56 +704,77 @@
     <!-- ══════ FEATURES (RIGHT visually, but LEFT in DOM) PANEL ══════ -->
     <aside class="auth-left">
       <div class="auth-brand">
-        <img class="auth-brand-logo" src="img/brand-l.png" alt="Mark1 CRM">
-        <p class="auth-brand-tagline">Savdo, mahsulotlar va mijozlaringizni <br>samarali boshqaring</p>
+        <a href="/" aria-label="Mark1 CRM Bosh sahifa">
+          <img class="auth-brand-logo" src="img/brand-l.png" alt="Mark1 CRM">
+        </a>
+        <p class="auth-brand-tagline">Savdo, ombor va nasiyalaringizni <br>yagona aqlli tizimda boshqaring</p>
+      </div>
+
+      <!-- Live Mini Dashboard Preview Card -->
+      <div class="auth-live-card">
+        <div class="auth-live-header">
+          <span class="auth-live-badge"><span class="auth-live-pulse"></span> Jonli tizim</span>
+          <span class="auth-live-tag">Kassa faol</span>
+        </div>
+        <div class="auth-live-body">
+          <p class="auth-live-lbl">Bugungi savdo ko'rsatkichi</p>
+          <h3 class="auth-live-val">12,450,000 <small>so'm</small></h3>
+          <div class="auth-live-growth"><i class="bi bi-arrow-up-right"></i> +18.4% o'tgan haftaga nisbatan</div>
+        </div>
+        <div class="auth-live-mini-bars" aria-hidden="true">
+          <span style="height:35%"></span>
+          <span style="height:55%"></span>
+          <span style="height:40%"></span>
+          <span style="height:80%"></span>
+          <span style="height:65%"></span>
+          <span style="height:95%"></span>
+          <span style="height:70%"></span>
+        </div>
       </div>
 
       <div class="auth-features">
         <div class="auth-feature-item">
           <div class="auth-feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
+            <i class="bi bi-lightning-charge-fill" aria-hidden="true"></i>
           </div>
           <div class="auth-feature-text">
-            <b>Haqiqiy vaqt rejimida savdo tahlili</b>
-            <span>Kundalik daromad va tranzaksiyalarni kuzatib boring</span>
+            <b>Tezkor kassa & savdo</b>
+            <span>Shtrix-kod skaneri, chek chiqarish, naqd va karta</span>
           </div>
         </div>
 
         <div class="auth-feature-item">
           <div class="auth-feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-              <line x1="12" y1="22.08" x2="12" y2="12"/>
-            </svg>
+            <i class="bi bi-box-seam-fill" aria-hidden="true"></i>
           </div>
           <div class="auth-feature-text">
-            <b>Inventarizatsiyani boshqarish</b>
-            <span>Ombor va mahsulot operatsiyalarini kuzatib boring</span>
+            <b>Avtomatik ombor nazorati</b>
+            <span>Mahsulot tugashidan oldin ogohlantirish beradi</span>
           </div>
         </div>
 
         <div class="auth-feature-item">
           <div class="auth-feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-              <line x1="1" y1="10" x2="23" y2="10"/>
-            </svg>
+            <i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i>
           </div>
           <div class="auth-feature-text">
-            <b>Qarzlar va to'lovlarni nazorat qilish</b>
-            <span>To'lovlar va muddatlarni kuzatib boring</span>
+            <b>Daftarsiz nasiyalar nazorati</b>
+            <span>Mijozlar qarzlari va to'lov muddatlari doim qo'lingizda</span>
           </div>
         </div>
       </div>
 
-      <div class="auth-left-footer">
-        <span class="auth-trust-badge">
-          <span class="auth-trust-dot"></span>
-          Xavfsiz va shifrlangan ulanish
-        </span>
+      <div class="auth-social-proof">
+        <div class="auth-avatars" aria-hidden="true">
+          <span class="avatar-pill" style="background:#4455EE;">DI</span>
+          <span class="avatar-pill" style="background:#0DAD78;">AZ</span>
+          <span class="avatar-pill" style="background:#E9A23B;">SA</span>
+          <span class="avatar-pill" style="background:#8B5CF6;">MK</span>
+        </div>
+        <div class="auth-social-text">
+          <b>1,500+ do'konlar va savdo nuqtalari</b>
+          <span>Har kuni MARK1 CRM orqali o'z biznesini boshqaradi</span>
+        </div>
       </div>
     </aside>
 
@@ -583,6 +784,12 @@
         <a class="auth-mobile-brand" href="/" aria-label="MARK1 bosh sahifasiga o'tish">
           <img src="img/mark1-logo-navbar.png" alt="MARK1 CRM">
         </a>
+
+        <!-- Apple-uslubidagi qulay tablar -->
+        <div class="auth-mode-switch" role="tablist" aria-label="Avtorizatsiya rejimi">
+          <a href="/login" class="auth-mode-btn" role="tab" aria-selected="false"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Kirish</a>
+          <a href="/signup" class="auth-mode-btn active" role="tab" aria-selected="true"><i class="bi bi-person-plus" aria-hidden="true"></i> Ro'yxatdan o'tish</a>
+        </div>
         <h1 class="auth-card-title">Hisob yaratish</h1>
         <p class="auth-card-subtitle">Bor-yo'g'i 2 ta oddiy qadamda tizimdan foydalanishni boshlang</p>
 
@@ -605,16 +812,22 @@
             <!-- Full name -->
             <div class="field-group">
               <label class="field-label" for="firstName">Ism va familiyangiz</label>
-              <input id="firstName" name="firstName" class="field-input"
-                required minlength="3" placeholder="Masalan: Sardor Aliyev" autocomplete="name">
+              <div class="field-wrap">
+                <i class="bi bi-person field-icon" aria-hidden="true"></i>
+                <input id="firstName" name="firstName" class="field-input with-icon"
+                  required minlength="3" placeholder="Masalan: Sardor Aliyev" autocomplete="name">
+              </div>
               <div class="invalid-feedback">Iltimos ismingizni kiriting (kamida 3 ta belgi).</div>
             </div>
 
             <!-- Phone -->
             <div class="field-group">
               <label class="field-label" for="phone">Telefon raqamingiz</label>
-              <input id="phone" name="phone" type="tel" class="field-input"
-                required placeholder="+998 90 123 45 67" maxlength="13" autocomplete="tel">
+              <div class="field-wrap">
+                <i class="bi bi-telephone field-icon" aria-hidden="true"></i>
+                <input id="phone" name="phone" type="tel" class="field-input with-icon"
+                  required placeholder="+998 90 123 45 67" maxlength="13" autocomplete="tel">
+              </div>
               <div class="invalid-feedback">Iltimos to'g'ri telefon raqam kiriting.</div>
             </div>
 
@@ -628,8 +841,11 @@
             <!-- Store name -->
             <div class="field-group">
               <label class="field-label" for="storeName">Do'koningiz nomi</label>
-              <input id="storeName" name="storeName" class="field-input"
-                required minlength="2" placeholder="Masalan: Baraka Market">
+              <div class="field-wrap">
+                <i class="bi bi-shop field-icon" aria-hidden="true"></i>
+                <input id="storeName" name="storeName" class="field-input with-icon"
+                  required minlength="2" placeholder="Masalan: Baraka Market">
+              </div>
               <div class="invalid-feedback">Iltimos do'kon nomini kiriting.</div>
             </div>
 
@@ -637,7 +853,8 @@
             <div class="field-group">
               <label class="field-label" for="password">Xavfsiz parol</label>
               <div class="field-wrap">
-                <input id="password" name="password" type="password" class="field-input has-toggle"
+                <i class="bi bi-lock field-icon" aria-hidden="true"></i>
+                <input id="password" name="password" type="password" class="field-input with-icon has-toggle"
                   required minlength="6" placeholder="Kamida 6 ta belgi" autocomplete="new-password">
                 <button type="button" class="pw-toggle-btn" data-pw-toggle="password" aria-label="Parolni ko'rsatish"><i class="bi bi-eye" aria-hidden="true"></i></button>
               </div>
