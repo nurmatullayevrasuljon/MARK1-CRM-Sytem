@@ -800,7 +800,7 @@ function mapTransaction(apiTransaction) {
     t.sold_at || t.created_at || t.date || t.timestamp || getCurrentLocalDateTime();
 
   return {
-    id: t.id ?? null,
+    id: t._id || t.id || null,
     name,
     category,
     qty,
@@ -3925,9 +3925,47 @@ function renderTransactions(apiTransactions) {
               : `<span class="status-badge status-sold"><i class="bi bi-check-circle-fill"></i> Sotildi</span>`
           }
         </td>
+        <td data-label="Amallar" class="text-end px-3">
+          <button class="btn btn-sm btn-outline-danger" onclick="cancelSaleFromJournal('${s.id}')" title="Sotuvni bekor qilish" aria-label="Sotuvni bekor qilish" style="border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600;">
+            <i class="bi bi-trash-fill" aria-hidden="true"></i> Bekor qilish
+          </button>
+        </td>
       </tr>
     `;
   });
+}
+
+/**
+ * Savdo jurnali (Tarix) sahifasidan sotuvni bekor qilish
+ */
+async function cancelSaleFromJournal(id) {
+  if (!id) return;
+  const ok = await window.showConfirm(
+    "Ushbu sotuvni bekor qilmoqchimisiz?\nMahsulotlar omborga qaytariladi va jurnaldan o'chiriladi.",
+    "Sotuvni bekor qilish",
+    "Bekor qilish",
+    "Ortga",
+    true
+  );
+  if (!ok) return;
+
+  try {
+    const result = await AuthSystem.cancelSale(id);
+    if (!result || !result.success) {
+      alert(result?.backendMessage || "Sotuvni bekor qilishda xatolik yuz berdi");
+      return;
+    }
+    showSaleAlert("Sotuv muvaffaqiyatli bekor qilindi!", "success");
+    await apiLoadSales();
+    await apiLoadProducts();
+    await loadAndRenderTransactions(transactionFilter);
+    if (typeof DashboardStatisticsManager !== 'undefined') {
+      DashboardStatisticsManager.init();
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Sotuvni bekor qilishda xatolik yuz berdi");
+  }
 }
 
 

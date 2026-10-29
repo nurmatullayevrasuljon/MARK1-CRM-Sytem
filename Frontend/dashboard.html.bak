@@ -811,6 +811,7 @@
                     <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Sana / Vaqt</th>
                     <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">To'lov turi</th>
                     <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3">Holati</th>
+                    <th scope="col" class="text-muted small fw-semibold border-0 text-uppercase py-3 text-end px-4">Amallar</th>
                   </tr>
                 </thead>
                 <tbody id="transactionsTableBody"></tbody>
