@@ -4254,9 +4254,13 @@ async function updateCharts(cachedRawSales) {
                     callback:
                       function(value) {
 
-                        return Number(
-                          value
-                        ).toLocaleString();
+                        const n = Number(value);
+                        if (!isFinite(n) || n === 0) return "0";
+                        if (n >= 1e12) return (n / 1e12).toFixed(1).replace(/\.0$/, "") + " trln";
+                        if (n >= 1e9) return (n / 1e9).toFixed(1).replace(/\.0$/, "") + " mlrd";
+                        if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, "") + " mln";
+                        if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, "") + " ming";
+                        return n.toLocaleString();
 
                       }
 
@@ -8639,10 +8643,18 @@ var DashboardStatisticsManager = {
       return "0"
     }
 
-    return Number(amount)
-      .toLocaleString(
-        "uz-UZ"
-      )
+    const n = Number(amount);
+    if (!Number.isFinite(n) || n === 0) return "0";
+
+    // Katta sonlar (100 milliondan ortiq) uchun ixcham format,
+    // KPI kartalarining chetga chiqib ketishini oldini oladi
+    if (n >= 1e12) return (n / 1e12).toFixed(2).replace(/\.?0+$/, "") + " trln";
+    if (n >= 1e9) return (n / 1e9).toFixed(2).replace(/\.?0+$/, "") + " mlrd";
+    if (n >= 1e8) return (n / 1e6).toFixed(1).replace(/\.?0+$/, "") + " mln";
+
+    return n.toLocaleString(
+      "uz-UZ"
+    )
 
   },
 

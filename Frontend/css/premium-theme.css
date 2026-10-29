@@ -1541,12 +1541,70 @@ textarea:focus-visible {
   border-color: var(--border-subtle) !important;
 }
 
-.dark-mode table,
-.dark-mode th,
-.dark-mode td {
-  background: transparent !important;
-  color: var(--text-primary) !important;
-  border-color: var(--border-subtle) !important;
+/* Urgency darajalari uchun dark-mode to'g'rilash */
+.dark-mode .overdue-mini-days.critical,
+html.dark-mode .overdue-mini-days.critical {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #fca5a5 !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+.dark-mode .overdue-mini-days.warning,
+html.dark-mode .overdue-mini-days.warning {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #fcd34d !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+.dark-mode .overdue-mini-days.mild,
+html.dark-mode .overdue-mini-days.mild {
+  background: rgba(16, 185, 129, 0.2) !important;
+  color: #6ee7b7 !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
+/* Qarzdorlar jadvalidagi status badge lari uchun dark mode to'g'rilash */
+.dark-mode .status-badge-large.overdue,
+html.dark-mode .status-badge-large.overdue {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(239, 68, 68, 0.4) !important;
+}
+.dark-mode .status-badge-large.upcoming,
+html.dark-mode .status-badge-large.upcoming {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #fcd34d !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+}
+.dark-mode .status-badge-large.normal,
+html.dark-mode .status-badge-large.normal {
+  background: rgba(59, 130, 246, 0.2) !important;
+  color: #93c5fd !important;
+  border: 1px solid rgba(59, 130, 246, 0.4) !important;
+}
+
+/* SMS status badge lari uchun dark mode to'g'rilash */
+.dark-mode .sms-status-badge.sms-sent,
+html.dark-mode .sms-status-badge.sms-sent {
+  background: rgba(16, 185, 129, 0.2) !important;
+  color: #6ee7b7 !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+.dark-mode .sms-status-badge.sms-pending,
+html.dark-mode .sms-status-badge.sms-pending {
+  background: rgba(59, 130, 246, 0.2) !important;
+  color: #93c5fd !important;
+  border-color: rgba(59, 130, 246, 0.4) !important;
+}
+.dark-mode .sms-status-badge.sms-overdue,
+html.dark-mode .sms-status-badge.sms-overdue {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #fca5a5 !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+.dark-mode .sms-status-badge.sms-no-action,
+html.dark-mode .sms-status-badge.sms-no-action {
+  background: rgba(148, 163, 184, 0.15) !important;
+  color: #cbd5e1 !important;
+  border-color: rgba(148, 163, 184, 0.3) !important;
 }
 
 .dark-mode .table-hover tbody tr:hover {
