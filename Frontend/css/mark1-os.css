@@ -5071,3 +5071,37 @@ html.dark-mode .table tbody tr:hover {
     min-width: 140px !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TELEFON: iOS/Android avtomatik zoom'ni o'chirish (HAQIQIY TELFONDA
+   "kiritib bo'lmayapti" muammosining asosiy sababi)
+   ═══════════════════════════════════════════════════════════════════════════
+   iPhone Safari va Android Chrome fokusda 16px dan kichik shriftli
+   input/select/textarea larni o'zi kattalashtiradi (auto-zoom). Zoom
+   klaviatura bilan birga sahifani «sindiradi»: input ekrandan chetlab
+   chiqadi, qayta bosish qiyinlashadi va bu «hech nima kiritib bo'lmayapti»
+   hissini tug'diradi. Yechim: telefonda (<768px) barcha forma
+   elementlarini 16px qilish. Tablet va desktopda dizayn o'zgarmaydi. */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Yuqoridagi keng qoidani ID+class bilan bekor qiluvchi bir necha
+     e'lon bor (masalan filter-select 13px !important) — ularni ham
+     16px ga ko'taramiz, aks holda iOS yana zoom beradi. */
+  #productsSection .mk-filter-select,
+  #transactionFilter,
+  #transactionPaymentFilter {
+    font-size: 16px !important;
+  }
+
+  /* Telefon uchun dynamic viewport — mobil URL bar tufayli pastdagi
+     «qora bo'shliq» ni yo'qotadi (100dvh eski brauzerlarda 100vh ga tushadi). */
+  body > .d-flex {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}

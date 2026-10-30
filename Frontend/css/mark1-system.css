@@ -80,6 +80,7 @@ button, input, select, textarea, optgroup { font-family: inherit; }
 /* ─── 3. App shell: sidebar / content ────────────────────────────────────── */
 body > .d-flex {
   min-height: 100vh;
+  min-height: 100dvh;
   align-items: stretch;
 }
 
@@ -836,6 +837,7 @@ input.field-input::placeholder { color: #626d82; opacity: 1; }
     top: 0;
     left: 0;
     height: 100vh;
+    height: 100dvh;
     width: min(300px, 84vw);
     min-width: 0;
     flex-basis: auto;
