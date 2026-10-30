@@ -546,15 +546,11 @@
                   <button class="btn btn-info" id="addSaleCard" title="Karta bilan sotish">
                     <i class="bi bi-credit-card" aria-hidden="true"></i> Karta
                   </button>
-                  <button class="btn btn-warning mk-pay-debt" id="addSaleDebt" title="Qarzga yoki qisman to'lov bilan sotish">
-                    <i class="bi bi-receipt" aria-hidden="true"></i> Qarzga sotish
-                  </button>
                 </div>
 
                 <p class="mk-pos-hint">
                   <i class="bi bi-info-circle" aria-hidden="true"></i>
                   To'lov tugmasi bosilganda savatdagi barcha mahsulotlar bitta sotuv sifatida yoziladi.
-                  Qarzga sotishda mijoz va qaytarish muddati ko'rsatiladi.
                 </p>
               </div>
             </div>

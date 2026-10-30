@@ -2746,6 +2746,18 @@ function renderSaleCart() {
   if (countEl) countEl.textContent = `${saleCart.length} ta mahsulot`;
   if (totalEl) totalEl.textContent = `${total.toLocaleString()} so'm`;
   if (subtotalEl) subtotalEl.textContent = `${total.toLocaleString()} so'm`;
+
+  // Foydalanuvchi so'rovi: "Qarzga sotish" tugmasi To'lov panelidan olib tashlandi.
+  // Qarzdorlar bo'limidan "Qarz qo'shish" orqali kelgan foydalanuvchi uchun
+  // savatda mahsulot paydo bo'lganda qarz oynasi avtomatik ochiladi
+  // (openDebtSaleModal ichida pendingDebtSaleClientId iste'mol qilinadi).
+  if (window.pendingDebtSaleClientId && saleCart.length && typeof openDebtSaleModal === "function") {
+    setTimeout(() => {
+      if (window.pendingDebtSaleClientId) {
+        try { openDebtSaleModal(); } catch (e) { console.error(e); }
+      }
+    }, 150);
+  }
 }
 
 function addCurrentSelectionToCart(silent) {
@@ -4567,7 +4579,9 @@ function getStatus(returnDate) {
     return { class: 'normal', text: 'Muddatsiz', days: 0 };
   }
   if (days > 0) return { class: 'overdue', text: 'Muddati o\'tgan', days };
-  if (days >= -7) return { class: 'upcoming', text: 'Yaqinlashmoqda', days: Math.abs(days) };
+  // "Yaqinlashmoqda" juda uzun — badge siqilib ustidagi kun matnini bosar edi.
+  // Qisqa "Yaqin" + pastdagi "N kun qoldi" matni yetarli ma'lumot beradi.
+  if (days >= -7) return { class: 'upcoming', text: 'Yaqin', days: Math.abs(days) };
   return { class: 'normal', text: 'Oddiy', days: Math.abs(days) };
 }
 
@@ -4792,7 +4806,7 @@ async function handleAdjustDebt(event) {
       }
 
       showSaleAlert(
-        `${debtor.name} uchun qarz qo'shish: mahsulot va miqdorni tanlab, "Qarzga sotish" tugmasini bosing — mijoz avtomatik tanlangan bo'ladi.`,
+        `${debtor.name} uchun qarz qo'shish: mahsulot va miqdorni tanlang — qarz oynasi avtomatik ochiladi.`,
         "success"
       );
       return;
@@ -5648,7 +5662,7 @@ function renderDebtors() {
     }
 
     return `
-      <tr>
+      <tr data-debtor-id="${mkEsc(d.id)}">
         <td data-label="Ism">
           <div style="display:flex; flex-direction:column; gap:5px; min-width:0;">
             <strong style="font-size:1rem; line-height:1.2; color:var(--debtor-name-color, #1e293b); text-transform: capitalize; overflow-wrap:anywhere;">${d.name}</strong>
@@ -6196,39 +6210,71 @@ function renderOverdueCards() {
 
 /* ===============================================
    QARZDORNI JADVALDA HIGHLIGHT QILISH (bonus)
+   Dashboard → Qarzdorlar sahifalararo o'tish:
+   - Agar joriy sahifada debtors bo'limi bo'lsa (desktop SPA) — inline highlight.
+   - Aks holda (ko'p sahifali arxitektura, dashboard sahifasida bo'lim yo'q) —
+     /debtors sahifasiga o'tamiz va debtorId ni sessionStorage orqali uzatamiz;
+   Debtors sahifasi yuklanganda bu ID bo'yicha qator highlight qilinadi.
 =============================================== */
 function highlightDebtor(debtorId) {
-  // Agar Qarzdorlar sahifasiga o'tkazish kerak bo'lsa
+  const hasDebtorsSection = !!document.getElementById("debtors");
+
+  if (!hasDebtorsSection) {
+    // Ko'p sahifali rejim: /debtors sahifasiga o'tish + ID uzatish
+    try { sessionStorage.setItem("mark1_highlight_debtor", String(debtorId)); } catch (e) {}
+    window.location.href = "/debtors";
+    return;
+  }
+
+  // SPA rejim: ochiq bo'limni almashtirib, highlight qilamiz
   openPage('debtors', 'Qarzdorlar');
 
   // Bir oz kutib, qarzdorni highlight qilish
   setTimeout(() => {
-    const rows = document.querySelectorAll('#debtorTableBody tr');
-    rows.forEach(row => {
-      row.style.background = '';
-    });
-
-    // Kerakli qarzdorni topish va highlight qilish
-    const targetRow = Array.from(rows).find(row => {
-      return row.innerHTML.includes(`onclick="contactDebtor(${debtorId})"`);
-    });
-
-    if (targetRow) {
-      targetRow.style.background = '#fef2f2';
-      targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-      setTimeout(() => {
-        targetRow.style.background = '';
-      }, 3000);
-    }
+    applyDebtorHighlight(debtorId);
   }, 300);
 }
-document.addEventListener("DOMContentLoaded", () => {
 
+// Highlight mantig'i: data-debtor-id atributi orqali qatorni topib,
+// vaqtincha fon beradi va skroll qiladi (eski innerHTML includes qidiruvi eskirgan).
+function applyDebtorHighlight(debtorId) {
+  const rows = document.querySelectorAll('#debtorTableBody tr');
+  rows.forEach(row => { row.style.background = ''; });
+
+  const targetRow = document.querySelector(`#debtorTableBody tr[data-debtor-id="${debtorId}"]`) ||
+    Array.from(rows).find(row => row.innerHTML.includes(`contactDebtor('${debtorId}')`));
+
+  if (targetRow) {
+    // Qorong'i rejimda ham ko'rinadigan, xavfsiz vaqtincha fon
+    targetRow.style.background = 'rgba(68, 85, 238, 0.12)';
+    targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    setTimeout(() => { targetRow.style.background = ''; }, 3000);
+    return true;
+  }
+  return false;
+}
+
+// /debtors sahifasi yuklanganda sessionStorage'dagi pending highlight ni bajarish
+document.addEventListener("DOMContentLoaded", () => {
+  let pendingId = null;
+  try { pendingId = sessionStorage.getItem("mark1_highlight_debtor"); } catch (e) {}
+  if (pendingId) {
+    try { sessionStorage.removeItem("mark1_highlight_debtor"); } catch (e) {}
+    // renderDebtors jadvalni to'ldirgandan keyin highlight qilish uchun bir necha frame kutamiz
+    let tries = 0;
+    const tryHighlight = () => {
+      const ok = applyDebtorHighlight(pendingId);
+      if (!ok && tries < 10) { tries++; setTimeout(tryHighlight, 200); }
+    };
+    setTimeout(tryHighlight, 300);
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
   renderDebtors();
   updateStatistics(); // bu avtomatik renderOverdueCards() ni chaqiradi
   renderOverdueCards();
-
 });
 
 
