@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#141a2e">
+<title>To‘lov — MARK1 CRM</title>
+<style>
+/* ===== MARK1 dizayn tokenlari =====
+   Diqqat: mark1.uz CSS fayllarini ko‘ra olmadim. Faqat theme-color (#141a2e) ma’lum.
+   Qolganlarini main.css dagi haqiqiy qiymatlarga almashtiring — faqat shu blok. */
+:root{
+  --mk-primary:#141a2e; --mk-primary-hover:#1f2742;
+  --mk-bg:#f6f7fb; --mk-surface:#fff; --mk-border:#e3e6ee;
+  --mk-text:#141a2e; --mk-muted:#5d6580;
+  --mk-ok:#13795b; --mk-err:#b42318; --mk-err-bg:#fef3f2;
+  --mk-radius:12px; --mk-font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+.mk-pay *{box-sizing:border-box}
+.mk-pay{margin:0;min-height:100vh;background:var(--mk-bg);color:var(--mk-text);font:16px/1.5 var(--mk-font)}
+.mk-pay-head{background:var(--mk-surface);border-bottom:1px solid var(--mk-border)}
+.mk-pay-head-in,.mk-pay-main,.mk-pay-trust{max-width:1040px;margin:0 auto;padding:0 20px}
+.mk-pay-head-in{display:flex;align-items:center;gap:16px;min-height:64px;flex-wrap:wrap}
+.mk-pay-logo img{height:32px;display:block}
+.mk-pay-title{font-size:18px;font-weight:600;margin:0;flex:1}
+.mk-pay-secure{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--mk-ok)}
+.mk-pay-back{color:var(--mk-muted);font-size:14px;text-decoration:none;border:1px solid var(--mk-border);border-radius:8px;padding:8px 12px}
+.mk-pay-back:hover{color:var(--mk-text);border-color:var(--mk-text)}
+.mk-pay-main{display:grid;grid-template-columns:1fr 340px;gap:24px;padding-top:28px;padding-bottom:28px;align-items:start}
+.mk-pay-card{background:var(--mk-surface);border:1px solid var(--mk-border);border-radius:var(--mk-radius);padding:20px;margin-bottom:20px}
+.mk-pay-card h2{font-size:16px;margin:0 0 14px}
+.mk-pay-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;font-size:15px}
+.mk-pay-row span:first-child{color:var(--mk-muted)}
+.mk-pay-row.mk-total{border-top:1px solid var(--mk-border);margin-top:6px;padding-top:14px;font-size:18px;font-weight:600}
+.mk-pay-row.mk-total span:first-child{color:var(--mk-text)}
+.mk-pay-methods{display:grid;grid-template-columns:1fr 1fr;gap:12px;border:0;padding:0;margin:0}
+.mk-pay-methods legend{font-size:16px;font-weight:600;margin-bottom:14px;padding:0}
+.mk-pay-opt{position:relative}
+.mk-pay-opt input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.mk-pay-opt label{display:flex;align-items:center;gap:12px;padding:16px;border:1.5px solid var(--mk-border);border-radius:var(--mk-radius);background:var(--mk-surface)}
+.mk-pay-opt input:checked+label{border-color:var(--mk-primary);box-shadow:0 0 0 1px var(--mk-primary)}
+.mk-pay-opt input:focus-visible+label{outline:3px solid #8aa0ff;outline-offset:2px}
+.mk-pay-opt svg{width:44px;height:44px;flex:none}
+.mk-pay-opt b{display:block}.mk-pay-opt small{color:var(--mk-muted)}
+.mk-pay-tick{margin-left:auto;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--mk-border);flex:none}
+.mk-pay-opt input:checked+label .mk-pay-tick{background:var(--mk-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.5l3 3 6-7' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E") center/100%;border-color:var(--mk-primary)}
+.mk-pay-side{position:sticky;top:20px}
+.mk-pay-btn{width:100%;min-height:48px;border:0;border-radius:10px;background:var(--mk-primary);color:#fff;font:600 16px var(--mk-font);cursor:pointer;margin-top:16px}
+.mk-pay-btn:hover:not(:disabled){background:var(--mk-primary-hover)}
+.mk-pay-btn:disabled{opacity:.55;cursor:not-allowed}
+.mk-pay-btn:focus-visible{outline:3px solid #8aa0ff;outline-offset:2px}
+.mk-pay-btn.mk-loading::before{content:"";display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border:2px solid #fff6;border-top-color:#fff;border-radius:50%;animation:mk-spin .8s linear infinite}
+@keyframes mk-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.mk-pay-btn.mk-loading::before{animation-duration:2s}}
+.mk-pay-msg{display:none;margin-top:14px;padding:12px 14px;border-radius:10px;font-size:14px}
+.mk-pay-msg.mk-show{display:block}
+.mk-pay-msg.mk-err{background:var(--mk-err-bg);color:var(--mk-err);border:1px solid #fecdca}
+.mk-pay-msg.mk-info{background:var(--mk-bg);color:var(--mk-muted);border:1px solid var(--mk-border)}
+.mk-pay-note{font-size:13px;color:var(--mk-muted);margin:12px 0 0}
+.mk-pay-trust{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding-bottom:40px;font-size:14px;color:var(--mk-muted)}
+.mk-pay-trust strong{display:block;color:var(--mk-text);margin-bottom:2px}
+.mk-pay-trust a{color:inherit}
+.mk-pay-done{text-align:center;padding:40px 20px}
+.mk-pay-done h2{font-size:22px}
+[hidden]{display:none!important}
+@media (max-width:860px){.mk-pay-main{grid-template-columns:1fr}.mk-pay-side{position:static}.mk-pay-trust{grid-template-columns:1fr}}
+@media (max-width:480px){.mk-pay-methods{grid-template-columns:1fr}.mk-pay-title{order:3;flex-basis:100%}}
+</style>
+</head>
+<body class="mk-pay">
+<header class="mk-pay-head"><div class="mk-pay-head-in">
+  <a class="mk-pay-logo" href="/" aria-label="MARK1"><img src="https://mark1.uz/img/mark1-logo-navbar.png" alt="MARK1"></a>
+  <h1 class="mk-pay-title">To‘lov</h1>
+  <span class="mk-pay-secure"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>Xavfsiz to‘lov</span>
+  <a class="mk-pay-back" id="mkBack" href="/">Bosh sahifaga qaytish</a>
+</div></header>
+
+<main class="mk-pay-main" id="mkPayMain">
+  <div>
+    <section class="mk-pay-card" aria-labelledby="mkPlanH">
+      <h2 id="mkPlanH">Tarif ma’lumotlari</h2>
+      <div class="mk-pay-row"><span>Tarif</span><span id="mkPlanName"></span></div>
+      <div class="mk-pay-row"><span>Narxi</span><span id="mkPlanPrice"></span></div>
+      <div class="mk-pay-row"><span>Obuna muddati</span><span id="mkPlanTerm"></span></div>
+      <div class="mk-pay-row"><span>Obuna tugash sanasi</span><span id="mkPlanEnd"></span></div>
+      <div class="mk-pay-row mk-total"><span>Jami to‘lov</span><span id="mkPlanTotal"></span></div>
+    </section>
+
+    <section class="mk-pay-card">
+      <fieldset class="mk-pay-methods" id="mkMethods">
+        <legend>To‘lov usulini tanlang</legend>
+        <div class="mk-pay-opt">
+          <input type="radio" name="mkMethod" id="mkClick" value="click">
+          <label for="mkClick">
+            <!-- Vaqtincha belgi. Rasmiy Click logotipi bilan almashtiring. -->
+            <svg viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="10" fill="#00a8e8"/><text x="22" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#fff" font-family="Arial">click</text></svg>
+            <span><b>Click</b><small>Click ilovasi orqali</small></span><span class="mk-pay-tick"></span>
+          </label>
+        </div>
+        <div class="mk-pay-opt">
+          <input type="radio" name="mkMethod" id="mkPayme" value="payme">
+          <label for="mkPayme">
+            <!-- Vaqtincha belgi. Rasmiy Payme logotipi bilan almashtiring. -->
+            <svg viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="10" fill="#0fb8b0"/><text x="22" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#fff" font-family="Arial">payme</text></svg>
+            <span><b>Payme</b><small>Payme ilovasi orqali</small></span><span class="mk-pay-tick"></span>
+          </label>
+        </div>
+      </fieldset>
+    </section>
+  </div>
+
+  <aside class="mk-pay-side">
+    <section class="mk-pay-card" aria-labelledby="mkSumH">
+      <h2 id="mkSumH">To‘lov xulosasi</h2>
+      <div class="mk-pay-row"><span>Tanlangan tarif</span><span id="mkSumName"></span></div>
+      <div class="mk-pay-row"><span>Tarif narxi</span><span id="mkSumPrice"></span></div>
+      <div class="mk-pay-row"><span>Qo‘shimcha to‘lovlar</span><span id="mkSumFee"></span></div>
+      <div class="mk-pay-row mk-total"><span>Jami to‘lov</span><span id="mkSumTotal"></span></div>
+      <button type="button" class="mk-pay-btn" id="mkPayBtn" disabled>To‘lovni amalga oshirish</button>
+      <p class="mk-pay-note" id="mkHint">Davom etish uchun to‘lov usulini tanlang.</p>
+      <div class="mk-pay-msg" id="mkMsg" role="alert" tabindex="-1"></div>
+    </section>
+  </aside>
+</main>
+
+<section class="mk-pay-card mk-pay-done" id="mkDone" hidden style="max-width:520px;margin:40px auto" aria-live="polite">
+  <h2>To‘lov qabul qilindi</h2>
+  <p id="mkDoneText"></p>
+  <a class="mk-pay-back" href="/">Bosh sahifaga qaytish</a>
+</section>
+
+<footer class="mk-pay-trust">
+  <div><strong>Xavfsiz to‘lov</strong>To‘lov Click yoki Payme sahifasida amalga oshadi.</div>
+  <div><strong>Ma’lumotlaringiz himoyalangan</strong>Karta ma’lumotlari MARK1 da saqlanmaydi.</div>
+  <div><strong>Qo‘llab-quvvatlash</strong><a href="mailto:support@mark1.uz">support@mark1.uz</a></div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ===== Sozlamalar ===== */
+  var CONFIG = {
+    HOME_URL: "/",                 // dashboard manzilingizga moslang
+    PAYMENTS_ENABLED: false,       // backend tayyor bo‘lgach true qiling
+    CREATE_URL: "/payments/create",          // POST {plan, provider} -> {order_id, payment_url}
+    STATUS_URL: "/payments/status/",         // GET + order_id -> {status: "paid"|"cancelled"|"pending"}
+    EXTRA_FEE: 0,
+    DEFAULT_PLAN: "crm",
+    PLANS: { crm: { name: "MARK1 CRM", price: 19999, months: 1 } }
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var params = new URLSearchParams(location.search);
+  var plan = CONFIG.PLANS[params.get("plan")] || CONFIG.PLANS[CONFIG.DEFAULT_PLAN];
+  var planKey = CONFIG.PLANS[params.get("plan")] ? params.get("plan") : CONFIG.DEFAULT_PLAN;
+  var state = { method: null, busy: false };
+
+  /* ===== Yordamchi ===== */
+  function som(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0") + " so‘m"; }
+  var MONTHS = ["yanvar","fevral","mart","aprel","may","iyun","iyul","avgust","sentabr","oktabr","noyabr","dekabr"];
+  function endDate(months) {
+    var d = new Date(), day = d.getDate();
+    d.setDate(1); d.setMonth(d.getMonth() + months);
+    var last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(day, last));
+    return d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear();
+  }
+  function set(id, v) { $(id).textContent = v; }
+
+  /* ===== Render: summa avtomatik hisoblanadi ===== */
+  var total = plan.price * plan.months + CONFIG.EXTRA_FEE;
+  set("mkPlanName", plan.name);
+  set("mkPlanPrice", som(plan.price) + " / oy");
+  set("mkPlanTerm", plan.months + " oy");
+  set("mkPlanEnd", endDate(plan.months));
+  set("mkPlanTotal", som(total));
+  set("mkSumName", plan.name);
+  set("mkSumPrice", som(plan.price * plan.months));
+  set("mkSumFee", som(CONFIG.EXTRA_FEE));
+  set("mkSumTotal", som(total));
+  $("mkBack").href = CONFIG.HOME_URL;
+
+  /* ===== Xabarlar ===== */
+  function msg(type, text) {
+    var m = $("mkMsg");
+    m.className = "mk-pay-msg mk-show " + (type === "err" ? "mk-err" : "mk-info");
+    m.textContent = text;
+    if (type === "err") m.focus();
+  }
+  function clearMsg() { $("mkMsg").className = "mk-pay-msg"; }
+
+  function setBusy(b) {
+    state.busy = b;
+    var btn = $("mkPayBtn");
+    btn.classList.toggle("mk-loading", b);
+    btn.disabled = b || !state.method;
+    btn.textContent = b ? "Kutilmoqda…" : "To‘lovni amalga oshirish";
+    document.querySelectorAll("input[name=mkMethod]").forEach(function (i) { i.disabled = b; });
+  }
+
+  /* ===== To‘lov provayderi integratsiyasi (placeholder) =====
+     Real API yo‘q: PAYMENTS_ENABLED=false bo‘lsa har doim xato qaytadi,
+     hech qachon "muvaffaqiyatli" ko‘rsatilmaydi. */
+  function api() {
+    if (!CONFIG.PAYMENTS_ENABLED || !window.crmApi) {
+      var e = new Error("NOT_CONNECTED"); e.code = "NOT_CONNECTED"; throw e;
+    }
+    return window.crmApi; // mavjud autentifikatsiyalangan axios klienti
+  }
+  var providers = {
+    click: function () { return createPayment("click"); },
+    payme: function () { return createPayment("payme"); }
+  };
+  async function createPayment(provider) {
+    var res = await api().post(CONFIG.CREATE_URL, { plan: planKey, provider: provider });
+    var url = res && res.data && res.data.payment_url;
+    if (!url) throw new Error("NO_URL");
+    window.location.assign(url); // foydalanuvchi provayder sahifasiga o‘tadi
+  }
+  async function verifyPayment(orderId) {
+    var res = await api().get(CONFIG.STATUS_URL + encodeURIComponent(orderId));
+    return res && res.data && res.data.status;
+  }
+
+  /* ===== Interaksiya ===== */
+  document.querySelectorAll("input[name=mkMethod]").forEach(function (i) {
+    i.addEventListener("change", function () {
+      state.method = i.value;
+      $("mkPayBtn").disabled = false;
+      $("mkHint").textContent = "Tanlangan usul: " + (i.value === "click" ? "Click" : "Payme") + ".";
+      clearMsg();
+    });
+  });
+
+  $("mkPayBtn").addEventListener("click", async function () {
+    if (state.busy || !state.method) return;
+    clearMsg(); setBusy(true);
+    try {
+      await providers[state.method]();
+    } catch (e) {
+      msg("err", e.code === "NOT_CONNECTED"
+        ? "To‘lov tizimi hali ulanmagan. To‘lov amalga oshirilmadi, hisobingizdan pul yechilmadi."
+        : "To‘lovni boshlashda xatolik yuz berdi. Qayta urinib ko‘ring yoki support@mark1.uz ga yozing.");
+      setBusy(false);
+    }
+  });
+
+  /* ===== Provayderdan qaytish: faqat backend tasdiqlasa success ===== */
+  async function handleReturn() {
+    var orderId = params.get("order_id");
+    if (!orderId) return;
+    msg("info", "To‘lov holati tekshirilmoqda…");
+    try {
+      var status = await verifyPayment(orderId);
+      if (status === "paid") {
+        $("mkPayMain").hidden = true; $("mkDone").hidden = false;
+        set("mkDoneText", plan.name + " obunangiz faollashtirildi. Tugash sanasi: " + endDate(plan.months) + ".");
+      } else if (status === "cancelled") {
+        msg("err", "To‘lov bekor qilindi. Istasangiz, qayta urinib ko‘ring.");
+      } else {
+        msg("info", "To‘lov hali tasdiqlanmadi. Bir necha daqiqadan so‘ng sahifani yangilang.");
+      }
+    } catch (e) {
+      msg("err", "To‘lov holatini tekshirib bo‘lmadi. To‘lov tasdiqlanmaguncha obuna faollashmaydi.");
+    }
+  }
+  handleReturn();
+})();
+</script>
+</body>
+</html>
