@@ -158,6 +158,10 @@ class _DailySalesScreenState extends State<DailySalesScreen> {
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.text(isDark),
                               ),
+                              // Uzun ism qatlam bo'ylab cho'zilib,
+                              // kartani buzmasligi uchun 1 qatlam + "..."
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -170,6 +174,9 @@ class _DailySalesScreenState extends State<DailySalesScreen> {
                           ],
                         ),
                       ),
+                      // Ism va summa orasida kamida 8px bo'shliq —
+                      // aks holda "Dilnoza Yusupova +80 000 so'm" yopishadi.
+                      const SizedBox(width: 8),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [

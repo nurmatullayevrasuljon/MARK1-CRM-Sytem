@@ -22,7 +22,10 @@ class StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 24, // DESIGN §7: chip height 24
+      // DESIGN §7: chip height 24 — lekin qat'iy `height` tizim shrift
+      // o'lchami (font_scale > 1.0) da matnni kesib yuboradi.
+      // Buning o'rniga minHeight: 1.0 da aniq 24, kattalashganda o'sadi.
+      constraints: const BoxConstraints(minHeight: 24),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: _bgAlpha),

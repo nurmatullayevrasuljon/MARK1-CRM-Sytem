@@ -78,7 +78,15 @@ class _SalesScreenState extends State<SalesScreen>
     // labelPadding 16px dan keyin "Bekor qilingan" kesilardi.
     // Tor ekranda padding va shrift kichrayadi, ≥360dp da DESIGN
     // ko'rinishi o'zgarmaydi.
-    final narrowTab = MediaQuery.sizeOf(context).width < 360;
+    // Tizim shrift o'lchami (font_scale) > 1.0 bo'lsa ham xuddi shunday:
+    // matn kattalashadi, tab kengligi o'zgarmaydi → kesilish.
+    // Shu uchun textScaler ham "tor holat" deb hisoblanadi.
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+    final narrowTab = MediaQuery.sizeOf(context).width < 360 || textScale > 1.05;
+    // TextScaler > 1.0 da fontSize 11 ga tushirilsa, matn 1.3 da ~14.3px
+    // bo'ladi — 360dp/3 = 120dp ichida to'liq chiqadi (labelPadding 6 bilan).
+    final tabPad = narrowTab ? 6.0 : 16.0;
+    final tabFont = narrowTab ? 11.0 : 12.0;
     // `SaleProvider` bu yerda **o'qilmaydi**: tab almashganda
     // `selectStatus` o'z holatini o'zgartiradi, ro'yxat esa
     // `_SalesList` ichida `context.watch` orqali kuzatiladi. Bu
@@ -114,11 +122,11 @@ class _SalesScreenState extends State<SalesScreen>
           unselectedLabelColor: AppColors.textSec(isDark),
           indicatorColor: AppColors.primary,
           labelPadding:
-              EdgeInsets.symmetric(horizontal: narrowTab ? 4 : 16),
+              EdgeInsets.symmetric(horizontal: tabPad),
           labelStyle: GoogleFonts.manrope(
-              fontSize: narrowTab ? 11 : 12, fontWeight: FontWeight.w600),
+              fontSize: tabFont, fontWeight: FontWeight.w600),
           unselectedLabelStyle: GoogleFonts.manrope(
-              fontSize: narrowTab ? 11 : 12, fontWeight: FontWeight.w600),
+              fontSize: tabFont, fontWeight: FontWeight.w600),
           tabs: const [
             Tab(text: 'Faol'),
             Tab(text: 'Bekor qilingan'),
@@ -303,6 +311,9 @@ class _SaleTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    // Ism bilan summa orasida bo'shliq — aks holda
+                    // "Dilnoza Yusupova 80 000 so'm" yopishib ketadi.
+                    const SizedBox(width: 8),
                     Text(
                       '${_fmt(sale.totalPrice)} so\'m',
                       style: GoogleFonts.manrope(
@@ -1780,10 +1791,11 @@ class _PaymentStepState extends State<_PaymentStep> {
       padding: const EdgeInsets.all(16),
       child: Column(children: [
         // Total display
+        // DESIGN: tugma/kartalarda GRADIENT TAQIQLANADI → qattiq action rang.
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: AppColors.primaryGradient,
+            color: AppColors.primary,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(children: [

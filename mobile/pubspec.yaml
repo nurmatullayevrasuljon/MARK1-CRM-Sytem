@@ -2,7 +2,7 @@ name: markcrm
 description: "MARK1 - Aqlli CRM platformasi"
 publish_to: 'none'
 
-version: 1.0.7+5009
+version: 1.0.8+5010
 
 environment:
   sdk: ^3.13.2
@@ -32,6 +32,9 @@ flutter:
 
   assets:
     - assets/images/
+    # Manrope shriftlari bundle qilingan — google_fonts ularni avtomatik
+    # topadi va HTTP fetch qilmaydi (release'da dizayn siljishi sababi).
+    - assets/fonts/
 
 flutter_launcher_icons:
   android: true
