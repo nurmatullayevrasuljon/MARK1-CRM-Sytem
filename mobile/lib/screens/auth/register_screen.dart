@@ -23,9 +23,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _storeCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
-  final _confirmCtrl = TextEditingController();
   bool _obscure = true;
-  bool _confirmObscure = true;
   bool _loading = false;
   bool _agree = false;
 
@@ -35,7 +33,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _storeCtrl.dispose();
     _phoneCtrl.dispose();
     _passCtrl.dispose();
-    _confirmCtrl.dispose();
     super.dispose();
   }
 
@@ -67,7 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Hisob yaratish',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
                     color: AppColors.text(isDark),
@@ -76,7 +73,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 6),
                 Text(
                   'Biznesingizni MARK1 CRM bilan boshqaring',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 14,
                     color: AppColors.textSec(isDark),
                   ),
@@ -125,9 +122,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // qabul qilinadigan qiymat aynan 9 xonali bo'lishi shart.
                     // (Avvalgi tekshiruv `d.length < 9` edi — 10-12 xonali
                     // "998..." xato raqam ham o'tib ketardi.)
+                    //
+                    // Xabar foydalanuvchi kiritgan ASL matnga qarab aniq
+                    // aytiladi: 10 xona "9019998877" normalize qilinsa
+                    // "019998877" ga aylanadi va avval "0 bilan
+                    // boshlanmasligi kerak" deb chiqardi — chalkash edi.
+                    final rawDigits = v.replaceAll(RegExp(r'\D'), '');
                     final d = normalizeUzPhone(v);
-                    if (d.length != 9) return 'Noto\'g\'ri telefon raqam';
-                    if (d.startsWith('0')) return 'Raqam 0 bilan boshlanmasligi kerak';
+                    if (d.length != 9 || d.startsWith('0')) {
+                      if (rawDigits.length > 9 && !rawDigits.startsWith('998')) {
+                        return 'Raqam 9 xona bo\'lishi kerak';
+                      }
+                      if (d.startsWith('0')) {
+                        return 'Raqam 0 bilan boshlanmasligi kerak';
+                      }
+                      return 'Noto\'g\'ri telefon raqam';
+                    }
+                    if (!isValidUzPhone(v)) {
+                      return 'Telefon raqamini tekshirib qayta kiriting';
+                    }
                     return null;
                   },
                 ),
@@ -137,7 +150,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 8),
                 _field(
                   controller: _passCtrl,
-                  hint: 'Kamida 8 ta belgi',
+                  hint: 'Kamida 6 ta belgi',
                   icon: Icons.lock_outline_rounded,
                   isDark: isDark,
                   obscure: _obscure,
@@ -151,33 +164,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       size: 20,
                     ),
                   ),
-                  validator: (v) => (v == null || v.length < 8)
-                      ? 'Kamida 8 ta belgi kiriting'
-                      : null,
-                ),
-
-                const SizedBox(height: 16),
-                _label('Parolni tasdiqlang', isDark),
-                const SizedBox(height: 8),
-                _field(
-                  controller: _confirmCtrl,
-                  hint: '••••••••',
-                  icon: Icons.lock_outline_rounded,
-                  isDark: isDark,
-                  obscure: _confirmObscure,
-                  suffix: GestureDetector(
-                    onTap: () =>
-                        setState(() => _confirmObscure = !_confirmObscure),
-                    child: Icon(
-                      _confirmObscure
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      color: AppColors.textHint(isDark),
-                      size: 20,
-                    ),
-                  ),
-                  validator: (v) =>
-                      v != _passCtrl.text ? 'Parollar mos kelmadi' : null,
+                  // Backend signup `password.length < 6` ni rad etadi,
+                  // shuning uchun mobil ham 6 belgida mos bo'lishi kerak.
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Parolni kiriting';
+                    if (v.length < 6) {
+                      return 'Kamida 6 ta belgi bo\'lishi kerak';
+                    }
+                    return null;
+                  },
                 ),
 
                 const SizedBox(height: 20),
@@ -215,29 +210,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Text.rich(TextSpan(children: [
                         TextSpan(
                             text: 'Men ',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.manrope(
                                 color: AppColors.textSec(isDark),
                                 fontSize: 13)),
                         TextSpan(
                             text: 'Foydalanish shartlari',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.manrope(
                                 color: AppColors.primary,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600)),
                         TextSpan(
                             text: ' va ',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.manrope(
                                 color: AppColors.textSec(isDark),
                                 fontSize: 13)),
                         TextSpan(
                             text: 'Maxfiylik siyosati',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.manrope(
                                 color: AppColors.primary,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600)),
                         TextSpan(
                             text: 'ga roziman',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.manrope(
                                 color: AppColors.textSec(isDark),
                                 fontSize: 13)),
                       ])),
@@ -256,11 +251,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     decoration: BoxDecoration(
                       gradient: _agree
                           ? AppColors.primaryGradient
-                          : LinearGradient(colors: [
-                              Colors.grey.shade400,
-                              Colors.grey.shade500
-                            ]),
-                      borderRadius: BorderRadius.circular(16),
+                          : const LinearGradient(colors: [AppColors.mute, AppColors.mute]),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: ElevatedButton(
                       onPressed: (_agree && !_loading) ? _register : null,
@@ -268,7 +260,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                            borderRadius: BorderRadius.circular(8)),
                       ),
                       child: _loading
                           ? const SizedBox(
@@ -277,13 +269,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               child: CircularProgressIndicator(
                                   color: Colors.white, strokeWidth: 2.5))
                           : Text(
-                              // Tugma o'chganda sababini o'zi aytadi — aks
-                              // holda foydalanuvchi "ishlamayapti" deb
-                              // o'ylab, qayta-qayta bosadi.
+                              // signup.html:882 dagidek "Hisob yaratish".
                               _agree
                                   ? 'Hisob yaratish'
                                   : 'Shartga rozi bo\'ling',
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.manrope(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white),
@@ -297,14 +287,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   Text(
                     'Allaqachon hisobingiz bormi? ',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.manrope(
                         color: AppColors.textSec(isDark), fontSize: 14),
                   ),
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Text(
                       'Kirish',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.manrope(
                         color: AppColors.primary,
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -386,7 +376,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             content: Text(resendRes.error?.userMessage ?? msg),
             backgroundColor: AppColors.accentRed,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ));
           return;
         }
@@ -397,14 +387,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         backgroundColor: AppColors.accentRed,
         behavior: SnackBarBehavior.floating,
         shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ));
     }
   }
 
   Widget _label(String text, bool isDark) => Text(
         text,
-        style: GoogleFonts.inter(
+        style: GoogleFonts.manrope(
           fontSize: 13,
           fontWeight: FontWeight.w600,
           color: AppColors.textSec(isDark),
@@ -432,10 +422,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         inputFormatters: formatters,
         validator: validator,
         style:
-            GoogleFonts.inter(color: AppColors.text(isDark), fontSize: 15),
+            GoogleFonts.manrope(color: AppColors.text(isDark), fontSize: 15),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.inter(
+          hintStyle: GoogleFonts.manrope(
               color: AppColors.textHint(isDark), fontSize: 14),
           prefixIcon:
               Icon(icon, color: AppColors.textHint(isDark), size: 20),
@@ -443,24 +433,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
           filled: true,
           fillColor: AppColors.card(isDark),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: AppColors.border(isDark)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: AppColors.border(isDark)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: AppColors.primary, width: 1.5),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide:
                 BorderSide(color: AppColors.accentRed.withValues(alpha: 0.6)),
           ),
           focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: AppColors.accentRed),
           ),
           contentPadding:

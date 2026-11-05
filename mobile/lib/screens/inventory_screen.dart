@@ -59,7 +59,7 @@ class _InventoryScreenState extends State<InventoryScreen>
         elevation: 0,
         title: Text(
           'Mahsulotlar',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.manrope(
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: AppColors.text(isDark),
@@ -93,7 +93,7 @@ class _InventoryScreenState extends State<InventoryScreen>
           unselectedLabelColor: AppColors.textSec(isDark),
           indicatorColor: AppColors.primary,
           labelStyle:
-              GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
+              GoogleFonts.manrope(fontSize: 13, fontWeight: FontWeight.w600),
           tabs: const [
             Tab(text: 'Barcha mahsulotlar'),
             Tab(text: 'Oz qolgan'),
@@ -109,11 +109,11 @@ class _InventoryScreenState extends State<InventoryScreen>
               Expanded(
                 child: TextField(
                   controller: _searchCtrl,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                       color: AppColors.text(isDark), fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Mahsulot nomi yoki barkod...',
-                    hintStyle: GoogleFonts.inter(
+                    hintStyle: GoogleFonts.manrope(
                         color: AppColors.textHint(isDark), fontSize: 14),
                     prefixIcon: Icon(Icons.search_rounded,
                         color: AppColors.textHint(isDark)),
@@ -132,17 +132,17 @@ class _InventoryScreenState extends State<InventoryScreen>
                     filled: true,
                     fillColor: AppColors.card(isDark),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide:
                           BorderSide(color: AppColors.border(isDark)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide:
                           BorderSide(color: AppColors.border(isDark)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide:
                           BorderSide(color: AppColors.primary, width: 1.5),
                     ),
@@ -165,7 +165,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.card(isDark),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.border(isDark)),
                   ),
                   child: PopupMenuButton<String?>(
@@ -250,13 +250,13 @@ class _InventoryScreenState extends State<InventoryScreen>
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card(isDark),
         title: Text('O\'chirish',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
                 fontWeight: FontWeight.w700,
                 color: AppColors.text(isDark))),
         content: Text(
           '${p.productName} mahsulotini o\'chirmoqchimisiz?',
           style:
-              GoogleFonts.inter(color: AppColors.textSec(isDark)),
+              GoogleFonts.manrope(color: AppColors.textSec(isDark)),
         ),
         actions: [
           TextButton(
@@ -299,7 +299,7 @@ class _InventoryScreenState extends State<InventoryScreen>
       backgroundColor: AppColors.card(isDark),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
         bool loading = false;
@@ -315,7 +315,7 @@ class _InventoryScreenState extends State<InventoryScreen>
               child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Text(
                   'Miqdor qo\'shish',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: AppColors.text(isDark),
@@ -324,11 +324,11 @@ class _InventoryScreenState extends State<InventoryScreen>
                 const SizedBox(height: 8),
                 Text(
                   p.productName,
-                  style: GoogleFonts.inter(color: AppColors.textSec(isDark)),
+                  style: GoogleFonts.manrope(color: AppColors.textSec(isDark)),
                 ),
                 Text(
                   'Hozirgi miqdor: ${fmtQty(p.quantity)} ${p.unit}',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                       color: AppColors.primary, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 20),
@@ -341,24 +341,24 @@ class _InventoryScreenState extends State<InventoryScreen>
                         RegExp(r'^\d+\.?\d*'))
                   ],
                   autofocus: true,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                       color: AppColors.text(isDark), fontSize: 15),
                   decoration: InputDecoration(
                     hintText: 'Qo\'shiladigan miqdor (${p.unit})',
-                    hintStyle: GoogleFonts.inter(
+                    hintStyle: GoogleFonts.manrope(
                         color: AppColors.textHint(isDark), fontSize: 14),
                     filled: true,
                     fillColor: AppColors.bg(isDark),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: AppColors.border(isDark)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: AppColors.border(isDark)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: AppColors.primary, width: 1.5),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
@@ -372,21 +372,21 @@ class _InventoryScreenState extends State<InventoryScreen>
                       child: TextField(
                         controller: purPriceCtrl,
                         keyboardType: TextInputType.number,
-                        style: GoogleFonts.inter(color: AppColors.text(isDark), fontSize: 14),
+                        style: GoogleFonts.manrope(color: AppColors.text(isDark), fontSize: 14),
                         decoration: InputDecoration(
                           labelText: 'Kelish narxi (so\'m)',
                           filled: true,
                           fillColor: AppColors.bg(isDark),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(color: AppColors.border(isDark)),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(color: AppColors.border(isDark)),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(color: AppColors.primary, width: 1.5),
                           ),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -398,21 +398,21 @@ class _InventoryScreenState extends State<InventoryScreen>
                       child: TextField(
                         controller: sellPriceCtrl,
                         keyboardType: TextInputType.number,
-                        style: GoogleFonts.inter(color: AppColors.text(isDark), fontSize: 14),
+                        style: GoogleFonts.manrope(color: AppColors.text(isDark), fontSize: 14),
                         decoration: InputDecoration(
                           labelText: 'Sotish narxi (so\'m)',
                           filled: true,
                           fillColor: AppColors.bg(isDark),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(color: AppColors.border(isDark)),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(color: AppColors.border(isDark)),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(color: AppColors.primary, width: 1.5),
                           ),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -428,7 +428,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: AppColors.primaryGradient,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: ElevatedButton(
                       onPressed: loading
@@ -459,7 +459,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
+                            borderRadius: BorderRadius.circular(8)),
                       ),
                       child: loading
                           ? const SizedBox(
@@ -469,7 +469,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                                   color: Colors.white, strokeWidth: 2))
                           : Text(
                             'Qo\'shish',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.manrope(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
@@ -518,14 +518,14 @@ class _InventoryScreenState extends State<InventoryScreen>
           builder: (ctx, setDlg) => AlertDialog(
             backgroundColor: AppColors.card(isDark),
             title: Text('Yangi kategoriya',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                     fontWeight: FontWeight.w700,
                     color: AppColors.text(isDark))),
             content: TextField(
               controller: ctrl,
               autofocus: true,
               textCapitalization: TextCapitalization.sentences,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.manrope(
                   color: AppColors.text(isDark), fontSize: 15),
               onChanged: (_) {
                 // Xatoni foydalanuvchi yozishni davom etganda tozalaymiz.
@@ -541,7 +541,7 @@ class _InventoryScreenState extends State<InventoryScreen>
               },
               decoration: InputDecoration(
                 hintText: 'Kategoriya nomi',
-                hintStyle: GoogleFonts.inter(
+                hintStyle: GoogleFonts.manrope(
                     color: AppColors.textHint(isDark), fontSize: 14),
                 errorText: error,
                 errorStyle: const TextStyle(color: AppColors.accentRed),
@@ -613,7 +613,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 child: saving
                     ? const SizedBox(
@@ -642,7 +642,7 @@ class _InventoryScreenState extends State<InventoryScreen>
       backgroundColor: AppColors.card(isDark),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) => _CategoriesSheet(isDark: isDark, pp: pp),
     );
@@ -656,7 +656,7 @@ class _InventoryScreenState extends State<InventoryScreen>
       backgroundColor: AppColors.card(isDark),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) => _ProductFormSheet(
         isDark: isDark,
@@ -672,10 +672,10 @@ class _InventoryScreenState extends State<InventoryScreen>
 
   void _showSnack(String msg, {bool success = true}) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
+      content: Text(msg, style: GoogleFonts.manrope(fontWeight: FontWeight.w500)),
       backgroundColor: success ? AppColors.accentGreen : AppColors.accentRed,
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ));
   }
 }
@@ -718,7 +718,7 @@ class _ProductList extends StatelessWidget {
               color: AppColors.accentRed, size: 48),
           const SizedBox(height: 12),
           Text(error!,
-              style: GoogleFonts.inter(color: AppColors.textSec(isDark))),
+              style: GoogleFonts.manrope(color: AppColors.textSec(isDark))),
           const SizedBox(height: 16),
           TextButton(onPressed: onRefresh, child: const Text('Qayta urinish')),
         ]),
@@ -731,7 +731,7 @@ class _ProductList extends StatelessWidget {
               color: AppColors.textHint(isDark), size: 64),
           const SizedBox(height: 12),
           Text('Mahsulotlar yo\'q',
-              style: GoogleFonts.inter(color: AppColors.textSec(isDark))),
+              style: GoogleFonts.manrope(color: AppColors.textSec(isDark))),
         ]),
       );
     }
@@ -794,7 +794,7 @@ class _ProductTile extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.card(isDark),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: product.isLowStock
               ? AppColors.accentRed.withValues(alpha: 0.4)
@@ -822,7 +822,7 @@ class _ProductTile extends StatelessWidget {
             children: [
               Text(
                 product.productName,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppColors.text(isDark),
@@ -846,7 +846,7 @@ class _ProductTile extends StatelessWidget {
                         product.categoryName!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.manrope(
                             fontSize: 10,
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600),
@@ -856,7 +856,7 @@ class _ProductTile extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   '${fmtQty(product.quantity)} ${product.unit}',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 12,
                     color: product.isLowStock
                         ? AppColors.accentRed
@@ -875,7 +875,7 @@ class _ProductTile extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 '${_fmt(product.sellingPrice)} so\'m',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primary,
@@ -1007,7 +1007,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
               Center(
                 child: Text(
                   widget.edit == null ? 'Mahsulot qo\'shish' : 'Mahsulotni tahrirlash',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: AppColors.text(isDark),
@@ -1050,26 +1050,26 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
               DropdownButtonFormField<String>(
                 initialValue: _categoryId,
                 hint: Text('Kategoriyani tanlang',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.manrope(
                         color: AppColors.textHint(isDark), fontSize: 14)),
                 dropdownColor: AppColors.card(isDark),
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                     color: AppColors.text(isDark), fontSize: 14),
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: AppColors.bg(isDark),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(8),
                     borderSide:
                         BorderSide(color: AppColors.border(isDark)),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(8),
                     borderSide:
                         BorderSide(color: AppColors.border(isDark)),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(8),
                     borderSide:
                         BorderSide(color: AppColors.primary, width: 1.5),
                   ),
@@ -1163,7 +1163,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: ElevatedButton(
                     onPressed: _loading ? null : _save,
@@ -1171,7 +1171,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                     child: _loading
                         ? const SizedBox(
@@ -1181,7 +1181,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
                                 color: Colors.white, strokeWidth: 2))
                         : Text(
                             widget.edit == null ? 'Qo\'shish' : 'Saqlash',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.manrope(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
@@ -1210,7 +1210,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
         decoration: BoxDecoration(
           gradient: selected ? AppColors.primaryGradient : null,
           color: selected ? null : AppColors.bg(isDark),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color:
                 selected ? AppColors.primary : AppColors.border(isDark),
@@ -1218,7 +1218,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
         ),
         child: Text(
           value,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.manrope(
             fontWeight: FontWeight.w600,
             color: selected ? Colors.white : AppColors.textSec(isDark),
             fontSize: 14,
@@ -1232,7 +1232,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
         padding: const EdgeInsets.only(bottom: 6),
         child: Text(
           text,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.manrope(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: AppColors.textSec(isDark),
@@ -1261,30 +1261,30 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
               ]
             : null,
         validator: validator,
-        style: GoogleFonts.inter(
+        style: GoogleFonts.manrope(
             color: AppColors.text(isDark), fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
           suffixIcon: suffix,
-          hintStyle: GoogleFonts.inter(
+          hintStyle: GoogleFonts.manrope(
               color: AppColors.textHint(isDark), fontSize: 13),
           filled: true,
           fillColor: AppColors.bg(isDark),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: AppColors.border(isDark)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: AppColors.border(isDark)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide:
                 BorderSide(color: AppColors.primary, width: 1.5),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(
                 color: AppColors.accentRed.withValues(alpha: 0.6)),
           ),
@@ -1379,7 +1379,7 @@ class _CategoriesSheetState extends State<_CategoriesSheet> {
         children: [
           Text(
             'Kategoriyalar',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.text(isDark),
@@ -1392,7 +1392,7 @@ class _CategoriesSheetState extends State<_CategoriesSheet> {
           Text(
             'Yangi kategoriya qo\'shish uchun yuqoridagi + tugmasini bosing',
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               fontSize: 12,
               color: AppColors.textHint(isDark),
             ),
@@ -1404,7 +1404,7 @@ class _CategoriesSheetState extends State<_CategoriesSheet> {
               padding: const EdgeInsets.all(24),
               child: Text(
                 'Hali kategoriya yo\'q',
-                style: GoogleFonts.inter(color: AppColors.textSec(isDark)),
+                style: GoogleFonts.manrope(color: AppColors.textSec(isDark)),
               ),
             )
           else
@@ -1436,7 +1436,7 @@ class _CategoryTile extends StatelessWidget {
     return ListTile(
       title: Text(
         cat.categoryName,
-        style: GoogleFonts.inter(
+        style: GoogleFonts.manrope(
             color: AppColors.text(isDark), fontWeight: FontWeight.w500),
       ),
       trailing: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -1464,14 +1464,14 @@ class _CategoryTile extends StatelessWidget {
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card(isDark),
         title: Text('Kategoriyani tahrirlash',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
                 fontWeight: FontWeight.w700,
                 color: AppColors.text(isDark))),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           style:
-              GoogleFonts.inter(color: AppColors.text(isDark)),
+              GoogleFonts.manrope(color: AppColors.text(isDark)),
           decoration: InputDecoration(
             hintText: 'Kategoriya nomi',
             border: const OutlineInputBorder(),
@@ -1504,11 +1504,11 @@ class _CategoryTile extends StatelessWidget {
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card(isDark),
         title: Text('O\'chirish',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
                 fontWeight: FontWeight.w700,
                 color: AppColors.text(isDark))),
         content: Text('${cat.categoryName} kategoriyasini o\'chirmoqchimisiz?',
-            style: GoogleFonts.inter(color: AppColors.textSec(isDark))),
+            style: GoogleFonts.manrope(color: AppColors.textSec(isDark))),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),

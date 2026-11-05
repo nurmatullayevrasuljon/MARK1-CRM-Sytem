@@ -82,7 +82,14 @@ class ApiResult<T> {
 class ApiService {
   // Asosiy ishlayotgan backend (VPS). Render demo'i sovuq boshlanishi
   // 25+ sekund edi va u yerda yangilash versiyasini boshqara olmasdik.
-  static const String _baseUrl = 'https://backend.mark1.uz/api';
+  //
+  // `--dart-define=API_BASE=...` orqali QA/dev serverga yo'naltirish mumkin
+  // (masalan: flutter run -DAPI_BASE=http://10.0.2.2:3001/api).
+  // Belgilanmagan HAR DOIM production'ni ko'rsatadi.
+  static const String _baseUrl = String.fromEnvironment(
+    'API_BASE',
+    defaultValue: 'https://backend.mark1.uz/api',
+  );
   static const Duration _timeout = Duration(seconds: 20);
 
   static String? _cachedToken;
@@ -431,10 +438,17 @@ class ApiService {
           statusCode: 422,
         );
       default:
+        // 4xx (400, 409, 410, 429 ...) — server aniq xabar qaytaradi
+        // (masalan "Telefon raqam yoki parol noto'g'ri"). Bularni
+        // `validation` deb belgilaymiz, aks holda foydalanuvchi
+        // "Kutilmagan xatolik" degan ma'nosiz xabar ko'radi.
+        // 5xx — server tomonidagi muammo, alohida xabar.
         throw ApiException(
           type: res.statusCode >= 500
               ? ApiErrorType.serverError
-              : ApiErrorType.unknown,
+              : (res.statusCode >= 400 && res.statusCode < 500
+                  ? ApiErrorType.validation
+                  : ApiErrorType.unknown),
           message: message,
           statusCode: res.statusCode,
         );

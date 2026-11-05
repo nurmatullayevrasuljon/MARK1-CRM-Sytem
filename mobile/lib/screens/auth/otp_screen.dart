@@ -102,7 +102,7 @@ class _OtpScreenState extends State<OtpScreen> {
               // Header
               Text(
                 'SMS Tasdiqlash',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
                   color: AppColors.text(isDark),
@@ -112,7 +112,7 @@ class _OtpScreenState extends State<OtpScreen> {
               Text.rich(TextSpan(children: [
                 TextSpan(
                   text: maskedPhone,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 14,
                     color: AppColors.text(isDark),
                     fontWeight: FontWeight.w600,
@@ -120,7 +120,7 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
                 TextSpan(
                   text: ' raqamiga yuborilgan\n6 xonali kodni kiriting',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 14,
                     color: AppColors.textSec(isDark),
                   ),
@@ -143,12 +143,12 @@ class _OtpScreenState extends State<OtpScreen> {
                     ? Text.rich(TextSpan(children: [
                         TextSpan(
                           text: 'Kodni qayta yuborish: ',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.manrope(
                               color: AppColors.textSec(isDark), fontSize: 14),
                         ),
                         TextSpan(
                           text: _timerText,
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.manrope(
                             color: AppColors.primary,
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -165,7 +165,7 @@ class _OtpScreenState extends State<OtpScreen> {
                               )
                             : Text(
                                 'Kodni qayta yuborish',
-                                style: GoogleFonts.inter(
+                                style: GoogleFonts.manrope(
                                   color: AppColors.primary,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
@@ -184,7 +184,7 @@ class _OtpScreenState extends State<OtpScreen> {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
                         color: AppColors.primary.withValues(alpha: 0.3),
@@ -199,7 +199,7 @@ class _OtpScreenState extends State<OtpScreen> {
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                     child: _loading
                         ? const SizedBox(
@@ -210,7 +210,7 @@ class _OtpScreenState extends State<OtpScreen> {
                           )
                         : Text(
                             'Tasdiqlash',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.manrope(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
@@ -239,7 +239,7 @@ class _OtpScreenState extends State<OtpScreen> {
         textAlign: TextAlign.center,
         maxLength: 1,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        style: GoogleFonts.inter(
+        style: GoogleFonts.manrope(
           fontSize: 22,
           fontWeight: FontWeight.w700,
           color: AppColors.text(isDark),
@@ -249,15 +249,15 @@ class _OtpScreenState extends State<OtpScreen> {
           filled: true,
           fillColor: AppColors.card(isDark),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: AppColors.border(isDark)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: AppColors.border(isDark)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: AppColors.primary, width: 2),
           ),
           contentPadding: EdgeInsets.zero,
@@ -327,7 +327,7 @@ class _OtpScreenState extends State<OtpScreen> {
       content: Text(msg),
       backgroundColor: AppColors.accentRed,
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ));
   }
 

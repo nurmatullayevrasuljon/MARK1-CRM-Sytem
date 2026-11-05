@@ -4,4 +4,10 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- QA/debug buildlarida lokal serverga (http://10.0.2.2:3001) ulanish
+         uchun kerak: Android 9+ (API 28+) cleartext HTTPni bloklaydi.
+         Bu fayl faqat debug binarida qollanadi, release (Play Market)
+         binarga TA'SIR QILMAYDI. -->
+    <application android:usesCleartextTraffic="true"/>
 </manifest>

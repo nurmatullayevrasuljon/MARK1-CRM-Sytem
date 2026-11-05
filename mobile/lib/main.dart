@@ -57,7 +57,7 @@ class MarkCRMApp extends StatelessWidget {
           seedColor: AppColors.primary,
           brightness: isDark ? Brightness.dark : Brightness.light,
         ),
-        textTheme: GoogleFonts.interTextTheme(
+        textTheme: GoogleFonts.manropeTextTheme(
           isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
         ).apply(bodyColor: AppColors.text(isDark)),
       ),

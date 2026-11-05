@@ -2,7 +2,7 @@ name: markcrm
 description: "MARK1 - Aqlli CRM platformasi"
 publish_to: 'none'
 
-version: 1.0.3+5005
+version: 1.0.6+5008
 
 environment:
   sdk: ^3.13.2
@@ -20,6 +20,7 @@ dependencies:
   http: ^1.6.0
   image_picker: ^1.2.3
   mobile_scanner: ^7.4.2
+  package_info_plus: ^10.2.2
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
   flutter_test:
@@ -35,7 +36,7 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/logo.jpg"
-  adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/images/logo.jpg"
+  image_path: "assets/images/icon_legacy.png"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/images/icon_foreground.png"
   min_sdk_android: 21

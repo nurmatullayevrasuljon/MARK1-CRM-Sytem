@@ -166,6 +166,44 @@ class LocaleProvider extends ChangeNotifier {
       AppLanguage.en: 'Settings',
     },
 
+    // Bottom nav qisqa nomlari (6 tab kenglikda kesilmasligi uchun)
+    'nav_home_short': {
+      AppLanguage.uzLatn: 'Panel',
+      AppLanguage.uzCyrl: 'Панель',
+      AppLanguage.ru: 'Панель',
+      AppLanguage.en: 'Panel',
+    },
+    'nav_sales_short': {
+      AppLanguage.uzLatn: 'Sotish',
+      AppLanguage.uzCyrl: 'Сотиш',
+      AppLanguage.ru: 'Продажа',
+      AppLanguage.en: 'Sell',
+    },
+    'nav_inventory_short': {
+      AppLanguage.uzLatn: 'Ombor',
+      AppLanguage.uzCyrl: 'Омбор',
+      AppLanguage.ru: 'Склад',
+      AppLanguage.en: 'Stock',
+    },
+    'nav_daily_sales_short': {
+      AppLanguage.uzLatn: 'Kunlik',
+      AppLanguage.uzCyrl: 'Кунлик',
+      AppLanguage.ru: 'Дневные',
+      AppLanguage.en: 'Daily',
+    },
+    'nav_debtors_short': {
+      AppLanguage.uzLatn: 'Qarz',
+      AppLanguage.uzCyrl: 'Қарз',
+      AppLanguage.ru: 'Должники',
+      AppLanguage.en: 'Debt',
+    },
+    'nav_profile_short': {
+      AppLanguage.uzLatn: 'Sozlama',
+      AppLanguage.uzCyrl: 'Созлама',
+      AppLanguage.ru: 'Настройки',
+      AppLanguage.en: 'Settings',
+    },
+
     // Passcode Screen
     'passcode_title': {
       AppLanguage.uzLatn: 'Xavfsizlik paroli',

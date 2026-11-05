@@ -86,26 +86,30 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 48),
 
                 // Logo
+                // Oq M faqat to'q fonda o'qiladi — shuning uchun konteyner
+                // har ikki rejimda ham ink rangida (DESIGN §2.1).
                 Center(
                   child: Container(
-                    width: 100,
-                    height: 100,
+                    width: 88,
+                    height: 88,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
+                      color: const Color(0xFF080D17), // ink
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.08),
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 20,
+                          color: AppColors.primary.withValues(alpha: 0.28),
+                          blurRadius: 24,
                           offset: const Offset(0, 8),
                         ),
                       ],
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Image.asset(
-                        'assets/images/logo.jpg',
-                        fit: BoxFit.cover,
-                      ),
+                    padding: const EdgeInsets.all(16),
+                    child: Image.asset(
+                      'assets/images/mark1-mark.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
@@ -116,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   fit: BoxFit.scaleDown,
                   child: Text(
                     'Xush kelibsiz MARK1 CRM ga',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.manrope(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
                       color: AppColors.text(isDark),
@@ -127,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 6),
                 Text(
                   'Davom etish uchun hisobingizga kiring',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 15,
                     color: AppColors.textSec(isDark),
                   ),
@@ -147,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s\-()]')),
                   ],
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     color: AppColors.text(isDark),
                     fontSize: 15,
                   ),
@@ -181,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   controller: _passCtrl,
                   obscureText: _obscure,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     color: AppColors.text(isDark),
                     fontSize: 15,
                   ),
@@ -218,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: Text(
                       'Parolni unutdingizmi?',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.manrope(
                         fontSize: 13,
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600,
@@ -246,7 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Text(
                       'Hisobingiz yo\'qmi? ',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.manrope(
                         color: AppColors.textSec(isDark),
                         fontSize: 14,
                       ),
@@ -260,7 +264,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       child: Text(
                         'Ro\'yxatdan o\'ting',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.manrope(
                           color: AppColors.primary,
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -347,11 +351,11 @@ class _LoginScreenState extends State<LoginScreen> {
       SnackBar(
         content: Text(
           msg,
-          style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+          style: GoogleFonts.manrope(fontWeight: FontWeight.w500),
         ),
         backgroundColor: AppColors.accentRed,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
@@ -363,7 +367,7 @@ class _LoginScreenState extends State<LoginScreen> {
     Widget? suffix,
   }) => InputDecoration(
     hintText: hint,
-    hintStyle: GoogleFonts.inter(
+    hintStyle: GoogleFonts.manrope(
       color: AppColors.textHint(isDark),
       fontSize: 14,
     ),
@@ -372,23 +376,23 @@ class _LoginScreenState extends State<LoginScreen> {
     filled: true,
     fillColor: AppColors.card(isDark),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(8),
       borderSide: BorderSide(color: AppColors.border(isDark)),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(8),
       borderSide: BorderSide(color: AppColors.border(isDark)),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(8),
       borderSide: BorderSide(color: AppColors.primary, width: 1.5),
     ),
     errorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(8),
       borderSide: BorderSide(color: AppColors.accentRed.withValues(alpha: 0.6)),
     ),
     focusedErrorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(8),
       borderSide: BorderSide(color: AppColors.accentRed),
     ),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -405,7 +409,7 @@ class _FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     label,
-    style: GoogleFonts.inter(
+    style: GoogleFonts.manrope(
       fontSize: 13,
       fontWeight: FontWeight.w600,
       color: AppColors.textSec(isDark),
@@ -432,11 +436,9 @@ class _GradientButton extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: onPressed == null || loading
-              ? LinearGradient(
-                  colors: [Colors.grey.shade400, Colors.grey.shade500],
-                )
+              ? const LinearGradient(colors: [AppColors.mute, AppColors.mute])
               : AppColors.primaryGradient,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8),
           boxShadow: (onPressed != null && !loading)
               ? [
                   BoxShadow(
@@ -453,7 +455,7 @@ class _GradientButton extends StatelessWidget {
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(8),
             ),
           ),
           child: loading
@@ -467,7 +469,7 @@ class _GradientButton extends StatelessWidget {
                 )
               : Text(
                   label,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,

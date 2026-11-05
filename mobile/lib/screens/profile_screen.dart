@@ -21,15 +21,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _picker = ImagePicker();
   bool _uploadingAvatar = false;
 
+  /// Joriy ilova versiyasi — `PackageInfo` dan o'qiladi (build vaqtida emas).
+  String _versionName = UpdateService.fallbackVersionName;
+
   @override
   void initState() {
     super.initState();
+    _loadVersion();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       if (auth.isAuthenticated && auth.store == null) {
         auth.loadProfile();
       }
     });
+  }
+
+  Future<void> _loadVersion() async {
+    final cur = await UpdateService.currentVersion();
+    if (mounted) setState(() => _versionName = cur.name);
   }
 
   Future<void> _pickAndUploadAvatar(AuthProvider auth) async {
@@ -57,224 +66,352 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bg(isDark),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Header
-          SliverToBoxAdapter(
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 28),
-              decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(32),
-                  bottomRight: Radius.circular(32),
+      body: SafeArea(
+        bottom: false,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // Topbar
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sozlamalar',
+                      style: GoogleFonts.manrope(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.text(isDark),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Tizim va shaxsiy profil sozlamalari',
+                      style: GoogleFonts.manrope(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textSec(isDark),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Column(children: [
-                // Avatar
-                GestureDetector(
-                  onTap: (auth.isAuthenticated || auth.isDemo) && !_uploadingAvatar
-                      ? () {
-                          if (auth.isDemo) {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Demo rejimda rasm yuklab bo\'lmaydi')));
-                          } else {
-                            _pickAndUploadAvatar(auth);
-                          }
-                        }
-                      : null,
-                  child: Stack(children: [
-                    CircleAvatar(
-                      radius: 48,
-                      backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      backgroundImage: auth.store?.profilePicture != null
-                          ? NetworkImage(auth.store!.profilePicture!)
-                          : null,
-                      child: _uploadingAvatar
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : auth.store?.profilePicture == null
-                              ? Text(
-                                  (auth.store?.ceoName.isNotEmpty == true
-                                          ? auth.store!.ceoName[0]
-                                          : 'M')
-                                      .toUpperCase(),
-                                  style: GoogleFonts.inter(
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.w800,
+            ),
+
+            // Profile Card (Ixcham, zamonaviy profil bloki — ulkan binafsha qopqoq o'rniga)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: AppColors.card(isDark),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border(isDark)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      // Avatar
+                      GestureDetector(
+                        onTap: (auth.isAuthenticated || auth.isDemo) && !_uploadingAvatar
+                            ? () {
+                                if (auth.isDemo) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Demo rejimda rasm yuklab bo\'lmaydi'),
+                                    ),
+                                  );
+                                } else {
+                                  _pickAndUploadAvatar(auth);
+                                }
+                              }
+                            : null,
+                        child: Stack(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(2.5),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: AppColors.primaryGradient,
+                              ),
+                              child: CircleAvatar(
+                                radius: 34,
+                                backgroundColor: isDark
+                                    ? AppColors.navy
+                                    : AppColors.snow,
+                                backgroundImage: auth.store?.profilePicture != null
+                                    ? NetworkImage(auth.store!.profilePicture!)
+                                    : null,
+                                child: _uploadingAvatar
+                                    ? SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          color: AppColors.primary,
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : auth.store?.profilePicture == null
+                                        ? Text(
+                                            (auth.store?.ceoName.isNotEmpty == true
+                                                    ? auth.store!.ceoName[0]
+                                                    : 'M')
+                                                .toUpperCase(),
+                                            style: GoogleFonts.manrope(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppColors.primary,
+                                            ),
+                                          )
+                                        : null,
+                              ),
+                            ),
+                            if ((auth.isAuthenticated || auth.isDemo) && !_uploadingAvatar)
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: AppColors.card(isDark),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt_rounded,
+                                    size: 12,
                                     color: Colors.white,
                                   ),
-                                )
-                              : null,
-                    ),
-                    if ((auth.isAuthenticated || auth.isDemo) && !_uploadingAvatar)
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 28,
-                          height: 28,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.camera_alt_rounded,
-                              size: 14, color: AppColors.primary),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                  ]),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  auth.store?.ceoName ?? 'MARK1 CRM',
-                  style: GoogleFonts.inter(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                      const SizedBox(width: 16),
+                      // Info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              auth.store?.ceoName ?? 'MARK1 CRM',
+                              style: GoogleFonts.manrope(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.text(isDark),
+                              ),
+                            ),
+                            if (auth.store?.storeName != null) ...[
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  auth.store!.storeName,
+                                  style: GoogleFonts.manrope(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            if (auth.store?.ceoPhone != null &&
+                                auth.store!.ceoPhone.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                displayUzPhone(auth.store!.ceoPhone),
+                                style: GoogleFonts.manrope(
+                                  fontSize: 12.5,
+                                  color: AppColors.textSec(isDark),
+                                ),
+                              ),
+                            ],
+                            if (auth.isDemo)
+                              Container(
+                                margin: const EdgeInsets.only(top: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.accentOrange.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  'Demo rejim',
+                                  style: GoogleFonts.manrope(
+                                    fontSize: 11,
+                                    color: AppColors.accentOrange,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                if (auth.store?.storeName != null)
-                  Text(
-                    auth.store!.storeName,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: Colors.white.withValues(alpha: 0.8),
-                    ),
-                  ),
-                if (auth.store?.ceoPhone != null &&
-                    auth.store!.ceoPhone.isNotEmpty)
-                  Text(
-                    displayUzPhone(auth.store!.ceoPhone),
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: Colors.white.withValues(alpha: 0.7),
-                    ),
-                  ),
-                if (auth.isDemo)
-                  Container(
-                    margin: const EdgeInsets.only(top: 8),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.orange,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Demo rejim',
-                      style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600),
-                    ),
-                  ),
-              ]),
+              ),
             ),
-          ),
 
-          // Settings
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(children: [
-                const SizedBox(height: 8),
+            // Settings Sections
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Profile settings
+                    if (auth.isAuthenticated || auth.isDemo) ...[
+                      _SectionHeader('Hisob', isDark),
+                      _GroupedCard(
+                        isDark: isDark,
+                        children: [
+                          _SettingsRow(
+                            icon: Icons.person_outline_rounded,
+                            title: 'Profilni tahrirlash',
+                            isDark: isDark,
+                            onTap: () {
+                              if (auth.isDemo) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Demo rejimda profil o\'zgartirib bo\'lmaydi'),
+                                  ),
+                                );
+                              } else {
+                                _showEditProfile(context, isDark, auth);
+                              }
+                            },
+                          ),
+                          _SettingsRow(
+                            icon: Icons.lock_outline_rounded,
+                            title: 'Parolni o\'zgartirish',
+                            isDark: isDark,
+                            onTap: () {
+                              if (auth.isDemo) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Demo rejimda parol o\'zgartirib bo\'lmaydi'),
+                                  ),
+                                );
+                              } else {
+                                _showChangePassword(context, isDark, auth);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                    ],
 
-                // Profile settings
-                if (auth.isAuthenticated || auth.isDemo) ...[
-                  _SectionHeader('Hisob', isDark),
-                  _SettingsTile(
-                    icon: Icons.person_outline_rounded,
-                    title: 'Profilni tahrirlash',
-                    isDark: isDark,
-                    onTap: () {
-                      if (auth.isDemo) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Demo rejimda profil o\'zgartirib bo\'lmaydi')));
-                      } else {
-                        _showEditProfile(context, isDark, auth);
-                      }
-                    },
-                  ),
-                  _SettingsTile(
-                    icon: Icons.lock_outline_rounded,
-                    title: 'Parolni o\'zgartirish',
-                    isDark: isDark,
-                    onTap: () {
-                      if (auth.isDemo) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Demo rejimda parol o\'zgartirib bo\'lmaydi')));
-                      } else {
-                        _showChangePassword(context, isDark, auth);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // App settings
-                _SectionHeader('Ilova', isDark),
-                _SettingsTile(
-                  icon: isDark
-                      ? Icons.light_mode_outlined
-                      : Icons.dark_mode_outlined,
-                  title: isDark ? 'Yorug\' rejim' : 'Qorong\'u rejim',
-                  isDark: isDark,
-                  trailing: Switch(
-                    value: isDark,
-                    onChanged: (_) => themeProvider.toggleTheme(),
-                    activeThumbColor: AppColors.primary,
-                  ),
-                  onTap: () => themeProvider.toggleTheme(),
-                ),
-                _SettingsTile(
-                  icon: Icons.system_update_rounded,
-                  title: 'Yangilanishlarni tekshirish',
-                  subtitle: 'v${UpdateService.currentVersionName}',
-                  isDark: isDark,
-                  onTap: () => UpdateService.checkForUpdate(
-                    context,
-                    isManualCheck: true,
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Logout
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _logout(context, auth),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                          color: AppColors.accentRed.withValues(alpha: 0.4)),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                    // App settings
+                    _SectionHeader('Ilova', isDark),
+                    _GroupedCard(
+                      isDark: isDark,
+                      children: [
+                        _SettingsRow(
+                          icon: isDark
+                              ? Icons.light_mode_outlined
+                              : Icons.dark_mode_outlined,
+                          // Sarlavha har doim switchning holatini aks ettiradi:
+                          // ON = ko'rsatilgan rejim faol (DESIGN §7 yorliq qoidasi).
+                          title: 'Qorong\'u rejim',
+                          isDark: isDark,
+                          trailing: Switch(
+                            value: isDark,
+                            onChanged: (_) => themeProvider.toggleTheme(),
+                            activeThumbColor: AppColors.primary,
+                          ),
+                          onTap: () => themeProvider.toggleTheme(),
+                        ),
+                        _SettingsRow(
+                          icon: Icons.system_update_rounded,
+                          title: 'Yangilanishlarni tekshirish',
+                          subtitle: 'v$_versionName',
+                          isDark: isDark,
+                          onTap: () => UpdateService.checkForUpdate(
+                            context,
+                            isManualCheck: true,
+                          ),
+                        ),
+                      ],
                     ),
-                    icon: Icon(Icons.logout_rounded,
-                        color: AppColors.accentRed),
-                    label: Text(
-                      'Chiqish',
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.accentRed,
+
+                    const SizedBox(height: 24),
+
+                    // Logout Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _logout(context, auth),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: AppColors.accentRed.withValues(alpha: 0.35),
+                          ),
+                          backgroundColor: AppColors.accentRed.withValues(alpha: 0.05),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        icon: Icon(
+                          Icons.logout_rounded,
+                          color: AppColors.accentRed,
+                          size: 20,
+                        ),
+                        label: Text(
+                          'Chiqish',
+                          style: GoogleFonts.manrope(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.accentRed,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+
+                    const SizedBox(height: 16),
+
+                    Center(
+                      child: Text(
+                        'MARK1 CRM v$_versionName',
+                        style: GoogleFonts.manrope(
+                          fontSize: 12,
+                          color: AppColors.textHint(isDark),
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 80),
+                  ],
                 ),
-
-                const SizedBox(height: 12),
-
-                Text(
-                  'MARK1 CRM v${UpdateService.currentVersionName}',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppColors.textHint(isDark),
-                  ),
-                ),
-
-                const SizedBox(height: 80),
-              ]),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -291,12 +428,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return AlertDialog(
           backgroundColor: AppColors.card(isDark),
           title: Text('Chiqish',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.manrope(
                   fontWeight: FontWeight.w700,
                   color: AppColors.text(isDark))),
           content: Text('Hisobdan chiqmoqchimisiz?',
               style:
-                  GoogleFonts.inter(color: AppColors.textSec(isDark))),
+                  GoogleFonts.manrope(color: AppColors.textSec(isDark))),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -341,7 +478,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: AppColors.card(isDark),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) {
         return StatefulBuilder(builder: (ctx, setSt) {
@@ -357,7 +494,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(mainAxisSize: MainAxisSize.min, children: [
               Text(
                 'Profilni tahrirlash',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: AppColors.text(isDark),
@@ -398,7 +535,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Text(
                     formError!,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.manrope(
                       color: AppColors.accentRed,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
@@ -412,7 +549,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: ElevatedButton(
                     onPressed: loading
@@ -474,7 +611,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                     child: loading
                         ? const SizedBox(
@@ -484,7 +621,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 color: Colors.white, strokeWidth: 2))
                         : Text(
                             'Saqlash',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.manrope(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
@@ -530,7 +667,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: AppColors.card(isDark),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) {
         return StatefulBuilder(builder: (ctx, setSt) {
@@ -546,7 +683,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(mainAxisSize: MainAxisSize.min, children: [
               Text(
                 'Parolni o\'zgartirish',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: AppColors.text(isDark),
@@ -605,7 +742,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Text(
                     formError!,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.manrope(
                         fontSize: 13, color: AppColors.accentRed),
                   ),
                 ),
@@ -617,7 +754,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: ElevatedButton(
                     onPressed: loading
@@ -654,7 +791,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                     child: loading
                         ? const SizedBox(
@@ -664,7 +801,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 color: Colors.white, strokeWidth: 2))
                         : Text(
                             'O\'zgartirish',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.manrope(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
@@ -708,34 +845,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // `Form` ichida bo'lishi shart — aks holda xato hech qachon ko'rinmaydi.
         validator: validator,
         style:
-            GoogleFonts.inter(color: AppColors.text(isDark), fontSize: 15),
+            GoogleFonts.manrope(color: AppColors.text(isDark), fontSize: 15),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.inter(
+          hintStyle: GoogleFonts.manrope(
               color: AppColors.textHint(isDark), fontSize: 14),
           prefixIcon: Icon(icon, color: AppColors.textHint(isDark), size: 20),
           suffixIcon: suffix,
           filled: true,
           fillColor: AppColors.bg(isDark),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: AppColors.border(isDark)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: AppColors.border(isDark)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: AppColors.primary, width: 1.5),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(
                 color: AppColors.accentRed.withValues(alpha: 0.6)),
           ),
           focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: AppColors.accentRed, width: 1.5),
           ),
           contentPadding:
@@ -756,7 +893,7 @@ class _SectionHeader extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 8),
         child: Text(
           title.toUpperCase(),
-          style: GoogleFonts.inter(
+          style: GoogleFonts.manrope(
             fontSize: 11,
             fontWeight: FontWeight.w700,
             color: AppColors.textHint(isDark),
@@ -766,8 +903,51 @@ class _SectionHeader extends StatelessWidget {
       );
 }
 
-// ─── Settings Tile ────────────────────────────────────────────────
-class _SettingsTile extends StatelessWidget {
+// ─── Grouped Card ──────────────────────────────────────────────────
+class _GroupedCard extends StatelessWidget {
+  final List<Widget> children;
+  final bool isDark;
+
+  const _GroupedCard({
+    required this.children,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card(isDark),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border(isDark)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          for (int i = 0; i < children.length; i++) ...[
+            children[i],
+            if (i < children.length - 1)
+              Divider(
+                height: 1,
+                thickness: 1,
+                indent: 56,
+                color: AppColors.border(isDark).withValues(alpha: 0.7),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Settings Row ──────────────────────────────────────────────────
+class _SettingsRow extends StatelessWidget {
   final IconData icon;
   final String title;
   final String? subtitle;
@@ -775,7 +955,7 @@ class _SettingsTile extends StatelessWidget {
   final VoidCallback? onTap;
   final Widget? trailing;
 
-  const _SettingsTile({
+  const _SettingsRow({
     required this.icon,
     required this.title,
     this.subtitle,
@@ -785,48 +965,66 @@ class _SettingsTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: AppColors.card(isDark),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border(isDark)),
-        ),
-        child: ListTile(
-          onTap: onTap,
-          leading: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: AppColors.primary, size: 18),
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: AppColors.primary, size: 19),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.manrope(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.text(isDark),
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle!,
+                        style: GoogleFonts.manrope(
+                          fontSize: 12,
+                          color: AppColors.textHint(isDark),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (trailing != null)
+                trailing!
+              else
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textHint(isDark).withValues(alpha: 0.6),
+                  size: 20,
+                ),
+            ],
           ),
-          title: Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.text(isDark),
-            ),
-          ),
-          subtitle: subtitle != null
-              ? Text(
-                  subtitle!,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppColors.textHint(isDark),
-                  ),
-                )
-              : null,
-          trailing: trailing ??
-              Icon(Icons.chevron_right_rounded,
-                  color: AppColors.textHint(isDark)),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14)),
         ),
-      );
+      ),
+    );
+  }
 }
 
 // ─── (PIN dialogi olib tashlandi: ilova kirishda PIN so'ramaydi) ──

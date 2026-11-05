@@ -124,13 +124,13 @@ class _QuantityDialogState extends State<_QuantityDialog> {
 
     return AlertDialog(
       backgroundColor: AppColors.card(isDark),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             widget.title ?? 'Miqdor kiritish',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               color: AppColors.text(isDark),
               fontSize: 17,
               fontWeight: FontWeight.w700,
@@ -141,7 +141,7 @@ class _QuantityDialogState extends State<_QuantityDialog> {
             p.productName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               color: AppColors.primary,
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -157,12 +157,12 @@ class _QuantityDialogState extends State<_QuantityDialog> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               'Omborda: ${fmtQty(p.quantity)} ${p.unit}'
               '${widget.currentInCart > 0 ? '  •  savatda: ${fmtQty(widget.currentInCart)}' : ''}',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.manrope(
                 color: AppColors.textSec(isDark),
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -184,7 +184,7 @@ class _QuantityDialogState extends State<_QuantityDialog> {
                   FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
                 ],
                 onSubmitted: (_) => _submit(),
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                   color: AppColors.text(isDark),
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -196,7 +196,7 @@ class _QuantityDialogState extends State<_QuantityDialog> {
                   contentPadding:
                       const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                   suffixText: p.unit,
-                  suffixStyle: GoogleFonts.inter(
+                  suffixStyle: GoogleFonts.manrope(
                       color: AppColors.textSec(isDark), fontSize: 13),
                   errorText: _errorText ??
                       (_qty == 0 ? 'Miqdor 0 dan katta bo\'lishi kerak' : null),
@@ -250,11 +250,11 @@ class _QuantityDialogState extends State<_QuantityDialog> {
                   shadowColor: Colors.transparent,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 child: Text(
                   'Qo\'shish',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     color: Colors.white,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,

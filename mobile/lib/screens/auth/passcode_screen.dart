@@ -137,7 +137,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> with SingleTickerProvid
               height: 72,
               decoration: BoxDecoration(
                 gradient: AppColors.primaryGradient,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.primary.withValues(alpha: 0.35),
@@ -153,7 +153,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> with SingleTickerProvid
             const SizedBox(height: 20),
             Text(
               locale.tr('passcode_title'),
-              style: GoogleFonts.inter(
+              style: GoogleFonts.manrope(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
                 color: AppColors.text(isDark),
@@ -165,7 +165,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> with SingleTickerProvid
               child: Text(
                 locale.tr('passcode_desc'),
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                   fontSize: 13,
                   color: AppColors.textSec(isDark),
                 ),
@@ -207,7 +207,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> with SingleTickerProvid
             const SizedBox(height: 12),
             Text(
               _hasError ? locale.tr('passcode_error') : locale.tr('passcode_default_hint'),
-              style: GoogleFonts.inter(
+              style: GoogleFonts.manrope(
                 fontSize: 12,
                 color: _hasError ? AppColors.accentRed : AppColors.textHint(isDark),
                 fontWeight: _hasError ? FontWeight.w600 : FontWeight.w500,
@@ -286,7 +286,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> with SingleTickerProvid
         child: Center(
           child: Text(
             number,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               fontSize: 26,
               fontWeight: FontWeight.w600,
               color: AppColors.text(isDark),

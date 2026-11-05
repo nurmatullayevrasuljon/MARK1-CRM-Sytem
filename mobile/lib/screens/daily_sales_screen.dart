@@ -7,6 +7,7 @@ import '../providers/theme_provider.dart';
 import '../providers/statistics_provider.dart';
 import '../providers/sale_provider.dart';
 import '../utils/format_utils.dart';
+import '../widgets/status_chip.dart';
 
 class DailySalesScreen extends StatefulWidget {
   const DailySalesScreen({super.key});
@@ -41,7 +42,7 @@ class _DailySalesScreenState extends State<DailySalesScreen> {
         elevation: 0,
         title: Text(
           'Kunlik Savdolar',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.manrope(
             color: AppColors.text(isDark),
             fontWeight: FontWeight.w700,
             fontSize: 20,
@@ -93,7 +94,7 @@ class _DailySalesScreenState extends State<DailySalesScreen> {
             // Transactions Header
             Text(
               'So\'nggi tranzaksiyalar',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.manrope(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: AppColors.text(isDark),
@@ -115,7 +116,7 @@ class _DailySalesScreenState extends State<DailySalesScreen> {
                   padding: const EdgeInsets.all(32.0),
                   child: Text(
                     'Bugun savdo yo\'q',
-                    style: GoogleFonts.inter(color: AppColors.textSec(isDark)),
+                    style: GoogleFonts.manrope(color: AppColors.textSec(isDark)),
                   ),
                 ),
               )
@@ -126,7 +127,7 @@ class _DailySalesScreenState extends State<DailySalesScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppColors.card(isDark),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.border(isDark)),
                   ),
                   child: Row(
@@ -149,8 +150,10 @@ class _DailySalesScreenState extends State<DailySalesScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              sale.clientName ?? 'Noma\'lum xaridor',
-                              style: GoogleFonts.inter(
+                              sale.clientName?.isNotEmpty == true
+                                  ? sale.clientName!
+                                  : 'Chakana savdo',
+                              style: GoogleFonts.manrope(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.text(isDark),
@@ -159,7 +162,7 @@ class _DailySalesScreenState extends State<DailySalesScreen> {
                             const SizedBox(height: 4),
                             Text(
                               _formatDate(sale.createdAt),
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.manrope(
                                 fontSize: 13,
                                 color: AppColors.textSec(isDark),
                               ),
@@ -172,36 +175,19 @@ class _DailySalesScreenState extends State<DailySalesScreen> {
                         children: [
                           Text(
                             '+${fmtMoney(sale.totalPrice)} so\'m',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.manrope(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: AppColors.accentGreen,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: sale.hasDebt
-                                  ? AppColors.accentRed.withValues(alpha: 0.1)
-                                  : AppColors.accentGreen.withValues(
-                                      alpha: 0.1,
-                                    ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              sale.hasDebt ? 'Qarz' : 'To\'langan',
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: sale.hasDebt
-                                    ? AppColors.accentRed
-                                    : AppColors.accentGreen,
-                              ),
-                            ),
+                          StatusChip(
+                            label: sale.hasDebt ? 'Qarz' : 'To\'langan',
+                            color: sale.hasDebt
+                                ? AppColors.accentRed
+                                : AppColors.accentGreen,
+                            isDark: isDark,
                           ),
                         ],
                       ),
@@ -244,7 +230,7 @@ class _SummaryCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.card(isDark),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border(isDark)),
         boxShadow: [
           BoxShadow(
@@ -261,14 +247,14 @@ class _SummaryCard extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 16),
           Text(
             value,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               fontSize: 18,
               fontWeight: FontWeight.w800,
               color: AppColors.text(isDark),
@@ -277,7 +263,7 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             title,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: AppColors.textSec(isDark),

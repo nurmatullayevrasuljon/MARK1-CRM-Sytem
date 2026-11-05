@@ -204,7 +204,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
                     height: r.height,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                             color: AppColors.primaryLight, width: 3),
                       ),
@@ -324,7 +324,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 18, vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                     ),
@@ -375,7 +375,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
               children: [
                 Text(
                   'Shtrix-kodni qo\'lda kiriting',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -384,7 +384,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
                 const SizedBox(height: 8),
                 Text(
                   'Shtrix-kod faqat raqamlardan iborat bo\'lishi kerak.',
-                  style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+                  style: GoogleFonts.manrope(color: Colors.white70, fontSize: 13),
                 ),
                 const SizedBox(height: 20),
                 TextField(
@@ -395,27 +395,27 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
                   ],
                   onSubmitted: (_) => _submitManual(),
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     color: Colors.white,
                     fontSize: 20,
                     letterSpacing: 2,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Masalan: 2000000009128',
-                    hintStyle: GoogleFonts.inter(
+                    hintStyle: GoogleFonts.manrope(
                         color: Colors.white38, fontSize: 18),
                     filled: true,
                     fillColor: Colors.white12,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: const BorderSide(color: Colors.white24),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: const BorderSide(color: Colors.white24),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: const BorderSide(
                           color: AppColors.primaryLight, width: 1.6),
                     ),
@@ -431,7 +431,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
                         side: const BorderSide(color: Colors.white38),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                       child: const Text('Kameraga qaytish'),
@@ -442,7 +442,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: AppColors.primaryGradient,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: ElevatedButton(
                         onPressed: _submitManual,
@@ -451,7 +451,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
                           shadowColor: Colors.transparent,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
+                              borderRadius: BorderRadius.circular(8)),
                         ),
                         child: const Text(
                           'Tasdiqlash',
@@ -503,7 +503,7 @@ class _FatalErrorView extends StatelessWidget {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
+                style: GoogleFonts.manrope(color: Colors.white, fontSize: 15),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -513,7 +513,7 @@ class _FatalErrorView extends StatelessWidget {
                   foregroundColor: Colors.black87,
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 child: const Text('Qo\'lda kiritish',
                     style: TextStyle(fontWeight: FontWeight.w700)),
@@ -543,7 +543,7 @@ class _Scrim extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hole = RRect.fromRectAndRadius(size, const Radius.circular(20));
+    final hole = RRect.fromRectAndRadius(size, const Radius.circular(16));
     return ClipPath(
       clipper: _ScrimClipper(hole),
       child: SizedBox(
