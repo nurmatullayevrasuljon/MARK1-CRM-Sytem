@@ -296,20 +296,41 @@ class _MainShellState extends State<MainShell> {
                     Icon(icon, size: 22, color: color ?? inactiveColor),
               ),
               const SizedBox(height: 4),
-              AnimatedDefaultTextStyle(
-                duration: duration,
-                curve: curve,
-                style: GoogleFonts.manrope(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? activeColor : inactiveColor,
-                  letterSpacing: -0.2,
-                ),
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.clip,
-                  textAlign: TextAlign.center,
+              // Nom faqat faol bo'limga o'tilganda tagidan chiqib
+              // ko'rinadi; boshqa tablarda umuman ko'rinmaydi.
+              // Slot balandligi saqlanadi — ikonkalar baribir
+              // bari bir qatorda turishi uchun.
+              SizedBox(
+                height: 18,
+                child: ClipRect(
+                  child: AnimatedSlide(
+                    duration: duration,
+                    curve: curve,
+                    offset: isSelected ? Offset.zero : const Offset(0, 1.3),
+                    child: AnimatedOpacity(
+                      duration: duration,
+                      curve: curve,
+                      opacity: isSelected ? 1 : 0,
+                      child: Center(
+                        child: AnimatedDefaultTextStyle(
+                          duration: duration,
+                          curve: curve,
+                          style: GoogleFonts.manrope(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: activeColor,
+                            letterSpacing: -0.2,
+                          ),
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.clip,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
