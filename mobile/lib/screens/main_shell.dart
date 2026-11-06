@@ -300,7 +300,7 @@ class _MainShellState extends State<MainShell> {
                 duration: duration,
                 curve: curve,
                 style: GoogleFonts.manrope(
-                  fontSize: 10.5,
+                  fontSize: 12,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected ? activeColor : inactiveColor,
                   letterSpacing: -0.2,

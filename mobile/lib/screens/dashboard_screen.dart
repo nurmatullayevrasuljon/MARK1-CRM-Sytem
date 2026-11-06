@@ -717,7 +717,7 @@ class _AiOverviewSectionState extends State<_AiOverviewSection> {
                         child: Text(
                           '${i + 1}',
                           style: GoogleFonts.manrope(
-                            fontSize: 10,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800,
                             color: AppColors.primary,
                           ),
@@ -835,7 +835,7 @@ class _AiOverviewSectionState extends State<_AiOverviewSection> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.manrope(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textSec(isDark),
                     letterSpacing: 0.2,
@@ -864,7 +864,7 @@ class _AiOverviewSectionState extends State<_AiOverviewSection> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.manrope(
-              fontSize: 9.5,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
               color: AppColors.textSec(isDark),
             ),
@@ -922,62 +922,69 @@ class _StatCard extends StatelessWidget {
             ? Colors.transparent
             : AppColors.primary.withValues(alpha: 0.08),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: 18),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              // Header (DESIGN §5): ikonka tile + sarlavha yonma-yon.
+              // Ko'z bir qarashda "qaysi raqam qaysi tushumni bildiradi"
+              // ni oladi — title qiymat ostida mayda yozilganda bu
+              // bog'lanish yo'qoladi.
+              Row(
                 children: [
-                  if (loading)
-                    Container(
-                      width: 70,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: AppColors.border(isDark),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    )
-                  else
-                    // Tor ekranlarda uzun qiymat ("95 ming so'm")
-                    // kesilmasdan kichrayadi: FittedBox faqat matn
-                    // kenglikdan oshganda scaleDown qiladi, oddiy
-                    // o'lchamda 17px saqlanadi.
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        value,
-                        maxLines: 1,
-                        style: GoogleFonts.manrope(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.text(isDark),
-                        ),
-                      ),
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  const SizedBox(height: 2),
-                  Text(
-                    title,
-                    style: GoogleFonts.manrope(
-                      fontSize: 11,
-                      color: AppColors.textSec(isDark),
+                    child: Icon(icon, color: color, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: GoogleFonts.manrope(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSec(isDark),
+                        height: 1.25,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
+              if (loading)
+                Container(
+                  width: 70,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: AppColors.border(isDark),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                )
+              else
+                // Tor ekranlarda uzun qiymat ("95 ming so'm")
+                // kesilmasdan kichrayadi: FittedBox faqat matn
+                // kenglikdan oshganda scaleDown qiladi.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    style: GoogleFonts.manrope(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.text(isDark),
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -1143,11 +1150,11 @@ class _WeeklyTrendCard extends StatelessWidget {
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 40,
+                      reservedSize: 48,
                       getTitlesWidget: (value, meta) {
                         return Text(
                           _formatNumber(value),
-                          style: GoogleFonts.manrope(fontSize: 10, color: AppColors.textSec(isDark)),
+                          style: GoogleFonts.manrope(fontSize: 11, color: AppColors.textSec(isDark)),
                         );
                       },
                     ),
@@ -1164,7 +1171,7 @@ class _WeeklyTrendCard extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 8.0),
                           child: Text(
                             day,
-                            style: GoogleFonts.manrope(fontSize: 10, color: AppColors.textSec(isDark)),
+                            style: GoogleFonts.manrope(fontSize: 11, color: AppColors.textSec(isDark)),
                           ),
                         );
                       },

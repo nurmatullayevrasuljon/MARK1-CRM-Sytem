@@ -261,7 +261,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 child: Text(
                                   'Demo rejim',
                                   style: GoogleFonts.manrope(
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     color: AppColors.accentOrange,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -894,7 +894,7 @@ class _SectionHeader extends StatelessWidget {
         child: Text(
           title.toUpperCase(),
           style: GoogleFonts.manrope(
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: FontWeight.w700,
             color: AppColors.textHint(isDark),
             letterSpacing: 1.2,

@@ -847,7 +847,7 @@ class _ProductTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.manrope(
-                            fontSize: 10,
+                            fontSize: 12,
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600),
                       ),

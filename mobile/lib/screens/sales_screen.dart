@@ -370,7 +370,7 @@ class _SaleTile extends StatelessWidget {
                   Text(
                     'Muddat: ${_formatDate(sale.dueDate!)}',
                     style: GoogleFonts.manrope(
-                      fontSize: 11,
+                      fontSize: 12,
                       color: AppColors.accentRed.withValues(alpha: 0.8),
                     ),
                   ),
@@ -1099,7 +1099,7 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
         Text(
           label,
           style: GoogleFonts.manrope(
-            fontSize: 10,
+            fontSize: 12,
             color: active ? AppColors.primary : AppColors.textSec(isDark),
             fontWeight: active ? FontWeight.w600 : FontWeight.normal,
           ),

@@ -1168,7 +1168,7 @@ class _DebtTile extends StatelessWidget {
                           child: Text(
                             badge.text,
                             style: GoogleFonts.manrope(
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
                               color: badge.color,
                             ),
@@ -1178,7 +1178,7 @@ class _DebtTile extends StatelessWidget {
                           Text(
                             'Muddat: ${_fmtDate(sale.dueDate!)}',
                             style: GoogleFonts.manrope(
-                                fontSize: 11, color: AppColors.textSec(isDark)),
+                                fontSize: 12, color: AppColors.textSec(isDark)),
                           ),
                       ],
                     ),
@@ -1248,7 +1248,7 @@ class _KpiCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.manrope(
-                fontSize: 11, color: AppColors.textSec(isDark)),
+                fontSize: 12, color: AppColors.textSec(isDark)),
           ),
           const SizedBox(height: 4),
           FittedBox(
@@ -1267,7 +1267,7 @@ class _KpiCard extends StatelessWidget {
           Text(
             sub,
             style: GoogleFonts.manrope(
-                fontSize: 10.5, color: AppColors.textSec(isDark)),
+                fontSize: 12, color: AppColors.textSec(isDark)),
           ),
         ],
       ),
