@@ -479,31 +479,6 @@ class _DebtorsTabState extends State<_DebtorsTab> {
               ),
             ),
 
-            // ── Yangi qarzdor ──
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 2, 16, 12),
-                child: SizedBox(
-                  height: 46,
-                  child: ElevatedButton.icon(
-                    onPressed: _showNewDebtor,
-                    icon: const Icon(Icons.person_add_alt_1_rounded, size: 20),
-                    label: Text(
-                      'Yangi qarzdor',
-                      style: GoogleFonts.manrope(
-                          fontSize: 15, fontWeight: FontWeight.w700),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
             if (dp.error != null)
               SliverToBoxAdapter(
                 child: Padding(
@@ -537,7 +512,8 @@ class _DebtorsTabState extends State<_DebtorsTab> {
                         const SizedBox(height: 6),
                         Text(
                           'Qarzga sotilgan mahsulotlar shu yerda paydo bo\'ladi. '
-                          'Yangi qarzdor qo\'shish uchun yuqoridagi tugmani bosing.',
+                          'Yangi qarzdor qo\'shish uchun o\'ng pastdagi '
+                          'tugmani bosing.',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.manrope(
                             fontSize: 13,
