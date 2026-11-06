@@ -219,44 +219,51 @@ class _MainShellState extends State<MainShell> {
           top: BorderSide(color: AppColors.border(isDark), width: 1),
         ),
       ),
-      child: SafeArea(
-        child: SizedBox(
-          height: 64,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final double itemW = constraints.maxWidth / items.length;
-              return Stack(
-                children: [
-                  // Faol tab ostidagi siluvchi chip (whoosh)
-                  AnimatedPositioned(
-                    duration: navDuration,
-                    curve: navCurve,
-                    left: _currentIndex * itemW + 6,
-                    top: 6,
-                    width: itemW - 12,
-                    height: 52,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.steel : const Color(0xFFD3E4EF),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+      // Gesture inset (~24dp) ichiga quti kengayadi, chip va ikonkalar
+      // esa BUTUN fon balandligida markazlanadi — aks holda kontent
+      // vizual markazdan ~12dp yuqorida turib, tepaga yopishib
+      // ko'rinardi.
+      child: SizedBox(
+        height: 64 + MediaQuery.of(context).padding.bottom,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final double itemW = constraints.maxWidth / items.length;
+            final double barH = constraints.maxHeight;
+            return Stack(
+              children: [
+                // Faol tab ostidagi siluvchi chip (whoosh)
+                AnimatedPositioned(
+                  duration: navDuration,
+                  curve: navCurve,
+                  left: _currentIndex * itemW + 6,
+                  top: (barH - 52) / 2,
+                  width: itemW - 12,
+                  height: 52,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.steel : const Color(0xFFD3E4EF),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  Row(
-                    children: items
-                        .map((it) => SizedBox(
-                              width: itemW,
-                              child: _navItem(
-                                it.index, it.icon, it.label, isDark,
-                                duration: navDuration, curve: navCurve,
-                              ),
-                            ))
-                        .toList(),
+                ),
+                Positioned.fill(
+                  child: Center(
+                    child: Row(
+                      children: items
+                          .map((it) => SizedBox(
+                                width: itemW,
+                                child: _navItem(
+                                  it.index, it.icon, it.label, isDark,
+                                  duration: navDuration, curve: navCurve,
+                                ),
+                              ))
+                          .toList(),
+                    ),
                   ),
-                ],
-              );
-            },
-          ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

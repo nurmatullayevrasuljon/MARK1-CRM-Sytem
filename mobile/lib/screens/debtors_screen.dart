@@ -1115,81 +1115,91 @@ class _DebtTile extends StatelessWidget {
           child: GestureDetector(
             onTap: onTap,
             behavior: HitTestBehavior.opaque,
-            child: Row(children: [
-              CircleAvatar(
-                backgroundColor: _statusOf(sale) == _DebtStatus.overdue
-                    ? AppColors.accentRed.withValues(alpha: 0.12)
-                    : AppColors.primary.withValues(alpha: 0.1),
-                child: Text(
-                  (sale.clientName?.isNotEmpty == true
-                          ? sale.clientName![0]
-                          : '?')
-                      .toUpperCase(),
-                  style: GoogleFonts.manrope(
-                    fontWeight: FontWeight.w700,
-                    color: _statusOf(sale) == _DebtStatus.overdue
-                        ? AppColors.accentRed
-                        : AppColors.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      sale.clientName?.isNotEmpty == true
-                          ? sale.clientName!
-                          : 'Mijoz',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  CircleAvatar(
+                    backgroundColor: _statusOf(sale) == _DebtStatus.overdue
+                        ? AppColors.accentRed.withValues(alpha: 0.12)
+                        : AppColors.primary.withValues(alpha: 0.1),
+                    child: Text(
+                      (sale.clientName?.isNotEmpty == true
+                              ? sale.clientName![0]
+                              : '?')
+                          .toUpperCase(),
                       style: GoogleFonts.manrope(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.text(isDark),
+                        fontWeight: FontWeight.w700,
+                        color: _statusOf(sale) == _DebtStatus.overdue
+                            ? AppColors.accentRed
+                            : AppColors.primary,
                       ),
                     ),
-                    if (sale.clientPhone != null &&
-                        sale.clientPhone!.trim().isNotEmpty)
-                      Text(displayUzPhone(sale.clientPhone),
-                          style: GoogleFonts.manrope(
-                              fontSize: 13, color: AppColors.textSec(isDark))),
-                    const SizedBox(height: 4),
-                    // Status badge + muddat (web jadvalidagi "Holat" ustuni).
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      crossAxisAlignment: WrapCrossAlignment.center,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: badge.color.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            badge.text,
-                            style: GoogleFonts.manrope(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: badge.color,
-                            ),
+                        Text(
+                          sale.clientName?.isNotEmpty == true
+                              ? sale.clientName!
+                              : 'Mijoz',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.manrope(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.text(isDark),
                           ),
                         ),
-                        if (sale.dueDate != null)
-                          Text(
-                            'Muddat: ${_fmtDate(sale.dueDate!)}',
-                            style: GoogleFonts.manrope(
-                                fontSize: 12, color: AppColors.textSec(isDark)),
-                          ),
+                        if (sale.clientPhone != null &&
+                            sale.clientPhone!.trim().isNotEmpty)
+                          Text(displayUzPhone(sale.clientPhone),
+                              style: GoogleFonts.manrope(
+                                  fontSize: 13,
+                                  color: AppColors.textSec(isDark))),
                       ],
                     ),
+                  ),
+                ]),
+                const SizedBox(height: 4),
+                // Status badge + muddat (web jadvalidagi "Holat" ustuni).
+                // Alohida qatorda, to'liq kenglikda: yon tomondagi
+                // miqdor+menyu tufayli kenglik tor edi va pill ichidagi
+                // matn ikki qatorda kesilardi.
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: badge.color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        badge.text,
+                        maxLines: 1,
+                        style: GoogleFonts.manrope(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: badge.color,
+                        ),
+                      ),
+                    ),
+                    if (sale.dueDate != null)
+                      Text(
+                        'Muddat: ${_fmtDate(sale.dueDate!)}',
+                        style: GoogleFonts.manrope(
+                            fontSize: 12, color: AppColors.textSec(isDark)),
+                      ),
                   ],
                 ),
-              ),
-            ]),
+              ],
+            ),
           ),
         ),
         const SizedBox(width: 8),
