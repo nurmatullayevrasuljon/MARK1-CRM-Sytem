@@ -223,26 +223,28 @@ class _MainShellState extends State<MainShell> {
           top: BorderSide(color: AppColors.border(isDark), width: 1),
         ),
       ),
-      // Gesture inset (~24dp) ichiga quti kengayadi, chip va ikonkalar
-      // esa BUTUN fon balandligida markazlanadi — aks holda kontent
-      // vizual markazdan ~12dp yuqorida turib, tepaga yopishib
-      // ko'rinardi.
+      // Gesture inset (~24dp) ichiga quti kengayadi. Chip va ikonkalar
+      // esa PILADAN YUQORIDA (insetning yarmi hisobga olinib) markazlanadi —
+      // aks holda chip pilaga yopishib qolardi (tekshiruv: chip pasti
+      // y=2360, pila y=2364 — orasida atigi 4px edi).
       child: SizedBox(
         height: 64 + MediaQuery.of(context).padding.bottom,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final double itemW = constraints.maxWidth / items.length;
             final double barH = constraints.maxHeight;
+            final double inset = MediaQuery.of(context).padding.bottom;
             return Stack(
               children: [
                 // Faol tab ostidagi siluvchi chip (whoosh).
                 // Balandlik 58: ikonka 26 (faol 30) + 4 + nom 18 = 52,
-                // chip ichida 3dp nafas paytdir.
+                // chip ichida 3dp nafas paytdir. Top = eski markaz - inset/4
+                // (inset=0 da eski formula bilan bir xil).
                 AnimatedPositioned(
                   duration: navDuration,
                   curve: navCurve,
                   left: _currentIndex * itemW + 6,
-                  top: (barH - 58) / 2,
+                  top: (barH - 58) / 2 - inset / 4,
                   width: itemW - 12,
                   height: 58,
                   child: Container(
@@ -253,18 +255,23 @@ class _MainShellState extends State<MainShell> {
                   ),
                 ),
                 Positioned.fill(
-                  child: Center(
-                    child: Row(
-                      children: items
-                          .map((it) => SizedBox(
-                                width: itemW,
-                                child: _navItem(
-                                  it.index, it.icon, it.label, isDark,
-                                  size: it.size,
-                                  duration: navDuration, curve: navCurve,
-                                ),
-                              ))
-                          .toList(),
+                  // Bottom padding kontentni inset/4 (≈6dp) yuqoriga
+                  // suradi — chip bilan bir xil siljish uchun.
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: inset / 2),
+                    child: Center(
+                      child: Row(
+                        children: items
+                            .map((it) => SizedBox(
+                                  width: itemW,
+                                  child: _navItem(
+                                    it.index, it.icon, it.label, isDark,
+                                    size: it.size,
+                                    duration: navDuration, curve: navCurve,
+                                  ),
+                                ))
+                            .toList(),
+                      ),
                     ),
                   ),
                 ),
