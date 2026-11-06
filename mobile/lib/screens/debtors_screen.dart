@@ -667,21 +667,25 @@ class _DebtorsTabState extends State<_DebtorsTab> {
           ),
 
           // ── Filtrlar (web: 4 ta filter tab) ──
+          // Wrap: 4 chiplar ekranning kengligidan kengroq edi —
+          // horizontal ListView da "Yaqinlashmoqda" cheti kesilar,
+          // "Oddiy" esa umuman ko'rinmasdi. Wrap barcha filtrlarni
+          // ikki qatorda to'liq ko'rsadi, yashirin scroll yo'q.
           SliverToBoxAdapter(
-            child: SizedBox(
-              height: 46,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-                itemCount: _filterIds.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (_, i) => _FilterChip(
-                  label: _filterLabels[i],
-                  selected: _filter == _filterIds[i],
-                  isDark: isDark,
-                  onTap: () => setState(() => _filter = _filterIds[i]),
-                ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (var i = 0; i < _filterIds.length; i++)
+                    _FilterChip(
+                      label: _filterLabels[i],
+                      selected: _filter == _filterIds[i],
+                      isDark: isDark,
+                      onTap: () => setState(() => _filter = _filterIds[i]),
+                    ),
+                ],
               ),
             ),
           ),
