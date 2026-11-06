@@ -24,13 +24,10 @@ class DebtorsScreen extends StatefulWidget {
   State<DebtorsScreen> createState() => _DebtorsScreenState();
 }
 
-class _DebtorsScreenState extends State<DebtorsScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabCtrl;
-
+class _DebtorsScreenState extends State<DebtorsScreen> {
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<DebtProvider>(context, listen: false).loadDebts();
       Provider.of<ClientProvider>(context, listen: false).loadClients();
@@ -38,15 +35,11 @@ class _DebtorsScreenState extends State<DebtorsScreen> with SingleTickerProvider
   }
 
   @override
-  void dispose() {
-    _tabCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final isDark = Provider.of<ThemeProvider>(context).isDark;
 
+    // Mijozlar sub-tabini olib tashlandi: mijozlar "Yangi qarzdor"
+    // oynasi orqali yaratiladi/tahrirlanadi, alohida bo'lim shart emas.
     return Scaffold(
       backgroundColor: AppColors.bg(isDark),
       appBar: AppBar(
@@ -60,231 +53,8 @@ class _DebtorsScreenState extends State<DebtorsScreen> with SingleTickerProvider
             color: AppColors.text(isDark),
           ),
         ),
-        bottom: TabBar(
-          controller: _tabCtrl,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSec(isDark),
-          indicatorColor: AppColors.primary,
-          labelStyle: GoogleFonts.manrope(fontSize: 14, fontWeight: FontWeight.w600),
-          tabs: const [
-            Tab(text: 'Mijozlar'),
-            Tab(text: 'Qarzdorlar'),
-          ],
-        ),
       ),
-      body: TabBarView(
-        controller: _tabCtrl,
-        children: [
-          _ClientsTab(isDark: isDark),
-          _DebtorsTab(isDark: isDark, onTab: widget.onTab),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Clients Tab ──────────────────────────────────────────────────
-class _ClientsTab extends StatefulWidget {
-  final bool isDark;
-  const _ClientsTab({required this.isDark});
-
-  @override
-  State<_ClientsTab> createState() => _ClientsTabState();
-}
-
-class _ClientsTabState extends State<_ClientsTab> {
-  final _searchCtrl = TextEditingController();
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = widget.isDark;
-    final cp = Provider.of<ClientProvider>(context);
-    final results = cp.search(_searchCtrl.text);
-
-    return Scaffold(
-      backgroundColor: AppColors.bg(isDark),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primary,
-        onPressed: () => _showClientSheet(context, null),
-        child: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchCtrl,
-              style: GoogleFonts.manrope(color: AppColors.text(isDark), fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'Mijoz ismini izlash...',
-                hintStyle: GoogleFonts.manrope(color: AppColors.textHint(isDark), fontSize: 14),
-                prefixIcon: Icon(Icons.search_rounded, color: AppColors.textHint(isDark)),
-                filled: true,
-                fillColor: AppColors.card(isDark),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border(isDark))),
-                enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border(isDark))),
-                focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              ),
-              onChanged: (_) => setState(() {}),
-            ),
-          ),
-          if (cp.isLoading && cp.clients.isEmpty)
-            const Expanded(child: Center(child: CircularProgressIndicator()))
-          else if (results.isEmpty)
-            Expanded(
-              child: Center(
-                child: Text('Mijozlar topilmadi',
-                    style: GoogleFonts.manrope(color: AppColors.textSec(isDark))),
-              ),
-            )
-          else
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: cp.loadClients,
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: results.length,
-                  itemBuilder: (_, i) {
-                    final c = results[i];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      decoration: BoxDecoration(
-                        color: AppColors.card(isDark),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border(isDark)),
-                      ),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                          child: Text(
-                            c.clientName.isNotEmpty ? c.clientName[0].toUpperCase() : '?',
-                            style: GoogleFonts.manrope(
-                                fontWeight: FontWeight.w700, color: AppColors.primary),
-                          ),
-                        ),
-                        title: Text(
-                          c.clientName,
-                          style: GoogleFonts.manrope(
-                              color: AppColors.text(isDark), fontWeight: FontWeight.w600),
-                        ),
-                        subtitle: (c.clientPhone != null && c.clientPhone!.trim().isNotEmpty)
-                            // Noto'g'ri raqamni ochiq ko'rsatamiz: `0` bilan
-                            // boshlangan 9 xona SMS orqali yetib bor maydi,
-                            // lekin foydalanuvchi "yubordim" deb o'ylaydi.
-                            ? Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      displayUzPhone(c.clientPhone),
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.manrope(
-                                        color: isValidUzPhone(c.clientPhone)
-                                            ? AppColors.textSec(isDark)
-                                            : AppColors.accentRed,
-                                        fontSize: 12,
-                                        decoration: isValidUzPhone(c.clientPhone)
-                                            ? null
-                                            : TextDecoration.lineThrough,
-                                      ),
-                                    ),
-                                  ),
-                                  if (!isValidUzPhone(c.clientPhone)) ...[
-                                    const SizedBox(width: 6),
-                                    Semantics(
-                                      label: 'Telefon noto\'g\'ri',
-                                      child: Tooltip(
-                                        message: 'Raqam noto\'g\'ri — SMS yetib bor '
-                                            'maydi. 0 bilan boshlanmasin, '
-                                            'masalan 90 123 45 67.',
-                                        child: Icon(
-                                          Icons.warning_amber_rounded,
-                                          size: 14,
-                                          color: AppColors.accentRed,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              )
-                            : null,
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              tooltip: 'Tahrirlash',
-                              icon: Icon(Icons.edit_rounded, color: AppColors.primary, size: 20),
-                              onPressed: () => _showClientSheet(context, c),
-                            ),
-                            IconButton(
-                              tooltip: 'O\'chirish',
-                              icon: const Icon(Icons.delete_outline_rounded, color: AppColors.accentRed, size: 20),
-                              onPressed: () => _deleteClient(context, c.id),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _deleteClient(BuildContext context, String id) async {
-    final cp = Provider.of<ClientProvider>(context, listen: false);
-    final messenger = ScaffoldMessenger.of(context);
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      barrierLabel: 'Bekor qilish',
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.card(widget.isDark),
-        title: Text('O\'chirish',
-            style: GoogleFonts.manrope(color: AppColors.text(widget.isDark), fontWeight: FontWeight.w700)),
-        content: Text('Haqiqatan ham mijozni o\'chirmoqchimisiz?',
-            style: GoogleFonts.manrope(color: AppColors.textSec(widget.isDark))),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Bekor')),
-          TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('O\'chirish', style: TextStyle(color: AppColors.accentRed))),
-        ],
-      ),
-    );
-    if (confirm != true || !mounted) return;
-    final res = await cp.deleteClient(id);
-    if (!mounted) return;
-    messenger.showSnackBar(SnackBar(
-      content: Text(res.success ? 'Mijoz o\'chirildi' : res.error?.userMessage ?? 'Xato'),
-      backgroundColor: res.success ? AppColors.accentGreen : AppColors.accentRed,
-    ));
-  }
-
-  void _showClientSheet(BuildContext context, ClientModel? client) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.card(widget.isDark),
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => _ClientFormSheet(client: client, isDark: widget.isDark),
+      body: _DebtorsTab(isDark: isDark, onTab: widget.onTab),
     );
   }
 }
@@ -584,223 +354,243 @@ class _DebtorsTabState extends State<_DebtorsTab> {
     final upcoming =
         dp.debts.where((s) => _statusOf(s) == _DebtStatus.upcoming).toList();
 
-    return RefreshIndicator(
-      color: AppColors.primary,
-      onRefresh: () => dp.loadDebts(),
-      child: CustomScrollView(
-        physics:
-            const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-        slivers: [
-          // ── KPI kartalari (web: renderOverdueCards + KPI updater) ──
-          // DESIGN §10: gradient yo'q — barcha kartalar tekis rang.
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Row(children: [
-                Expanded(
-                  child: _KpiCard(
-                    isDark: isDark,
-                    label: 'Umumiy qarz',
-                    value: _fmt(dp.totalDebt),
-                    sub: '${dp.debts.length} ta hujjat',
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _KpiCard(
-                    isDark: isDark,
-                    label: 'Muddati o\'tgan',
-                    value: _fmt(_sum(overdue)),
-                    sub: '${overdue.length} ta',
-                    color: AppColors.accentRed,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _KpiCard(
-                    isDark: isDark,
-                    label: 'Yaqinlashmoqda',
-                    value: _fmt(_sum(upcoming)),
-                    sub: '${upcoming.length} ta',
-                    color: AppColors.accentOrange,
-                  ),
-                ),
-              ]),
-            ),
-          ),
-
-          // ── Qidiruv ──
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: TextField(
-                controller: _searchCtrl,
-                onChanged: (_) => setState(() {}),
-                style: GoogleFonts.manrope(color: AppColors.text(isDark)),
-                decoration: InputDecoration(
-                  hintText: 'Ism yoki telefon bo\'yicha qidirish',
-                  prefixIcon: Icon(Icons.search_rounded,
-                      color: AppColors.textSec(isDark)),
-                  hintStyle:
-                      GoogleFonts.manrope(color: AppColors.textHint(isDark)),
-                  filled: true,
-                  fillColor: AppColors.card(isDark),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border(isDark)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border(isDark)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        BorderSide(color: AppColors.primary, width: 1.5),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // ── Filtrlar (web: 4 ta filter tab) ──
-          // Wrap: 4 chiplar ekranning kengligidan kengroq edi —
-          // horizontal ListView da "Yaqinlashmoqda" cheti kesilar,
-          // "Oddiy" esa umuman ko'rinmasdi. Wrap barcha filtrlarni
-          // ikki qatorda to'liq ko'rsadi, yashirin scroll yo'q.
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (var i = 0; i < _filterIds.length; i++)
-                    _FilterChip(
-                      label: _filterLabels[i],
-                      selected: _filter == _filterIds[i],
-                      isDark: isDark,
-                      onTap: () => setState(() => _filter = _filterIds[i]),
-                    ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── Yangi qarzdor ──
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 2, 16, 12),
-              child: SizedBox(
-                height: 46,
-                child: ElevatedButton.icon(
-                  onPressed: _showNewDebtor,
-                  icon: const Icon(Icons.person_add_alt_1_rounded, size: 20),
-                  label: Text(
-                    'Yangi qarzdor',
-                    style: GoogleFonts.manrope(
-                        fontSize: 15, fontWeight: FontWeight.w700),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          if (dp.error != null)
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showNewDebtor,
+        tooltip: 'Yangi qarzdor',
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.person_add_alt_1_rounded,
+            color: Colors.white),
+      ),
+      body: RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: () => dp.loadDebts(),
+        child: CustomScrollView(
+          physics:
+              const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          slivers: [
+            // ── KPI kartalari (web: renderOverdueCards + KPI updater) ──
+            // DESIGN §10: gradient yo'q — barcha kartalar tekis rang.
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(dp.error!,
-                    style: GoogleFonts.manrope(color: AppColors.accentRed)),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: Row(children: [
+                  Expanded(
+                    child: _KpiCard(
+                      isDark: isDark,
+                      label: 'Umumiy qarz',
+                      value: _fmt(dp.totalDebt),
+                      sub: '${dp.debts.length} ta hujjat',
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _KpiCard(
+                      isDark: isDark,
+                      label: 'Muddati o\'tgan',
+                      value: _fmt(_sum(overdue)),
+                      sub: '${overdue.length} ta',
+                      color: AppColors.accentRed,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _KpiCard(
+                      isDark: isDark,
+                      label: 'Yaqinlashmoqda',
+                      value: _fmt(_sum(upcoming)),
+                      sub: '${upcoming.length} ta',
+                      color: AppColors.accentOrange,
+                    ),
+                  ),
+                ]),
               ),
             ),
 
-          // ── Ro'yxat yoki bo'sh holat ──
-          if (dp.debts.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
+            // ── Qidiruv + filtr menyusi (Ombor ekranidagi bilan bir xil naqsh) ──
+            // Chiplar o'rniga kategoriya menyusi: 4 ta holat filtri bitta
+            // tugma ostida, qidiruv bilan bir qatorda — ekran tejaydi.
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Row(children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchCtrl,
+                      onChanged: (_) => setState(() {}),
+                      style:
+                          GoogleFonts.manrope(color: AppColors.text(isDark)),
+                      decoration: InputDecoration(
+                        hintText: 'Ism yoki telefon bo\'yicha qidirish',
+                        prefixIcon: Icon(Icons.search_rounded,
+                            color: AppColors.textSec(isDark)),
+                        hintStyle: GoogleFonts.manrope(
+                            color: AppColors.textHint(isDark)),
+                        filled: true,
+                        fillColor: AppColors.card(isDark),
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 4),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide:
+                              BorderSide(color: AppColors.border(isDark)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide:
+                              BorderSide(color: AppColors.border(isDark)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                              color: AppColors.primary, width: 1.5),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.card(isDark),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.border(isDark)),
+                    ),
+                    child: PopupMenuButton<String>(
+                      tooltip: 'Filtrlar',
+                      icon: Icon(
+                        Icons.filter_list_rounded,
+                        color: _filter != 'all'
+                            ? AppColors.primary
+                            : AppColors.textSec(isDark),
+                      ),
+                      onSelected: (v) => setState(() => _filter = v),
+                      itemBuilder: (_) => [
+                        for (var i = 0; i < _filterIds.length; i++)
+                          PopupMenuItem<String>(
+                            value: _filterIds[i],
+                            child: Text(_filterLabels[i]),
+                          ),
+                      ],
+                    ),
+                  ),
+                ]),
+              ),
+            ),
+
+            // ── Yangi qarzdor ──
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 2, 16, 12),
+                child: SizedBox(
+                  height: 46,
+                  child: ElevatedButton.icon(
+                    onPressed: _showNewDebtor,
+                    icon: const Icon(Icons.person_add_alt_1_rounded, size: 20),
+                    label: Text(
+                      'Yangi qarzdor',
+                      style: GoogleFonts.manrope(
+                          fontSize: 15, fontWeight: FontWeight.w700),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            if (dp.error != null)
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(dp.error!,
+                      style: GoogleFonts.manrope(color: AppColors.accentRed)),
+                ),
+              ),
+
+            // ── Ro'yxat yoki bo'sh holat ──
+            if (dp.debts.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.inbox_rounded,
+                            color: AppColors.textSec(isDark), size: 56),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Hozircha qarzdor yo\'q',
+                          style: GoogleFonts.manrope(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.text(isDark),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Qarzga sotilgan mahsulotlar shu yerda paydo bo\'ladi. '
+                          'Yangi qarzdor qo\'shish uchun yuqoridagi tugmani bosing.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.manrope(
+                            fontSize: 13,
+                            color: AppColors.textSec(isDark),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            else if (visible.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.inbox_rounded,
-                          color: AppColors.textSec(isDark), size: 56),
-                      const SizedBox(height: 12),
+                      Icon(Icons.search_off_rounded,
+                          color: AppColors.textSec(isDark), size: 48),
+                      const SizedBox(height: 10),
                       Text(
-                        'Hozircha qarzdor yo\'q',
+                        'Filtrlarga mos qarzdor topilmadi',
                         style: GoogleFonts.manrope(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.text(isDark),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Qarzga sotilgan mahsulotlar shu yerda paydo bo\'ladi. '
-                        'Yangi qarzdor qo\'shish uchun yuqoridagi tugmani bosing.',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.manrope(
-                          fontSize: 13,
-                          color: AppColors.textSec(isDark),
-                        ),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.text(isDark)),
                       ),
                     ],
                   ),
                 ),
-              ),
-            )
-          else if (visible.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.search_off_rounded,
-                        color: AppColors.textSec(isDark), size: 48),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Filtrlarga mos qarzdor topilmadi',
-                      style: GoogleFonts.manrope(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.text(isDark)),
-                    ),
-                  ],
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, i) {
+                      final sale = visible[i];
+                      return _DebtTile(
+                        sale: sale,
+                        isDark: isDark,
+                        onTap: () => _openDetail(sale),
+                        menu: _buildMenu(sale),
+                      );
+                    },
+                    childCount: visible.length,
+                  ),
                 ),
               ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (_, i) {
-                    final sale = visible[i];
-                    return _DebtTile(
-                      sale: sale,
-                      isDark: isDark,
-                      onTap: () => _openDetail(sale),
-                      menu: _buildMenu(sale),
-                    );
-                  },
-                  childCount: visible.length,
-                ),
-              ),
-            ),
-          const SliverToBoxAdapter(child: SizedBox(height: 80)),
-        ],
+            const SliverToBoxAdapter(child: SizedBox(height: 80)),
+          ],
+        ),
       ),
     );
   }
@@ -1284,47 +1074,6 @@ class _KpiCard extends StatelessWidget {
                 fontSize: 12, color: AppColors.textSec(isDark)),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ─── Filter chip (web: filter tablari) ────────────────────────────
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label,
-    required this.selected,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.card(isDark),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border(isDark),
-          ),
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.manrope(
-            fontSize: 13,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-            color: selected ? Colors.white : AppColors.textSec(isDark),
-          ),
-        ),
       ),
     );
   }

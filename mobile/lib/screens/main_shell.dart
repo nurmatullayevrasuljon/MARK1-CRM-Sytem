@@ -196,13 +196,17 @@ class _MainShellState extends State<MainShell> {
     const navDuration = Duration(milliseconds: 300);
     const navCurve = Cubic(0.2, 0.8, 0.2, 1);
 
-    final items = <({int index, IconData icon, String label})>[
-      (index: 0, icon: Icons.grid_view_rounded, label: locale.tr('nav_home_short')),
-      (index: 1, icon: Icons.shopping_cart_rounded, label: locale.tr('nav_sales_short')),
-      (index: 2, icon: Icons.inventory_2_rounded, label: locale.tr('nav_inventory_short')),
-      (index: 3, icon: Icons.trending_up_rounded, label: locale.tr('nav_daily_sales_short')),
-      (index: 4, icon: Icons.people_alt_rounded, label: locale.tr('nav_debtors_short')),
-      (index: 5, icon: Icons.settings_rounded, label: locale.tr('nav_profile_short')),
+    // Optik normallashtirish: grid_view qutisi26dp da boshqa
+    // belgilardan kichroq (52px vs 57px), trending_up esa
+    // chizig'i tufayli "yengil" ko'rinadi — hajmlari teng
+    // vizual og'irlikka qarab kompensatsiya qilinadi.
+    final items = <({int index, IconData icon, String label, double size})>[
+      (index: 0, icon: Icons.grid_view_rounded, label: locale.tr('nav_home_short'), size: 29),
+      (index: 1, icon: Icons.shopping_cart_rounded, label: locale.tr('nav_sales_short'), size: 26),
+      (index: 2, icon: Icons.inventory_2_rounded, label: locale.tr('nav_inventory_short'), size: 26),
+      (index: 3, icon: Icons.trending_up_rounded, label: locale.tr('nav_daily_sales_short'), size: 30),
+      (index: 4, icon: Icons.people_alt_rounded, label: locale.tr('nav_debtors_short'), size: 26),
+      (index: 5, icon: Icons.settings_rounded, label: locale.tr('nav_profile_short'), size: 26),
     ];
 
     return Container(
@@ -231,14 +235,16 @@ class _MainShellState extends State<MainShell> {
             final double barH = constraints.maxHeight;
             return Stack(
               children: [
-                // Faol tab ostidagi siluvchi chip (whoosh)
+                // Faol tab ostidagi siluvchi chip (whoosh).
+                // Balandlik 58: ikonka 26 (faol 30) + 4 + nom 18 = 52,
+                // chip ichida 3dp nafas paytdir.
                 AnimatedPositioned(
                   duration: navDuration,
                   curve: navCurve,
                   left: _currentIndex * itemW + 6,
-                  top: (barH - 52) / 2,
+                  top: (barH - 58) / 2,
                   width: itemW - 12,
-                  height: 52,
+                  height: 58,
                   child: Container(
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.steel : const Color(0xFFD3E4EF),
@@ -254,6 +260,7 @@ class _MainShellState extends State<MainShell> {
                                 width: itemW,
                                 child: _navItem(
                                   it.index, it.icon, it.label, isDark,
+                                  size: it.size,
                                   duration: navDuration, curve: navCurve,
                                 ),
                               ))
@@ -270,7 +277,7 @@ class _MainShellState extends State<MainShell> {
   }
 
   Widget _navItem(int index, IconData icon, String label, bool isDark,
-      {required Duration duration, required Curve curve}) {
+      {required double size, required Duration duration, required Curve curve}) {
     final bool isSelected = _currentIndex == index;
     // DESIGN §2: ranglar faqat palitradan — navy/mist zinapoyasi.
     final Color activeColor = isDark ? AppColors.snow : AppColors.navy;
@@ -292,15 +299,29 @@ class _MainShellState extends State<MainShell> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              TweenAnimationBuilder<Color?>(
+              // Ikonka: asosiy hajm (26dp, optik kompensatsiyalangan
+              // belgilar 29–30dp), faol holatda 1.15 baravar va
+              // faol bo'lganda tepaga ko'tariladi — bar vizual jihatdan
+              // jonlanadi, nom pastda o'z joyida qoladi.
+              AnimatedPadding(
                 duration: duration,
                 curve: curve,
-                tween: ColorTween(
-                  begin: inactiveColor,
-                  end: isSelected ? activeColor : inactiveColor,
+                padding: EdgeInsets.only(top: isSelected ? 0 : 6),
+                child: AnimatedScale(
+                  duration: duration,
+                  curve: curve,
+                  scale: isSelected ? 1.15 : 1,
+                  child: TweenAnimationBuilder<Color?>(
+                    duration: duration,
+                    curve: curve,
+                    tween: ColorTween(
+                      begin: inactiveColor,
+                      end: isSelected ? activeColor : inactiveColor,
+                    ),
+                    builder: (context, color, child) =>
+                        Icon(icon, size: size, color: color ?? inactiveColor),
+                  ),
                 ),
-                builder: (context, color, child) =>
-                    Icon(icon, size: 22, color: color ?? inactiveColor),
               ),
               const SizedBox(height: 4),
               // Nom faqat faol bo'limga o'tilganda tagidan chiqib
