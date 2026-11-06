@@ -132,7 +132,7 @@ class _QuantityDialogState extends State<_QuantityDialog> {
             widget.title ?? 'Miqdor kiritish',
             style: GoogleFonts.manrope(
               color: AppColors.text(isDark),
-              fontSize: 17,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -186,7 +186,7 @@ class _QuantityDialogState extends State<_QuantityDialog> {
                 onSubmitted: (_) => _submit(),
                 style: GoogleFonts.manrope(
                   color: AppColors.text(isDark),
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
                 decoration: InputDecoration(

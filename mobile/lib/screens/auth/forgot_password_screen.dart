@@ -74,7 +74,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 Text(
                   'Telefon raqamingizni kiriting',
                   style: GoogleFonts.manrope(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: AppColors.text(isDark),
                   ),
@@ -314,7 +314,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           FilteringTextInputFormatter.digitsOnly
                         ],
                         style: GoogleFonts.manrope(
-                          fontSize: 22,
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: AppColors.text(isDark),
                         ),

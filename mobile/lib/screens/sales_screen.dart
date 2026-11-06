@@ -102,7 +102,7 @@ class _SalesScreenState extends State<SalesScreen>
         title: Text(
           'Savdolar',
           style: GoogleFonts.manrope(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.w700,
             color: AppColors.text(isDark),
           ),
@@ -669,6 +669,10 @@ class _PaymentSheetState extends State<_PaymentSheet> {
   String _method = 'cash';
   bool _loading = false;
 
+  // Xato sheet ichida ko'rsatiladi (SnackBar modal sheet ortida qolib,
+  // foydalanuvchi ko'ra olmasdi — QA'da tasdiqlangan P1 topilma).
+  String? _error;
+
   @override
   void initState() {
     super.initState();
@@ -676,6 +680,9 @@ class _PaymentSheetState extends State<_PaymentSheet> {
     // qarz `1070.50` bo'lsa maydon `1071` bo'ladi (ortiqcha to'lov).
     // `fmtInput` hech narsani o'zgartirmaydi.
     _amtCtrl.text = fmtInput(widget.sale.totalRemaining);
+    _amtCtrl.addListener(() {
+      if (_error != null && mounted) setState(() => _error = null);
+    });
   }
 
   @override
@@ -718,7 +725,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
           ],
           autofocus: true,
           style:
-              GoogleFonts.manrope(color: AppColors.text(isDark), fontSize: 20),
+              GoogleFonts.manrope(color: AppColors.text(isDark), fontSize: 18),
           decoration: InputDecoration(
             hintText: 'Summa',
             prefixText: '',
@@ -739,6 +746,36 @@ class _PaymentSheetState extends State<_PaymentSheet> {
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
+
+        // Xato maydon ostida — SnackBar sheet ortida ko'rinmasdi.
+        if (_error != null) ...[
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.accentRed.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                  color: AppColors.accentRed.withValues(alpha: 0.35)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.error_outline_rounded,
+                    size: 16, color: AppColors.accentRed),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _error!,
+                    style: GoogleFonts.manrope(
+                        fontSize: 13, height: 1.35, color: AppColors.accentRed),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
 
         const SizedBox(height: 14),
 
@@ -827,9 +864,24 @@ class _PaymentSheetState extends State<_PaymentSheet> {
 
   Future<void> _pay() async {
     final amount = double.tryParse(_amtCtrl.text.trim()) ?? 0;
-    if (amount <= 0) return;
+    if (amount <= 0) {
+      setState(() => _error = 'To\'lov summasini kiriting');
+      return;
+    }
+    // Client-side ortiqcha to'lov himoyasi: backend rad etganda hech qanday
+    // javob ko'rinmasdi (SnackBar sheet ortida qolardi). Endi oldindan
+    // shaffof xato chiqadi.
+    if (amount > widget.sale.totalRemaining) {
+      setState(() => _error =
+          'Kiritgan summa qarzdan katta. Hozirgi qarz: '
+          '${_fmt(widget.sale.totalRemaining)} so\'m');
+      return;
+    }
 
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     final sp = Provider.of<SaleProvider>(context, listen: false);
     final result = await sp.addPayment(
       saleId: widget.sale.id,
@@ -851,11 +903,8 @@ class _PaymentSheetState extends State<_PaymentSheet> {
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(result.error?.userMessage ?? 'Xatolik'),
-        backgroundColor: AppColors.accentRed,
-        behavior: SnackBarBehavior.floating,
-      ));
+      // Xato sheet ichida ko'rsatiladi (SnackBar sheet ortida qolmasdi).
+      setState(() => _error = result.error?.userMessage ?? 'Xatolik');
     }
   }
 
@@ -1810,7 +1859,7 @@ class _PaymentStepState extends State<_PaymentStep> {
                     Text(
                       '${_fmt(widget.total)} so\'m',
                       style: GoogleFonts.manrope(
-                        fontSize: 26,
+                        fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),

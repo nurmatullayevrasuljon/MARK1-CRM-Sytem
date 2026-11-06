@@ -154,7 +154,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> with SingleTickerProvid
             Text(
               locale.tr('passcode_title'),
               style: GoogleFonts.manrope(
-                fontSize: 22,
+                fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: AppColors.text(isDark),
               ),
@@ -287,7 +287,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> with SingleTickerProvid
           child: Text(
             number,
             style: GoogleFonts.manrope(
-              fontSize: 26,
+              fontSize: 22,
               fontWeight: FontWeight.w600,
               color: AppColors.text(isDark),
             ),

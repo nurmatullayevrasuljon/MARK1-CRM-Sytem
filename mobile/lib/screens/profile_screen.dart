@@ -81,7 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Text(
                       'Sozlamalar',
                       style: GoogleFonts.manrope(
-                        fontSize: 24,
+                        fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: AppColors.text(isDark),
                         letterSpacing: -0.5,
@@ -168,7 +168,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                     : 'M')
                                                 .toUpperCase(),
                                             style: GoogleFonts.manrope(
-                                              fontSize: 24,
+                                              fontSize: 20,
                                               fontWeight: FontWeight.w800,
                                               color: AppColors.primary,
                                             ),
@@ -210,7 +210,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Text(
                               auth.store?.ceoName ?? 'MARK1 CRM',
                               style: GoogleFonts.manrope(
-                                fontSize: 17,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.text(isDark),
                               ),

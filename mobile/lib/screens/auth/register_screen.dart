@@ -65,7 +65,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Text(
                   'Hisob yaratish',
                   style: GoogleFonts.manrope(
-                    fontSize: 26,
+                    fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: AppColors.text(isDark),
                   ),

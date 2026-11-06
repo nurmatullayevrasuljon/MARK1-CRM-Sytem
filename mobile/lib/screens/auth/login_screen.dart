@@ -121,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text(
                     'Xush kelibsiz MARK1 CRM ga',
                     style: GoogleFonts.manrope(
-                      fontSize: 26,
+                      fontSize: 22,
                       fontWeight: FontWeight.w800,
                       color: AppColors.text(isDark),
                       height: 1.2,

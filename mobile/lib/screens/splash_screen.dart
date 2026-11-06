@@ -182,7 +182,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Text(
                     'MARK1 CRM',
                     style: GoogleFonts.manrope(
-                      fontSize: 34,
+                      fontSize: 28,
                       fontWeight: FontWeight.w900,
                       color: const Color(0xFFEAF3F8), // snow
                       letterSpacing: 1.6,

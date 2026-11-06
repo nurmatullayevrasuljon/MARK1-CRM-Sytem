@@ -397,7 +397,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
                   onSubmitted: (_) => _submitManual(),
                   style: GoogleFonts.manrope(
                     color: Colors.white,
-                    fontSize: 20,
+                    fontSize: 18,
                     letterSpacing: 2,
                   ),
                   decoration: InputDecoration(

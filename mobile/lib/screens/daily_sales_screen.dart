@@ -45,7 +45,7 @@ class _DailySalesScreenState extends State<DailySalesScreen> {
           style: GoogleFonts.manrope(
             color: AppColors.text(isDark),
             fontWeight: FontWeight.w700,
-            fontSize: 20,
+            fontSize: 18,
           ),
         ),
         bottom: PreferredSize(

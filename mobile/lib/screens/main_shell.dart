@@ -34,7 +34,10 @@ class _MainShellState extends State<MainShell> {
         const SalesScreen(),
         const InventoryScreen(),
         const DailySalesScreen(), // Added
-        const DebtorsScreen(),
+        // `onTab`: "Yangi qarzdor" oqimi yaratilgandan keyin foydalanuvchini
+        // Sotish bo'limiga yo'naltiradi (web'dagi kabi — qarz faqat mahsulot
+        // bilan bog'liq Sale orqali yaratiladi).
+        DebtorsScreen(onTab: _selectTab),
         const ProfileScreen(),
       ];
 
@@ -160,7 +163,7 @@ class _MainShellState extends State<MainShell> {
       child: Column(
         children: [
           const SizedBox(height: 32),
-          Text("MARK CRM", style: GoogleFonts.manrope(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.text(isDark))),
+          Text("MARK CRM", style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.text(isDark))),
           const SizedBox(height: 32),
           _sidebarItem(0, Icons.grid_view_rounded, locale.tr('nav_home'), isDark),
           _sidebarItem(1, Icons.shopping_cart_rounded, locale.tr('nav_sales'), isDark),

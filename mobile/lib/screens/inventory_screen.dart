@@ -60,7 +60,7 @@ class _InventoryScreenState extends State<InventoryScreen>
         title: Text(
           'Mahsulotlar',
           style: GoogleFonts.manrope(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.w700,
             color: AppColors.text(isDark),
           ),

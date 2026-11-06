@@ -9,6 +9,7 @@ import '../utils/format_utils.dart';
 import '../providers/theme_provider.dart';
 import '../providers/statistics_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/debt_provider.dart';
 import '../models/statistics_model.dart';
 import '../models/ai_overview_model.dart';
 import '../services/api_service.dart';
@@ -40,12 +41,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _load() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final stats = Provider.of<StatisticsProvider>(context, listen: false);
+    // Async gap'dan oldin olinadi (analyze: use_build_context_synchronously).
+    final debts = Provider.of<DebtProvider>(context, listen: false);
     if (auth.isAuthenticated) {
       await auth.loadProfile();
-      await Future.wait([
+      // "Qarzdorlar" kartasi qarzlar ro'yxatidan hisoblanadi (web'dek
+      // `debtors.length`). `/statistics/full` qarzdorlar sonini YUBORMAYDI,
+      // shuning uchun ro'yxat bo'sh bo'lsa yuklaymiz.
+      final futures = <Future<void>>[
         stats.loadAll(),
         _loadAi(force: false),
-      ]);
+      ];
+      if (debts.debts.isEmpty) futures.add(debts.loadDebts());
+      await Future.wait(futures);
     }
   }
 
@@ -119,6 +127,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final isDark = Provider.of<ThemeProvider>(context).isDark;
     final auth = Provider.of<AuthProvider>(context);
     final statsProvider = Provider.of<StatisticsProvider>(context);
+    // Qarzdorlar soni: web'dek qarzlar ro'yxatidan (debtors.length).
+    // `/statistics/full` bu sonni yubormaydi → stats'dan o'qish doim 0 edi.
+    final debtProvider = Provider.of<DebtProvider>(context);
+    final debtorsCount = debtProvider.debts.isNotEmpty
+        ? debtProvider.debts.length
+        : (statsProvider.stats?.debtorsCount ?? 0);
 
     return Scaffold(
       backgroundColor: AppColors.bg(isDark),
@@ -162,7 +176,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     auth.store?.storeName ??
                                     'MARK1 CRM',
                                 style: GoogleFonts.manrope(
-                                  fontSize: 22,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
                                 ),
@@ -238,7 +252,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         _formatMoney(statsProvider.stats
                                             ?.monthlyRevenue),
                                         style: GoogleFonts.manrope(
-                                          fontSize: 22,
+                                          fontSize: 18,
                                           fontWeight: FontWeight.w800,
                                           color: Colors.white,
                                         ),
@@ -347,7 +361,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _StatCard(
                     title: 'Qarzdorlar',
                     onTap: _go(4), // Qarzdorlar
-                    value: '${statsProvider.stats?.debtorsCount ?? 0} ta',
+                    value: '$debtorsCount ta',
                     icon: Icons.people_outline_rounded,
                     color: AppColors.accentOrange,
                     isDark: isDark,
@@ -837,7 +851,7 @@ class _AiOverviewSectionState extends State<_AiOverviewSection> {
               value,
               maxLines: 1,
               style: GoogleFonts.manrope(
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: FontWeight.w800,
                 color: AppColors.text(isDark),
                 letterSpacing: -0.5,
@@ -946,7 +960,7 @@ class _StatCard extends StatelessWidget {
                         value,
                         maxLines: 1,
                         style: GoogleFonts.manrope(
-                          fontSize: 17,
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: AppColors.text(isDark),
                         ),

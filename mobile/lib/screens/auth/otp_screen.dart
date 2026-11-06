@@ -103,7 +103,7 @@ class _OtpScreenState extends State<OtpScreen> {
               Text(
                 'SMS Tasdiqlash',
                 style: GoogleFonts.manrope(
-                  fontSize: 26,
+                  fontSize: 22,
                   fontWeight: FontWeight.w800,
                   color: AppColors.text(isDark),
                 ),
@@ -240,7 +240,7 @@ class _OtpScreenState extends State<OtpScreen> {
         maxLength: 1,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         style: GoogleFonts.manrope(
-          fontSize: 22,
+          fontSize: 18,
           fontWeight: FontWeight.w700,
           color: AppColors.text(isDark),
         ),

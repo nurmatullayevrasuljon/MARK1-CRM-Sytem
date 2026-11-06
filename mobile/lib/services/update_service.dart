@@ -232,7 +232,7 @@ class _UpdateDialogState extends State<_UpdateDialog> {
               info.title,
               textAlign: TextAlign.center,
               style: GoogleFonts.manrope(
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppColors.text(isDark),
               ),
