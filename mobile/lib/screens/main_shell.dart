@@ -240,11 +240,13 @@ class _MainShellState extends State<MainShell> {
                 // Balandlik 58: ikonka 26 (faol 30) + 4 + nom 18 = 52,
                 // chip ichida 3dp nafas paytdir. Top = eski markaz - inset/4
                 // (inset=0 da eski formula bilan bir xil).
+                // +6: foydalanuvchi talabi bilan butun bar bir oz
+                // tepaga ko'tarildi (pila bilan oraliq kattalashdi).
                 AnimatedPositioned(
                   duration: navDuration,
                   curve: navCurve,
                   left: _currentIndex * itemW + 6,
-                  top: (barH - 58) / 2 - inset / 4,
+                  top: (barH - 58) / 2 - inset / 4 - 6,
                   width: itemW - 12,
                   height: 58,
                   child: Container(
@@ -257,8 +259,9 @@ class _MainShellState extends State<MainShell> {
                 Positioned.fill(
                   // Bottom padding kontentni inset/4 (≈6dp) yuqoriga
                   // suradi — chip bilan bir xil siljish uchun.
+                  // +6: bar bilan birga umumiy 6dp tepaga ko'tarish.
                   child: Padding(
-                    padding: EdgeInsets.only(bottom: inset / 2),
+                    padding: EdgeInsets.only(bottom: inset / 2 + 6),
                     child: Center(
                       child: Row(
                         children: items

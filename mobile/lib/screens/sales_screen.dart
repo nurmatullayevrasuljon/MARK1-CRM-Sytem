@@ -7,6 +7,7 @@ import '../utils/phone_utils.dart';
 import '../utils/format_utils.dart';
 import '../utils/quantity_dialog.dart';
 import 'barcode_scanner_screen.dart';
+import 'debtors_screen.dart';
 import '../providers/theme_provider.dart';
 import '../providers/sale_provider.dart';
 import '../providers/product_provider.dart';
@@ -414,8 +415,13 @@ class _SaleTile extends StatelessWidget {
   // 70 so'mni yo'qotardi (video'da ko'rsatilgan xato).
   String _fmt(double v) => fmtSum(v);
 
-  String _formatDate(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
+  // Server UTC qaytaradi (`2026-12-07T19:00Z`), ilova UTC+5 da yashaydi:
+  // to'g'ridan-to'g'ri formatlasak 08.12 → 07.12 ga siljardi.
+  // `toLocal()` bilan foydalanuvchi vaqt mintaqasidagi kun chiqadi.
+  String _formatDate(DateTime d) {
+    final l = d.toLocal();
+    return '${l.day.toString().padLeft(2, '0')}.${l.month.toString().padLeft(2, '0')}.${l.year}';
+  }
 }
 
 // ─── Sale Detail Screen ───────────────────────────────────────────
@@ -517,7 +523,8 @@ class SaleDetailScreen extends StatelessWidget {
           _card(isDark,
               sale.products.map((p) => _row(
                     p.productName ?? 'Mahsulot',
-                    '${p.quantity} x ${_fmt(p.sellingPrice)} = ${_fmt(p.quantity * p.sellingPrice)} so\'m',
+                    // Xom `p.quantity` → "1.0 x ..." chiqarardi.
+                    '${fmtQty(p.quantity)} x ${_fmt(p.sellingPrice)} = ${_fmt(p.quantity * p.sellingPrice)} so\'m',
                     isDark,
                   )).toList()),
 
@@ -644,8 +651,10 @@ class SaleDetailScreen extends StatelessWidget {
   // 70 so'mni yo'qotardi (video'da ko'rsatilgan xato).
   String _fmt(double v) => fmtSum(v);
 
-  String _fmtDt(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
+  String _fmtDt(DateTime d) {
+    final l = d.toLocal(); // UTC → mahalliy (08.12 → 07.12 siljishini oldini oladi)
+    return '${l.day.toString().padLeft(2, '0')}.${l.month.toString().padLeft(2, '0')}.${l.year}';
+  }
 }
 
 // ─── Payment Sheet ────────────────────────────────────────────────
@@ -927,13 +936,16 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
   // Selected items
   final List<_CartItem> _cart = [];
   ClientModel? _selectedClient;
-  String _payMethod = 'cash'; // cash, card, mixed
+  String _payMethod = 'cash'; // cash, card, mixed, debt (qarzga sotish)
   final _cashCtrl = TextEditingController();
   final _cardCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
   DateTime? _dueDate;
   bool _loading = false;
   int _step = 0; // 0=products, 1=client, 2=payment
+  // Sheet ichidagi xato: SnackBar modal sheet ORTIDA qolib ko'rinmasdi
+  // (ClientFormSheet'dagi `_error` bilan bir xil sabab).
+  String? _error;
 
   @override
   void dispose() {
@@ -950,6 +962,7 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
   double get _cashPaid => double.tryParse(_cashCtrl.text) ?? 0;
   double get _cardPaid => double.tryParse(_cardCtrl.text) ?? 0;
   double get _totalPaid {
+    if (_payMethod == 'debt') return 0; // qarzga: hech narsa to'lanmaydi
     if (_payMethod == 'cash') return _cashPaid;
     if (_payMethod == 'card') return _cardPaid;
     return _cashPaid + _cardPaid;
@@ -990,6 +1003,38 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
         ),
 
         const Divider(height: 1),
+
+        // Sheet ichidagi xato (SnackBar sheet ortida qolib ko'rinmasdi).
+        if (_error != null)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.accentRed.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.accentRed.withValues(alpha: 0.4)),
+            ),
+            child: Row(children: [
+              Icon(Icons.error_outline_rounded,
+                  color: AppColors.accentRed, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(_error!,
+                    style: GoogleFonts.manrope(
+                        color: AppColors.accentRed,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600)),
+              ),
+              IconButton(
+                onPressed: () => setState(() => _error = null),
+                icon: Icon(Icons.close_rounded,
+                    color: AppColors.accentRed, size: 18),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ]),
+          ),
 
         // Content
         Expanded(
@@ -1032,11 +1077,19 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
                       onSelect: (c) {
                           setState(() {
                               _selectedClient = c;
+                              _error = null; // mijoz tanlandi — xato o'chdi
                               _step = 1; // Return to payment
                           });
                       },
                       onNext: () {
+                        // Mijoz majburiy: tanlanmagan bo'lsa kirmaymiz.
+                        if (_selectedClient == null) {
+                          setState(() => _error =
+                              'Mijoz tanlash majburiy — ro\'yxatdan birini tanlang');
+                          return;
+                        }
                         setState(() {
+                          _error = null;
                           _step = 1; // Return to payment
                         });
                       },
@@ -1057,10 +1110,16 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
                       remaining: _remaining,
                       loading: _loading,
                       onSelectClient: () => setState(() => _step = 2),
-                      onMethodChanged: (m) =>
-                          setState(() => _payMethod = m),
-                      onDueDateChanged: (d) =>
-                          setState(() => _dueDate = d),
+                      onAddClient: _addClient,
+                      // Usul/muddat o'zgarsa eski xato o'chadi.
+                      onMethodChanged: (m) => setState(() {
+                        _payMethod = m;
+                        _error = null;
+                      }),
+                      onDueDateChanged: (d) => setState(() {
+                        _dueDate = d;
+                        if (d != null) _error = null;
+                      }),
                       onBack: () => setState(() => _step = 0),
                       onConfirm: _createSale,
                     ),
@@ -1115,8 +1174,47 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
         margin: const EdgeInsets.only(bottom: 16),
       );
 
+  /// To'lov qadamidagi `+` tugmasi: shu yerdan yangi mijoz qo'shamiz.
+  /// `ClientFormSheet` saqlaganda yangi `ClientModel` qaytaradi —
+  /// uni darhol tanlangan mijoz qilib qo'yamiz.
+  Future<void> _addClient() async {
+    final isDark = widget.isDark;
+    final created = await showModalBottomSheet<ClientModel>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.card(isDark),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => ClientFormSheet(isDark: isDark),
+    );
+    if (created != null && mounted) {
+      setState(() {
+        _selectedClient = created;
+        _error = null; // yangi mijoz qo'shildi — xato o'chdi
+      });
+    }
+  }
+
   Future<void> _createSale() async {
     if (_cart.isEmpty || _loading) return; // ikki marta yuborishni oldini olamiz
+
+    // ── Majburiy tekshiruvlar (yuborishdan oldin) ────────────────
+    // 1) Mijoz — endi majburiy: qarz Qarzdorlar'ga tushishi uchun
+    //    backend'da `client_id` shart.
+    if (_selectedClient == null) {
+      setState(() {
+        _error = 'Mijoz tanlash majburiy — yangi mijozni `+` bilan qo\'shing';
+        _step = 2; // Mijozlar qadamiga o'tkazamiz
+      });
+      return;
+    }
+    // 2) Qarz usulida muddat majburiy.
+    if (_payMethod == 'debt' && _dueDate == null) {
+      setState(() => _error = 'Qarz muddatini tanlash majburiy');
+      return;
+    }
+    setState(() => _error = null);
+
     setState(() => _loading = true);
 
     final sp = Provider.of<SaleProvider>(context, listen: false);
@@ -1131,7 +1229,11 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
 
     double cashAmt = 0;
     double cardAmt = 0;
-    if (_payMethod == 'cash') {
+    if (_payMethod == 'debt') {
+      // Qarzga sotish: hech qanday to'lov yo'q, butun summa qarzga.
+      cashAmt = 0;
+      cardAmt = 0;
+    } else if (_payMethod == 'cash') {
       cashAmt = _cashPaid;
     } else if (_payMethod == 'card') {
       cardAmt = _cardPaid;
@@ -1572,7 +1674,9 @@ class _ProductSelectTile extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Text(
-              '${cartItem!.qty}',
+              // Xom `'${qty}'` → "1.0" deb chiqardi (double).
+              // fmtQty 1.0 → "1", 2.5 → "2.5" ko'rinishida beradi.
+              fmtQty(cartItem!.qty),
               style: GoogleFonts.manrope(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -1674,23 +1778,8 @@ class _ClientStepState extends State<_ClientStep> {
         ),
       ),
 
-      // "Mijosiz" option
-      ListTile(
-        onTap: () {
-          widget.onSelect(null);
-          setState(() {});
-        },
-        leading: CircleAvatar(
-          backgroundColor: AppColors.border(isDark),
-          child: Icon(Icons.person_off_outlined,
-              color: AppColors.textSec(isDark)),
-        ),
-        title: Text('Mijosiz sotuv',
-            style: GoogleFonts.manrope(color: AppColors.text(isDark))),
-        trailing: widget.selected == null
-            ? Icon(Icons.check_circle_rounded, color: AppColors.primary)
-            : null,
-      ),
+      // "Mijosiz sotuv" varianti OLIB TASHLANDI: mijoz endi majburiy
+      // (qarz Qarzdorlar'ga tushishi uchun backend'da client_id shart).
 
       const Divider(height: 1),
 
@@ -1800,6 +1889,7 @@ class _PaymentStep extends StatefulWidget {
   final double remaining;
   final bool loading;
   final VoidCallback onSelectClient;
+  final Future<void> Function()? onAddClient;
   final void Function(String) onMethodChanged;
   final void Function(DateTime?) onDueDateChanged;
   final VoidCallback onBack;
@@ -1820,6 +1910,7 @@ class _PaymentStep extends StatefulWidget {
     required this.remaining,
     required this.loading,
     required this.onSelectClient,
+    this.onAddClient,
     required this.onMethodChanged,
     required this.onDueDateChanged,
     required this.onBack,
@@ -1885,7 +1976,9 @@ class _PaymentStepState extends State<_PaymentStep> {
 
         const SizedBox(height: 16),
 
-        // Optional Client Selection
+        // Client Selection — ENDI MAJBURIY (qarz Qarzdorlar'ga tushishi
+        // uchun backend'da client_id shart). Yonida `+` tugmasi orqali
+        // shu yerdan yangi mijoz qo'shiladi (kontakt/ro'yxatdan emas).
         ListTile(
           contentPadding: EdgeInsets.zero,
           onTap: widget.onSelectClient,
@@ -1894,22 +1987,46 @@ class _PaymentStepState extends State<_PaymentStep> {
             child: Icon(Icons.person_outline_rounded, color: AppColors.primary),
           ),
           title: Text(
-            widget.selectedClient?.clientName ?? 'Mijoz (Ixtiyoriy)',
+            widget.selectedClient?.clientName ?? 'Mijoz (majburiy)',
             style: GoogleFonts.manrope(
               fontWeight: FontWeight.w600,
-              color: AppColors.text(isDark),
+              color: widget.selectedClient == null
+                  ? AppColors.accentRed
+                  : AppColors.text(isDark),
             ),
           ),
           subtitle: widget.selectedClient != null
               ? Text(
-                  widget.selectedClient!.clientPhone ?? 'Raqamsiz',
+                  () {
+                    final p = displayUzPhone(widget.selectedClient!.clientPhone);
+                    return p.isEmpty ? 'Raqamsiz' : p;
+                  }(),
                   style: GoogleFonts.manrope(
                     color: AppColors.textSec(isDark),
                     fontSize: 12,
                   ),
                 )
-              : null,
-          trailing: Icon(Icons.chevron_right_rounded, color: AppColors.textHint(isDark)),
+              : Text(
+                  'Tanlang yoki `+` bilan yangisini qo\'shing',
+                  style: GoogleFonts.manrope(
+                    color: AppColors.textHint(isDark),
+                    fontSize: 12,
+                  ),
+                ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Yangi mijoz qo'shish — shu qatorda.
+              IconButton(
+                onPressed: widget.onAddClient,
+                tooltip: 'Yangi mijoz qo\'shish',
+                icon: Icon(Icons.add_circle_outline_rounded,
+                    color: AppColors.primary),
+              ),
+              Icon(Icons.chevron_right_rounded,
+                  color: AppColors.textHint(isDark)),
+            ],
+          ),
         ),
 
         const SizedBox(height: 16),
@@ -1927,6 +2044,9 @@ class _PaymentStepState extends State<_PaymentStep> {
           Expanded(child: _mBtn('Karta', 'card', isDark)),
           const SizedBox(width: 6),
           Expanded(child: _mBtn('Ikkalasi', 'mixed', isDark)),
+          const SizedBox(width: 6),
+          // Qarzga sotish: butun summa qarzga yoziladi, muddat majburiy.
+          Expanded(child: _mBtn('Qarz', 'debt', isDark)),
         ]),
 
         const SizedBox(height: 14),
@@ -1974,11 +2094,16 @@ class _PaymentStepState extends State<_PaymentStep> {
         // Due date (if debt)
         if (remaining > 0) ...[
           const SizedBox(height: 14),
-          Text('Muddat (ixtiyoriy)',
+          Text(
+              widget.payMethod == 'debt'
+                  ? 'Muddat (majburiy)'
+                  : 'Muddat (ixtiyoriy)',
               style: GoogleFonts.manrope(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSec(isDark))),
+                  color: widget.payMethod == 'debt' && widget.dueDate == null
+                      ? AppColors.accentRed
+                      : AppColors.textSec(isDark))),
           const SizedBox(height: 8),
           GestureDetector(
             onTap: () async {

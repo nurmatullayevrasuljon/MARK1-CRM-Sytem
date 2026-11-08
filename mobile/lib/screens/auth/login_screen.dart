@@ -157,8 +157,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   decoration: _inputDecoration(
                     isDark: isDark,
-                    hint: '+998 90 123 45 67',
+                    hint: '90 123 45 67',
                     prefixIcon: Icons.phone_outlined,
+                    prefixText: '+998 ',
                   ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) return 'Telefon kiriting';
@@ -365,6 +366,7 @@ class _LoginScreenState extends State<LoginScreen> {
     required String hint,
     required IconData prefixIcon,
     Widget? suffix,
+    String? prefixText,
   }) => InputDecoration(
     hintText: hint,
     hintStyle: GoogleFonts.manrope(
@@ -372,6 +374,9 @@ class _LoginScreenState extends State<LoginScreen> {
       fontSize: 14,
     ),
     prefixIcon: Icon(prefixIcon, color: AppColors.textHint(isDark), size: 20),
+    // "+998" maydon boshidanoq ko'rinadi — foydalanuvchi uni qayta yozmaydi.
+    prefixText: prefixText,
+    prefixStyle: GoogleFonts.manrope(color: AppColors.text(isDark), fontSize: 15),
     suffixIcon: suffix,
     filled: true,
     fillColor: AppColors.card(isDark),

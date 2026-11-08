@@ -74,9 +74,22 @@ bool isValidUzPhone(String? raw) {
   if (digits.startsWith('0')) return false;
   if (digits.startsWith('998')) return false;
 
-  // O'zbek mobil operator prefikslari: 90, 91, 93, 94, 95, 97, 98, 99.
-  // (92 va 96 hozirda raqamlanmagan, 88/99 turli xizmatlar uchun.)
-  const validPrefixes = ['90', '91', '93', '94', '95', '97', '98', '99'];
+  // O'zbekistondagi BARCHA mobil operator prefikslari (ITU raqamlash
+  // rejasiga ko'ra, "Telephone numbers in Uzbekistan"):
+  //   20 = OQ (Beeline),  33 = Humans,        50 = Ucell,
+  //   70 = Uzmobile,      77 = Uzmobile,       80 = Perfectum Mobile,
+  //   87 = Mobiuz,        88 = Mobiuz,         90 = Beeline,
+  //   91 = Beeline,       92 = mobil,          93 = Ucell,
+  //   94 = mobil,         95 = Uzmobile CDMA,  97 = Mobiuz,
+  //   98 = Perfectum CDMA, 99 = Uzmobile.
+  //
+  // Rad etiladiganlar: 55 (VoIP/Uztelecom) va 61–79 oralig'idagi
+  // (70/77 dan tashqari) geografik stasionar kodlar, shuningdek
+  // hozircha raqamlanmagan 96.
+  const validPrefixes = [
+    '20', '33', '50', '70', '77', '80', '87', '88',
+    '90', '91', '92', '93', '94', '95', '97', '98', '99',
+  ];
   if (!validPrefixes.contains(digits.substring(0, 2))) return false;
 
   return true;

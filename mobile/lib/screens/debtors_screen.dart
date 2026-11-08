@@ -59,16 +59,16 @@ class _DebtorsScreenState extends State<DebtorsScreen> {
   }
 }
 
-class _ClientFormSheet extends StatefulWidget {
+class ClientFormSheet extends StatefulWidget {
   final ClientModel? client;
   final bool isDark;
-  const _ClientFormSheet({this.client, required this.isDark});
+  const ClientFormSheet({super.key, this.client, required this.isDark});
 
   @override
-  State<_ClientFormSheet> createState() => _ClientFormSheetState();
+  State<ClientFormSheet> createState() => ClientFormSheetState();
 }
 
-class _ClientFormSheetState extends State<_ClientFormSheet> {
+class ClientFormSheetState extends State<ClientFormSheet> {
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   bool _loading = false;
@@ -135,11 +135,23 @@ class _ClientFormSheetState extends State<_ClientFormSheet> {
           TextField(
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
+            // Raqamlardan boshqasi yozilmasin: "+998", bo'shliq, tire
+            // normalizeUzPhone tomonidan tozalanadi, lekin harflar
+            // serverda 400 bo'lib qaytardi — kirishda cheklanadi.
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9 +()\-]')),
+              LengthLimitingTextInputFormatter(17),
+            ],
             style: GoogleFonts.manrope(color: AppColors.text(widget.isDark)),
             decoration: InputDecoration(
-              hintText: 'Telefon (masalan: 901234567)',
+              hintText: '90 123 45 67',
+              labelText: 'Telefon (majburiy)',
+              labelStyle: GoogleFonts.manrope(
+                  color: AppColors.textHint(widget.isDark), fontSize: 13),
               prefixText: '+998 ',
-              prefixStyle: GoogleFonts.manrope(color: AppColors.text(widget.isDark)),
+              prefixStyle: GoogleFonts.manrope(
+                  color: AppColors.text(widget.isDark),
+                  fontWeight: FontWeight.w600),
               filled: true,
               fillColor: AppColors.bg(widget.isDark),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -208,10 +220,25 @@ class _ClientFormSheetState extends State<_ClientFormSheet> {
 
     // Backend `998${phone}` qo'shib SMS yuboradi, shuning uchun
     // 9 xona raqam yuborish shart (aks holda "998998..." bo'lib xato ketadi).
+    // Telefon MAJBURIY: mijoz bazada raqamsiz qolsa, Qarzdorlar'da
+    // "Raqamsiz" chiqadi va SMS/Qo'ng'iroq imkoniyati yo'qoladi.
     final phoneStr = normalizeUzPhone(_phoneCtrl.text);
-    if (phoneStr.isNotEmpty && phoneStr.length != 9) {
+    if (phoneStr.isEmpty) {
+      setState(() =>
+          _error = 'Telefon raqami majburiy — masalan: 901234567');
+      return;
+    }
+    if (phoneStr.length != 9) {
       setState(() =>
           _error = 'Telefon 9 xona bo\'lishi kerak (masalan: 901234567)');
+      return;
+    }
+    // Operator kodi: `isValidUzPhone` xato kodni (55, 61-79, 96) rad etadi.
+    // "Yangi qarzdor" formasida shu tekshiruv bor — bir xillik uchun shu ham.
+    if (!isValidUzPhone(phoneStr)) {
+      setState(() => _error =
+          'Telefon raqami noto\'g\'ri. Mobil operator kodi bilan yozing '
+          '(masalan: 90 123 45 67, 88 91 19 90 4)');
       return;
     }
     // `0` bilan boshlangan raqam to'g'ri formatda, lekin mavjud emas —
@@ -225,22 +252,39 @@ class _ClientFormSheetState extends State<_ClientFormSheet> {
     setState(() => _loading = true);
     final cp = Provider.of<ClientProvider>(context, listen: false);
 
-    final res = widget.client == null
-        ? await cp.createClient(name: name, phone: phoneStr)
-        : await cp.updateClient(
-            clientId: widget.client!.id, name: name, phone: phoneStr);
+    // Ikkita alohida tur (ApiResult<ClientModel> vs ApiResult<void>):
+    // umumiy tip `void` bo'lib qoladi va `res.data` ni ishlatib bo'lmaydi.
+    bool ok;
+    String? errMsg;
+    ClientModel? created;
+    if (widget.client == null) {
+      final res = await cp.createClient(name: name, phone: phoneStr);
+      ok = res.success;
+      errMsg = res.error?.userMessage;
+      created = res.data;
+    } else {
+      final res = await cp.updateClient(
+          clientId: widget.client!.id, name: name, phone: phoneStr);
+      ok = res.success;
+      errMsg = res.error?.userMessage;
+    }
 
     if (!mounted) return;
     setState(() => _loading = false);
 
-    if (res.success) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    if (ok) {
+      // Sotish oqidida `+` tugmasi orqali qo'shilganda yangi mijozni
+      // darhol tanlangan mijoz sifatida qaytaramiz (pop → ClientModel).
+      // Messenger'ni pop'dan OLDIN olamiz — pop'dan keyin context
+      // yopilgan oynani qidirib, xabar umuman chiqmasligi mumkin.
+      final messenger = ScaffoldMessenger.of(context);
+      Navigator.pop(context, created);
+      messenger.showSnackBar(SnackBar(
         content: Text(widget.client == null ? 'Mijoz qo\'shildi' : 'Mijoz saqlandi'),
         backgroundColor: AppColors.accentGreen,
       ));
     } else {
-      setState(() => _error = res.error?.userMessage ?? 'Xato');
+      setState(() => _error = errMsg ?? 'Xato');
     }
   }
 }
@@ -725,7 +769,7 @@ class _DebtorsTabState extends State<_DebtorsTab> {
       backgroundColor: AppColors.card(isDark),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (_) => _ClientFormSheet(client: client, isDark: isDark),
+      builder: (_) => ClientFormSheet(client: client, isDark: isDark),
     ).then((_) => dp.loadDebts());
   }
 
@@ -794,7 +838,7 @@ class _DebtorsTabState extends State<_DebtorsTab> {
   }
 
   // "Yangi qarzdor" — web handleSubmit kabi: tekshiruvlar → mijoz →
-  // keyin foydalanuvchi Sotish bo'limida qarzga sotadi.
+  // `opening_record` bilan qarz → qarzdorlar ro'yxatiga tushadi.
   Future<void> _showNewDebtor() async {
     final created = await showModalBottomSheet<ClientModel?>(
       context: context,
@@ -812,13 +856,7 @@ class _DebtorsTabState extends State<_DebtorsTab> {
       backgroundColor: AppColors.accentGreen,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      content: Text('${created.clientName} tayyor. '
-          'Endi mahsulot tanlab qarzga soting.'),
-      action: SnackBarAction(
-        label: 'Sotishga o\'tish',
-        textColor: Colors.white,
-        onPressed: () => widget.onTab?.call(1),
-      ),
+      content: Text('${created.clientName} qarzdorlar ro\'yxatiga qo\'shildi.'),
     ));
   }
 }
@@ -991,7 +1029,10 @@ class _DebtTile extends StatelessWidget {
     );
   }
 
-  String _fmtDate(DateTime d) =>      '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
+  String _fmtDate(DateTime d) {
+    final l = d.toLocal(); // UTC → mahalliy: muddat kuni bir kun siljimasin
+    return '${l.day.toString().padLeft(2, '0')}.${l.month.toString().padLeft(2, '0')}.${l.year}';
+  }
 }
 
 // ─── KPI kartasi (web: yuqoridagi statistika kartalari) ───────────
@@ -1067,6 +1108,8 @@ class _NewDebtorSheet extends StatefulWidget {
 class _NewDebtorSheetState extends State<_NewDebtorSheet> {
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  final _amountCtrl = TextEditingController();
+  DateTime? _dueDate;
   bool _loading = false;
 
   // Xato sheet ICHIDA ko'rsatiladi. SnackBar modal bottom sheet ortida
@@ -1086,12 +1129,14 @@ class _NewDebtorSheetState extends State<_NewDebtorSheet> {
 
     _nameCtrl.addListener(clear);
     _phoneCtrl.addListener(clear);
+    _amountCtrl.addListener(clear);
   }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
+    _amountCtrl.dispose();
     super.dispose();
   }
 
@@ -1140,8 +1185,8 @@ class _NewDebtorSheetState extends State<_NewDebtorSheet> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Avval mijozni qo\'shing. Qarz miqdori mahsulot sotuvi orqali '
-            'yaratiladi — keyin Sotish bo\'limida qarzga sotasiz.',
+            'Ism, telefon va qarz miqdorini kiriting — qarzdorlar '
+            'ro\'yxatiga darhol tushadi.',
             textAlign: TextAlign.center,
             style: GoogleFonts.manrope(
                 fontSize: 12.5, color: AppColors.textSec(isDark)),
@@ -1180,6 +1225,72 @@ class _NewDebtorSheetState extends State<_NewDebtorSheet> {
               fillColor: AppColors.bg(isDark),
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _amountCtrl,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: false),
+            style: GoogleFonts.manrope(color: AppColors.text(isDark)),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9\s]')),
+            ],
+            decoration: InputDecoration(
+              labelText: 'Qarz miqdori (so\'m) *',
+              labelStyle: GoogleFonts.manrope(color: AppColors.textSec(isDark)),
+              hintText: '250000',
+              hintStyle: GoogleFonts.manrope(color: AppColors.textHint(isDark)),
+              prefixText: '',
+              filled: true,
+              fillColor: AppColors.bg(isDark),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // To'lov muddati — qarzdor "Muddati o'tgan" filtrida shu
+          // sanaga qarab ajratiladi.
+          GestureDetector(
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate:
+                    _dueDate ?? DateTime.now().add(const Duration(days: 30)),
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+              );
+              if (picked != null) setState(() => _dueDate = picked);
+            },
+            child: Container(
+              width: double.infinity,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+              decoration: BoxDecoration(
+                color: AppColors.bg(isDark),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.border(isDark)),
+              ),
+              child: Row(children: [
+                Icon(Icons.calendar_today_rounded,
+                    color: AppColors.textHint(isDark), size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _dueDate == null
+                        ? 'Muddat tanlang (ixtiyoriy)'
+                        : '${_dueDate!.day.toString().padLeft(2, '0')}.'
+                            '${_dueDate!.month.toString().padLeft(2, '0')}.'
+                            '${_dueDate!.year}',
+                    style: GoogleFonts.manrope(
+                      fontSize: 14,
+                      color: _dueDate != null
+                          ? AppColors.text(isDark)
+                          : AppColors.textHint(isDark),
+                    ),
+                  ),
+                ),
+              ]),
             ),
           ),
           // Xato sheet ichida — SnackBar sheet ortida ko'rinmasdi.
@@ -1232,7 +1343,7 @@ class _NewDebtorSheetState extends State<_NewDebtorSheet> {
                       height: 20,
                       child: CircularProgressIndicator(
                           color: Colors.white, strokeWidth: 2))
-                  : Text('Mijozni qo\'shish',
+                  : Text('Qarzdorni qo\'shish',
                       style: GoogleFonts.manrope(
                           fontSize: 15, fontWeight: FontWeight.w700)),
             ),
@@ -1251,23 +1362,33 @@ class _NewDebtorSheetState extends State<_NewDebtorSheet> {
       return;
     }
 
-    // 2) Telefon: 9 xona, 0 bilan boshlanmaydi.
+    // 2) Telefon: 9 xona, 0 bilan boshlanmaydi, mobil operator kodi.
     final phone = normalizeUzPhone(_phoneCtrl.text);
     if (phone.length != 9) {
       setState(() =>
           _error = 'Telefon raqamni to\'g\'ri kiriting (masalan: 901234567)');
       return;
     }
-    if (phone.startsWith('0')) {
+    if (!isValidUzPhone(phone)) {
+      setState(() => _error =
+          'Telefon raqami noto\'g\'ri. Mobil operator kodi bilan yozing '
+          '(masalan: 90 123 45 67, 88 91 19 90 4)');
+      return;
+    }
+
+    // 3) Qarz miqdori — 0 dan katta butun son.
+    final amount = double.tryParse(
+        _amountCtrl.text.replaceAll(RegExp(r'[^\d]'), ''));
+    if (amount == null || amount <= 0) {
       setState(
-          () => _error = 'Raqam 0 bilan boshlanmaydi. Masalan: 901234567');
+          () => _error = 'Qarz miqdorini kiriting (0 dan katta son)');
       return;
     }
 
     final dp = Provider.of<DebtProvider>(context, listen: false);
     final cp = Provider.of<ClientProvider>(context, listen: false);
 
-    // 3) Dublikat tekshiruvi — web'dek qarzdorlar ro'yxati bo'yicha.
+    // 4) Dublikat tekshiruvi — web'dek qarzdorlar ro'yxati bo'yicha.
     for (final d in dp.debts) {
       final dPhone = normalizeUzPhone(d.clientPhone ?? '');
       if (dPhone == phone) {
@@ -1280,7 +1401,7 @@ class _NewDebtorSheetState extends State<_NewDebtorSheet> {
 
     setState(() => _loading = true);
 
-    // 4) Mijoz allaqachon bor bo'lsa — uni qayta yaratmaymiz.
+    // 5) Mijoz allaqachon bor bo'lsa — uni qayta yaratmaymiz.
     ClientModel? existing;
     for (final c in cp.clients) {
       if (normalizeUzPhone(c.clientPhone ?? '') == phone) {
@@ -1288,26 +1409,57 @@ class _NewDebtorSheetState extends State<_NewDebtorSheet> {
         break;
       }
     }
-    if (existing != null) {
+
+    // 6) Mijoz yaratamiz (yoki mavjudini olamiz).
+    ClientModel? client = existing;
+    if (client == null) {
+      final res = await cp.createClient(name: name, phone: phone);
       if (!mounted) return;
-      Navigator.pop(context, existing);
+      if (!res.success) {
+        setState(() {
+          _loading = false;
+          _error = res.error?.userMessage ?? 'Mijozni qo\'shishda xatolik';
+        });
+        return;
+      }
+      client = res.data ?? _findByPhone(cp, phone);
+    }
+    if (client == null) {
+      setState(() {
+        _loading = false;
+        _error = 'Mijoz yaratilmadi — qayta urinib ko\'ring';
+      });
       return;
     }
 
-    // 5) Yangi mijoz yaratamiz.
-    final res = await cp.createClient(name: name, phone: phone);
+    // 7) Haqiqiy qarzni yaratamiz: `opening_record` bilan Sale ochiladi
+    //    (`products: []`, `total_remaining = miqdor`) va qarzdorlar
+    //    ro'yxatiga darhol tushadi. Aks holda sheet faqat mijoz
+    //    qo'shib, hech qanday qarz qoldirmasdi (P0 topilma).
+    final sp = Provider.of<SaleProvider>(context, listen: false);
+    final saleRes = await sp.createSale(
+      products: const [],
+      clientId: client.id,
+      totalPrice: amount,
+      totalPurchase: 0,
+      totalPaid: 0,
+      paidByCash: 0,
+      paidByCard: 0,
+      totalRemaining: amount,
+      dueDate: _dueDate,
+      note: 'POSdan oldin qarz',
+      openingRecord: amount,
+    );
     if (!mounted) return;
     setState(() => _loading = false);
 
-    if (!res.success) {
-      setState(() =>
-          _error = res.error?.userMessage ?? 'Mijozni qo\'shishda xatolik');
+    if (!saleRes.success) {
+      setState(() => _error = saleRes.error?.userMessage ??
+          'Qarzni yaratishda xatolik');
       return;
     }
 
-    ClientModel? created = res.data;
-    created ??= _findByPhone(cp, phone);
-    Navigator.pop(context, created);
+    Navigator.pop(context, client);
   }
 
   ClientModel? _findByPhone(ClientProvider cp, String phone) {

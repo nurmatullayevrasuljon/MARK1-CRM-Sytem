@@ -234,6 +234,13 @@ class SaleProvider extends ChangeNotifier {
     required double totalRemaining,
     DateTime? dueDate,
     String? note,
+    /// Eski (POSdan oldin) qarzni qarzdorga ko'chirish.
+    ///
+    /// Backend `opening_record > 0` bo'lsa `products`ni talab qilmaydi
+    /// (`products: []` bilan Sale yaratadi va `total_remaining`ni
+    /// shu qiymatga tenglaydi) — ya'ni qarzdorlar ro'yxatida darhol
+    /// ko'rinadi. `client_id` majburiy.
+    double openingRecord = 0,
   }) async {
     try {
       await ApiService.post('/sale/create', body: {
@@ -245,6 +252,7 @@ class SaleProvider extends ChangeNotifier {
         'paid_by_cash': paidByCash,
         'paid_by_card': paidByCard,
         'total_remaining': totalRemaining,
+        if (openingRecord > 0) 'opening_record': openingRecord,
         if (dueDate != null) 'due_date': dueDate.toIso8601String(),
         if (note != null && note.isNotEmpty) 'note': note,
       });

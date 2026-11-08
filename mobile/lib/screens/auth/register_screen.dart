@@ -108,9 +108,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 8),
                 _field(
                   controller: _phoneCtrl,
-                  hint: '+998 90 123 45 67',
+                  hint: '90 123 45 67',
                   icon: Icons.phone_outlined,
                   isDark: isDark,
+                  prefixText: '+998 ',
                   keyboard: TextInputType.phone,
                   formatters: [
                     FilteringTextInputFormatter.allow(
@@ -411,6 +412,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     TextInputType? keyboard,
     List<TextInputFormatter>? formatters,
     String? Function(String?)? validator,
+    String? prefixText,
   }) =>
       TextFormField(
         // Xato foydalanuvchi maydonni tuzatgan zahoti kiritiladi.
@@ -429,6 +431,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               color: AppColors.textHint(isDark), fontSize: 14),
           prefixIcon:
               Icon(icon, color: AppColors.textHint(isDark), size: 20),
+          // "+998" maydon boshidanoq ko'rinadi — foydalanuvchi uni
+          // qayta yozmaydi (normalizeUzPhone ikki marta qo'shilishining
+          // oldini oladi).
+          prefixText: prefixText,
+          prefixStyle: GoogleFonts.manrope(
+              color: AppColors.text(isDark), fontSize: 15),
           suffixIcon: suffix,
           filled: true,
           fillColor: AppColors.card(isDark),

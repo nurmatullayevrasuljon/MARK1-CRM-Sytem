@@ -212,7 +212,8 @@ class _DailySalesScreenState extends State<DailySalesScreen> {
   String _formatMoney(double? val) => fmtMoney(val);
 
   String _formatDate(DateTime d) {
-    return '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year} ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    final l = d.toLocal(); // UTC → mahalliy vaqt mintaqasi
+    return '${l.day.toString().padLeft(2, '0')}.${l.month.toString().padLeft(2, '0')}.${l.year} ${l.hour.toString().padLeft(2, '0')}:${l.minute.toString().padLeft(2, '0')}';
   }
 }
 

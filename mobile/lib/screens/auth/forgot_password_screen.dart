@@ -112,11 +112,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   style: GoogleFonts.manrope(
                       color: AppColors.text(isDark), fontSize: 15),
                   decoration: InputDecoration(
-                    hintText: '+998 90 123 45 67',
+                    hintText: '90 123 45 67',
                     hintStyle: GoogleFonts.manrope(
                         color: AppColors.textHint(isDark), fontSize: 14),
                     prefixIcon: Icon(Icons.phone_outlined,
                         color: AppColors.textHint(isDark), size: 20),
+                    // "+998" maydon boshidanoq ko'rinadi.
+                    prefixText: '+998 ',
+                    prefixStyle:
+                        GoogleFonts.manrope(color: AppColors.text(isDark), fontSize: 15),
                     filled: true,
                     fillColor: AppColors.card(isDark),
                     border: OutlineInputBorder(

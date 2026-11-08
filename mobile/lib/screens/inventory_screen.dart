@@ -78,7 +78,7 @@ class _InventoryScreenState extends State<InventoryScreen>
           IconButton(
             icon: Icon(Icons.playlist_add_rounded, color: AppColors.primary),
             tooltip: 'Kategoriya qo\'shish',
-            onPressed: () => _showAddCategoryDialog(context, isDark, pp),
+            onPressed: () => showAddCategoryDialog(context, isDark, pp),
           ),
           IconButton(
             icon: Icon(Icons.add_rounded, color: AppColors.primary),
@@ -503,7 +503,9 @@ class _InventoryScreenState extends State<InventoryScreen>
   // ─── Yangi kategoriya qo'shish (tez oynasi) ───────────────────
   // Kategoriyalar menyusidan oldin bitta ochish/saqlash bosqichi kerak
   // edi — endi AppBar'dagi `+` to'g'ridan-to'g'ri shu ishni qiladi.
-  Future<void> _showAddCategoryDialog(
+  // Mahsulot formasi ichidagi Kategoriya qatoridagi `+` ham shu metodni
+  // chaqiradi va yaratilgan kategoriya NOMINI qaytaradi (avtomatik tanlash).
+  static Future<String?> showAddCategoryDialog(
       BuildContext ctx, bool isDark, ProductProvider pp) async {
     final ctrl = TextEditingController();
     String? error;
@@ -584,7 +586,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                     // Oyna allaqachon yopilgan bo'lishi mumkin.
                     if (!dialogCtx.mounted) return;
                     if (res.success) {
-                      Navigator.pop(dialogCtx);
+                      Navigator.pop(dialogCtx, name);
                       ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
                         content: Text('$name kategoriyasi qo\'shildi'),
                         backgroundColor: AppColors.accentGreen,
@@ -632,6 +634,7 @@ class _InventoryScreenState extends State<InventoryScreen>
     // (yopish animatsiyasidan keyin) — aks holda dialog hali ekranda
     // qayta qurilayotganda "controller used after disposed" xatosi chiqadi.
     disposeAfterRouteClosed(ctrl.dispose);
+    return null; // bekor qilindi yoki xato — nom qaytmaydi
   }
 
   // ─── Categories bottom sheet ──────────────────────────────────
@@ -662,6 +665,9 @@ class _InventoryScreenState extends State<InventoryScreen>
         isDark: isDark,
         pp: pp,
         edit: edit,
+        // Kategoriya qatoridagi `+` shu oynani ochadi va yaratilgan
+        // kategoriya nomini qaytaradi (avtomatik tanlanadi).
+        onAddCategory: () => showAddCategoryDialog(ctx, isDark, pp),
         onSaved: () => _showSnack(
           edit == null ? 'Mahsulot qo\'shildi' : 'Mahsulot yangilandi',
           success: true,
@@ -931,12 +937,15 @@ class _ProductFormSheet extends StatefulWidget {
   final ProductProvider pp;
   final ProductModel? edit;
   final VoidCallback onSaved;
+  /// Kategoriya qatoridagi `+` — yaratilgan kategoriya nomini qaytaradi.
+  final Future<String?> Function()? onAddCategory;
 
   const _ProductFormSheet({
     required this.isDark,
     required this.pp,
     this.edit,
     required this.onSaved,
+    this.onAddCategory,
   });
 
   @override
@@ -1046,7 +1055,38 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
 
               const SizedBox(height: 12),
 
-              _lbl('Kategoriya *', isDark),
+              // Kategoriya + yangi kategoriya qo'shish (`+` shu qatorda).
+              Row(children: [
+                _lbl('Kategoriya *', isDark),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: widget.onAddCategory == null
+                      ? null
+                      : () async {
+                          final created = await widget.onAddCategory!();
+                          if (created == null || !mounted) return;
+                          // Yangi kategoriyani avtomatik tanlaymiz.
+                          final match = widget.pp.categories
+                              .where((c) => c.categoryName == created);
+                          if (match.isNotEmpty) {
+                            setState(() => _categoryId = match.first.id);
+                          }
+                        },
+                  icon: Icon(Icons.add_rounded,
+                      size: 18, color: AppColors.primary),
+                  label: Text('Qo\'shish',
+                      style: GoogleFonts.manrope(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary)),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 0),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ]),
               DropdownButtonFormField<String>(
                 initialValue: _categoryId,
                 hint: Text('Kategoriyani tanlang',
