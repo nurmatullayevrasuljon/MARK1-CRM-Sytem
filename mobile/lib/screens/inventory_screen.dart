@@ -1400,65 +1400,147 @@ class _CategoriesSheet extends StatefulWidget {
 }
 
 class _CategoriesSheetState extends State<_CategoriesSheet> {
-  // Qo'shish formasi shu joydan olib tashlandi (AppBar'dagi `+` tugmasi
-  // orqali qo'shiladi), shuning uchun controller/`_adding` kerak emas.
+  String? _error;
+  String? _success;
 
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final cats = widget.pp.categories;
 
-    return Padding(
-      padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 20,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Kategoriyalar',
-            style: GoogleFonts.manrope(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: AppColors.text(isDark),
-            ),
-          ),
-          const SizedBox(height: 6),
-          // Qo'shish oynasi endi yagona joyda — AppBar'dagi `+` tugmasi.
-          // Bu yerga ikkinchi maydon qo'shilsa, foydalanuvchi qaysi biri
-          // ishlaydi deb o'ylab vaqtni yo'qotadi. O'rnini ko'rsatamiz.
-          Text(
-            'Yangi kategoriya qo\'shish uchun yuqoridagi + tugmasini bosing',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.manrope(
-              fontSize: 12,
-              color: AppColors.textHint(isDark),
-            ),
-          ),
-          const SizedBox(height: 12),
+    return ListenableBuilder(
+      listenable: widget.pp,
+      builder: (context, _) {
+        final cats = widget.pp.categories;
 
-          if (cats.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                'Hali kategoriya yo\'q',
-                style: GoogleFonts.manrope(color: AppColors.textSec(isDark)),
+        return Padding(
+          padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Kategoriyalar',
+                style: GoogleFonts.manrope(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.text(isDark),
+                ),
               ),
-            )
-          else
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 300),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: cats.length,
-                itemBuilder: (_, i) =>
-                    _CategoryTile(cat: cats[i], isDark: isDark, pp: widget.pp),
+              const SizedBox(height: 6),
+              Text(
+                'Yangi kategoriya qo\'shish uchun yuqoridagi + tugmasini bosing',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.manrope(
+                  fontSize: 12,
+                  color: AppColors.textHint(isDark),
+                ),
               ),
-            ),
-        ],
-      ),
+              const SizedBox(height: 12),
+
+              if (_error != null) ...[
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentRed.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: AppColors.accentRed.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline,
+                          color: AppColors.accentRed, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _error!,
+                          style: GoogleFonts.manrope(
+                            fontSize: 12,
+                            color: AppColors.accentRed,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              if (_success != null) ...[
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentGreen.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: AppColors.accentGreen.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle_outline,
+                          color: AppColors.accentGreen, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _success!,
+                          style: GoogleFonts.manrope(
+                            fontSize: 12,
+                            color: AppColors.accentGreen,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              if (cats.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'Hali kategoriya yo\'q',
+                    style: GoogleFonts.manrope(color: AppColors.textSec(isDark)),
+                  ),
+                )
+              else
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 300),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: cats.length,
+                    itemBuilder: (_, i) => _CategoryTile(
+                      cat: cats[i],
+                      isDark: isDark,
+                      pp: widget.pp,
+                      onError: (msg) {
+                        setState(() {
+                          _error = msg;
+                          _success = null;
+                        });
+                      },
+                      onSuccess: (msg) {
+                        setState(() {
+                          _success = msg;
+                          _error = null;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -1467,9 +1549,16 @@ class _CategoryTile extends StatelessWidget {
   final CategoryModel cat;
   final bool isDark;
   final ProductProvider pp;
+  final ValueChanged<String>? onError;
+  final ValueChanged<String>? onSuccess;
 
-  const _CategoryTile(
-      {required this.cat, required this.isDark, required this.pp});
+  const _CategoryTile({
+    required this.cat,
+    required this.isDark,
+    required this.pp,
+    this.onError,
+    this.onSuccess,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1525,8 +1614,17 @@ class _CategoryTile extends StatelessWidget {
           ElevatedButton(
             onPressed: () async {
               if (ctrl.text.trim().isEmpty) return;
-              await pp.updateCategory(cat.id, ctrl.text.trim());
-              if (context.mounted) Navigator.pop(context);
+              final result =
+                  await pp.updateCategory(cat.id, ctrl.text.trim());
+              if (!context.mounted) return;
+              Navigator.pop(context);
+              if (result.success) {
+                onSuccess?.call('Kategoriya yangilandi');
+              } else {
+                final err = result.error?.userMessage ??
+                    'Kategoriyani yangilab bo\'lmadi';
+                onError?.call(err);
+              }
             },
             child: const Text('Saqlash'),
           ),
@@ -1561,8 +1659,42 @@ class _CategoryTile extends StatelessWidget {
         ],
       ),
     );
-    if (confirm == true) {
-      await pp.deleteCategory(cat.id);
+    if (confirm != true || !context.mounted) return;
+
+    final result = await pp.deleteCategory(cat.id);
+    if (!context.mounted) return;
+    if (result.success) {
+      onSuccess?.call('Kategoriya o\'chirildi');
+    } else {
+      final msg = result.error?.userMessage ??
+          'Kategoriyani o\'chirib bo\'lmadi';
+      onError?.call(msg);
+      // Foydalanuvchiga modal sheet ustida ham aniq dialog bilan sababini ko'rsatamiz
+      // (masalan: "Bu kategoriyada 1 ta mahsulot bor...").
+      await showDialog(
+        context: context,
+        barrierLabel: 'Bekor qilish',
+        builder: (_) => AlertDialog(
+          backgroundColor: AppColors.card(isDark),
+          title: Text(
+            'O\'chirib bo\'lmadi',
+            style: GoogleFonts.manrope(
+              fontWeight: FontWeight.w700,
+              color: AppColors.text(isDark),
+            ),
+          ),
+          content: Text(
+            msg,
+            style: GoogleFonts.manrope(color: AppColors.textSec(isDark)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Tushundim'),
+            ),
+          ],
+        ),
+      );
     }
   }
 }
