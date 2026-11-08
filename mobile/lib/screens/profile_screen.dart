@@ -487,7 +487,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               left: 24,
               right: 24,
               top: 24,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom +
+                  (MediaQuery.of(ctx).padding.bottom > 0
+                      ? MediaQuery.of(ctx).padding.bottom + 16.0
+                      : 24.0),
             ),
             child: Form(
               key: formKey,
@@ -676,7 +679,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               left: 24,
               right: 24,
               top: 24,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom +
+                  (MediaQuery.of(ctx).padding.bottom > 0
+                      ? MediaQuery.of(ctx).padding.bottom + 16.0
+                      : 24.0),
             ),
             child: Form(
               key: formKey,

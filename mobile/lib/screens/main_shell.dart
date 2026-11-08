@@ -209,6 +209,13 @@ class _MainShellState extends State<MainShell> {
       (index: 5, icon: Icons.settings_rounded, label: locale.tr('nav_profile_short'), size: 26),
     ];
 
+    final double bottomInset = MediaQuery.of(context).padding.bottom;
+    // 3 tugmali navigatsiya (≈48dp) yoki gestura pilasi (≈24–32dp) ostida
+    // yopishib qolmasligi uchun pastdan xavfsiz balandlik:
+    // Agar bottomInset > 0 bo'lsa: to'liq bottomInset + 12dp oraliq beramiz.
+    // Agar bottomInset == 0 bo'lsa (eski telefonlar): kamida 20dp masofa qoldiramiz.
+    final double bottomSafe = bottomInset > 0 ? (bottomInset + 12.0) : 20.0;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface(isDark),
@@ -223,64 +230,52 @@ class _MainShellState extends State<MainShell> {
           top: BorderSide(color: AppColors.border(isDark), width: 1),
         ),
       ),
-      // Gesture inset (~24dp) ichiga quti kengayadi. Chip va ikonkalar
-      // esa PILADAN YUQORIDA (insetning yarmi hisobga olinib) markazlanadi —
-      // aks holda chip pilaga yopishib qolardi (tekshiruv: chip pasti
-      // y=2360, pila y=2364 — orasida atigi 4px edi).
-      child: SizedBox(
-        height: 64 + MediaQuery.of(context).padding.bottom,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final double itemW = constraints.maxWidth / items.length;
-            final double barH = constraints.maxHeight;
-            final double inset = MediaQuery.of(context).padding.bottom;
-            return Stack(
-              children: [
-                // Faol tab ostidagi siluvchi chip (whoosh).
-                // Balandlik 58: ikonka 26 (faol 30) + 4 + nom 18 = 52,
-                // chip ichida 3dp nafas paytdir. Top = eski markaz - inset/4
-                // (inset=0 da eski formula bilan bir xil).
-                // +6: foydalanuvchi talabi bilan butun bar bir oz
-                // tepaga ko'tarildi (pila bilan oraliq kattalashdi).
-                AnimatedPositioned(
-                  duration: navDuration,
-                  curve: navCurve,
-                  left: _currentIndex * itemW + 6,
-                  top: (barH - 58) / 2 - inset / 4 - 6,
-                  width: itemW - 12,
-                  height: 58,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.steel : const Color(0xFFD3E4EF),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                Positioned.fill(
-                  // Bottom padding kontentni inset/4 (≈6dp) yuqoriga
-                  // suradi — chip bilan bir xil siljish uchun.
-                  // +6: bar bilan birga umumiy 6dp tepaga ko'tarish.
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: inset / 2 + 6),
-                    child: Center(
-                      child: Row(
-                        children: items
-                            .map((it) => SizedBox(
-                                  width: itemW,
-                                  child: _navItem(
-                                    it.index, it.icon, it.label, isDark,
-                                    size: it.size,
-                                    duration: navDuration, curve: navCurve,
-                                  ),
-                                ))
-                            .toList(),
+      child: Padding(
+        padding: EdgeInsets.only(top: 8, bottom: bottomSafe),
+        child: SizedBox(
+          height: 60,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double itemW = constraints.maxWidth / items.length;
+              return Stack(
+                children: [
+                  // Faol tab ostidagi siluvchi chip (whoosh).
+                  AnimatedPositioned(
+                    duration: navDuration,
+                    curve: navCurve,
+                    left: _currentIndex * itemW + 6,
+                    top: 1,
+                    width: itemW - 12,
+                    height: 58,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color:
+                            isDark ? AppColors.steel : const Color(0xFFD3E4EF),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
-                ),
-              ],
-            );
-          },
+                  Row(
+                    children: items
+                        .map((it) => SizedBox(
+                              width: itemW,
+                              height: 60,
+                              child: _navItem(
+                                it.index,
+                                it.icon,
+                                it.label,
+                                isDark,
+                                size: it.size,
+                                duration: navDuration,
+                                curve: navCurve,
+                              ),
+                            ))
+                        .toList(),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

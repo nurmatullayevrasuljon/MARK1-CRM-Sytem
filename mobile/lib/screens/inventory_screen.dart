@@ -71,15 +71,6 @@ class _InventoryScreenState extends State<InventoryScreen>
             tooltip: 'Kategoriyalar',
             onPressed: () => _showCategoriesSheet(context, isDark, pp),
           ),
-          // Kategoriyalar menyusidan keyingi darajada: kategoriyani tez
-          // qo'shish. `playlist_add` ikonkasi mahsulot qo'shish
-          // (`add_rounded`) dan farqlanadi — ikkalasi yonma-yon
-          // turgani uchun chalkash bo'lmasligi kerak.
-          IconButton(
-            icon: Icon(Icons.playlist_add_rounded, color: AppColors.primary),
-            tooltip: 'Kategoriya qo\'shish',
-            onPressed: () => showAddCategoryDialog(context, isDark, pp),
-          ),
           IconButton(
             icon: Icon(Icons.add_rounded, color: AppColors.primary),
             tooltip: 'Mahsulot qo\'shish',
@@ -309,7 +300,10 @@ class _InventoryScreenState extends State<InventoryScreen>
               left: 24,
               right: 24,
               top: 24,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom +
+                  (MediaQuery.of(ctx).padding.bottom > 0
+                      ? MediaQuery.of(ctx).padding.bottom + 16.0
+                      : 24.0),
             ),
             child: SingleChildScrollView(
               child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -1004,7 +998,10 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
         left: 24,
         right: 24,
         top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            (MediaQuery.of(context).padding.bottom > 0
+                ? MediaQuery.of(context).padding.bottom + 16.0
+                : 20.0),
       ),
       child: Form(
         key: _formKey,
@@ -1417,7 +1414,10 @@ class _CategoriesSheetState extends State<_CategoriesSheet> {
               left: 20,
               right: 20,
               top: 20,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+              bottom: MediaQuery.of(context).viewInsets.bottom +
+                  (MediaQuery.of(context).padding.bottom > 0
+                      ? MediaQuery.of(context).padding.bottom + 16.0
+                      : 20.0)),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

@@ -708,7 +708,10 @@ class _PaymentSheetState extends State<_PaymentSheet> {
         left: 24,
         right: 24,
         top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            (MediaQuery.of(context).padding.bottom > 0
+                ? MediaQuery.of(context).padding.bottom + 16.0
+                : 24.0),
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Text(
@@ -1546,7 +1549,13 @@ class _ProductStepState extends State<_ProductStep> {
       ),
 
       Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            MediaQuery.of(context).padding.bottom > 0
+                ? MediaQuery.of(context).padding.bottom + 12
+                : 16),
         child: SizedBox(
           width: double.infinity,
           height: 50,
@@ -1826,7 +1835,13 @@ class _ClientStepState extends State<_ClientStep> {
       ),
 
       Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            MediaQuery.of(context).padding.bottom > 0
+                ? MediaQuery.of(context).padding.bottom + 12
+                : 16),
         child: Row(children: [
           Expanded(
             child: OutlinedButton(
@@ -2222,7 +2237,11 @@ class _PaymentStepState extends State<_PaymentStep> {
           ),
         ]),
 
-        const SizedBox(height: 20),
+        SizedBox(
+          height: MediaQuery.of(context).padding.bottom > 0
+              ? MediaQuery.of(context).padding.bottom + 16
+              : 20,
+        ),
       ]),
     );
   }

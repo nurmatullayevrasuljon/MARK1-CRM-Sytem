@@ -110,7 +110,10 @@ class ClientFormSheetState extends State<ClientFormSheet> {
         left: 24,
         right: 24,
         top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            (MediaQuery.of(context).padding.bottom > 0
+                ? MediaQuery.of(context).padding.bottom + 16.0
+                : 24.0),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1171,7 +1174,10 @@ class _NewDebtorSheetState extends State<_NewDebtorSheet> {
         left: 24,
         right: 24,
         top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            (MediaQuery.of(context).padding.bottom > 0
+                ? MediaQuery.of(context).padding.bottom + 16.0
+                : 24.0),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1520,7 +1526,10 @@ class _DebtPaymentSheetState extends State<_DebtPaymentSheet> {
         left: 24,
         right: 24,
         top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            (MediaQuery.of(context).padding.bottom > 0
+                ? MediaQuery.of(context).padding.bottom + 16.0
+                : 24.0),
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Text(
