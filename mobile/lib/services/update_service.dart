@@ -9,6 +9,7 @@
 //   yangilanishni Play Store'ning o'zi bajaradi.
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../constants/app_colors.dart';
@@ -37,9 +38,11 @@ class AppUpdateInfo {
 
   factory AppUpdateInfo.fromJson(Map<String, dynamic> json) {
     return AppUpdateInfo(
-      latestVersion: json['latest_version'] ?? '1.0.2',
-      latestVersionCode: json['latest_version_code'] ?? 5003,
-      minSupportedVersionCode: json['min_supported_version_code'] ?? 5003,
+      latestVersion: json['latest_version'] ?? UpdateService.fallbackVersionName,
+      latestVersionCode: json['latest_version_code'] ??
+          UpdateService.fallbackVersionCode,
+      minSupportedVersionCode: json['min_supported_version_code'] ??
+          UpdateService.fallbackVersionCode,
       forceUpdate: json['force_update'] ?? false,
       playStoreUrl: json['play_store_url'] ??
           'https://play.google.com/store/apps/details?id=uz.mark1.crm',
@@ -51,9 +54,28 @@ class AppUpdateInfo {
 }
 
 class UpdateService {
-  /// Joriy ilova versiya kodi (pubspec.yaml dagi 1.0.3+5005 bilan bir xil).
-  static const int currentVersionCode = 5005;
-  static const String currentVersionName = '1.0.3';
+  /// Zaxira qiymatlar — faqat `PackageInfo` o'qib bo'lmasa ishlatiladi.
+  /// pubspec.yaml dagi `version:` bilan mos bo'lishi kerak.
+  static const int fallbackVersionCode = 5011;
+  static const String fallbackVersionName = '1.0.9';
+
+  /// Ilovaning joriy versiyasini **qurilmadan o'qiydi** (`package_info_plus`).
+  ///
+  /// Muhim: bu qiymat qo'lda yangilanishi shart emas — har bir build'da
+  /// pubspec.yaml dagi `1.0.x+500x` dan olinadi. Eski kodda bu hardcode
+  /// edi (5005/1.0.3), natijada yangi ilova o'rnatilgan foydalanuvchiga
+  /// "yangi versiya mavjud" yoki "joriy: v1.0.3" noto'g'ri xabar chiqardi.
+  static Future<({int code, String name})> currentVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      return (
+        code: int.tryParse(info.buildNumber) ?? fallbackVersionCode,
+        name: info.version,
+      );
+    } catch (_) {
+      return (code: fallbackVersionCode, name: fallbackVersionName);
+    }
+  }
 
   /// Serverdan yangilanish borligini tekshiradi va kerak bo'lsa muloqot oynasini chiqaradi.
   static Future<void> checkForUpdate(
@@ -61,22 +83,27 @@ class UpdateService {
     bool isManualCheck = false,
   }) async {
     try {
+      final cur = await currentVersion();
       final res = await ApiService.get('/app/version', withAuth: false);
 
       if (res['success'] == true && res['data'] != null) {
         final info = AppUpdateInfo.fromJson(res['data']);
 
-        if (info.latestVersionCode > currentVersionCode) {
+        if (info.latestVersionCode > cur.code) {
           if (!context.mounted) return;
           final isForce = info.forceUpdate ||
-              currentVersionCode < info.minSupportedVersionCode;
+              cur.code < info.minSupportedVersionCode;
 
           await showDialog(
             context: context,
             barrierDismissible: !isForce,
             builder: (ctx) => PopScope(
               canPop: !isForce,
-              child: _UpdateDialog(info: info, isForce: isForce),
+              child: _UpdateDialog(
+                info: info,
+                isForce: isForce,
+                currentVersionName: cur.name,
+              ),
             ),
           );
           return;
@@ -87,8 +114,8 @@ class UpdateService {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Sizda eng so\'nggi versiya o\'rnatilgan (v$currentVersionName)',
-              style: GoogleFonts.inter(),
+              'Sizda eng so\'nggi versiya o\'rnatilgan (v${cur.name})',
+              style: GoogleFonts.manrope(),
             ),
             backgroundColor: AppColors.accentGreen,
             duration: const Duration(seconds: 3),
@@ -97,11 +124,13 @@ class UpdateService {
       }
     } catch (_) {
       if (isManualCheck && context.mounted) {
+        final cur = await currentVersion();
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Sizda eng so\'nggi versiya o\'rnatilgan (v$currentVersionName)',
-              style: GoogleFonts.inter(),
+              'Sizda eng so\'nggi versiya o\'rnatilgan (v${cur.name})',
+              style: GoogleFonts.manrope(),
             ),
             backgroundColor: AppColors.accentGreen,
           ),
@@ -115,7 +144,14 @@ class _UpdateDialog extends StatefulWidget {
   final AppUpdateInfo info;
   final bool isForce;
 
-  const _UpdateDialog({required this.info, required this.isForce});
+  /// Joriy ilova versiyasi (checkForUpdate orqali PackageInfo'dan olinadi).
+  final String currentVersionName;
+
+  const _UpdateDialog({
+    required this.info,
+    required this.isForce,
+    required this.currentVersionName,
+  });
 
   @override
   State<_UpdateDialog> createState() => _UpdateDialogState();
@@ -167,7 +203,7 @@ class _UpdateDialogState extends State<_UpdateDialog> {
     final isForce = widget.isForce;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       backgroundColor: AppColors.card(isDark),
       elevation: 10,
       child: Padding(
@@ -195,8 +231,8 @@ class _UpdateDialogState extends State<_UpdateDialog> {
             Text(
               info.title,
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 20,
+              style: GoogleFonts.manrope(
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppColors.text(isDark),
               ),
@@ -211,8 +247,8 @@ class _UpdateDialogState extends State<_UpdateDialog> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                'v${info.latestVersion} mavjud (joriy: v${UpdateService.currentVersionName})',
-                style: GoogleFonts.inter(
+                'v${info.latestVersion} mavjud (joriy: v${widget.currentVersionName})',
+                style: GoogleFonts.manrope(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppColors.primary,
@@ -227,12 +263,12 @@ class _UpdateDialogState extends State<_UpdateDialog> {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: AppColors.bg(isDark),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.border(isDark)),
               ),
               child: Text(
                 info.message,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                   fontSize: 14,
                   height: 1.45,
                   color: AppColors.text(isDark),
@@ -247,16 +283,16 @@ class _UpdateDialogState extends State<_UpdateDialog> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.08),
+                  color: AppColors.accentRed.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                  border: Border.all(color: AppColors.accentRed.withValues(alpha: 0.3)),
                 ),
                 child: Text(
                   _error!,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 13,
                     height: 1.4,
-                    color: Colors.red.shade700,
+                    color: AppColors.accentRed,
                   ),
                 ),
               ),
@@ -272,14 +308,14 @@ class _UpdateDialogState extends State<_UpdateDialog> {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         side: BorderSide(color: AppColors.border(isDark)),
                       ),
                       onPressed: () => Navigator.of(context).pop(),
                       child: Text(
                         'Keyinroq',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.manrope(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textSec(isDark),
@@ -295,14 +331,14 @@ class _UpdateDialogState extends State<_UpdateDialog> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       elevation: 0,
                     ),
                     onPressed: _openPlayStore,
                     child: Text(
                       'Yangilash',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.manrope(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,

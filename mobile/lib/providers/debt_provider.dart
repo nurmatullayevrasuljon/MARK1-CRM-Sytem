@@ -34,4 +34,22 @@ class DebtProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Qarzdorga SMS eslatma yuboradi.
+  ///
+  /// NIMA UCHUN: web'da `POST /sale/remind?sale_id=...` ishlatiladi
+  /// (script.js `sendSms`), backend esa xabar matnini O'ZI generatsiya
+  /// qiladi — biz faqat sale_id yuboramiz.
+  Future<ApiResult<Map<String, dynamic>>> remindSale(String saleId) async {
+    try {
+      final data = await ApiService.post('/sale/remind',
+          queryParams: {'sale_id': saleId});
+      return ApiResult.success(
+        data: data,
+        message: data['message']?.toString() ?? 'Sms yuborildi',
+      );
+    } on ApiException catch (e) {
+      return ApiResult.failure(e);
+    }
+  }
 }

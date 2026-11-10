@@ -34,7 +34,10 @@ class _MainShellState extends State<MainShell> {
         const SalesScreen(),
         const InventoryScreen(),
         const DailySalesScreen(), // Added
-        const DebtorsScreen(),
+        // `onTab`: "Yangi qarzdor" oqimi yaratilgandan keyin foydalanuvchini
+        // Sotish bo'limiga yo'naltiradi (web'dagi kabi — qarz faqat mahsulot
+        // bilan bog'liq Sale orqali yaratiladi).
+        DebtorsScreen(onTab: _selectTab),
         const ProfileScreen(),
       ];
 
@@ -160,7 +163,7 @@ class _MainShellState extends State<MainShell> {
       child: Column(
         children: [
           const SizedBox(height: 32),
-          Text("MARK CRM", style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.text(isDark))),
+          Text("MARK CRM", style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.text(isDark))),
           const SizedBox(height: 32),
           _sidebarItem(0, Icons.grid_view_rounded, locale.tr('nav_home'), isDark),
           _sidebarItem(1, Icons.shopping_cart_rounded, locale.tr('nav_sales'), isDark),
@@ -177,7 +180,7 @@ class _MainShellState extends State<MainShell> {
     final bool isSelected = _currentIndex == index;
     return ListTile(
       leading: Icon(icon, color: isSelected ? AppColors.primary : AppColors.textHint(isDark)),
-      title: Text(label, style: GoogleFonts.inter(
+      title: Text(label, style: GoogleFonts.manrope(
         color: isSelected ? AppColors.primary : AppColors.text(isDark),
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
       )),
@@ -188,179 +191,182 @@ class _MainShellState extends State<MainShell> {
 
   Widget _buildBottomNav(bool isDark) {
     final locale = Provider.of<LocaleProvider>(context);
+    // DESIGN §9 motion: cubic-bezier(.2,.8,.2,1), 300ms — chip tablar
+    // orasida "whoosh" qilib sirpanib o'tadi.
+    const navDuration = Duration(milliseconds: 300);
+    const navCurve = Cubic(0.2, 0.8, 0.2, 1);
+
+    // Optik normallashtirish: grid_view qutisi26dp da boshqa
+    // belgilardan kichroq (52px vs 57px), trending_up esa
+    // chizig'i tufayli "yengil" ko'rinadi — hajmlari teng
+    // vizual og'irlikka qarab kompensatsiya qilinadi.
+    final items = <({int index, IconData icon, String label, double size})>[
+      (index: 0, icon: Icons.grid_view_rounded, label: locale.tr('nav_home_short'), size: 29),
+      (index: 1, icon: Icons.shopping_cart_rounded, label: locale.tr('nav_sales_short'), size: 26),
+      (index: 2, icon: Icons.inventory_2_rounded, label: locale.tr('nav_inventory_short'), size: 26),
+      (index: 3, icon: Icons.trending_up_rounded, label: locale.tr('nav_daily_sales_short'), size: 30),
+      (index: 4, icon: Icons.people_alt_rounded, label: locale.tr('nav_debtors_short'), size: 26),
+      (index: 5, icon: Icons.settings_rounded, label: locale.tr('nav_profile_short'), size: 26),
+    ];
+
+    final double bottomInset = MediaQuery.of(context).padding.bottom;
+    // 3 tugmali navigatsiya (≈48dp) yoki gestura pilasi (≈24–32dp) ostida
+    // yopishib qolmasligi uchun pastdan xavfsiz balandlik:
+    // Agar bottomInset > 0 bo'lsa: to'liq bottomInset + 12dp oraliq beramiz.
+    // Agar bottomInset == 0 bo'lsa (eski telefonlar): kamida 20dp masofa qoldiramiz.
+    final double bottomSafe = bottomInset > 0 ? (bottomInset + 12.0) : 20.0;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface(isDark),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
-            blurRadius: 20, offset: const Offset(0, -4),
+            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
           ),
         ],
-        border: Border(top: BorderSide(color: AppColors.border(isDark), width: 1)),
+        border: Border(
+          top: BorderSide(color: AppColors.border(isDark), width: 1),
+        ),
       ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _navItem(0, Icons.grid_view_rounded, locale.tr('nav_home'), isDark),
-              _navItem(1, Icons.shopping_cart_rounded, locale.tr('nav_sales'), isDark),
-              _navItem(2, Icons.inventory_2_rounded, locale.tr('nav_inventory'), isDark),
-              _navItem(3, Icons.trending_up_rounded, locale.tr('nav_daily_sales'), isDark),
-              _navItem(4, Icons.people_alt_rounded, locale.tr('nav_debtors'), isDark),
-              _navItem(5, Icons.settings_rounded, locale.tr('nav_profile'), isDark),
-            ],
+      child: Padding(
+        padding: EdgeInsets.only(top: 8, bottom: bottomSafe),
+        child: SizedBox(
+          height: 60,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double itemW = constraints.maxWidth / items.length;
+              return Stack(
+                children: [
+                  // Faol tab ostidagi siluvchi chip (whoosh).
+                  AnimatedPositioned(
+                    duration: navDuration,
+                    curve: navCurve,
+                    left: _currentIndex * itemW + 6,
+                    top: 1,
+                    width: itemW - 12,
+                    height: 58,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color:
+                            isDark ? AppColors.steel : const Color(0xFFD3E4EF),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: items
+                        .map((it) => SizedBox(
+                              width: itemW,
+                              height: 60,
+                              child: _navItem(
+                                it.index,
+                                it.icon,
+                                it.label,
+                                isDark,
+                                size: it.size,
+                                duration: navDuration,
+                                curve: navCurve,
+                              ),
+                            ))
+                        .toList(),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
     );
   }
 
-  Widget _navItem(int index, IconData icon, String label, bool isDark) {
+  Widget _navItem(int index, IconData icon, String label, bool isDark,
+      {required double size, required Duration duration, required Curve curve}) {
     final bool isSelected = _currentIndex == index;
-    return Expanded(
-      // Faol element kengaymasligi uchun `flex` bir xil. Avval faol element
-      // 4/2 bo'lib yozuv faqat uning yonida ko'rinardi — bu har bosilganda
-      // menyuning kengligi sakrab turardi va boshqa tablarda yozuv yo'q edi.
-      // Endi barcha tablarda yozuv doim pastda, ikonka tepada.
-      flex: 1,
-      child: Semantics(
-        // Yorliq faol bo'lganda ko'rinadi, faol bo'lmaganda esa umuman
-        // chizilmaydi. Shuning uchun ekran o'quvchisi (TalkBack) bo'sh
-        // tablarni "nomsiz tugma" deb o'qirdi. Semantics orqali nom har
-        // doim mavjud bo'ladi.
-        label: label,
-        button: true,
-        selected: isSelected,
-        // Yorliq faol bo'lganda ham o'qiladi — `excludeSemantics` bo'lmasa
-        // TalkBack nomni ikki marta ("Sotish Sotish") aytar edi.
-        excludeSemantics: true,
-        // DIQQAT: `excludeSemantics: true` pastdagi `InkWell`'ning
-        // `onTap` harakatini ham YO'QOTADI. Natijada TalkBack "Sotish,
-        // tugma" deb o'qiydi, lekin ekranda ikki marta bosish
-        // **hech narsa qilmaydi** — ya'ni tugma faqat o'qiladi,
-        // boshqarilmaydi. Bu sezilarli muqobilik buzilishidan ko'ra
-        // yomonroq. Harakatni shu yerda qayta beramiz.
-        onTap: () => setState(() => _currentIndex = index),
-        child: Material(
-          // Fon `Material` da, `InkWell` splash'i aynan shu yerga chiziladi.
-          // Radius `AnimatedContainer` bilan bir xil bo'lishi shart,
-          // aks holda to'lqin burchakdan tashqariga chiqib ketadi.
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => setState(() => _currentIndex = index),
-            borderRadius: BorderRadius.circular(16),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              // `horizontal` 2 → 1: matnga qo'shimcha ~4 logik px kerak
-              // edi. "Mahsulotlar" (11 belgi) aynan 1 px yetmabdi va
-              // so'nggi "r" o'ziga alohida qatorga tushib ketayotgan edi.
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 1),
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.primary.withValues(alpha: 0.15)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
+    // DESIGN §2: ranglar faqat palitradan — navy/mist zinapoyasi.
+    final Color activeColor = isDark ? AppColors.snow : AppColors.navy;
+    final Color inactiveColor = isDark ? AppColors.mist : AppColors.textHint(false);
+
+    return Semantics(
+      label: label,
+      button: true,
+      selected: isSelected,
+      excludeSemantics: true,
+      onTap: () => setState(() => _currentIndex = index),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => setState(() => _currentIndex = index),
+          customBorder: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          splashColor: AppColors.primary.withValues(alpha: 0.1),
+          highlightColor: Colors.transparent,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Ikonka: asosiy hajm (26dp, optik kompensatsiyalangan
+              // belgilar 29–30dp), faol holatda 1.15 baravar va
+              // faol bo'lganda tepaga ko'tariladi — bar vizual jihatdan
+              // jonlanadi, nom pastda o'z joyida qoladi.
+              AnimatedPadding(
+                duration: duration,
+                curve: curve,
+                padding: EdgeInsets.only(top: isSelected ? 0 : 6),
+                child: AnimatedScale(
+                  duration: duration,
+                  curve: curve,
+                  scale: isSelected ? 1.15 : 1,
+                  child: TweenAnimationBuilder<Color?>(
+                    duration: duration,
+                    curve: curve,
+                    tween: ColorTween(
+                      begin: inactiveColor,
+                      end: isSelected ? activeColor : inactiveColor,
+                    ),
+                    builder: (context, color, child) =>
+                        Icon(icon, size: size, color: color ?? inactiveColor),
+                  ),
+                ),
               ),
-              // Ikonka tepada, yozuv pastda — vertikal joylashuv.
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Ikonka uchun doimiy quti: animatsiya paytida tashqi
-                  // o'lcham o'zgarmaydi, shuning uchun yozuv sakramaydi.
-                  SizedBox(
-                    height: 38,
-                    child: AnimatedPadding(
-                      duration: const Duration(milliseconds: 280),
-                      curve: Curves.easeOutBack,
-                      // Ikonka faol bo'lganda yuqoriga "ko'tariladi".
-                      // `top` kamayadi, quti balandligi esa doim 38 —
-                      // shuning uchun yozuv joyida qotib turadi.
-                      padding: EdgeInsets.only(
-                          top: isSelected ? 3 : 10),
-                      child: Align(
-                        alignment: Alignment.topCenter,
-                        child: AnimatedScale(
-                          duration: const Duration(milliseconds: 280),
-                          curve: Curves.easeOutBack,
-                          scale: isSelected ? 1.1 : 1.0,
-                          // LED yorish: tanlangan ikonka atrofida rangli
-                          // halqa paydo bo'ladi va yo'qoladi.
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 340),
-                            curve: Curves.easeOut,
-                            padding: const EdgeInsets.all(3),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withValues(
-                                      alpha: isSelected ? 0.45 : 0),
-                                  blurRadius: isSelected ? 14 : 0,
-                                  spreadRadius: isSelected ? 1 : 0,
-                                ),
-                              ],
-                            ),
-                            child: Icon(icon,
-                                color: isSelected
-                                    ? AppColors.primary
-                                    : AppColors.textHint(isDark),
-                                size: 22),
+              const SizedBox(height: 4),
+              // Nom faqat faol bo'limga o'tilganda tagidan chiqib
+              // ko'rinadi; boshqa tablarda umuman ko'rinmaydi.
+              // Slot balandligi saqlanadi — ikonkalar baribir
+              // bari bir qatorda turishi uchun.
+              SizedBox(
+                height: 18,
+                child: ClipRect(
+                  child: AnimatedSlide(
+                    duration: duration,
+                    curve: curve,
+                    offset: isSelected ? Offset.zero : const Offset(0, 1.3),
+                    child: AnimatedOpacity(
+                      duration: duration,
+                      curve: curve,
+                      opacity: isSelected ? 1 : 0,
+                      child: Center(
+                        child: AnimatedDefaultTextStyle(
+                          duration: duration,
+                          curve: curve,
+                          style: GoogleFonts.manrope(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: activeColor,
+                            letterSpacing: -0.2,
+                          ),
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.clip,
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  // Nom faqat faol tabda ko'rinadi — qolgan tablarda
-                  // faqat ikonka qoladi.
-                  //
-                  // Lekin `SizedBox(height: 23)` baribir doimiy: bu
-                  // "o'rin band qiluvchi" (spacer). Uni olib tashlasa,
-                  // Column balandligi yozuv bor-yo'qligiga qarab
-                  // o'zgaradi va `Row` da barcha elementlar markazlashadi —
-                  // natijada yozuvsiz tablar ikonkasi 7-8 px pastroqqa
-                  // siljardi (avval shu xato bor edi: "Boshqaruv paneli"
-                  // tabi [2119-2316], "Sotish" tabi [2134-2302]).
-                  SizedBox(
-                    height: 22, // 9.5px * 1.15 * 2 qator ≈ 22
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeOut,
-                      opacity: isSelected ? 1 : 0,
-                      // Semantika tashqaridagi `Semantics` da —
-                      // `excludeSemantics: true` tufayli nom hech qachon
-                      // yo'qolmaydi, TalkBack har doim o'qiydi.
-                      child: Text(
-                        label,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.textHint(isDark),
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                          // 10 → 9.5: 10 da "Mahsulotlar" (~156px)
-                          // mavjud kenglikdan (~155px) oshib, so'nggi
-                          // harf alohida qatorga tushardi. 9.5 da
-                          // barcha yorliqlar (shu jumladan boshqa
-                          // tillardagi uzunlar) xavfsiz sig'adi.
-                          fontSize: 9.5,
-                          height: 1.15,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),

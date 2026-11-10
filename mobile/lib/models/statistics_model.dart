@@ -36,16 +36,32 @@ class StatisticsModel {
         inventoryBalance:
             (json['inventory_balance'] ?? json['inventoryBalance'] ?? 0)
                 .toDouble(),
-        overdueDebt:
-            (json['overdue_debt'] ?? json['overdueDebt'] ?? 0).toDouble(),
+        // Backend `/statistics/full` `overdue_payments` yuboradi
+        // (Frontend script.js ham shu kalitni o'qiydi). Eski mobil kalit
+        // `overdue_debt` hech qachon yuborilmagan → Panel doim 0 ko'rsatardi.
+        overdueDebt: (json['overdue_debt'] ??
+                json['overdueDebt'] ??
+                json['overdue_payments'] ??
+                0)
+            .toDouble(),
         debtorsCount:
             (json['debtors_count'] ?? json['debtorsCount'] ?? 0).toInt(),
         lowStockCount:
             (json['low_stock_count'] ?? json['lowStockCount'] ?? 0).toInt(),
-        cashRevenue:
-            (json['cash_revenue'] ?? json['cashRevenue'] ?? 0).toDouble(),
-        cardRevenue:
-            (json['card_revenue'] ?? json['cardRevenue'] ?? 0).toDouble(),
+        // Backend `daily_cash_sale_revenue` / `monthly_cash_sale_revenue`
+        // yuboradi; eski `cash_revenue` kaliti yuborilmagan.
+        cashRevenue: (json['cash_revenue'] ??
+                json['cashRevenue'] ??
+                json['daily_cash_sale_revenue'] ??
+                json['monthly_cash_sale_revenue'] ??
+                0)
+            .toDouble(),
+        cardRevenue: (json['card_revenue'] ??
+                json['cardRevenue'] ??
+                json['daily_card_sale_revenue'] ??
+                json['monthly_card_sale_revenue'] ??
+                0)
+            .toDouble(),
         todaySalesCount:
             (json['today_sales_count'] ?? json['todaySalesCount'] ?? 0).toInt(),
       );

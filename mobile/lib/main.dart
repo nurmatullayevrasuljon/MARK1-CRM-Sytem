@@ -16,6 +16,12 @@ import 'providers/statistics_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Shriftlar assets/fonts/ ichida bundle qilingan (Manrope, 7 variant).
+  // Runtime HTTP fetch O'CHIRILDI: release'da internet bo'lmasa yoki
+  // Google Fonts bloklansa ilova hali ham o'z dizaynida qoladi.
+  // (google_fonts avval yuklanmagan shriftni HTTP orqali yuklab,
+  //  kiritilmagan holda tizim shriftiga tushib qolardi — dizayn siljishi.)
+  GoogleFonts.config.allowRuntimeFetching = false;
   runApp(
     MultiProvider(
       providers: [
@@ -57,7 +63,7 @@ class MarkCRMApp extends StatelessWidget {
           seedColor: AppColors.primary,
           brightness: isDark ? Brightness.dark : Brightness.light,
         ),
-        textTheme: GoogleFonts.interTextTheme(
+        textTheme: GoogleFonts.manropeTextTheme(
           isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
         ).apply(bodyColor: AppColors.text(isDark)),
       ),

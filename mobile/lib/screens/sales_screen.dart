@@ -7,6 +7,7 @@ import '../utils/phone_utils.dart';
 import '../utils/format_utils.dart';
 import '../utils/quantity_dialog.dart';
 import 'barcode_scanner_screen.dart';
+import 'debtors_screen.dart';
 import '../providers/theme_provider.dart';
 import '../providers/sale_provider.dart';
 import '../providers/product_provider.dart';
@@ -14,6 +15,7 @@ import '../providers/client_provider.dart';
 import '../models/sale_model.dart';
 import '../models/product_model.dart';
 import '../models/client_model.dart';
+import '../widgets/status_chip.dart';
 
 class SalesScreen extends StatefulWidget {
   const SalesScreen({super.key});
@@ -73,6 +75,19 @@ class _SalesScreenState extends State<SalesScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Provider.of<ThemeProvider>(context).isDark;
+    // 320dp da uchta tab teng bo'linadi (≈106px) va default
+    // labelPadding 16px dan keyin "Bekor qilingan" kesilardi.
+    // Tor ekranda padding va shrift kichrayadi, ≥360dp da DESIGN
+    // ko'rinishi o'zgarmaydi.
+    // Tizim shrift o'lchami (font_scale) > 1.0 bo'lsa ham xuddi shunday:
+    // matn kattalashadi, tab kengligi o'zgarmaydi → kesilish.
+    // Shu uchun textScaler ham "tor holat" deb hisoblanadi.
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+    final narrowTab = MediaQuery.sizeOf(context).width < 360 || textScale > 1.05;
+    // TextScaler > 1.0 da fontSize 11 ga tushirilsa, matn 1.3 da ~14.3px
+    // bo'ladi — 360dp/3 = 120dp ichida to'liq chiqadi (labelPadding 6 bilan).
+    final tabPad = narrowTab ? 6.0 : 16.0;
+    final tabFont = narrowTab ? 11.0 : 12.0;
     // `SaleProvider` bu yerda **o'qilmaydi**: tab almashganda
     // `selectStatus` o'z holatini o'zgartiradi, ro'yxat esa
     // `_SalesList` ichida `context.watch` orqali kuzatiladi. Bu
@@ -87,8 +102,8 @@ class _SalesScreenState extends State<SalesScreen>
         elevation: 0,
         title: Text(
           'Savdolar',
-          style: GoogleFonts.inter(
-            fontSize: 20,
+          style: GoogleFonts.manrope(
+            fontSize: 18,
             fontWeight: FontWeight.w700,
             color: AppColors.text(isDark),
           ),
@@ -107,8 +122,12 @@ class _SalesScreenState extends State<SalesScreen>
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textSec(isDark),
           indicatorColor: AppColors.primary,
-          labelStyle:
-              GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+          labelPadding:
+              EdgeInsets.symmetric(horizontal: tabPad),
+          labelStyle: GoogleFonts.manrope(
+              fontSize: tabFont, fontWeight: FontWeight.w600),
+          unselectedLabelStyle: GoogleFonts.manrope(
+              fontSize: tabFont, fontWeight: FontWeight.w600),
           tabs: const [
             Tab(text: 'Faol'),
             Tab(text: 'Bekor qilingan'),
@@ -150,7 +169,7 @@ class _SalesScreenState extends State<SalesScreen>
       isScrollControlled: true,
       backgroundColor: AppColors.card(isDark),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) => _NewSaleSheet(isDark: isDark),
     );
@@ -192,14 +211,14 @@ class _SalesList extends StatelessWidget {
               color: AppColors.textHint(isDark), size: 64),
           const SizedBox(height: 12),
           Text('Savdolar yo\'q',
-              style: GoogleFonts.inter(color: AppColors.textSec(isDark))),
+              style: GoogleFonts.manrope(color: AppColors.textSec(isDark))),
           // So'rov muvaffaqiyatsiz bo'lsa, "bo'sh" emas, "xato" ko'rsatiladi —
           // aks holda foydalanuvchi ma'lumot yo'q deb o'ylaydi.
           if (sp.error != null) ...[
             const SizedBox(height: 12),
             Text(sp.error!,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                     color: AppColors.accentRed, fontSize: 12)),
           ],
         ]),
@@ -254,7 +273,7 @@ class _SaleTile extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.card(isDark),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: sale.isOverdue
                 ? AppColors.accentRed.withValues(alpha: 0.4)
@@ -281,8 +300,10 @@ class _SaleTile extends StatelessWidget {
                   Row(children: [
                     Expanded(
                       child: Text(
-                        sale.clientName ?? 'Noma\'lum mijoz',
-                        style: GoogleFonts.inter(
+                        sale.clientName?.isNotEmpty == true
+                            ? sale.clientName!
+                            : 'Chakana savdo',
+                        style: GoogleFonts.manrope(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: AppColors.text(isDark),
@@ -291,9 +312,12 @@ class _SaleTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    // Ism bilan summa orasida bo'shliq — aks holda
+                    // "Dilnoza Yusupova 80 000 so'm" yopishib ketadi.
+                    const SizedBox(width: 8),
                     Text(
                       '${_fmt(sale.totalPrice)} so\'m',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.manrope(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: AppColors.text(isDark),
@@ -304,26 +328,15 @@ class _SaleTile extends StatelessWidget {
                   Row(children: [
                     Text(
                       _formatDate(sale.createdAt),
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.manrope(
                           fontSize: 13,
                           color: AppColors.textSec(isDark)),
                     ),
                     const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: _statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        _statusLabel,
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: _statusColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                    StatusChip(
+                      label: _statusLabel,
+                      color: _statusColor,
+                      isDark: isDark,
                     ),
                   ]),
                 ],
@@ -347,7 +360,7 @@ class _SaleTile extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   'Qarz: ${_fmt(sale.totalRemaining)} so\'m',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 12,
                     color: AppColors.accentRed,
                     fontWeight: FontWeight.w600,
@@ -357,8 +370,8 @@ class _SaleTile extends StatelessWidget {
                   const Spacer(),
                   Text(
                     'Muddat: ${_formatDate(sale.dueDate!)}',
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
+                    style: GoogleFonts.manrope(
+                      fontSize: 12,
                       color: AppColors.accentRed.withValues(alpha: 0.8),
                     ),
                   ),
@@ -378,7 +391,7 @@ class _SaleTile extends StatelessWidget {
       case 'cancelled':
         return AppColors.accentRed;
       case 'returned':
-        return Colors.orange;
+        return AppColors.accentOrange;
       default:
         return Colors.grey;
     }
@@ -402,8 +415,13 @@ class _SaleTile extends StatelessWidget {
   // 70 so'mni yo'qotardi (video'da ko'rsatilgan xato).
   String _fmt(double v) => fmtSum(v);
 
-  String _formatDate(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
+  // Server UTC qaytaradi (`2026-12-07T19:00Z`), ilova UTC+5 da yashaydi:
+  // to'g'ridan-to'g'ri formatlasak 08.12 → 07.12 ga siljardi.
+  // `toLocal()` bilan foydalanuvchi vaqt mintaqasidagi kun chiqadi.
+  String _formatDate(DateTime d) {
+    final l = d.toLocal();
+    return '${l.day.toString().padLeft(2, '0')}.${l.month.toString().padLeft(2, '0')}.${l.year}';
+  }
 }
 
 // ─── Sale Detail Screen ───────────────────────────────────────────
@@ -428,7 +446,7 @@ class SaleDetailScreen extends StatelessWidget {
         ),
         title: Text(
           'Sotuv tafsiloti',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.manrope(
             fontSize: 18,
             fontWeight: FontWeight.w700,
             color: AppColors.text(isDark),
@@ -464,9 +482,9 @@ class SaleDetailScreen extends StatelessWidget {
                     child: ListTile(
                       dense: true,
                       leading:
-                          Icon(Icons.cancel_outlined, color: Colors.red),
+                          Icon(Icons.cancel_outlined, color: AppColors.accentRed),
                       title: Text('Bekor qilish',
-                          style: TextStyle(color: Colors.red)),
+                          style: TextStyle(color: AppColors.accentRed)),
                     )),
               ],
             ),
@@ -477,7 +495,13 @@ class SaleDetailScreen extends StatelessWidget {
         child: Column(children: [
           // Summary card
           _card(isDark, [
-            _row('Mijoz', sale.clientName ?? 'Noma\'lum', isDark),
+            _row(
+              'Mijoz',
+              sale.clientName?.isNotEmpty == true
+                  ? sale.clientName!
+                  : 'Chakana savdo',
+              isDark,
+            ),
             _row('Sana', _fmtDt(sale.createdAt), isDark),
             _row('Jami summa', '${_fmt(sale.totalPrice)} so\'m', isDark),
             _row('To\'langan', '${_fmt(sale.totalPaid)} so\'m', isDark,
@@ -499,7 +523,8 @@ class SaleDetailScreen extends StatelessWidget {
           _card(isDark,
               sale.products.map((p) => _row(
                     p.productName ?? 'Mahsulot',
-                    '${p.quantity} x ${_fmt(p.sellingPrice)} = ${_fmt(p.quantity * p.sellingPrice)} so\'m',
+                    // Xom `p.quantity` → "1.0 x ..." chiqarardi.
+                    '${fmtQty(p.quantity)} x ${_fmt(p.sellingPrice)} = ${_fmt(p.quantity * p.sellingPrice)} so\'m',
                     isDark,
                   )).toList()),
 
@@ -528,7 +553,7 @@ class SaleDetailScreen extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: AppColors.primaryGradient,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: ElevatedButton.icon(
                   onPressed: () =>
@@ -537,13 +562,13 @@ class SaleDetailScreen extends StatelessWidget {
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                   icon: const Icon(Icons.payment_rounded,
                       color: Colors.white, size: 20),
                   label: Text(
                     'To\'lov qilish (${_fmt(sale.totalRemaining)} so\'m)',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.manrope(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -566,7 +591,7 @@ class SaleDetailScreen extends StatelessWidget {
       backgroundColor: AppColors.card(isDark),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) => _PaymentSheet(
         sale: sale,
@@ -580,7 +605,7 @@ class SaleDetailScreen extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 8),
         child: Text(
           title,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.manrope(
             fontSize: 15,
             fontWeight: FontWeight.w700,
             color: AppColors.text(isDark),
@@ -592,7 +617,7 @@ class SaleDetailScreen extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.card(isDark),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.border(isDark)),
         ),
         child: Column(children: children),
@@ -604,7 +629,7 @@ class SaleDetailScreen extends StatelessWidget {
         child: Row(children: [
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               fontSize: 13,
               color: AppColors.textSec(isDark),
             ),
@@ -612,7 +637,7 @@ class SaleDetailScreen extends StatelessWidget {
           const Spacer(),
           Text(
             value,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: color ?? AppColors.text(isDark),
@@ -626,8 +651,10 @@ class SaleDetailScreen extends StatelessWidget {
   // 70 so'mni yo'qotardi (video'da ko'rsatilgan xato).
   String _fmt(double v) => fmtSum(v);
 
-  String _fmtDt(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
+  String _fmtDt(DateTime d) {
+    final l = d.toLocal(); // UTC → mahalliy (08.12 → 07.12 siljishini oldini oladi)
+    return '${l.day.toString().padLeft(2, '0')}.${l.month.toString().padLeft(2, '0')}.${l.year}';
+  }
 }
 
 // ─── Payment Sheet ────────────────────────────────────────────────
@@ -651,6 +678,10 @@ class _PaymentSheetState extends State<_PaymentSheet> {
   String _method = 'cash';
   bool _loading = false;
 
+  // Xato sheet ichida ko'rsatiladi (SnackBar modal sheet ortida qolib,
+  // foydalanuvchi ko'ra olmasdi — QA'da tasdiqlangan P1 topilma).
+  String? _error;
+
   @override
   void initState() {
     super.initState();
@@ -658,6 +689,9 @@ class _PaymentSheetState extends State<_PaymentSheet> {
     // qarz `1070.50` bo'lsa maydon `1071` bo'ladi (ortiqcha to'lov).
     // `fmtInput` hech narsani o'zgartirmaydi.
     _amtCtrl.text = fmtInput(widget.sale.totalRemaining);
+    _amtCtrl.addListener(() {
+      if (_error != null && mounted) setState(() => _error = null);
+    });
   }
 
   @override
@@ -674,12 +708,15 @@ class _PaymentSheetState extends State<_PaymentSheet> {
         left: 24,
         right: 24,
         top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            (MediaQuery.of(context).padding.bottom > 0
+                ? MediaQuery.of(context).padding.bottom + 16.0
+                : 24.0),
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Text(
           'To\'lov qilish',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.manrope(
             fontSize: 18,
             fontWeight: FontWeight.w700,
             color: AppColors.text(isDark),
@@ -688,7 +725,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
         const SizedBox(height: 6),
         Text(
           'Qarz: ${_fmt(widget.sale.totalRemaining)} so\'m',
-          style: GoogleFonts.inter(color: AppColors.accentRed),
+          style: GoogleFonts.manrope(color: AppColors.accentRed),
         ),
         const SizedBox(height: 20),
 
@@ -700,7 +737,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
           ],
           autofocus: true,
           style:
-              GoogleFonts.inter(color: AppColors.text(isDark), fontSize: 20),
+              GoogleFonts.manrope(color: AppColors.text(isDark), fontSize: 18),
           decoration: InputDecoration(
             hintText: 'Summa',
             prefixText: '',
@@ -708,19 +745,49 @@ class _PaymentSheetState extends State<_PaymentSheet> {
             filled: true,
             fillColor: AppColors.bg(isDark),
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: AppColors.border(isDark))),
             enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: AppColors.border(isDark))),
             focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
                 borderSide:
                     BorderSide(color: AppColors.primary, width: 1.5)),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
+
+        // Xato maydon ostida — SnackBar sheet ortida ko'rinmasdi.
+        if (_error != null) ...[
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.accentRed.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                  color: AppColors.accentRed.withValues(alpha: 0.35)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.error_outline_rounded,
+                    size: 16, color: AppColors.accentRed),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _error!,
+                    style: GoogleFonts.manrope(
+                        fontSize: 13, height: 1.35, color: AppColors.accentRed),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
 
         const SizedBox(height: 14),
 
@@ -744,7 +811,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
           child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: AppColors.primaryGradient,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: ElevatedButton(
               onPressed: _loading ? null : _pay,
@@ -752,7 +819,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
                 backgroundColor: Colors.transparent,
                 shadowColor: Colors.transparent,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(8)),
               ),
               child: _loading
                   ? const SizedBox(
@@ -762,7 +829,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
                           color: Colors.white, strokeWidth: 2))
                   : Text(
                       'Tasdiqlash',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.manrope(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: Colors.white),
@@ -797,7 +864,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
           const SizedBox(width: 6),
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               fontWeight: FontWeight.w600,
               color: sel ? Colors.white : AppColors.textSec(isDark),
             ),
@@ -809,9 +876,24 @@ class _PaymentSheetState extends State<_PaymentSheet> {
 
   Future<void> _pay() async {
     final amount = double.tryParse(_amtCtrl.text.trim()) ?? 0;
-    if (amount <= 0) return;
+    if (amount <= 0) {
+      setState(() => _error = 'To\'lov summasini kiriting');
+      return;
+    }
+    // Client-side ortiqcha to'lov himoyasi: backend rad etganda hech qanday
+    // javob ko'rinmasdi (SnackBar sheet ortida qolardi). Endi oldindan
+    // shaffof xato chiqadi.
+    if (amount > widget.sale.totalRemaining) {
+      setState(() => _error =
+          'Kiritgan summa qarzdan katta. Hozirgi qarz: '
+          '${_fmt(widget.sale.totalRemaining)} so\'m');
+      return;
+    }
 
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     final sp = Provider.of<SaleProvider>(context, listen: false);
     final result = await sp.addPayment(
       saleId: widget.sale.id,
@@ -830,14 +912,11 @@ class _PaymentSheetState extends State<_PaymentSheet> {
         backgroundColor: AppColors.accentGreen,
         behavior: SnackBarBehavior.floating,
         shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(result.error?.userMessage ?? 'Xatolik'),
-        backgroundColor: AppColors.accentRed,
-        behavior: SnackBarBehavior.floating,
-      ));
+      // Xato sheet ichida ko'rsatiladi (SnackBar sheet ortida qolmasdi).
+      setState(() => _error = result.error?.userMessage ?? 'Xatolik');
     }
   }
 
@@ -860,13 +939,16 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
   // Selected items
   final List<_CartItem> _cart = [];
   ClientModel? _selectedClient;
-  String _payMethod = 'cash'; // cash, card, mixed
+  String _payMethod = 'cash'; // cash, card, mixed, debt (qarzga sotish)
   final _cashCtrl = TextEditingController();
   final _cardCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
   DateTime? _dueDate;
   bool _loading = false;
   int _step = 0; // 0=products, 1=client, 2=payment
+  // Sheet ichidagi xato: SnackBar modal sheet ORTIDA qolib ko'rinmasdi
+  // (ClientFormSheet'dagi `_error` bilan bir xil sabab).
+  String? _error;
 
   @override
   void dispose() {
@@ -883,6 +965,7 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
   double get _cashPaid => double.tryParse(_cashCtrl.text) ?? 0;
   double get _cardPaid => double.tryParse(_cardCtrl.text) ?? 0;
   double get _totalPaid {
+    if (_payMethod == 'debt') return 0; // qarzga: hech narsa to'lanmaydi
     if (_payMethod == 'cash') return _cashPaid;
     if (_payMethod == 'card') return _cardPaid;
     return _cashPaid + _cardPaid;
@@ -923,6 +1006,38 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
         ),
 
         const Divider(height: 1),
+
+        // Sheet ichidagi xato (SnackBar sheet ortida qolib ko'rinmasdi).
+        if (_error != null)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.accentRed.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.accentRed.withValues(alpha: 0.4)),
+            ),
+            child: Row(children: [
+              Icon(Icons.error_outline_rounded,
+                  color: AppColors.accentRed, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(_error!,
+                    style: GoogleFonts.manrope(
+                        color: AppColors.accentRed,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600)),
+              ),
+              IconButton(
+                onPressed: () => setState(() => _error = null),
+                icon: Icon(Icons.close_rounded,
+                    color: AppColors.accentRed, size: 18),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ]),
+          ),
 
         // Content
         Expanded(
@@ -965,11 +1080,19 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
                       onSelect: (c) {
                           setState(() {
                               _selectedClient = c;
+                              _error = null; // mijoz tanlandi — xato o'chdi
                               _step = 1; // Return to payment
                           });
                       },
                       onNext: () {
+                        // Mijoz majburiy: tanlanmagan bo'lsa kirmaymiz.
+                        if (_selectedClient == null) {
+                          setState(() => _error =
+                              'Mijoz tanlash majburiy — ro\'yxatdan birini tanlang');
+                          return;
+                        }
                         setState(() {
+                          _error = null;
                           _step = 1; // Return to payment
                         });
                       },
@@ -990,10 +1113,16 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
                       remaining: _remaining,
                       loading: _loading,
                       onSelectClient: () => setState(() => _step = 2),
-                      onMethodChanged: (m) =>
-                          setState(() => _payMethod = m),
-                      onDueDateChanged: (d) =>
-                          setState(() => _dueDate = d),
+                      onAddClient: _addClient,
+                      // Usul/muddat o'zgarsa eski xato o'chadi.
+                      onMethodChanged: (m) => setState(() {
+                        _payMethod = m;
+                        _error = null;
+                      }),
+                      onDueDateChanged: (d) => setState(() {
+                        _dueDate = d;
+                        if (d != null) _error = null;
+                      }),
                       onBack: () => setState(() => _step = 0),
                       onConfirm: _createSale,
                     ),
@@ -1020,7 +1149,7 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
           child: Center(
             child: Text(
               '${numOverride ?? (step + 1)}',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.manrope(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: active ? Colors.white : AppColors.textSec(isDark),
@@ -1031,8 +1160,8 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
         const SizedBox(height: 2),
         Text(
           label,
-          style: GoogleFonts.inter(
-            fontSize: 10,
+          style: GoogleFonts.manrope(
+            fontSize: 12,
             color: active ? AppColors.primary : AppColors.textSec(isDark),
             fontWeight: active ? FontWeight.w600 : FontWeight.normal,
           ),
@@ -1048,8 +1177,47 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
         margin: const EdgeInsets.only(bottom: 16),
       );
 
+  /// To'lov qadamidagi `+` tugmasi: shu yerdan yangi mijoz qo'shamiz.
+  /// `ClientFormSheet` saqlaganda yangi `ClientModel` qaytaradi —
+  /// uni darhol tanlangan mijoz qilib qo'yamiz.
+  Future<void> _addClient() async {
+    final isDark = widget.isDark;
+    final created = await showModalBottomSheet<ClientModel>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.card(isDark),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => ClientFormSheet(isDark: isDark),
+    );
+    if (created != null && mounted) {
+      setState(() {
+        _selectedClient = created;
+        _error = null; // yangi mijoz qo'shildi — xato o'chdi
+      });
+    }
+  }
+
   Future<void> _createSale() async {
     if (_cart.isEmpty || _loading) return; // ikki marta yuborishni oldini olamiz
+
+    // ── Majburiy tekshiruvlar (yuborishdan oldin) ────────────────
+    // 1) Mijoz — endi majburiy: qarz Qarzdorlar'ga tushishi uchun
+    //    backend'da `client_id` shart.
+    if (_selectedClient == null) {
+      setState(() {
+        _error = 'Mijoz tanlash majburiy — yangi mijozni `+` bilan qo\'shing';
+        _step = 2; // Mijozlar qadamiga o'tkazamiz
+      });
+      return;
+    }
+    // 2) Qarz usulida muddat majburiy.
+    if (_payMethod == 'debt' && _dueDate == null) {
+      setState(() => _error = 'Qarz muddatini tanlash majburiy');
+      return;
+    }
+    setState(() => _error = null);
+
     setState(() => _loading = true);
 
     final sp = Provider.of<SaleProvider>(context, listen: false);
@@ -1064,7 +1232,11 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
 
     double cashAmt = 0;
     double cardAmt = 0;
-    if (_payMethod == 'cash') {
+    if (_payMethod == 'debt') {
+      // Qarzga sotish: hech qanday to'lov yo'q, butun summa qarzga.
+      cashAmt = 0;
+      cardAmt = 0;
+    } else if (_payMethod == 'cash') {
       cashAmt = _cashPaid;
     } else if (_payMethod == 'card') {
       cardAmt = _cardPaid;
@@ -1115,7 +1287,7 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
         backgroundColor: AppColors.accentGreen,
         behavior: SnackBarBehavior.floating,
         shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -1294,7 +1466,7 @@ class _ProductStepState extends State<_ProductStep> {
                   child: Text(
                     '${widget.cart.length} mahsulot | ${_fmt(widget.cart.fold(0.0, (s, i) => s + i.qty * i.product.sellingPrice))} so\'m',
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.manrope(
                         color: AppColors.primary, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -1305,10 +1477,10 @@ class _ProductStepState extends State<_ProductStep> {
           // Search
           TextField(
             controller: _searchCtrl,
-            style: GoogleFonts.inter(color: AppColors.text(isDark), fontSize: 14),
+            style: GoogleFonts.manrope(color: AppColors.text(isDark), fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Mahsulot izlash...',
-              hintStyle: GoogleFonts.inter(
+              hintStyle: GoogleFonts.manrope(
                   color: AppColors.textHint(isDark), fontSize: 14),
               prefixIcon: Icon(Icons.search_rounded,
                   color: AppColors.textHint(isDark)),
@@ -1320,15 +1492,15 @@ class _ProductStepState extends State<_ProductStep> {
               filled: true,
               fillColor: AppColors.bg(isDark),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: AppColors.border(isDark)),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: AppColors.border(isDark)),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
                 borderSide:
                     BorderSide(color: AppColors.primary, width: 1.5),
               ),
@@ -1377,7 +1549,13 @@ class _ProductStepState extends State<_ProductStep> {
       ),
 
       Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            MediaQuery.of(context).padding.bottom > 0
+                ? MediaQuery.of(context).padding.bottom + 12
+                : 16),
         child: SizedBox(
           width: double.infinity,
           height: 50,
@@ -1401,10 +1579,8 @@ class _ProductStepState extends State<_ProductStep> {
                 gradient: widget.canContinue
                     ? AppColors.primaryGradient
                     // Savat bo'sh — tugma ko'rinadi, lekin bosilmaydi.
-                    : const LinearGradient(
-                        colors: [Color(0xFFB6BAC7), Color(0xFFA3A8B7)],
-                      ),
-                borderRadius: BorderRadius.circular(14),
+                    : const LinearGradient(colors: [AppColors.mute, AppColors.mute]),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: ElevatedButton(
                 onPressed: widget.canContinue ? widget.onNext : null,
@@ -1412,13 +1588,13 @@ class _ProductStepState extends State<_ProductStep> {
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 child: Text(
                   widget.canContinue
                       ? 'Davom etish →'
                       : 'Savatga mahsulot qo\'shing',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color:
@@ -1462,7 +1638,7 @@ class _ProductSelectTile extends StatelessWidget {
         color: cartItem != null
             ? AppColors.primary.withValues(alpha: 0.06)
             : AppColors.bg(isDark),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: cartItem != null
               ? AppColors.primary.withValues(alpha: 0.3)
@@ -1476,7 +1652,7 @@ class _ProductSelectTile extends StatelessWidget {
             children: [
               Text(
                 product.productName,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppColors.text(isDark),
@@ -1486,7 +1662,7 @@ class _ProductSelectTile extends StatelessWidget {
               ),
               Text(
                 '${_fmt(product.sellingPrice)} so\'m | Qoldi: ${fmtQty(product.quantity)} ${product.unit}',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                     fontSize: 12, color: AppColors.textSec(isDark)),
               ),
             ],
@@ -1496,16 +1672,21 @@ class _ProductSelectTile extends StatelessWidget {
           IconButton(
             tooltip: 'Savatdan olib tashlash',
             onPressed: onRemove,
-            icon: const Icon(Icons.remove_circle_rounded, color: Colors.red),
+            icon: const Icon(Icons.remove_circle_rounded, color: AppColors.accentRed),
             iconSize: 22,
             padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
+            // DESIGN §12: touch target ≥44px — iconni kichraytirmasdan
+            // bosish maydonini 44×44 ga kengaytiramiz.
+            constraints:
+                const BoxConstraints(minWidth: 44, minHeight: 44),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Text(
-              '${cartItem!.qty}',
-              style: GoogleFonts.inter(
+              // Xom `'${qty}'` → "1.0" deb chiqardi (double).
+              // fmtQty 1.0 → "1", 2.5 → "2.5" ko'rinishida beradi.
+              fmtQty(cartItem!.qty),
+              style: GoogleFonts.manrope(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
                 color: AppColors.primary,
@@ -1525,7 +1706,9 @@ class _ProductSelectTile extends StatelessWidget {
           ),
           iconSize: 22,
           padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
+          // DESIGN §12: touch target ≥44px.
+          constraints:
+              const BoxConstraints(minWidth: 44, minHeight: 44),
         ),
       ]),
     );
@@ -1577,24 +1760,24 @@ class _ClientStepState extends State<_ClientStep> {
         padding: const EdgeInsets.all(16),
         child: TextField(
           controller: _searchCtrl,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.manrope(
               color: AppColors.text(isDark), fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Mijozni izlash...',
-            hintStyle: GoogleFonts.inter(
+            hintStyle: GoogleFonts.manrope(
                 color: AppColors.textHint(isDark), fontSize: 14),
             prefixIcon: Icon(Icons.search_rounded,
                 color: AppColors.textHint(isDark)),
             filled: true,
             fillColor: AppColors.bg(isDark),
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: AppColors.border(isDark))),
             enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: AppColors.border(isDark))),
             focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
                 borderSide:
                     BorderSide(color: AppColors.primary, width: 1.5)),
             contentPadding:
@@ -1604,23 +1787,8 @@ class _ClientStepState extends State<_ClientStep> {
         ),
       ),
 
-      // "Mijosiz" option
-      ListTile(
-        onTap: () {
-          widget.onSelect(null);
-          setState(() {});
-        },
-        leading: CircleAvatar(
-          backgroundColor: AppColors.border(isDark),
-          child: Icon(Icons.person_off_outlined,
-              color: AppColors.textSec(isDark)),
-        ),
-        title: Text('Mijosiz sotuv',
-            style: GoogleFonts.inter(color: AppColors.text(isDark))),
-        trailing: widget.selected == null
-            ? Icon(Icons.check_circle_rounded, color: AppColors.primary)
-            : null,
-      ),
+      // "Mijosiz sotuv" varianti OLIB TASHLANDI: mijoz endi majburiy
+      // (qarz Qarzdorlar'ga tushishi uchun backend'da client_id shart).
 
       const Divider(height: 1),
 
@@ -1641,7 +1809,7 @@ class _ClientStepState extends State<_ClientStep> {
                     : AppColors.border(isDark),
                 child: Text(
                   c.clientName.isNotEmpty ? c.clientName[0].toUpperCase() : '?',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontWeight: FontWeight.w700,
                     color:
                         sel ? AppColors.primary : AppColors.textSec(isDark),
@@ -1649,12 +1817,12 @@ class _ClientStepState extends State<_ClientStep> {
                 ),
               ),
               title: Text(c.clientName,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                       color: AppColors.text(isDark),
                       fontWeight: FontWeight.w500)),
               subtitle: (c.clientPhone != null && c.clientPhone!.trim().isNotEmpty)
                   ? Text(displayUzPhone(c.clientPhone),
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.manrope(
                           color: AppColors.textSec(isDark), fontSize: 12))
                   : null,
               trailing: sel
@@ -1667,7 +1835,13 @@ class _ClientStepState extends State<_ClientStep> {
       ),
 
       Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            MediaQuery.of(context).padding.bottom > 0
+                ? MediaQuery.of(context).padding.bottom + 12
+                : 16),
         child: Row(children: [
           Expanded(
             child: OutlinedButton(
@@ -1675,11 +1849,11 @@ class _ClientStepState extends State<_ClientStep> {
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: AppColors.border(isDark)),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: Text('← Orqaga',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                       color: AppColors.textSec(isDark))),
             ),
           ),
@@ -1689,7 +1863,7 @@ class _ClientStepState extends State<_ClientStep> {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: AppColors.primaryGradient,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: ElevatedButton(
                 onPressed: widget.onNext,
@@ -1697,11 +1871,11 @@ class _ClientStepState extends State<_ClientStep> {
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                      borderRadius: BorderRadius.circular(8)),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: Text('Davom etish →',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.manrope(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: Colors.white)),
@@ -1730,6 +1904,7 @@ class _PaymentStep extends StatefulWidget {
   final double remaining;
   final bool loading;
   final VoidCallback onSelectClient;
+  final Future<void> Function()? onAddClient;
   final void Function(String) onMethodChanged;
   final void Function(DateTime?) onDueDateChanged;
   final VoidCallback onBack;
@@ -1750,6 +1925,7 @@ class _PaymentStep extends StatefulWidget {
     required this.remaining,
     required this.loading,
     required this.onSelectClient,
+    this.onAddClient,
     required this.onMethodChanged,
     required this.onDueDateChanged,
     required this.onBack,
@@ -1770,11 +1946,12 @@ class _PaymentStepState extends State<_PaymentStep> {
       padding: const EdgeInsets.all(16),
       child: Column(children: [
         // Total display
+        // DESIGN: tugma/kartalarda GRADIENT TAQIQLANADI → qattiq action rang.
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: AppColors.primaryGradient,
-            borderRadius: BorderRadius.circular(16),
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Row(children: [
             Expanded(
@@ -1782,13 +1959,13 @@ class _PaymentStepState extends State<_PaymentStep> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Jami summa',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.manrope(
                             color: Colors.white.withValues(alpha: 0.8),
                             fontSize: 12)),
                     Text(
                       '${_fmt(widget.total)} so\'m',
-                      style: GoogleFonts.inter(
-                        fontSize: 26,
+                      style: GoogleFonts.manrope(
+                        fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
@@ -1798,12 +1975,12 @@ class _PaymentStepState extends State<_PaymentStep> {
             if (remaining > 0)
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 Text('Qarz',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.manrope(
                         color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 12)),
                 Text(
                   '${_fmt(remaining)} so\'m',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: Colors.white),
@@ -1814,7 +1991,9 @@ class _PaymentStepState extends State<_PaymentStep> {
 
         const SizedBox(height: 16),
 
-        // Optional Client Selection
+        // Client Selection — ENDI MAJBURIY (qarz Qarzdorlar'ga tushishi
+        // uchun backend'da client_id shart). Yonida `+` tugmasi orqali
+        // shu yerdan yangi mijoz qo'shiladi (kontakt/ro'yxatdan emas).
         ListTile(
           contentPadding: EdgeInsets.zero,
           onTap: widget.onSelectClient,
@@ -1823,29 +2002,53 @@ class _PaymentStepState extends State<_PaymentStep> {
             child: Icon(Icons.person_outline_rounded, color: AppColors.primary),
           ),
           title: Text(
-            widget.selectedClient?.clientName ?? 'Mijoz (Ixtiyoriy)',
-            style: GoogleFonts.inter(
+            widget.selectedClient?.clientName ?? 'Mijoz (majburiy)',
+            style: GoogleFonts.manrope(
               fontWeight: FontWeight.w600,
-              color: AppColors.text(isDark),
+              color: widget.selectedClient == null
+                  ? AppColors.accentRed
+                  : AppColors.text(isDark),
             ),
           ),
           subtitle: widget.selectedClient != null
               ? Text(
-                  widget.selectedClient!.clientPhone ?? 'Raqamsiz',
-                  style: GoogleFonts.inter(
+                  () {
+                    final p = displayUzPhone(widget.selectedClient!.clientPhone);
+                    return p.isEmpty ? 'Raqamsiz' : p;
+                  }(),
+                  style: GoogleFonts.manrope(
                     color: AppColors.textSec(isDark),
                     fontSize: 12,
                   ),
                 )
-              : null,
-          trailing: Icon(Icons.chevron_right_rounded, color: AppColors.textHint(isDark)),
+              : Text(
+                  'Tanlang yoki `+` bilan yangisini qo\'shing',
+                  style: GoogleFonts.manrope(
+                    color: AppColors.textHint(isDark),
+                    fontSize: 12,
+                  ),
+                ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Yangi mijoz qo'shish — shu qatorda.
+              IconButton(
+                onPressed: widget.onAddClient,
+                tooltip: 'Yangi mijoz qo\'shish',
+                icon: Icon(Icons.add_circle_outline_rounded,
+                    color: AppColors.primary),
+              ),
+              Icon(Icons.chevron_right_rounded,
+                  color: AppColors.textHint(isDark)),
+            ],
+          ),
         ),
 
         const SizedBox(height: 16),
 
         // Payment method
         Text('To\'lov usuli',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textSec(isDark))),
@@ -1856,6 +2059,9 @@ class _PaymentStepState extends State<_PaymentStep> {
           Expanded(child: _mBtn('Karta', 'card', isDark)),
           const SizedBox(width: 6),
           Expanded(child: _mBtn('Ikkalasi', 'mixed', isDark)),
+          const SizedBox(width: 6),
+          // Qarzga sotish: butun summa qarzga yoziladi, muddat majburiy.
+          Expanded(child: _mBtn('Qarz', 'debt', isDark)),
         ]),
 
         const SizedBox(height: 14),
@@ -1890,7 +2096,7 @@ class _PaymentStepState extends State<_PaymentStep> {
                 child: Text(
                   'To\'lanadigan: ${_fmt(widget.totalPaid)} so\'m',
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                       fontSize: 13,
                       color: AppColors.accentGreen,
                       fontWeight: FontWeight.w600),
@@ -1903,11 +2109,16 @@ class _PaymentStepState extends State<_PaymentStep> {
         // Due date (if debt)
         if (remaining > 0) ...[
           const SizedBox(height: 14),
-          Text('Muddat (ixtiyoriy)',
-              style: GoogleFonts.inter(
+          Text(
+              widget.payMethod == 'debt'
+                  ? 'Muddat (majburiy)'
+                  : 'Muddat (ixtiyoriy)',
+              style: GoogleFonts.manrope(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSec(isDark))),
+                  color: widget.payMethod == 'debt' && widget.dueDate == null
+                      ? AppColors.accentRed
+                      : AppColors.textSec(isDark))),
           const SizedBox(height: 8),
           GestureDetector(
             onTap: () async {
@@ -1924,7 +2135,7 @@ class _PaymentStepState extends State<_PaymentStep> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: AppColors.card(isDark),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.border(isDark)),
               ),
               child: Row(children: [
@@ -1935,7 +2146,7 @@ class _PaymentStepState extends State<_PaymentStep> {
                   widget.dueDate != null
                       ? '${widget.dueDate!.day.toString().padLeft(2, '0')}.${widget.dueDate!.month.toString().padLeft(2, '0')}.${widget.dueDate!.year}'
                       : 'Muddat tanlang...',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 14,
                     color: widget.dueDate != null
                         ? AppColors.text(isDark)
@@ -1951,24 +2162,24 @@ class _PaymentStepState extends State<_PaymentStep> {
         const SizedBox(height: 14),
         TextField(
           controller: widget.noteCtrl,
-          style: GoogleFonts.inter(color: AppColors.text(isDark), fontSize: 14),
+          style: GoogleFonts.manrope(color: AppColors.text(isDark), fontSize: 14),
           maxLines: 2,
           decoration: InputDecoration(
             hintText: 'Izoh (ixtiyoriy)...',
-            hintStyle: GoogleFonts.inter(
+            hintStyle: GoogleFonts.manrope(
                 color: AppColors.textHint(isDark), fontSize: 14),
             prefixIcon: Icon(Icons.notes_rounded,
                 color: AppColors.textHint(isDark), size: 20),
             filled: true,
             fillColor: AppColors.card(isDark),
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: AppColors.border(isDark))),
             enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: AppColors.border(isDark))),
             focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
                 borderSide:
                     BorderSide(color: AppColors.primary, width: 1.5)),
             contentPadding:
@@ -1985,11 +2196,11 @@ class _PaymentStepState extends State<_PaymentStep> {
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: AppColors.border(isDark)),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: Text('← Orqaga',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                       color: AppColors.textSec(isDark))),
             ),
           ),
@@ -1999,7 +2210,7 @@ class _PaymentStepState extends State<_PaymentStep> {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: AppColors.primaryGradient,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: ElevatedButton(
                 onPressed: widget.loading ? null : widget.onConfirm,
@@ -2007,7 +2218,7 @@ class _PaymentStepState extends State<_PaymentStep> {
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                      borderRadius: BorderRadius.circular(8)),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: widget.loading
@@ -2017,7 +2228,7 @@ class _PaymentStepState extends State<_PaymentStep> {
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
                     : Text('✓ Tasdiqlash',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.manrope(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: Colors.white)),
@@ -2026,7 +2237,11 @@ class _PaymentStepState extends State<_PaymentStep> {
           ),
         ]),
 
-        const SizedBox(height: 20),
+        SizedBox(
+          height: MediaQuery.of(context).padding.bottom > 0
+              ? MediaQuery.of(context).padding.bottom + 16
+              : 20,
+        ),
       ]),
     );
   }
@@ -2041,7 +2256,7 @@ class _PaymentStepState extends State<_PaymentStep> {
         decoration: BoxDecoration(
           gradient: sel ? AppColors.primaryGradient : null,
           color: sel ? null : AppColors.card(isDark),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: sel ? AppColors.primary : AppColors.border(isDark),
           ),
@@ -2049,7 +2264,7 @@ class _PaymentStepState extends State<_PaymentStep> {
         child: Center(
           child: Text(
             label,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: sel ? Colors.white : AppColors.textSec(isDark),
@@ -2064,7 +2279,7 @@ class _PaymentStepState extends State<_PaymentStep> {
       String label, TextEditingController ctrl, bool isDark) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.manrope(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.textSec(isDark))),
@@ -2076,23 +2291,23 @@ class _PaymentStepState extends State<_PaymentStep> {
         inputFormatters: [
           FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
         ],
-        style: GoogleFonts.inter(
+        style: GoogleFonts.manrope(
             color: AppColors.text(isDark), fontSize: 16),
         decoration: InputDecoration(
           hintText: '0',
           suffixText: 'so\'m',
-          suffixStyle: GoogleFonts.inter(
+          suffixStyle: GoogleFonts.manrope(
               color: AppColors.textSec(isDark), fontSize: 14),
           filled: true,
           fillColor: AppColors.card(isDark),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: AppColors.border(isDark))),
           enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: AppColors.border(isDark))),
           focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(8),
               borderSide:
                   BorderSide(color: AppColors.primary, width: 1.5)),
           contentPadding:

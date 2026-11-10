@@ -9,7 +9,10 @@ import '../utils/format_utils.dart';
 import '../providers/theme_provider.dart';
 import '../providers/statistics_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/debt_provider.dart';
 import '../models/statistics_model.dart';
+import '../models/ai_overview_model.dart';
+import '../services/api_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   // Boshqaruv panelidagi stat kartalar bosilganda tegishli bo'limga
@@ -24,6 +27,11 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  AiOverviewModel? _aiData;
+  bool _aiLoading = false;
+  String? _aiError;
+  DateTime? _lastAiForceAt;
+
   @override
   void initState() {
     super.initState();
@@ -33,9 +41,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _load() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final stats = Provider.of<StatisticsProvider>(context, listen: false);
+    // Async gap'dan oldin olinadi (analyze: use_build_context_synchronously).
+    final debts = Provider.of<DebtProvider>(context, listen: false);
     if (auth.isAuthenticated) {
       await auth.loadProfile();
-      await stats.loadAll();
+      // "Qarzdorlar" kartasi qarzlar ro'yxatidan hisoblanadi (web'dek
+      // `debtors.length`). `/statistics/full` qarzdorlar sonini YUBORMAYDI,
+      // shuning uchun ro'yxat bo'sh bo'lsa yuklaymiz.
+      final futures = <Future<void>>[
+        stats.loadAll(),
+        _loadAi(force: false),
+      ];
+      if (debts.debts.isEmpty) futures.add(debts.loadDebts());
+      await Future.wait(futures);
+    }
+  }
+
+  Future<void> _loadAi({bool force = false}) async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (!auth.isAuthenticated || auth.isDemo) return;
+
+    if (force) {
+      if (_lastAiForceAt != null &&
+          DateTime.now().difference(_lastAiForceAt!).inSeconds < 15) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Iltimos, qayta tahlil uchun 15 soniya kuting'),
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+      _lastAiForceAt = DateTime.now();
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _aiLoading = true;
+      _aiError = null;
+    });
+
+    try {
+      final res = await ApiService.get(
+        '/ai/overview',
+        queryParams: {
+          'period': 'daily',
+          if (force) 'force': 'true',
+        },
+      );
+      if (mounted) {
+        setState(() {
+          _aiData = AiOverviewModel.fromJson(res);
+          _aiLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _aiLoading = false;
+          _aiError = 'AI tahlilini yuklab bo\'lmadi';
+        });
+      }
     }
   }
 
@@ -43,11 +110,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // 2 = Mahsulotlar, 3 = Kunlik Savdolar, 4 = Qarzdorlar.
   void Function() _go(int index) => () => widget.onTab?.call(index);
 
+  // Statistika kartalari uchun ratio: DESIGN ratio 1.55 faqat karta
+  // balandligi ≥112dp bo'lganda qo'llanadi (ichki kontent 106dp).
+  // Tor ekranlarda karta balandligi 112dp da ushlanadi — aks holda
+  // 320dp da "BOTTOM OVERFLOWED BY 17 PIXELS" xatosi chiqardi.
+  double _statGridRatio(BuildContext context) {
+    final w = MediaQuery.sizeOf(context).width;
+    final cardW = (w - 16 * 2 - 12) / 2; // horizontal padding + spacing
+    final designH = cardW / 1.55;
+    final h = designH > 112 ? designH : 112.0;
+    return cardW / h;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Provider.of<ThemeProvider>(context).isDark;
     final auth = Provider.of<AuthProvider>(context);
     final statsProvider = Provider.of<StatisticsProvider>(context);
+    // Qarzdorlar soni: web'dek qarzlar ro'yxatidan (debtors.length).
+    // `/statistics/full` bu sonni yubormaydi → stats'dan o'qish doim 0 edi.
+    final debtProvider = Provider.of<DebtProvider>(context);
+    final debtorsCount = debtProvider.debts.isNotEmpty
+        ? debtProvider.debts.length
+        : (statsProvider.stats?.debtorsCount ?? 0);
 
     return Scaffold(
       backgroundColor: AppColors.bg(isDark),
@@ -65,8 +150,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 decoration: BoxDecoration(
                   gradient: AppColors.primaryGradient,
                   borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(28),
-                    bottomRight: Radius.circular(28),
+                    bottomLeft: Radius.circular(16),
+                    bottomRight: Radius.circular(16),
                   ),
                 ),
                 child: Column(
@@ -80,7 +165,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             children: [
                               Text(
                                 _greeting(),
-                                style: GoogleFonts.inter(
+                                style: GoogleFonts.manrope(
                                   fontSize: 13,
                                   color: Colors.white.withValues(alpha: 0.8),
                                 ),
@@ -90,8 +175,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 auth.store?.ceoName ??
                                     auth.store?.storeName ??
                                     'MARK1 CRM',
-                                style: GoogleFonts.inter(
-                                  fontSize: 22,
+                                style: GoogleFonts.manrope(
+                                  fontSize: 18,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
                                 ),
@@ -99,7 +184,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               if (auth.store?.storeName != null)
                                 Text(
                                   auth.store!.storeName,
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.manrope(
                                     fontSize: 13,
                                     color:
                                         Colors.white.withValues(alpha: 0.75),
@@ -123,7 +208,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           ? auth.store!.ceoName[0]
                                           : 'M')
                                       .toUpperCase(),
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.manrope(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
@@ -141,7 +226,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         children: [
@@ -154,7 +239,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               children: [
                                 Text(
                                   'Oylik tushum',
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.manrope(
                                     fontSize: 12,
                                     color:
                                         Colors.white.withValues(alpha: 0.8),
@@ -166,8 +251,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     : Text(
                                         _formatMoney(statsProvider.stats
                                             ?.monthlyRevenue),
-                                        style: GoogleFonts.inter(
-                                          fontSize: 22,
+                                        style: GoogleFonts.manrope(
+                                          fontSize: 18,
                                           fontWeight: FontWeight.w800,
                                           color: Colors.white,
                                         ),
@@ -200,20 +285,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.1),
+                    color: AppColors.accentOrange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: Colors.orange.withValues(alpha: 0.3)),
+                        color: AppColors.accentOrange.withValues(alpha: 0.3)),
                   ),
                   child: Row(children: [
                     const Icon(Icons.info_outline_rounded,
-                        color: Colors.orange, size: 20),
+                        color: AppColors.accentOrange, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Demo rejim: statistika ko\'rsatilmayapti. To\'liq uchun kiring.',
-                        style: GoogleFonts.inter(
-                            fontSize: 13, color: Colors.orange),
+                        style: GoogleFonts.manrope(
+                            fontSize: 13, color: AppColors.accentOrange),
                       ),
                     ),
                   ]),
@@ -225,12 +310,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               sliver: SliverGrid(
-                gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  childAspectRatio: 1.55,
+                  // Tor ekranlarda (≤390dp) 1.55 ratio karta balandligini
+                  // 89ga tushirib, ichki kontent (ikonka+qiymat+yorliq
+                  // = 106dp) sig'masligi sababli 17px OVERFLOW berardi.
+                  // Endi karta balandligi hech qachon 112dp dan kam emas.
+                  childAspectRatio: _statGridRatio(context),
                 ),
                 delegate: SliverChildListDelegate([
                   _StatCard(
@@ -257,7 +345,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     value: _formatMoney(
                         statsProvider.stats?.inventoryBalance),
                     icon: Icons.inventory_2_rounded,
-                    color: Colors.blue,
+                    color: AppColors.accentBlue,
                     isDark: isDark,
                     loading: statsProvider.isLoading,
                   ),
@@ -273,9 +361,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _StatCard(
                     title: 'Qarzdorlar',
                     onTap: _go(4), // Qarzdorlar
-                    value: '${statsProvider.stats?.debtorsCount ?? 0} ta',
+                    value: '$debtorsCount ta',
                     icon: Icons.people_outline_rounded,
-                    color: Colors.orange,
+                    color: AppColors.accentOrange,
                     isDark: isDark,
                     loading: statsProvider.isLoading,
                   ),
@@ -285,13 +373,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     value:
                         '${statsProvider.stats?.lowStockCount ?? 0} mahsulot',
                     icon: Icons.inventory_outlined,
-                    color: Colors.purple,
+                    color: AppColors.accentOrange,
                     isDark: isDark,
                     loading: statsProvider.isLoading,
                   ),
                 ]),
               ),
             ),
+
+            // MARK1 AI — Daily Business Overview (Web saytdagidek sun'iy intellekt tahlili)
+            if (auth.isAuthenticated && !auth.isDemo)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: _AiOverviewSection(
+                    data: _aiData,
+                    isLoading: _aiLoading,
+                    error: _aiError,
+                    isDark: isDark,
+                    onRefresh: () => _loadAi(force: true),
+                  ),
+                ),
+              ),
 
             // Payment breakdown
             SliverToBoxAdapter(
@@ -358,6 +461,420 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
+// ─── MARK1 AI Daily Overview Card ────────────────────────────────
+// DESIGN §5 Card: radius 12, steel border, ichida hint panel (radius 8).
+// Insight matni raqamlangan nuqtalarga bo'linadi, dastlab 2 tasi
+// ko'rinadi, "Batafsil" bilan ochiladi. Metrikalar DESIGN stat
+// kartalari ko'rinishida (Small label → figure → izoh).
+class _AiOverviewSection extends StatefulWidget {
+  final AiOverviewModel? data;
+  final bool isLoading;
+  final String? error;
+  final bool isDark;
+  final VoidCallback onRefresh;
+
+  const _AiOverviewSection({
+    required this.data,
+    required this.isLoading,
+    required this.error,
+    required this.isDark,
+    required this.onRefresh,
+  });
+
+  @override
+  State<_AiOverviewSection> createState() => _AiOverviewSectionState();
+}
+
+class _AiOverviewSectionState extends State<_AiOverviewSection> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card(isDark),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border(isDark)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header: icon tile + sarlavha + refresh
+            Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.auto_awesome_rounded,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Biznes tahlili',
+                    style: GoogleFonts.manrope(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.text(isDark),
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: widget.isLoading ? null : widget.onRefresh,
+                  tooltip: 'Qayta tahlil qilish',
+                  icon: widget.isLoading
+                      ? SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : Icon(
+                          Icons.refresh_rounded,
+                          color: AppColors.textSec(isDark),
+                          size: 20,
+                        ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Content Body
+            if (widget.isLoading && widget.data == null)
+              _buildLoadingState()
+            else if (widget.error != null && widget.data == null)
+              _buildErrorState()
+            else if (widget.data != null)
+              _buildDataState()
+            else
+              _buildLoadingState(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Aqlli yordamchi savdo, ombor va qarzlarni tahlil qilmoqda...',
+              style: GoogleFonts.manrope(
+                fontSize: 12.5,
+                color: AppColors.textSec(widget.isDark),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.accentRed.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline_rounded, color: AppColors.accentRed, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              widget.error ?? 'Tahlilni olishda xatolik yuz berdi',
+              style: GoogleFonts.manrope(fontSize: 12, color: AppColors.accentRed),
+            ),
+          ),
+          TextButton(
+            onPressed: widget.onRefresh,
+            child: const Text('Qayta urinish', style: TextStyle(fontSize: 12)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Insight matnini qoidalarga ajratadi: yangi satrlar yoki nuqta bilan
+  // tugaydigan gaplar. RAQAMLASH — DESIGN §7 (raqam birinchi o'rinda).
+  List<String> _splitInsights(String text) {
+    final normalized = text.replaceAll(RegExp(r'\s*\n\s*'), '\n').trim();
+    List<String> parts = normalized
+        .split('\n')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (parts.length == 1) {
+      parts = normalized
+          .split(RegExp(r'(?<=\.)\s+'))
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    // Agar hali ham bitta bo'lsa — 140 belgidan uzamiz.
+    if (parts.length == 1 && parts.first.length > 160) {
+      final one = parts.first;
+      parts = [];
+      for (var i = 0; i < one.length; i += 140) {
+        parts.add(one.substring(i, i + 140 > one.length ? one.length : i + 140));
+      }
+    }
+    // Ichki raqamli bandlarni ("1) ... 2) ...") ham alohida punktlarga
+    // ajratamiz — server bitta satrda yuborsa ham bo'lsin.
+    final expanded = <String>[];
+    for (final part in parts) {
+      if (part.contains(RegExp(r'\d+\)\s'))) {
+        final subs = part
+            .split(RegExp(r'(?=\d+\)\s)'))
+            .map((s) => s.replaceFirst(RegExp(r'^\d+\)\s*'), '').trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
+        if (subs.length > 1) {
+          expanded.addAll(subs);
+          continue;
+        }
+      }
+      expanded.add(part);
+    }
+    return expanded;
+  }
+
+  Widget _buildDataState() {
+    final isDark = widget.isDark;
+    final insights = widget.data?.overviewText != null &&
+            widget.data!.overviewText!.isNotEmpty
+        ? _splitInsights(widget.data!.overviewText!)
+        : <String>[];
+    final visible = _expanded ? insights : insights.take(2).toList();
+    final hasMore = insights.length > 2;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Insight nuqtalari (raqamlangan)
+        if (insights.isNotEmpty)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.snow.withValues(alpha: 0.04) : AppColors.primary.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.border(isDark)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < visible.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 18,
+                        height: 18,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '${i + 1}',
+                          style: GoogleFonts.manrope(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          visible[i],
+                          style: GoogleFonts.manrope(
+                            fontSize: 12.5,
+                            height: 1.45,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.text(isDark),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (hasMore)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, left: 26),
+                    child: InkWell(
+                      onTap: () => setState(() => _expanded = !_expanded),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        child: Text(
+                          _expanded
+                              ? 'Yig\'ish'
+                              : 'Batafsil (${insights.length} ta)',
+                          style: GoogleFonts.manrope(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+        const SizedBox(height: 12),
+
+        // DESIGN stat kartalari: label (Small, text-2) → figure (24/800)
+        Row(
+          children: [
+            Expanded(
+              child: _statTile(
+                label: 'Tushum',
+                value: fmtMoney(widget.data?.revenue ?? 0),
+                caption: 'bugun',
+                color: AppColors.accentGreen,
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _statTile(
+                label: 'Kam tovar',
+                value: '${widget.data?.lowStockCount ?? 0}',
+                caption: 'ta mahsulot',
+                color: AppColors.accentOrange,
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _statTile(
+                label: 'Muddati o\'tgan',
+                value: '${widget.data?.overdueClients ?? 0}',
+                caption: 'kishi',
+                color: AppColors.accentRed,
+                isDark: isDark,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // DESIGN §5 Stat card: label → katta figure → izoh; status = nuqta + rang.
+  Widget _statTile({
+    required String label,
+    required String value,
+    required String caption,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surface(isDark) : AppColors.card(isDark),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border(isDark)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.manrope(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSec(isDark),
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: GoogleFonts.manrope(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.text(isDark),
+                letterSpacing: -0.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 1),
+          Text(
+            caption,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.manrope(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSec(isDark),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ─── Stat Card ────────────────────────────────────────────────────
 class _StatCard extends StatelessWidget {
   final String title;
@@ -395,7 +912,7 @@ class _StatCard extends StatelessWidget {
       color: AppColors.card(isDark),
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: AppColors.border(isDark)),
       ),
       child: InkWell(
@@ -405,55 +922,69 @@ class _StatCard extends StatelessWidget {
             ? Colors.transparent
             : AppColors.primary.withValues(alpha: 0.08),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 18),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              // Header (DESIGN §5): ikonka tile + sarlavha yonma-yon.
+              // Ko'z bir qarashda "qaysi raqam qaysi tushumni bildiradi"
+              // ni oladi — title qiymat ostida mayda yozilganda bu
+              // bog'lanish yo'qoladi.
+              Row(
                 children: [
-                  if (loading)
-                    Container(
-                      width: 70,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: AppColors.border(isDark),
-                        borderRadius: BorderRadius.circular(4),
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, color: color, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: GoogleFonts.manrope(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSec(isDark),
+                        height: 1.25,
                       ),
-                    )
-                  else
-                    Text(
-                      value,
-                      style: GoogleFonts.inter(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.text(isDark),
-                      ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  const SizedBox(height: 2),
-                  Text(
-                    title,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      color: AppColors.textSec(isDark),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
+              if (loading)
+                Container(
+                  width: 70,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: AppColors.border(isDark),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                )
+              else
+                // Tor ekranlarda uzun qiymat ("95 ming so'm")
+                // kesilmasdan kichrayadi: FittedBox faqat matn
+                // kenglikdan oshganda scaleDown qiladi.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    style: GoogleFonts.manrope(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.text(isDark),
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -491,7 +1022,7 @@ class _PaymentBreakdown extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.card(isDark),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border(isDark)),
       ),
       child: Column(
@@ -499,7 +1030,7 @@ class _PaymentBreakdown extends StatelessWidget {
         children: [
           Text(
             'To\'lov usullari',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               fontSize: 15,
               fontWeight: FontWeight.w700,
               color: AppColors.text(isDark),
@@ -518,7 +1049,7 @@ class _PaymentBreakdown extends StatelessWidget {
                       ),
                       Expanded(
                         flex: cardFlex,
-                        child: Container(height: 10, color: Colors.blue),
+                        child: Container(height: 10, color: AppColors.accentBlue),
                       ),
                     ],
                   )
@@ -533,15 +1064,15 @@ class _PaymentBreakdown extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               'Naqd: ${_fmt(cashRevenue)} so\'m',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.manrope(
                   fontSize: 13, color: AppColors.textSec(isDark)),
             ),
             const SizedBox(width: 16),
-            _dot(Colors.blue),
+            _dot(AppColors.accentBlue),
             const SizedBox(width: 6),
             Text(
               'Karta: ${_fmt(cardRevenue)} so\'m',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.manrope(
                   fontSize: 13, color: AppColors.textSec(isDark)),
             ),
           ]),
@@ -584,7 +1115,7 @@ class _WeeklyTrendCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.card(isDark),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border(isDark)),
       ),
       child: Column(
@@ -592,7 +1123,7 @@ class _WeeklyTrendCard extends StatelessWidget {
         children: [
           Text(
             locale.tr('dash_weekly_revenue'),
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               fontSize: 15,
               fontWeight: FontWeight.w700,
               color: AppColors.text(isDark),
@@ -619,11 +1150,11 @@ class _WeeklyTrendCard extends StatelessWidget {
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 40,
+                      reservedSize: 48,
                       getTitlesWidget: (value, meta) {
                         return Text(
                           _formatNumber(value),
-                          style: GoogleFonts.inter(fontSize: 10, color: AppColors.textSec(isDark)),
+                          style: GoogleFonts.manrope(fontSize: 11, color: AppColors.textSec(isDark)),
                         );
                       },
                     ),
@@ -640,7 +1171,7 @@ class _WeeklyTrendCard extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 8.0),
                           child: Text(
                             day,
-                            style: GoogleFonts.inter(fontSize: 10, color: AppColors.textSec(isDark)),
+                            style: GoogleFonts.manrope(fontSize: 11, color: AppColors.textSec(isDark)),
                           ),
                         );
                       },
@@ -727,14 +1258,14 @@ class _ErrorBanner extends StatelessWidget {
           child: Text(
             message,
             style:
-                GoogleFonts.inter(fontSize: 13, color: AppColors.accentRed),
+                GoogleFonts.manrope(fontSize: 13, color: AppColors.accentRed),
           ),
         ),
         GestureDetector(
           onTap: onRetry,
           child: Text(
             'Qayta',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: AppColors.accentRed,

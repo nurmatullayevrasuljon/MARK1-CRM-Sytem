@@ -59,8 +59,8 @@ class _InventoryScreenState extends State<InventoryScreen>
         elevation: 0,
         title: Text(
           'Mahsulotlar',
-          style: GoogleFonts.inter(
-            fontSize: 20,
+          style: GoogleFonts.manrope(
+            fontSize: 18,
             fontWeight: FontWeight.w700,
             color: AppColors.text(isDark),
           ),
@@ -70,15 +70,6 @@ class _InventoryScreenState extends State<InventoryScreen>
             icon: Icon(Icons.category_outlined, color: AppColors.primary),
             tooltip: 'Kategoriyalar',
             onPressed: () => _showCategoriesSheet(context, isDark, pp),
-          ),
-          // Kategoriyalar menyusidan keyingi darajada: kategoriyani tez
-          // qo'shish. `playlist_add` ikonkasi mahsulot qo'shish
-          // (`add_rounded`) dan farqlanadi — ikkalasi yonma-yon
-          // turgani uchun chalkash bo'lmasligi kerak.
-          IconButton(
-            icon: Icon(Icons.playlist_add_rounded, color: AppColors.primary),
-            tooltip: 'Kategoriya qo\'shish',
-            onPressed: () => _showAddCategoryDialog(context, isDark, pp),
           ),
           IconButton(
             icon: Icon(Icons.add_rounded, color: AppColors.primary),
@@ -93,7 +84,7 @@ class _InventoryScreenState extends State<InventoryScreen>
           unselectedLabelColor: AppColors.textSec(isDark),
           indicatorColor: AppColors.primary,
           labelStyle:
-              GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
+              GoogleFonts.manrope(fontSize: 13, fontWeight: FontWeight.w600),
           tabs: const [
             Tab(text: 'Barcha mahsulotlar'),
             Tab(text: 'Oz qolgan'),
@@ -109,11 +100,11 @@ class _InventoryScreenState extends State<InventoryScreen>
               Expanded(
                 child: TextField(
                   controller: _searchCtrl,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                       color: AppColors.text(isDark), fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Mahsulot nomi yoki barkod...',
-                    hintStyle: GoogleFonts.inter(
+                    hintStyle: GoogleFonts.manrope(
                         color: AppColors.textHint(isDark), fontSize: 14),
                     prefixIcon: Icon(Icons.search_rounded,
                         color: AppColors.textHint(isDark)),
@@ -132,17 +123,17 @@ class _InventoryScreenState extends State<InventoryScreen>
                     filled: true,
                     fillColor: AppColors.card(isDark),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide:
                           BorderSide(color: AppColors.border(isDark)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide:
                           BorderSide(color: AppColors.border(isDark)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide:
                           BorderSide(color: AppColors.primary, width: 1.5),
                     ),
@@ -165,7 +156,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.card(isDark),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.border(isDark)),
                   ),
                   child: PopupMenuButton<String?>(
@@ -250,13 +241,13 @@ class _InventoryScreenState extends State<InventoryScreen>
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card(isDark),
         title: Text('O\'chirish',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
                 fontWeight: FontWeight.w700,
                 color: AppColors.text(isDark))),
         content: Text(
           '${p.productName} mahsulotini o\'chirmoqchimisiz?',
           style:
-              GoogleFonts.inter(color: AppColors.textSec(isDark)),
+              GoogleFonts.manrope(color: AppColors.textSec(isDark)),
         ),
         actions: [
           TextButton(
@@ -299,7 +290,7 @@ class _InventoryScreenState extends State<InventoryScreen>
       backgroundColor: AppColors.card(isDark),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
         bool loading = false;
@@ -309,13 +300,16 @@ class _InventoryScreenState extends State<InventoryScreen>
               left: 24,
               right: 24,
               top: 24,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom +
+                  (MediaQuery.of(ctx).padding.bottom > 0
+                      ? MediaQuery.of(ctx).padding.bottom + 16.0
+                      : 24.0),
             ),
             child: SingleChildScrollView(
               child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Text(
                   'Miqdor qo\'shish',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: AppColors.text(isDark),
@@ -324,11 +318,11 @@ class _InventoryScreenState extends State<InventoryScreen>
                 const SizedBox(height: 8),
                 Text(
                   p.productName,
-                  style: GoogleFonts.inter(color: AppColors.textSec(isDark)),
+                  style: GoogleFonts.manrope(color: AppColors.textSec(isDark)),
                 ),
                 Text(
                   'Hozirgi miqdor: ${fmtQty(p.quantity)} ${p.unit}',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                       color: AppColors.primary, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 20),
@@ -341,24 +335,24 @@ class _InventoryScreenState extends State<InventoryScreen>
                         RegExp(r'^\d+\.?\d*'))
                   ],
                   autofocus: true,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                       color: AppColors.text(isDark), fontSize: 15),
                   decoration: InputDecoration(
                     hintText: 'Qo\'shiladigan miqdor (${p.unit})',
-                    hintStyle: GoogleFonts.inter(
+                    hintStyle: GoogleFonts.manrope(
                         color: AppColors.textHint(isDark), fontSize: 14),
                     filled: true,
                     fillColor: AppColors.bg(isDark),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: AppColors.border(isDark)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: AppColors.border(isDark)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: AppColors.primary, width: 1.5),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
@@ -372,21 +366,21 @@ class _InventoryScreenState extends State<InventoryScreen>
                       child: TextField(
                         controller: purPriceCtrl,
                         keyboardType: TextInputType.number,
-                        style: GoogleFonts.inter(color: AppColors.text(isDark), fontSize: 14),
+                        style: GoogleFonts.manrope(color: AppColors.text(isDark), fontSize: 14),
                         decoration: InputDecoration(
                           labelText: 'Kelish narxi (so\'m)',
                           filled: true,
                           fillColor: AppColors.bg(isDark),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(color: AppColors.border(isDark)),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(color: AppColors.border(isDark)),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(color: AppColors.primary, width: 1.5),
                           ),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -398,21 +392,21 @@ class _InventoryScreenState extends State<InventoryScreen>
                       child: TextField(
                         controller: sellPriceCtrl,
                         keyboardType: TextInputType.number,
-                        style: GoogleFonts.inter(color: AppColors.text(isDark), fontSize: 14),
+                        style: GoogleFonts.manrope(color: AppColors.text(isDark), fontSize: 14),
                         decoration: InputDecoration(
                           labelText: 'Sotish narxi (so\'m)',
                           filled: true,
                           fillColor: AppColors.bg(isDark),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(color: AppColors.border(isDark)),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(color: AppColors.border(isDark)),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(color: AppColors.primary, width: 1.5),
                           ),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -428,7 +422,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: AppColors.primaryGradient,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: ElevatedButton(
                       onPressed: loading
@@ -459,7 +453,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
+                            borderRadius: BorderRadius.circular(8)),
                       ),
                       child: loading
                           ? const SizedBox(
@@ -469,7 +463,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                                   color: Colors.white, strokeWidth: 2))
                           : Text(
                             'Qo\'shish',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.manrope(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
@@ -503,7 +497,9 @@ class _InventoryScreenState extends State<InventoryScreen>
   // ─── Yangi kategoriya qo'shish (tez oynasi) ───────────────────
   // Kategoriyalar menyusidan oldin bitta ochish/saqlash bosqichi kerak
   // edi — endi AppBar'dagi `+` to'g'ridan-to'g'ri shu ishni qiladi.
-  Future<void> _showAddCategoryDialog(
+  // Mahsulot formasi ichidagi Kategoriya qatoridagi `+` ham shu metodni
+  // chaqiradi va yaratilgan kategoriya NOMINI qaytaradi (avtomatik tanlash).
+  static Future<String?> showAddCategoryDialog(
       BuildContext ctx, bool isDark, ProductProvider pp) async {
     final ctrl = TextEditingController();
     String? error;
@@ -518,14 +514,14 @@ class _InventoryScreenState extends State<InventoryScreen>
           builder: (ctx, setDlg) => AlertDialog(
             backgroundColor: AppColors.card(isDark),
             title: Text('Yangi kategoriya',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                     fontWeight: FontWeight.w700,
                     color: AppColors.text(isDark))),
             content: TextField(
               controller: ctrl,
               autofocus: true,
               textCapitalization: TextCapitalization.sentences,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.manrope(
                   color: AppColors.text(isDark), fontSize: 15),
               onChanged: (_) {
                 // Xatoni foydalanuvchi yozishni davom etganda tozalaymiz.
@@ -541,7 +537,7 @@ class _InventoryScreenState extends State<InventoryScreen>
               },
               decoration: InputDecoration(
                 hintText: 'Kategoriya nomi',
-                hintStyle: GoogleFonts.inter(
+                hintStyle: GoogleFonts.manrope(
                     color: AppColors.textHint(isDark), fontSize: 14),
                 errorText: error,
                 errorStyle: const TextStyle(color: AppColors.accentRed),
@@ -584,7 +580,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                     // Oyna allaqachon yopilgan bo'lishi mumkin.
                     if (!dialogCtx.mounted) return;
                     if (res.success) {
-                      Navigator.pop(dialogCtx);
+                      Navigator.pop(dialogCtx, name);
                       ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
                         content: Text('$name kategoriyasi qo\'shildi'),
                         backgroundColor: AppColors.accentGreen,
@@ -613,7 +609,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 child: saving
                     ? const SizedBox(
@@ -632,6 +628,7 @@ class _InventoryScreenState extends State<InventoryScreen>
     // (yopish animatsiyasidan keyin) — aks holda dialog hali ekranda
     // qayta qurilayotganda "controller used after disposed" xatosi chiqadi.
     disposeAfterRouteClosed(ctrl.dispose);
+    return null; // bekor qilindi yoki xato — nom qaytmaydi
   }
 
   // ─── Categories bottom sheet ──────────────────────────────────
@@ -642,7 +639,7 @@ class _InventoryScreenState extends State<InventoryScreen>
       backgroundColor: AppColors.card(isDark),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) => _CategoriesSheet(isDark: isDark, pp: pp),
     );
@@ -656,12 +653,15 @@ class _InventoryScreenState extends State<InventoryScreen>
       backgroundColor: AppColors.card(isDark),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) => _ProductFormSheet(
         isDark: isDark,
         pp: pp,
         edit: edit,
+        // Kategoriya qatoridagi `+` shu oynani ochadi va yaratilgan
+        // kategoriya nomini qaytaradi (avtomatik tanlanadi).
+        onAddCategory: () => showAddCategoryDialog(ctx, isDark, pp),
         onSaved: () => _showSnack(
           edit == null ? 'Mahsulot qo\'shildi' : 'Mahsulot yangilandi',
           success: true,
@@ -672,10 +672,10 @@ class _InventoryScreenState extends State<InventoryScreen>
 
   void _showSnack(String msg, {bool success = true}) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
+      content: Text(msg, style: GoogleFonts.manrope(fontWeight: FontWeight.w500)),
       backgroundColor: success ? AppColors.accentGreen : AppColors.accentRed,
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ));
   }
 }
@@ -718,7 +718,7 @@ class _ProductList extends StatelessWidget {
               color: AppColors.accentRed, size: 48),
           const SizedBox(height: 12),
           Text(error!,
-              style: GoogleFonts.inter(color: AppColors.textSec(isDark))),
+              style: GoogleFonts.manrope(color: AppColors.textSec(isDark))),
           const SizedBox(height: 16),
           TextButton(onPressed: onRefresh, child: const Text('Qayta urinish')),
         ]),
@@ -731,7 +731,7 @@ class _ProductList extends StatelessWidget {
               color: AppColors.textHint(isDark), size: 64),
           const SizedBox(height: 12),
           Text('Mahsulotlar yo\'q',
-              style: GoogleFonts.inter(color: AppColors.textSec(isDark))),
+              style: GoogleFonts.manrope(color: AppColors.textSec(isDark))),
         ]),
       );
     }
@@ -794,7 +794,7 @@ class _ProductTile extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.card(isDark),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: product.isLowStock
               ? AppColors.accentRed.withValues(alpha: 0.4)
@@ -822,7 +822,7 @@ class _ProductTile extends StatelessWidget {
             children: [
               Text(
                 product.productName,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppColors.text(isDark),
@@ -846,8 +846,8 @@ class _ProductTile extends StatelessWidget {
                         product.categoryName!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                            fontSize: 10,
+                        style: GoogleFonts.manrope(
+                            fontSize: 12,
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600),
                       ),
@@ -856,7 +856,7 @@ class _ProductTile extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   '${fmtQty(product.quantity)} ${product.unit}',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 12,
                     color: product.isLowStock
                         ? AppColors.accentRed
@@ -875,7 +875,7 @@ class _ProductTile extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 '${_fmt(product.sellingPrice)} so\'m',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primary,
@@ -931,12 +931,15 @@ class _ProductFormSheet extends StatefulWidget {
   final ProductProvider pp;
   final ProductModel? edit;
   final VoidCallback onSaved;
+  /// Kategoriya qatoridagi `+` — yaratilgan kategoriya nomini qaytaradi.
+  final Future<String?> Function()? onAddCategory;
 
   const _ProductFormSheet({
     required this.isDark,
     required this.pp,
     this.edit,
     required this.onSaved,
+    this.onAddCategory,
   });
 
   @override
@@ -995,7 +998,10 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
         left: 24,
         right: 24,
         top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            (MediaQuery.of(context).padding.bottom > 0
+                ? MediaQuery.of(context).padding.bottom + 16.0
+                : 20.0),
       ),
       child: Form(
         key: _formKey,
@@ -1007,7 +1013,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
               Center(
                 child: Text(
                   widget.edit == null ? 'Mahsulot qo\'shish' : 'Mahsulotni tahrirlash',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: AppColors.text(isDark),
@@ -1046,30 +1052,61 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
 
               const SizedBox(height: 12),
 
-              _lbl('Kategoriya *', isDark),
+              // Kategoriya + yangi kategoriya qo'shish (`+` shu qatorda).
+              Row(children: [
+                _lbl('Kategoriya *', isDark),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: widget.onAddCategory == null
+                      ? null
+                      : () async {
+                          final created = await widget.onAddCategory!();
+                          if (created == null || !mounted) return;
+                          // Yangi kategoriyani avtomatik tanlaymiz.
+                          final match = widget.pp.categories
+                              .where((c) => c.categoryName == created);
+                          if (match.isNotEmpty) {
+                            setState(() => _categoryId = match.first.id);
+                          }
+                        },
+                  icon: Icon(Icons.add_rounded,
+                      size: 18, color: AppColors.primary),
+                  label: Text('Qo\'shish',
+                      style: GoogleFonts.manrope(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary)),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 0),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ]),
               DropdownButtonFormField<String>(
                 initialValue: _categoryId,
                 hint: Text('Kategoriyani tanlang',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.manrope(
                         color: AppColors.textHint(isDark), fontSize: 14)),
                 dropdownColor: AppColors.card(isDark),
-                style: GoogleFonts.inter(
+                style: GoogleFonts.manrope(
                     color: AppColors.text(isDark), fontSize: 14),
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: AppColors.bg(isDark),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(8),
                     borderSide:
                         BorderSide(color: AppColors.border(isDark)),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(8),
                     borderSide:
                         BorderSide(color: AppColors.border(isDark)),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(8),
                     borderSide:
                         BorderSide(color: AppColors.primary, width: 1.5),
                   ),
@@ -1163,7 +1200,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: ElevatedButton(
                     onPressed: _loading ? null : _save,
@@ -1171,7 +1208,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                     child: _loading
                         ? const SizedBox(
@@ -1181,7 +1218,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
                                 color: Colors.white, strokeWidth: 2))
                         : Text(
                             widget.edit == null ? 'Qo\'shish' : 'Saqlash',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.manrope(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
@@ -1210,7 +1247,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
         decoration: BoxDecoration(
           gradient: selected ? AppColors.primaryGradient : null,
           color: selected ? null : AppColors.bg(isDark),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color:
                 selected ? AppColors.primary : AppColors.border(isDark),
@@ -1218,7 +1255,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
         ),
         child: Text(
           value,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.manrope(
             fontWeight: FontWeight.w600,
             color: selected ? Colors.white : AppColors.textSec(isDark),
             fontSize: 14,
@@ -1232,7 +1269,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
         padding: const EdgeInsets.only(bottom: 6),
         child: Text(
           text,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.manrope(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: AppColors.textSec(isDark),
@@ -1261,30 +1298,30 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
               ]
             : null,
         validator: validator,
-        style: GoogleFonts.inter(
+        style: GoogleFonts.manrope(
             color: AppColors.text(isDark), fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
           suffixIcon: suffix,
-          hintStyle: GoogleFonts.inter(
+          hintStyle: GoogleFonts.manrope(
               color: AppColors.textHint(isDark), fontSize: 13),
           filled: true,
           fillColor: AppColors.bg(isDark),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: AppColors.border(isDark)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: AppColors.border(isDark)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide:
                 BorderSide(color: AppColors.primary, width: 1.5),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(
                 color: AppColors.accentRed.withValues(alpha: 0.6)),
           ),
@@ -1360,65 +1397,150 @@ class _CategoriesSheet extends StatefulWidget {
 }
 
 class _CategoriesSheetState extends State<_CategoriesSheet> {
-  // Qo'shish formasi shu joydan olib tashlandi (AppBar'dagi `+` tugmasi
-  // orqali qo'shiladi), shuning uchun controller/`_adding` kerak emas.
+  String? _error;
+  String? _success;
 
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final cats = widget.pp.categories;
 
-    return Padding(
-      padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 20,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Kategoriyalar',
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: AppColors.text(isDark),
-            ),
-          ),
-          const SizedBox(height: 6),
-          // Qo'shish oynasi endi yagona joyda — AppBar'dagi `+` tugmasi.
-          // Bu yerga ikkinchi maydon qo'shilsa, foydalanuvchi qaysi biri
-          // ishlaydi deb o'ylab vaqtni yo'qotadi. O'rnini ko'rsatamiz.
-          Text(
-            'Yangi kategoriya qo\'shish uchun yuqoridagi + tugmasini bosing',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: AppColors.textHint(isDark),
-            ),
-          ),
-          const SizedBox(height: 12),
+    return ListenableBuilder(
+      listenable: widget.pp,
+      builder: (context, _) {
+        final cats = widget.pp.categories;
 
-          if (cats.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                'Hali kategoriya yo\'q',
-                style: GoogleFonts.inter(color: AppColors.textSec(isDark)),
+        return Padding(
+          padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom +
+                  (MediaQuery.of(context).padding.bottom > 0
+                      ? MediaQuery.of(context).padding.bottom + 16.0
+                      : 20.0)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Kategoriyalar',
+                style: GoogleFonts.manrope(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.text(isDark),
+                ),
               ),
-            )
-          else
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 300),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: cats.length,
-                itemBuilder: (_, i) =>
-                    _CategoryTile(cat: cats[i], isDark: isDark, pp: widget.pp),
+              const SizedBox(height: 6),
+              Text(
+                'Yangi kategoriya qo\'shish uchun yuqoridagi + tugmasini bosing',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.manrope(
+                  fontSize: 12,
+                  color: AppColors.textHint(isDark),
+                ),
               ),
-            ),
-        ],
-      ),
+              const SizedBox(height: 12),
+
+              if (_error != null) ...[
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentRed.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: AppColors.accentRed.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline,
+                          color: AppColors.accentRed, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _error!,
+                          style: GoogleFonts.manrope(
+                            fontSize: 12,
+                            color: AppColors.accentRed,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              if (_success != null) ...[
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentGreen.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: AppColors.accentGreen.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle_outline,
+                          color: AppColors.accentGreen, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _success!,
+                          style: GoogleFonts.manrope(
+                            fontSize: 12,
+                            color: AppColors.accentGreen,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              if (cats.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'Hali kategoriya yo\'q',
+                    style: GoogleFonts.manrope(color: AppColors.textSec(isDark)),
+                  ),
+                )
+              else
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 300),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: cats.length,
+                    itemBuilder: (_, i) => _CategoryTile(
+                      cat: cats[i],
+                      isDark: isDark,
+                      pp: widget.pp,
+                      onError: (msg) {
+                        setState(() {
+                          _error = msg;
+                          _success = null;
+                        });
+                      },
+                      onSuccess: (msg) {
+                        setState(() {
+                          _success = msg;
+                          _error = null;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -1427,16 +1549,23 @@ class _CategoryTile extends StatelessWidget {
   final CategoryModel cat;
   final bool isDark;
   final ProductProvider pp;
+  final ValueChanged<String>? onError;
+  final ValueChanged<String>? onSuccess;
 
-  const _CategoryTile(
-      {required this.cat, required this.isDark, required this.pp});
+  const _CategoryTile({
+    required this.cat,
+    required this.isDark,
+    required this.pp,
+    this.onError,
+    this.onSuccess,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(
         cat.categoryName,
-        style: GoogleFonts.inter(
+        style: GoogleFonts.manrope(
             color: AppColors.text(isDark), fontWeight: FontWeight.w500),
       ),
       trailing: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -1464,14 +1593,14 @@ class _CategoryTile extends StatelessWidget {
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card(isDark),
         title: Text('Kategoriyani tahrirlash',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
                 fontWeight: FontWeight.w700,
                 color: AppColors.text(isDark))),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           style:
-              GoogleFonts.inter(color: AppColors.text(isDark)),
+              GoogleFonts.manrope(color: AppColors.text(isDark)),
           decoration: InputDecoration(
             hintText: 'Kategoriya nomi',
             border: const OutlineInputBorder(),
@@ -1485,8 +1614,17 @@ class _CategoryTile extends StatelessWidget {
           ElevatedButton(
             onPressed: () async {
               if (ctrl.text.trim().isEmpty) return;
-              await pp.updateCategory(cat.id, ctrl.text.trim());
-              if (context.mounted) Navigator.pop(context);
+              final result =
+                  await pp.updateCategory(cat.id, ctrl.text.trim());
+              if (!context.mounted) return;
+              Navigator.pop(context);
+              if (result.success) {
+                onSuccess?.call('Kategoriya yangilandi');
+              } else {
+                final err = result.error?.userMessage ??
+                    'Kategoriyani yangilab bo\'lmadi';
+                onError?.call(err);
+              }
             },
             child: const Text('Saqlash'),
           ),
@@ -1504,11 +1642,11 @@ class _CategoryTile extends StatelessWidget {
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card(isDark),
         title: Text('O\'chirish',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
                 fontWeight: FontWeight.w700,
                 color: AppColors.text(isDark))),
         content: Text('${cat.categoryName} kategoriyasini o\'chirmoqchimisiz?',
-            style: GoogleFonts.inter(color: AppColors.textSec(isDark))),
+            style: GoogleFonts.manrope(color: AppColors.textSec(isDark))),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -1521,8 +1659,42 @@ class _CategoryTile extends StatelessWidget {
         ],
       ),
     );
-    if (confirm == true) {
-      await pp.deleteCategory(cat.id);
+    if (confirm != true || !context.mounted) return;
+
+    final result = await pp.deleteCategory(cat.id);
+    if (!context.mounted) return;
+    if (result.success) {
+      onSuccess?.call('Kategoriya o\'chirildi');
+    } else {
+      final msg = result.error?.userMessage ??
+          'Kategoriyani o\'chirib bo\'lmadi';
+      onError?.call(msg);
+      // Foydalanuvchiga modal sheet ustida ham aniq dialog bilan sababini ko'rsatamiz
+      // (masalan: "Bu kategoriyada 1 ta mahsulot bor...").
+      await showDialog(
+        context: context,
+        barrierLabel: 'Bekor qilish',
+        builder: (_) => AlertDialog(
+          backgroundColor: AppColors.card(isDark),
+          title: Text(
+            'O\'chirib bo\'lmadi',
+            style: GoogleFonts.manrope(
+              fontWeight: FontWeight.w700,
+              color: AppColors.text(isDark),
+            ),
+          ),
+          content: Text(
+            msg,
+            style: GoogleFonts.manrope(color: AppColors.textSec(isDark)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Tushundim'),
+            ),
+          ],
+        ),
+      );
     }
   }
 }

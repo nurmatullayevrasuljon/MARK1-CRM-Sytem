@@ -42,7 +42,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
         title: Text(
           'Parolni tiklash',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.manrope(
             fontSize: 18,
             fontWeight: FontWeight.w700,
             color: AppColors.text(isDark),
@@ -63,7 +63,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   height: 64,
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(Icons.lock_reset_rounded,
                       color: AppColors.primary, size: 32),
@@ -73,8 +73,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                 Text(
                   'Telefon raqamingizni kiriting',
-                  style: GoogleFonts.inter(
-                    fontSize: 20,
+                  style: GoogleFonts.manrope(
+                    fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: AppColors.text(isDark),
                   ),
@@ -82,7 +82,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Ushbu raqamga parol tiklash uchun SMS kod yuboramiz',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 14,
                     color: AppColors.textSec(isDark),
                   ),
@@ -92,7 +92,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                 Text(
                   'Telefon raqam',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textSec(isDark),
@@ -109,26 +109,30 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     FilteringTextInputFormatter.allow(
                         RegExp(r'[0-9+\s\-()]')),
                   ],
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                       color: AppColors.text(isDark), fontSize: 15),
                   decoration: InputDecoration(
-                    hintText: '+998 90 123 45 67',
-                    hintStyle: GoogleFonts.inter(
+                    hintText: '90 123 45 67',
+                    hintStyle: GoogleFonts.manrope(
                         color: AppColors.textHint(isDark), fontSize: 14),
                     prefixIcon: Icon(Icons.phone_outlined,
                         color: AppColors.textHint(isDark), size: 20),
+                    // "+998" maydon boshidanoq ko'rinadi.
+                    prefixText: '+998 ',
+                    prefixStyle:
+                        GoogleFonts.manrope(color: AppColors.text(isDark), fontSize: 15),
                     filled: true,
                     fillColor: AppColors.card(isDark),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: AppColors.border(isDark)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: AppColors.border(isDark)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide:
                           BorderSide(color: AppColors.primary, width: 1.5),
                     ),
@@ -157,7 +161,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: AppColors.primaryGradient,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: ElevatedButton(
                       onPressed: _loading ? null : _send,
@@ -165,7 +169,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                            borderRadius: BorderRadius.circular(8)),
                       ),
                       child: _loading
                           ? const SizedBox(
@@ -175,7 +179,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                   color: Colors.white, strokeWidth: 2.5))
                           : Text(
                               'SMS yuborish',
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.manrope(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
@@ -273,7 +277,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         ),
         title: Text(
           'Yangi parol',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.manrope(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.text(isDark)),
@@ -289,7 +293,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               children: [
                 Text(
                   'SMS kodini kiriting',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 14,
                     color: AppColors.textSec(isDark),
                   ),
@@ -313,8 +317,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly
                         ],
-                        style: GoogleFonts.inter(
-                          fontSize: 22,
+                        style: GoogleFonts.manrope(
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: AppColors.text(isDark),
                         ),
@@ -323,17 +327,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           filled: true,
                           fillColor: AppColors.card(isDark),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide:
                                 BorderSide(color: AppColors.border(isDark)),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide:
                                 BorderSide(color: AppColors.border(isDark)),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide:
                                 BorderSide(color: AppColors.primary, width: 2),
                           ),
@@ -356,7 +360,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
                 Text(
                   'Yangi parol',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textSec(isDark),
@@ -369,11 +373,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   controller: _passCtrl,
                   obscureText: _obscure,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                       color: AppColors.text(isDark), fontSize: 15),
                   decoration: InputDecoration(
                     hintText: 'Kamida 8 ta belgi',
-                    hintStyle: GoogleFonts.inter(
+                    hintStyle: GoogleFonts.manrope(
                         color: AppColors.textHint(isDark), fontSize: 14),
                     prefixIcon: Icon(Icons.lock_outline_rounded,
                         color: AppColors.textHint(isDark), size: 20),
@@ -390,15 +394,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     filled: true,
                     fillColor: AppColors.card(isDark),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: AppColors.border(isDark)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: AppColors.border(isDark)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide:
                           BorderSide(color: AppColors.primary, width: 1.5),
                     ),
@@ -413,7 +417,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
                 Text(
                   'Parolni tasdiqlang',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textSec(isDark),
@@ -426,26 +430,26 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   controller: _confirmCtrl,
                   obscureText: _obscure,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.manrope(
                       color: AppColors.text(isDark), fontSize: 15),
                   decoration: InputDecoration(
                     hintText: '••••••••',
-                    hintStyle: GoogleFonts.inter(
+                    hintStyle: GoogleFonts.manrope(
                         color: AppColors.textHint(isDark), fontSize: 14),
                     prefixIcon: Icon(Icons.lock_outline_rounded,
                         color: AppColors.textHint(isDark), size: 20),
                     filled: true,
                     fillColor: AppColors.card(isDark),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: AppColors.border(isDark)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: AppColors.border(isDark)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide:
                           BorderSide(color: AppColors.primary, width: 1.5),
                     ),
@@ -464,7 +468,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: AppColors.primaryGradient,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: ElevatedButton(
                       onPressed: _loading ? null : _reset,
@@ -472,7 +476,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                            borderRadius: BorderRadius.circular(8)),
                       ),
                       child: _loading
                           ? const SizedBox(
@@ -482,7 +486,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                                   color: Colors.white, strokeWidth: 2.5))
                           : Text(
                               'Parolni o\'zgartirish',
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.manrope(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
