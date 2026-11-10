@@ -12,7 +12,7 @@ const options = {
 
     servers: [
       {
-        url: "https://mark1-crm-sytem.onrender.com/api",
+        url: "https://jewelry-calgary-expand-childrens.trycloudflare.com/api",
         description: "Development Server",
       },
     ],

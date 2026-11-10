@@ -44,7 +44,13 @@ if (process.env.ALLOWED_ORIGINS) {
   });
 }
 
-app.use(express.json());
+app.use(
+  express.json({
+    verify: (req, _res, buf) => {
+      req.rawBody = buf;
+    },
+  }),
+); app.use(express.urlencoded({ extended: true }));
 const sanitizeMiddleware = require("./middlewares/sanitize.middleware");
 app.use(sanitizeMiddleware);
 app.use(cookieParser());

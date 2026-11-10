@@ -6,6 +6,7 @@ const {
   generateAccessToken,
   generateRefreshToken,
 } = require("../utils/token.util");
+const { getCurrentSubscription } = require("../service/subscription.service");
 
 // QA-BUGFIX: noto'g'ri rol/telefon/ism Mongoose validatsiyasida 500 bo'lib
 // qaytardi. Endi 400 + tushunarli xabar.
@@ -58,7 +59,20 @@ exports.createUser = async (req, res) => {
         message: "Parol kamida 6 xonali bo'lishi kerak",
       });
     }
-
+    const sub = await getCurrentSubscription(id);
+    if (!sub) {
+      return res.status(402).json({
+        code: "plan_required",
+        message: "Tarif muddati tugagan. Davom etish uchun tarif sotib oling",
+      });
+    }
+    const userCount = await User.countDocuments({ store_id: id });
+    if (userCount >= sub.limits.max_users) {
+      return res.status(403).json({
+        code: "limit_reached",
+        message: `Tarifingizda maksimal ${sub.limits.max_users} ta xodim mumkin. Tarifingizni yangilang`,
+      });
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({
@@ -69,6 +83,13 @@ exports.createUser = async (req, res) => {
       password: hashedPassword,
       profile_picture,
     });
+    if ((await User.countDocuments({ store_id: id })) > sub.limits.max_users) {
+      await User.deleteOne({ _id: newUser._id });
+      return res.status(403).json({
+        code: "limit_reached",
+        message: `Tarifingizda maksimal ${sub.limits.max_users} ta xodim mumkin. Tarifingizni yangilang`,
+      });
+    }
     return res.status(200).json({
       message: "Xodim muvaffaqiyatli yaratildi",
     });
@@ -98,10 +119,10 @@ exports.updateUser = async (req, res) => {
 
     const existingUser = user_phone
       ? await User.findOne({
-          store_id: id,
-          user_phone,
-          _id: { $ne: user_id },
-        })
+        store_id: id,
+        user_phone,
+        _id: { $ne: user_id },
+      })
       : null;
 
     if (existingUser) {
@@ -232,7 +253,7 @@ exports.signinUser = async (req, res) => {
         : "web";
 
     const user = await User.findOne({ user_phone });
-    
+
     // CF-15 fix: Yagona xato xabari
     if (!user) {
       return res

@@ -1,5 +1,7 @@
 const Store = require("../models/store.model");
 const bcrypt = require("bcryptjs");
+const { grantTrial } = require("../service/subscription.service");
+
 const generateOtp = require("../utils/otp.util");
 const {
   generateRefreshToken,
@@ -127,7 +129,7 @@ exports.verify = async (req, res) => {
     store.otp_expires_at = null;
     store.otp_attempts = 0;
     store.is_verified = true;
-
+    await grantTrial(store._id);
     await store.save();
 
     const refreshToken = generateRefreshToken({

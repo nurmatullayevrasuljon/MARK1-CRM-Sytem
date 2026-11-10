@@ -6,6 +6,7 @@ const Client = require("../models/client.model");
 const parseDate = require("../utils/date.util");
 const ExcelJS = require("exceljs");
 const sendSms = require("../utils/sms.util");
+const { consumeQuota, refundQuota } = require("../service/subscription.service");
 
 exports.createSale = async (req, res) => {
   const session = await mongoose.startSession();
@@ -645,9 +646,27 @@ exports.sendManualReminder = async (req, res) => {
     }
 
     const message = `Hurmatli ${sale.client_id.client_name}, sizning ${sale.store_id.store_name} oldidagi ${formatNumber(sale.total_remaining)} so'm qarzingizni to'lash vaqti ertaga keladi. Iltimos, o'z vaqtida to'lang.`;
+    const quota = await consumeQuota(store_id, "sms");
+    if (!quota.ok) {
+      return res.status(quota.status).json({
+        code: quota.code,
+        message: quota.message,
+        limit: quota.limit,
+        used: quota.used,
+      });
+    }
+    let result;
+    try {
+      result = await sendSms(sale.client_id.client_phone, message);
+    } catch (err) {
+      await refundQuota(quota.sub_id, "sms");
+      throw err;
+    }
 
-    const result = await sendSms(sale.client_id.client_phone, message);
-
+    if (!result.success) {
+      await refundQuota(quota.sub_id, "sms"); // yuborilmadi, limit sarflanmasin
+      return res.status(400).json({ message: "Sms yuborishda xatolik", error: result?.error });
+    }
     if (result.success) {
       return res.status(200).json({
         message: "Sms muvaffaqiyatli yuborildi",

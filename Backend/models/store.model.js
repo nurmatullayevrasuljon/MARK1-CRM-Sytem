@@ -20,6 +20,10 @@ const StoreSchema = new mongoose.Schema(
     store_name: { type: String, required: [true, "Do'kon nomini kiriting"] },
     password: { type: String, required: [true, "Parolni kiriting"] },
     balance: { type: Number, default: 0 },
+    plan: { type: String, enum: ["free", "pro"], default: "free" },
+    plan_expires_at: { type: Date, default: null },
+    trial_used: { type: Boolean, default: false },     // trial faqat bir marta berilishi uchun
+    plan_lock_until: { type: Date, default: null },    // xarid paytidagi qisqa qulf
     profile_picture: { type: String, default: null },
     otp: { type: String, default: null },
     otp_expires_at: { type: Date, default: null },

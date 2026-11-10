@@ -2,8 +2,11 @@ const Sale = require("../models/sale.model");
 const Product = require("../models/product.model");
 const AiOverview = require("../models/aioverview.model");
 const Category = require("../models/category.model");
+const { consumeQuota, refundQuota } = require("../service/subscription.service");
+
 
 const mongoose = require("mongoose");
+const { runAdvisor } = require("./aiAdvisor");
 
 const SLOW_PRODUCT_THRESHOLD_DAYS = 15;
 const SLOW_PRODUCT_LIMIT = 5; // bazaga saqlanadigan ro'yxat uzunligi
@@ -627,6 +630,7 @@ function buildFallbackOverview(c) {
 // ---------- Controller ----------
 
 async function getAiOverview(req, res) {
+  let aiQuota = null;
   try {
     // MUHIM: aggregate() $match, find()/countDocuments()dan farqli o'laroq,
     // stringni ObjectId'ga avtomatik o'girmaydi — shuning uchun bu yerda
@@ -654,9 +658,25 @@ async function getAiOverview(req, res) {
       period,
       date: startOfDay(date),
     });
-    if (existing && existing.ai_overview && req.query.force !== "true") {
+    if (
+      existing &&
+      existing.ai_overview &&
+      existing.recommendations_status !== "failed" &&
+      req.query.force !== "true"
+    ) {
       return res.json(existing);
     }
+
+    const quota = await consumeQuota(store_id, "ai");
+    if (!quota.ok) {
+      return res.status(quota.status).json({
+        code: quota.code,
+        message: quota.message,
+        limit: quota.limit,
+        used: quota.used,
+      });
+    }
+    aiQuota = quota;
 
     const [sales, debts, inventory, topProducts, slowProducts] =
       await Promise.all([
@@ -726,9 +746,9 @@ async function getAiOverview(req, res) {
         : null,
       slowest: slowProducts.length
         ? {
-            name: slowProducts[0].name,
-            days: slowProducts[0].days_without_sale,
-          }
+          name: slowProducts[0].name,
+          days: slowProducts[0].days_without_sale,
+        }
         : null,
     };
 
@@ -794,6 +814,25 @@ async function getAiOverview(req, res) {
       }
     }
 
+    // --- Agent: tavsiyalar ---
+    // Zaxira va qarz "hozirgi holat"ni ko'rsatadi, shuning uchun faqat bugungi kun uchun ishlaydi
+    let recommendations = [];
+    let recommendations_status = "ok";
+    if (process.env.OPENAI_API_KEY && toYMD(date) === toYMD(new Date())) {
+      try {
+        recommendations = await runAdvisor({
+          storeId: store_id,
+          date,
+          computed,
+          slowProducts: slowProducts.slice(0, 8),
+          util: { startOfDay, subDays, diffInDays, formatMoney },
+        });
+      } catch (err) {
+        console.error("runAdvisor xatosi:", err.message);
+        recommendations_status = "failed";
+      }
+    }
+
     const doc = await AiOverview.findOneAndUpdate(
       { store_id, period, date: startOfDay(date) },
       {
@@ -811,12 +850,16 @@ async function getAiOverview(req, res) {
           stock_value: p.stock_value,
         })),
         ai_overview,
+        recommendations,
+        recommendations_status,
       },
-      { upsert: true, new: true },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
     );
 
     return res.json(doc);
   } catch (err) {
+        if (aiQuota) await refundQuota(aiQuota.sub_id, "ai").catch(() => {}); // hisoblash yiqilsa limit qaytadi
+
     console.error("getAiOverview xatosi:", err);
     return res
       .status(500)
@@ -824,4 +867,54 @@ async function getAiOverview(req, res) {
   }
 }
 
-module.exports = { getAiOverview };
+async function updateRecommendationStatus(req, res) {
+  try {
+    const allowed = ["bajarildi", "rad_etildi", "foydali", "foydasiz"];
+    const { status } = req.body;
+    const { id, recId } = req.params;
+
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ message: "Noto'g'ri status" });
+    }
+
+    if (
+      !mongoose.isValidObjectId(id) ||
+      !mongoose.isValidObjectId(recId)
+    ) {
+      return res.status(400).json({ message: "Noto'g'ri id" });
+    }
+
+    const update = {
+      "recommendations.$.status": status,
+    };
+
+    // completed_at faqat bajarildi holatida belgilanadi.
+    if (status === "bajarildi") {
+      update["recommendations.$.completed_at"] = new Date();
+    }
+
+    const doc = await AiOverview.findOneAndUpdate(
+      {
+        _id: id,
+        store_id: req.user.store_id,
+        "recommendations._id": recId,
+      },
+      { $set: update },
+      { new: true },
+    );
+
+    if (!doc) {
+      return res.status(404).json({ message: "Tavsiya topilmadi" });
+    }
+
+    return res.json(doc);
+  } catch (err) {
+    console.error("updateRecommendationStatus xatosi:", err);
+    return res.status(500).json({
+      message: "Holatni yangilashda xatolik",
+    });
+  }
+}
+
+module.exports = { getAiOverview, updateRecommendationStatus };
+

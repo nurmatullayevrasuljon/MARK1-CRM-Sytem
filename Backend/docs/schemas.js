@@ -1329,5 +1329,410 @@ module.exports = {
         updatedAt: { type: "string", format: "date-time" },
       },
     },
+
+    // components.schemas ichiga qo'shiladi. Ikki yo'li bor:
+    //   1) fayl ichidagi yozuvlarni (Payment: {...}, ...) to'g'ridan-to'g'ri `schemas: { ... }` ichiga ko'chiring
+    //   2) yoki shu faylni import qilib yoying:  schemas: { ...mavjudlari, ...require("./payment-subscription.schemas") }
+    /* ======
+              PAYMENT
+      */
+
+    Payment: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          example: "665f1c2e9b1e8a0012a4c7d1",
+        },
+        amount: {
+          type: "integer",
+          description: "Amount added to the store balance (so'm)",
+          example: 50000,
+        },
+        status: {
+          type: "string",
+          enum: ["created", "pending", "processing", "paid", "cancelled", "failed"],
+          description:
+            "created - saved, bill not opened yet. pending - waiting for the customer. processing - customer is paying. paid - balance credited (final). cancelled - cancelled by user or expired (final). failed - bill could not be opened or test payment not credited (final)",
+          example: "pending",
+        },
+        payment_url: {
+          type: "string",
+          nullable: true,
+          description:
+            "Payment page. Returned only while the payment is open (created, pending, processing), otherwise null",
+          example: "https://tezcheck.uz/pay/plk_xxxxxxxxxxxxxxxx",
+        },
+        expires_at: {
+          type: "string",
+          format: "date-time",
+          example: "2026-11-08T10:30:00.000Z",
+        },
+        paid_at: {
+          type: "string",
+          format: "date-time",
+          nullable: true,
+          example: null,
+        },
+        cancel_reason: {
+          type: "string",
+          nullable: true,
+          description: "user (cancelled by the store) or timeout (expired)",
+          example: null,
+        },
+        createdAt: {
+          type: "string",
+          format: "date-time",
+          example: "2026-11-08T10:00:00.000Z",
+        },
+      },
+    },
+
+    CreatePayment: {
+      type: "object",
+      required: ["amount"],
+      properties: {
+        amount: {
+          type: "integer",
+          minimum: 1000,
+          maximum: 50000000,
+          description:
+            "Amount in so'm (integer). Limits come from PAYMENT_MIN_AMOUNT and PAYMENT_MAX_AMOUNT",
+          example: 50000,
+        },
+      },
+    },
+
+    PaymentPagination: {
+      type: "object",
+      properties: {
+        page: { type: "integer", example: 1 },
+        limit: { type: "integer", example: 10 },
+        total: { type: "integer", example: 25 },
+        pages: { type: "integer", example: 3 },
+      },
+    },
+
+    PaymentError: {
+      type: "object",
+      properties: {
+        success: {
+          type: "boolean",
+          example: false,
+        },
+        message: {
+          type: "string",
+          example: "Server xatosi",
+        },
+      },
+    },
+
+    PaymentConflict: {
+      type: "object",
+      properties: {
+        success: {
+          type: "boolean",
+          example: false,
+        },
+        message: {
+          type: "string",
+          example: "Sizda yakunlanmagan to'lov bor. Uni tugating yoki bekor qiling",
+        },
+        payment: {
+          allOf: [{ $ref: "#/components/schemas/Payment" }],
+          description: "The existing (open or already finished) payment, if any",
+        },
+      },
+    },
+
+    /* ======
+              PAYMENT WEBHOOK (TezCheck)
+      */
+
+    PaymentWebhookEvent: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "Event id (does not change on redelivery)",
+          example: "oev_01JQEXAMPLEEVT00000000ABCD",
+        },
+        type: {
+          type: "string",
+          description:
+            "payment.succeeded, payment.processing, payment.requires_action, payment.failed, payment.canceled, payment.expired, payment.refunded and others",
+          example: "payment.succeeded",
+        },
+        schema_version: { type: "integer", example: 1 },
+        created_at: {
+          type: "string",
+          format: "date-time",
+          example: "2026-11-08T10:04:11+00:00",
+        },
+        mode: {
+          type: "string",
+          description: "Envelope mode. For the real environment of the payment use data.environment",
+          example: "test",
+        },
+        organization_id: { type: "string", example: "90010" },
+        cash_desk_id: { type: "string", example: "90001" },
+        data: { $ref: "#/components/schemas/PaymentWebhookData" },
+      },
+    },
+
+    PaymentWebhookData: {
+      type: "object",
+      properties: {
+        payment_id: {
+          type: "string",
+          example: "pay_01JQEXAMPLEPAY00000000ABCD",
+        },
+        state: { type: "string", example: "succeeded" },
+        previous_state: { type: "string", nullable: true, example: "processing" },
+        amount_minor: {
+          type: "integer",
+          description: "Amount charged to the customer in tiyin (so'm x 100)",
+          example: 5000000,
+        },
+        currency: { type: "string", example: "UZS" },
+        external_reference: {
+          type: "string",
+          description: "Our Payment id",
+          example: "665f1c2e9b1e8a0012a4c7d1",
+        },
+        bill_id: {
+          type: "string",
+          description: "TezCheck bill id",
+          example: "link_01JQEXAMPLEBILL0000000ABCD",
+        },
+        payment_channel: { type: "string", example: "web" },
+        fee_minor: {
+          type: "integer",
+          nullable: true,
+          description: "TezCheck commission in tiyin",
+          example: 50000,
+        },
+        net_minor: {
+          type: "integer",
+          nullable: true,
+          description: "Merchant share in tiyin",
+          example: 4950000,
+        },
+        succeeded_at: {
+          type: "string",
+          format: "date-time",
+          nullable: true,
+          example: "2026-11-08T10:04:11+00:00",
+        },
+        provider_code: { type: "string", nullable: true, example: "payme" },
+        environment: {
+          type: "string",
+          enum: ["live", "test"],
+          description: "test means the payment is not real money and is not credited",
+          example: "live",
+        },
+        reason_code: { type: "string", nullable: true, example: null },
+        problem: {
+          type: "object",
+          nullable: true,
+          description: "If unknown_reason is set the result is unknown and nothing is done",
+          properties: {
+            category: { type: "string", nullable: true },
+            unknown_reason: { type: "string", nullable: true },
+            provider_code: { type: "string", nullable: true },
+            attempt_state: { type: "string", nullable: true },
+            occurred_at: { type: "string", format: "date-time", nullable: true },
+          },
+        },
+        sequence: { type: "integer", example: 4 },
+      },
+    },
+
+    /* ======
+              SUBSCRIPTION
+      */
+
+    PlanLimits: {
+      type: "object",
+      properties: {
+        max_users: {
+          type: "integer",
+          description: "Maximum number of staff users",
+          example: 2,
+        },
+        sms: {
+          type: "integer",
+          description: "SMS count per period",
+          example: 20,
+        },
+        ai: {
+          type: "integer",
+          description: "AI analytics count per period",
+          example: 2,
+        },
+      },
+    },
+
+    SubscriptionPlan: {
+      type: "object",
+      properties: {
+        code: {
+          type: "string",
+          enum: ["start", "standart", "growth", "pro"],
+          example: "standart",
+        },
+        name: {
+          type: "string",
+          example: "STANDART",
+        },
+        price: {
+          type: "integer",
+          description: "Price in so'm",
+          example: 199000,
+        },
+        period_days: {
+          type: "integer",
+          example: 30,
+        },
+        limits: { $ref: "#/components/schemas/PlanLimits" },
+      },
+    },
+
+    Subscription: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          example: "665f1d4a9b1e8a0012a4c800",
+        },
+        plan: {
+          type: "string",
+          enum: ["start", "standart", "growth", "pro", "custom"],
+          description: "custom is the free trial or an individual plan assigned by an admin",
+          example: "standart",
+        },
+        is_trial: {
+          type: "boolean",
+          description: "14 day free trial",
+          example: false,
+        },
+        price_paid: {
+          type: "integer",
+          description: "Price paid in so'm (0 for trial)",
+          example: 199000,
+        },
+        starts_at: {
+          type: "string",
+          format: "date-time",
+          description: "In the future for a scheduled period",
+          example: "2026-11-08T10:00:00.000Z",
+        },
+        expires_at: {
+          type: "string",
+          format: "date-time",
+          example: "2026-12-08T10:00:00.000Z",
+        },
+        days_left: {
+          type: "integer",
+          description: "Days until expiry (rounded up)",
+          example: 30,
+        },
+        limits: { $ref: "#/components/schemas/PlanLimits" },
+        usage: {
+          type: "object",
+          description: "Used in this period",
+          properties: {
+            sms: { type: "integer", example: 3 },
+            ai: { type: "integer", example: 1 },
+          },
+        },
+        remaining: {
+          type: "object",
+          description: "Left in this period",
+          properties: {
+            sms: { type: "integer", example: 17 },
+            ai: { type: "integer", example: 1 },
+          },
+        },
+      },
+    },
+
+    PurchasePlan: {
+      type: "object",
+      required: ["plan"],
+      properties: {
+        plan: {
+          type: "string",
+          enum: ["start", "standart", "growth", "pro"],
+          example: "standart",
+        },
+      },
+    },
+
+    SubscriptionError: {
+      type: "object",
+      properties: {
+        success: {
+          type: "boolean",
+          example: false,
+        },
+        code: {
+          type: "string",
+          enum: ["invalid_plan", "insufficient_balance", "purchase_in_progress", "already_scheduled"],
+          example: "insufficient_balance",
+        },
+        message: {
+          type: "string",
+          example: "Balans yetarli emas",
+        },
+        required: {
+          type: "integer",
+          description: "Plan price (only for insufficient_balance)",
+          example: 199000,
+        },
+        balance: {
+          type: "number",
+          description: "Current balance (only for insufficient_balance)",
+          example: 120000,
+        },
+        shortfall: {
+          type: "number",
+          description: "Missing amount (only for insufficient_balance)",
+          example: 79000,
+        },
+      },
+    },
+
+    /* ======
+              PLAN LIMIT ERRORS
+              (xodim yaratish, SMS eslatma, AI overview va requirePlan() bilan himoyalangan route'larda chiqadi)
+      */
+
+    LimitError: {
+      type: "object",
+      properties: {
+        code: {
+          type: "string",
+          enum: ["plan_required", "quota_exceeded", "limit_reached"],
+          description:
+            "plan_required (402) - no plan or it has expired. quota_exceeded (403) - SMS or AI limit is used up. limit_reached (403) - staff users limit",
+          example: "quota_exceeded",
+        },
+        message: {
+          type: "string",
+          example: "SMS limiti tugagan (5/5). Tarifingizni yangilang",
+        },
+        limit: {
+          type: "integer",
+          description: "Only for quota_exceeded",
+          example: 5,
+        },
+        used: {
+          type: "integer",
+          description: "Only for quota_exceeded",
+          example: 5,
+        },
+      },
+    },
   },
 };

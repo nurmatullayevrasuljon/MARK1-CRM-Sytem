@@ -72,6 +72,32 @@ const AiOverviewSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    recommendations: {
+      type: [
+        {
+          priority: String,
+          action_type: String,
+          title: String,
+          reason: String,
+          action: String,
+          expected_effect: String,
+          ref_type: String,
+          ref_id: String,
+          message_draft: String,
+          status: {
+            type: String,
+            enum: ["yangi", "bajarildi", "rad_etildi", "foydali", "foydasiz"],
+            default: "yangi",
+          },
+        },
+      ],
+      default: [],
+    },
+    recommendations_status: {
+      type: String,
+      enum: ["ok", "failed"],
+      default: "ok",
+    },
   },
   { timestamps: true },
 );
