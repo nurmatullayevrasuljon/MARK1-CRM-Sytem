@@ -46,6 +46,146 @@
     })();
   </script>
 
+  <style>
+    /* Dashboard Obuna va Tarif banneri / widgeti */
+    .mk-sub-banner {
+      background: linear-gradient(135deg, rgba(37,99,235,0.06) 0%, rgba(139,92,246,0.08) 100%);
+      border: 1px solid rgba(37,99,235,0.18);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      box-shadow: 0 4px 12px -2px rgba(37,99,235,0.05);
+    }
+    .dark-mode .mk-sub-banner {
+      background: linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(139,92,246,0.15) 100%);
+      border-color: rgba(37,99,235,0.3);
+    }
+    .mk-sub-banner.expired {
+      background: linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(249,115,22,0.08) 100%);
+      border-color: rgba(239,68,68,0.25);
+    }
+    .mk-sub-banner-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .mk-sub-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #2563eb;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex: none;
+    }
+    .mk-sub-banner.expired .mk-sub-icon-box {
+      background: #ef4444;
+    }
+    .mk-sub-banner-info h4 {
+      font-size: 15px;
+      font-weight: 800;
+      margin: 0 0 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mk-sub-status-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .dark-mode .mk-sub-status-pill {
+      background: rgba(37,99,235,0.3);
+      color: #93c5fd;
+    }
+    .mk-sub-banner-info p {
+      font-size: 13px;
+      color: var(--text-secondary, #64748b);
+      margin: 0;
+    }
+    .mk-sub-banner-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .mk-sub-banner-btn {
+      background: #2563eb;
+      color: #fff !important;
+      font-weight: 700;
+      font-size: 13.5px;
+      padding: 9px 18px;
+      border-radius: 9px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all .15s ease;
+      border: none;
+    }
+    .mk-sub-banner-btn:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+    }
+    .mk-sub-banner.expired .mk-sub-banner-btn {
+      background: #ef4444;
+    }
+    .mk-sub-banner.expired .mk-sub-banner-btn:hover {
+      background: #dc2626;
+    }
+
+    /* Sidebar Obuna widget */
+    .mk-sidebar-sub-widget {
+      margin: 12px 14px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(37,99,235,0.08);
+      border: 1px solid rgba(37,99,235,0.18);
+      font-size: 12px;
+    }
+    .dark-mode .mk-sidebar-sub-widget {
+      background: rgba(37,99,235,0.15);
+      border-color: rgba(37,99,235,0.25);
+    }
+    .mk-sidebar-sub-widget .sub-title {
+      font-weight: 800;
+      color: #2563eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+    }
+    .dark-mode .mk-sidebar-sub-widget .sub-title {
+      color: #60a5fa;
+    }
+    .mk-sidebar-sub-widget .sub-desc {
+      color: #64748b;
+      margin-bottom: 6px;
+      font-size: 11.5px;
+    }
+    .mk-sidebar-sub-widget a {
+      color: #2563eb;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+    .dark-mode .mk-sidebar-sub-widget a {
+      color: #93c5fd;
+    }
+  </style>
 </head>
 
 <body>
@@ -124,7 +264,25 @@
 
           Sozlamalar
         </li>
+        <li class="nav-item" data-target="subscription" role="menuitem" tabindex="0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="svg-icon">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+          </svg>
+          Tariflar va Obuna
+        </li>
       </ul>
+      <!-- Sidebar obuna status widgeti -->
+      <div class="mk-sidebar-sub-widget" id="sidebarSubWidget">
+        <div class="sub-title">
+          <span id="sideSubName">Obuna</span>
+          <span id="sideSubDays" style="font-size:11px; font-weight:600; opacity:.85;">Yuklanmoqda...</span>
+        </div>
+        <div class="sub-desc" id="sideSubDesc">Tarif holati tekshirilmoqda</div>
+        <a href="/payment" id="sideSubLink">Tariflar &rarr;</a>
+      </div>
+
       <!-- Sidebar pastki bloki: foydalanuvchi + do'kon -->
       <div class="mk-sidebar-foot">
         <div class="mk-avatar" id="sidebarAvatar" aria-hidden="true">M</div>
@@ -264,6 +422,28 @@
       <!-- DASHBOARD -->
       
 <section id="dashboard" class="section active">
+
+        <!-- Obuna / Bepul sinov holati banneri -->
+        <div class="mk-sub-banner" id="mkSubBanner" style="display:none;">
+          <div class="mk-sub-banner-left">
+            <div class="mk-sub-icon-box" id="mkSubBannerIcon">
+              <i class="bi bi-stars"></i>
+            </div>
+            <div class="mk-sub-banner-info">
+              <h4 id="mkSubBannerTitle">
+                <span id="mkSubPlanTitle">Obuna</span>
+                <span class="mk-sub-status-pill" id="mkSubPill">Faol</span>
+              </h4>
+              <p id="mkSubBannerDesc">Tarif holati tekshirilmoqda...</p>
+            </div>
+          </div>
+          <div class="mk-sub-banner-right">
+            <span id="mkSubBalanceBadge" style="font-size:13px; font-weight:700; color:var(--text-secondary); margin-right:8px;">Balans: 0 so‘m</span>
+            <a href="/payment" class="mk-sub-banner-btn" id="mkSubBannerBtn">
+              Tariflar &rarr;
+            </a>
+          </div>
+        </div>
 
         <!-- h1'dan keyin h3 ga sakramaslik uchun yashirin h2 (WCAG 1.3.1) -->
         <h2 class="sr-only">Umumiy ko'rsatkichlar</h2>
@@ -717,6 +897,111 @@
   <!-- MARK1 app shell: sidebar collapse/drawer, modal fokus, toast, confirm -->
   <script src="js/app-shell.js?v=1792900000" defer></script>
 
+  <!-- Obuna holatini yuklash va Dashboard bannerini ko'rsatish -->
+  <script defer>
+    (function () {
+      function som(n) { return Number(n || 0).toLocaleString("ru-RU") + " so‘m"; }
+      function fmtDate(d) {
+        if (!d) return "—";
+        var date = new Date(d);
+        if (isNaN(date.getTime())) return "—";
+        var p = function(x) { return x < 10 ? "0" + x : x; };
+        return p(date.getDate()) + "." + p(date.getMonth() + 1) + "." + date.getFullYear();
+      }
+      var NAMES = { start: "START", standart: "STANDART", growth: "GROWTH", pro: "PRO", custom: "MAXSUS" };
+
+      function loadDashboardSubscription() {
+        if (!window.crmApi) {
+          setTimeout(loadDashboardSubscription, 300);
+          return;
+        }
+
+        window.crmApi.get("/subscription/current").then(function (res) {
+          var d = res.data || {};
+          var cur = d.current;
+          var bal = Number(d.balance) || 0;
+          var trialUsed = !!d.trial_used;
+
+          var banner = document.getElementById("mkSubBanner");
+          var titleEl = document.getElementById("mkSubPlanTitle");
+          var pillEl = document.getElementById("mkSubPill");
+          var descEl = document.getElementById("mkSubBannerDesc");
+          var balBadge = document.getElementById("mkSubBalanceBadge");
+          var btnEl = document.getElementById("mkSubBannerBtn");
+
+          var sideName = document.getElementById("sideSubName");
+          var sideDays = document.getElementById("sideSubDays");
+          var sideDesc = document.getElementById("sideSubDesc");
+
+          if (balBadge) balBadge.textContent = "Balans: " + som(bal);
+
+          if (cur) {
+            // Obuna faol (yoki 14 kunlik bepul sinov)
+            var planName = NAMES[cur.plan] || cur.plan || "Tarif";
+            var days = cur.days_left != null ? cur.days_left : 0;
+            var isTrial = !!cur.is_trial;
+
+            if (titleEl) titleEl.textContent = planName + " tarifi";
+            if (pillEl) {
+              pillEl.textContent = isTrial ? "14 kunlik sinov" : "Faol obuna";
+              pillEl.style.background = isTrial ? "#ede9fe" : "#dbeafe";
+              pillEl.style.color = isTrial ? "#6d28d9" : "#1e40af";
+            }
+            if (descEl) {
+              var limits = cur.limits || {};
+              var limStr = (limits.max_users ? limits.max_users + " foydalanuvchi" : "") +
+                (limits.sms ? " · " + limits.sms + " SMS" : "") +
+                (limits.ai ? " · " + limits.ai + " AI" : "");
+              descEl.textContent = (isTrial ? "Bepul sinov faol: " : "Tugash sanasi: ") +
+                fmtDate(cur.expires_at) + " (" + days + " kun qoldi). " + limStr;
+            }
+            if (btnEl) btnEl.textContent = "Tarifni boshqarish →";
+
+            if (sideName) sideName.textContent = planName;
+            if (sideDays) sideDays.textContent = days + " kun qoldi";
+            if (sideDesc) sideDesc.textContent = isTrial ? "Bepul sinov" : "Faol obuna";
+            if (banner) {
+              banner.classList.remove("expired");
+              banner.style.display = "flex";
+            }
+          } else {
+            // Obuna yo'q yoki 14 kunlik sinov TUGAGAN
+            if (banner) {
+              banner.classList.add("expired");
+              banner.style.display = "flex";
+            }
+            if (titleEl) titleEl.textContent = trialUsed ? "Sinov muddati tugagan" : "Obuna faol emas";
+            if (pillEl) {
+              pillEl.textContent = "Obuna kerak";
+              pillEl.style.background = "#fee2e2";
+              pillEl.style.color = "#b91c1c";
+            }
+            if (descEl) {
+              descEl.textContent = trialUsed
+                ? "Do‘koningizning 14 kunlik bepul sinovi tugagan. Tizimdan to‘liq foydalanish uchun tarif sotib oling."
+                : "Tizimdan to‘liq foydalanish uchun 4 ta tarifdan birini tanlang.";
+            }
+            if (btnEl) {
+              btnEl.textContent = "Tarif sotib olish →";
+            }
+
+            if (sideName) sideName.textContent = "Obuna yo‘q";
+            if (sideDays) sideDays.textContent = "To‘xtatilgan";
+            if (sideDesc) sideDesc.textContent = "Tarif tanlang";
+          }
+        }).catch(function (e) {
+          // Xatolikda banner ko'rinmaydi
+        });
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", loadDashboardSubscription);
+      } else {
+        loadDashboardSubscription();
+      }
+    })();
+  </script>
+
   <!-- Cross-page navigatsiya: bo'lim boshqa sahifada bo'lsa, URL ga o'tish -->
   <script>
   (function () {
@@ -726,7 +1011,8 @@
       productsSection: "/products",
       "daily-sales": "/history",
       debtors: "/debtors",
-      settings: "/settings"
+      settings: "/settings",
+      subscription: "/payment"
     };
     var CURRENT = "dashboard";
 
