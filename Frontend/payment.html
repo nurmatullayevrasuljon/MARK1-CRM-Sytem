@@ -4,564 +4,761 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#141a2e">
-<title>To‘lov — MARK1 CRM</title>
+<title>To‘lov va Obuna — MARK1 CRM</title>
+<link rel="shortcut icon" href="img/b-logo2.png" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Onest:wght@400;500;600&display=swap">
 <style>
-/* ===== MARK1 dizayn tokenlari =====
-   Diqqat: mark1.uz CSS fayllarini ko‘ra olmadim. Faqat theme-color (#141a2e) ma’lum.
-   Qolganlarini main.css dagi haqiqiy qiymatlarga almashtiring — faqat shu blok. */
 :root{
-  --mk-primary:#141a2e; --mk-primary-hover:#1f2742;
-  --mk-bg:#f6f7fb; --mk-surface:#fff; --mk-border:#e3e6ee;
-  --mk-text:#141a2e; --mk-muted:#5d6580;
-  --mk-ok:#13795b; --mk-err:#b42318; --mk-err-bg:#fef3f2;
-  --mk-radius:12px; --mk-font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mk-primary:#2563eb; --mk-primary-hover:#1d4ed8;
+  --mk-bg:#f8fafc; --mk-surface:#ffffff; --mk-border:#e2e8f0;
+  --mk-text:#0f172a; --mk-muted:#64748b;
+  --mk-ok:#10b981; --mk-err:#ef4444; --mk-err-bg:#fef2f2;
+  --mk-radius:14px; --mk-font:'Manrope', system-ui, -apple-system, sans-serif;
+  --mk-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
 }
-.mk-pay *{box-sizing:border-box}
-.mk-pay{margin:0;min-height:100vh;background:var(--mk-bg);color:var(--mk-text);font:16px/1.5 var(--mk-font)}
-.mk-pay-head{background:var(--mk-surface);border-bottom:1px solid var(--mk-border)}
-.mk-pay-head-in,.mk-pay-main,.mk-pay-trust{max-width:1040px;margin:0 auto;padding:0 20px}
-.mk-pay-head-in{display:flex;align-items:center;gap:16px;min-height:64px;flex-wrap:wrap}
-.mk-pay-logo img{height:32px;display:block}
-.mk-pay-title{font-size:18px;font-weight:600;margin:0;flex:1}
-.mk-pay-secure{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--mk-ok)}
-.mk-pay-back{color:var(--mk-muted);font-size:14px;text-decoration:none;border:1px solid var(--mk-border);border-radius:8px;padding:8px 12px}
-.mk-pay-back:hover{color:var(--mk-text);border-color:var(--mk-text)}
-.mk-pay-main{display:grid;grid-template-columns:1fr 340px;gap:24px;padding-top:28px;padding-bottom:28px;align-items:start}
-.mk-pay-card{background:var(--mk-surface);border:1px solid var(--mk-border);border-radius:var(--mk-radius);padding:20px;margin-bottom:20px}
-.mk-pay-card h2{font-size:16px;margin:0 0 14px}
-.mk-pay-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;font-size:15px}
-.mk-pay-row span:first-child{color:var(--mk-muted)}
-.mk-pay-row.mk-total{border-top:1px solid var(--mk-border);margin-top:6px;padding-top:14px;font-size:18px;font-weight:600}
-.mk-pay-row.mk-total span:first-child{color:var(--mk-text)}
-.mk-pay-methods{display:grid;grid-template-columns:1fr 1fr;gap:12px;border:0;padding:0;margin:0}
-.mk-pay-methods legend{font-size:16px;font-weight:600;margin-bottom:14px;padding:0}
-.mk-pay-opt{position:relative}
-.mk-pay-opt input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
-.mk-pay-opt label{display:flex;align-items:center;gap:12px;padding:16px;border:1.5px solid var(--mk-border);border-radius:var(--mk-radius);background:var(--mk-surface)}
-.mk-pay-opt input:checked+label{border-color:var(--mk-primary);box-shadow:0 0 0 1px var(--mk-primary)}
-.mk-pay-opt input:focus-visible+label{outline:3px solid #8aa0ff;outline-offset:2px}
-.mk-pay-opt svg{width:44px;height:44px;flex:none}
-.mk-pay-opt b{display:block}.mk-pay-opt small{color:var(--mk-muted)}
-.mk-pay-tick{margin-left:auto;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--mk-border);flex:none}
-.mk-pay-opt input:checked+label .mk-pay-tick{background:var(--mk-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.5l3 3 6-7' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E") center/100%;border-color:var(--mk-primary)}
-.mk-pay-side{position:sticky;top:20px}
-.mk-pay-btn{width:100%;min-height:48px;border:0;border-radius:10px;background:var(--mk-primary);color:#fff;font:600 16px var(--mk-font);cursor:pointer;margin-top:16px}
-.mk-pay-btn:hover:not(:disabled){background:var(--mk-primary-hover)}
-.mk-pay-btn:disabled{opacity:.55;cursor:not-allowed}
-.mk-pay-btn:focus-visible{outline:3px solid #8aa0ff;outline-offset:2px}
-.mk-pay-btn.mk-loading::before{content:"";display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border:2px solid #fff6;border-top-color:#fff;border-radius:50%;animation:mk-spin .8s linear infinite}
-@keyframes mk-spin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.mk-pay-btn.mk-loading::before{animation-duration:2s}}
-.mk-pay-msg{display:none;margin-top:14px;padding:12px 14px;border-radius:10px;font-size:14px}
-.mk-pay-msg.mk-show{display:block}
-.mk-pay-msg.mk-err{background:var(--mk-err-bg);color:var(--mk-err);border:1px solid #fecdca}
-.mk-pay-msg.mk-info{background:var(--mk-bg);color:var(--mk-muted);border:1px solid var(--mk-border)}
-.mk-pay-note{font-size:13px;color:var(--mk-muted);margin:12px 0 0}
-.mk-pay-trust{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding-bottom:40px;font-size:14px;color:var(--mk-muted)}
-.mk-pay-trust strong{display:block;color:var(--mk-text);margin-bottom:2px}
-.mk-pay-trust a{color:inherit}
-.mk-pay-done{text-align:center;padding:40px 20px}
-.mk-pay-done h2{font-size:22px}
-/* ===== Tarif tanlash qadami (tarif yo'q / bepul sinov tugaganda) ===== */
-.mk-pick{max-width:1040px;margin:0 auto;padding:28px 20px 48px}
-.mk-pick h2{font-size:22px;margin:0 0 6px}
-.mk-pick-lead{color:var(--mk-muted);font-size:15px;margin:0 0 18px}
-.mk-pick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.mk-pick-card{position:relative;display:flex;flex-direction:column;width:100%;padding:20px;background:var(--mk-surface);border:1.5px solid var(--mk-border);border-radius:var(--mk-radius);text-align:left;font:inherit;color:inherit;cursor:pointer;transition:border-color .15s ease, transform .15s ease}
-.mk-pick-card:hover{border-color:var(--mk-primary);transform:translateY(-2px)}
-.mk-pick-card:focus-visible{outline:3px solid #8aa0ff;outline-offset:2px}
-.mk-pick-name{font-size:16px;font-weight:700;letter-spacing:.02em}
-.mk-pick-price{font-size:20px;font-weight:700;margin-top:4px}
-.mk-pick-price small{font-size:13px;font-weight:400;color:var(--mk-muted)}
-.mk-pick-limits{list-style:none;margin:10px 0 14px;padding:0;font-size:13px;color:var(--mk-muted);display:grid;gap:4px}
-.mk-pick-cta{margin-top:auto;padding:10px 0;border-radius:8px;background:var(--mk-primary);color:#fff;font-size:14px;font-weight:600;text-align:center}
-.mk-pick-card:hover .mk-pick-cta{background:var(--mk-primary-hover)}
-.mk-pick-cur{position:absolute;top:12px;right:12px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--mk-bg);border:1px solid var(--mk-border);color:var(--mk-muted)}
-.mk-pick-note{margin-top:18px;font-size:14px;color:var(--mk-muted)}
-[hidden]{display:none!important}
-@media (max-width:860px){.mk-pay-main{grid-template-columns:1fr}.mk-pay-side{position:static}.mk-pay-trust{grid-template-columns:1fr}.mk-pick-grid{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:480px){.mk-pay-methods{grid-template-columns:1fr}.mk-pay-title{order:3;flex-basis:100%}}
+* { box-sizing: border-box; margin:0; padding:0; }
+body.mk-pay {
+  min-height: 100vh;
+  background: var(--mk-bg);
+  color: var(--mk-text);
+  font: 15px/1.6 var(--mk-font);
+  display: flex;
+  flex-direction: column;
+}
+.mk-pay-head {
+  background: var(--mk-surface);
+  border-bottom: 1px solid var(--mk-border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.mk-pay-head-in, .mk-pay-main, .mk-pay-trust {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+.mk-pay-head-in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 70px;
+  gap: 16px;
+}
+.mk-pay-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.mk-pay-brand img { height: 32px; display: block; }
+.mk-pay-brand h1 { font-size: 18px; font-weight: 700; color: var(--mk-text); }
+.mk-pay-head-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.mk-pay-secure {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mk-ok);
+  background: #ecfdf5;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+.mk-pay-back {
+  color: var(--mk-muted);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid var(--mk-border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  transition: all .15s ease;
+}
+.mk-pay-back:hover { color: var(--mk-text); border-color: var(--mk-text); }
+
+/* Asosiy qism */
+.mk-pay-main {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 32px;
+  padding-top: 36px;
+  padding-bottom: 48px;
+  align-items: start;
+  flex: 1;
+}
+.mk-card {
+  background: var(--mk-surface);
+  border: 1px solid var(--mk-border);
+  border-radius: var(--mk-radius);
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--mk-shadow);
+}
+.mk-card-title {
+  font-size: 17px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.mk-card-subtitle {
+  font-size: 13px;
+  color: var(--mk-muted);
+  margin-bottom: 20px;
+}
+
+/* 4 ta tarif kartochkalari (Grid) */
+.mk-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.mk-plan-item {
+  position: relative;
+  background: var(--mk-surface);
+  border: 2px solid var(--mk-border);
+  border-radius: 12px;
+  padding: 16px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all .2s ease;
+  display: flex;
+  flex-direction: column;
+}
+.mk-plan-item:hover {
+  border-color: #93c5fd;
+  transform: translateY(-2px);
+}
+.mk-plan-item.selected {
+  border-color: var(--mk-primary);
+  background: #f0f7ff;
+  box-shadow: 0 0 0 1px var(--mk-primary);
+}
+.mk-plan-badge {
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  background: var(--mk-primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: .05em;
+}
+.mk-plan-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--mk-text);
+  margin-bottom: 4px;
+}
+.mk-plan-price {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--mk-primary);
+  margin-bottom: 10px;
+}
+.mk-plan-price span {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--mk-muted);
+}
+.mk-plan-features {
+  list-style: none;
+  font-size: 12px;
+  color: var(--mk-muted);
+  display: grid;
+  gap: 4px;
+  margin-top: auto;
+  border-top: 1px dashed var(--mk-border);
+  padding-top: 8px;
+}
+.mk-plan-check {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 6px 0;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 6px;
+  background: #e2e8f0;
+  color: #475569;
+  transition: all .2s ease;
+}
+.mk-plan-item.selected .mk-plan-check {
+  background: var(--mk-primary);
+  color: #fff;
+}
+
+/* To'lov usullari */
+.mk-methods-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.mk-method-opt {
+  position: relative;
+}
+.mk-method-opt input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  margin: 0;
+}
+.mk-method-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 2px solid var(--mk-border);
+  border-radius: 12px;
+  background: var(--mk-surface);
+  transition: all .2s ease;
+}
+.mk-method-opt input:checked + .mk-method-card {
+  border-color: var(--mk-primary);
+  background: #f8faff;
+  box-shadow: 0 0 0 1px var(--mk-primary);
+}
+.mk-method-logo {
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+.mk-method-info b { display: block; font-size: 15px; }
+.mk-method-info small { font-size: 12px; color: var(--mk-muted); }
+.mk-method-tick {
+  margin-left: auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--mk-border);
+  flex: none;
+}
+.mk-method-opt input:checked + .mk-method-card .mk-method-tick {
+  border-color: var(--mk-primary);
+  background: var(--mk-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.5l3 3 6-7' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100%;
+}
+
+/* Xulosa qismi (Sidebar) */
+.mk-pay-side {
+  position: sticky;
+  top: 90px;
+}
+.mk-summary-card {
+  background: var(--mk-surface);
+  border: 1px solid var(--mk-border);
+  border-radius: var(--mk-radius);
+  padding: 24px;
+  box-shadow: var(--mk-shadow);
+}
+.mk-sum-title {
+  font-size: 17px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--mk-border);
+}
+.mk-sum-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 14px;
+}
+.mk-sum-row span:first-child { color: var(--mk-muted); }
+.mk-sum-row span:last-child { font-weight: 600; }
+.mk-sum-total {
+  margin-top: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--mk-border);
+  font-size: 19px;
+  font-weight: 800;
+}
+.mk-sum-total span:last-child { color: var(--mk-primary); }
+
+.mk-btn-pay {
+  width: 100%;
+  min-height: 50px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--mk-primary);
+  color: #fff;
+  font: 700 16px var(--mk-font);
+  cursor: pointer;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all .2s ease;
+}
+.mk-btn-pay:hover:not(:disabled) {
+  background: var(--mk-primary-hover);
+  transform: translateY(-1px);
+}
+.mk-btn-pay:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none;
+}
+.mk-btn-pay.loading::before {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff6;
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: mk-spin .7s linear infinite;
+}
+@keyframes mk-spin { to { transform: rotate(360deg); } }
+
+.mk-alert {
+  display: none;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.mk-alert.show { display: block; }
+.mk-alert.err { background: var(--mk-err-bg); color: var(--mk-err); border: 1px solid #fca5a5; }
+.mk-alert.info { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
+.mk-done-wrap {
+  text-align: center;
+  padding: 60px 20px;
+  max-width: 520px;
+  margin: 40px auto;
+}
+.mk-done-icon {
+  width: 64px;
+  height: 64px;
+  background: #dcfce7;
+  color: #16a34a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+.mk-done-wrap h2 { font-size: 24px; font-weight: 800; margin-bottom: 10px; }
+.mk-done-wrap p { color: var(--mk-muted); margin-bottom: 24px; }
+
+/* Responsive */
+@media (max-width: 960px) {
+  .mk-pay-main { grid-template-columns: 1fr; }
+  .mk-pay-side { position: static; }
+  .mk-plans-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .mk-plans-grid { grid-template-columns: 1fr; }
+  .mk-methods-grid { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body class="mk-pay">
-<header class="mk-pay-head"><div class="mk-pay-head-in">
-  <a class="mk-pay-logo" href="/" aria-label="MARK1"><img src="https://mark1.uz/img/mark1-logo-navbar.png" alt="MARK1"></a>
-  <h1 class="mk-pay-title" id="mkTitle">To‘lov</h1>
-  <span class="mk-pay-secure"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>Xavfsiz to‘lov</span>
-  <a class="mk-pay-back" id="mkBack" href="/">Bosh sahifaga qaytish</a>
-</div></header>
 
-<!-- Tarif tanlash qadami: ?plan= / pending / payment_id YO'Q bo'lsa ko'rinadi -->
-<section class="mk-pick" id="mkPick" hidden aria-labelledby="mkPickH">
-  <h2 id="mkPickH">Tarifni tanlang</h2>
-  <p class="mk-pick-lead" id="mkPickLead">14 kunlik bepul sinov yoki tarif tanlang</p>
-  <div class="mk-pick-grid" id="mkPickGrid"></div>
-  <p class="mk-pick-note" id="mkPickNote">Bepul sinov faqat bir marta beriladi. To‘lov Click/Payme orqali TezCheck xizmatida amalga oshiriladi.</p>
-</section>
+<header class="mk-pay-head">
+  <div class="mk-pay-head-in">
+    <div class="mk-pay-brand">
+      <a href="/" aria-label="MARK1 CRM"><img src="https://mark1.uz/img/mark1-logo-navbar.png" alt="MARK1"></a>
+      <h1>To‘lov va Obuna</h1>
+    </div>
+    <div class="mk-pay-head-right">
+      <span class="mk-pay-secure">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+        Xavfsiz to‘lov
+      </span>
+      <a class="mk-pay-back" id="mkBack" href="/">Bosh sahifaga</a>
+    </div>
+  </div>
+</header>
 
-<main class="mk-pay-main" id="mkPayMain" hidden>
-  <div>
-    <section class="mk-pay-card" aria-labelledby="mkPlanH">
-      <h2 id="mkPlanH">Tarif ma’lumotlari</h2>
-      <div class="mk-pay-row"><span>Tarif</span><span id="mkPlanName"></span></div>
-      <div class="mk-pay-row"><span>Narxi</span><span id="mkPlanPrice"></span></div>
-      <div class="mk-pay-row"><span>Obuna muddati</span><span id="mkPlanTerm"></span></div>
-      <div class="mk-pay-row"><span>Obuna tugash sanasi</span><span id="mkPlanEnd"></span></div>
-      <div class="mk-pay-row mk-total"><span>Jami to‘lov</span><span id="mkPlanTotal"></span></div>
+<main class="mk-pay-main" id="mkPayContainer">
+  <div class="mk-pay-content">
+    
+    <!-- 1-qadam: 4 ta Tarif kartochkalari -->
+    <section class="mk-card">
+      <div class="mk-card-title">
+        <span>1. Tarif rejasini tanlang</span>
+        <span id="mkTrialStatus" style="font-size:12px; font-weight:600; color:var(--mk-muted);"></span>
+      </div>
+      <p class="mk-card-subtitle">O‘zingizga mos tarifni tanlang. Istalgan vaqtda boshqa tarifga o‘tishingiz mumkin.</p>
+      
+      <div class="mk-plans-grid" id="mkPlansGrid">
+        <!-- JS orqali 4 ta tarif (START, STANDART, GROWTH, PRO) to'ldiriladi -->
+      </div>
     </section>
 
-    <section class="mk-pay-card">
-      <fieldset class="mk-pay-methods" id="mkMethods">
-        <legend>To‘lov usulini tanlang</legend>
-        <div class="mk-pay-opt">
-          <input type="radio" name="mkMethod" id="mkClick" value="click">
-          <label for="mkClick">
-            <!-- Vaqtincha belgi. Rasmiy Click logotipi bilan almashtiring. -->
-            <svg viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="10" fill="#00a8e8"/><text x="22" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#fff" font-family="Arial">click</text></svg>
-            <span><b>Click</b><small>Click ilovasi orqali</small></span><span class="mk-pay-tick"></span>
+    <!-- 2-qadam: To'lov usuli -->
+    <section class="mk-card" id="mkMethodsCard">
+      <div class="mk-card-title">2. To‘lov usulini tanlang</div>
+      <p class="mk-card-subtitle">To‘lov Click yoki Payme orqali xavfsiz amalga oshiriladi.</p>
+      
+      <div class="mk-methods-grid">
+        <div class="mk-method-opt">
+          <input type="radio" name="mkMethod" id="mClick" value="click" checked>
+          <label class="mk-method-card" for="mClick">
+            <svg class="mk-method-logo" viewBox="0 0 44 44">
+              <rect width="44" height="44" rx="10" fill="#00a3ff"/>
+              <text x="22" y="27" font-family="system-ui,sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">click</text>
+            </svg>
+            <div class="mk-method-info">
+              <b>Click</b>
+              <small>Click ilovasi yoki karta</small>
+            </div>
+            <span class="mk-method-tick"></span>
           </label>
         </div>
-        <div class="mk-pay-opt">
-          <input type="radio" name="mkMethod" id="mkPayme" value="payme">
-          <label for="mkPayme">
-            <!-- Vaqtincha belgi. Rasmiy Payme logotipi bilan almashtiring. -->
-            <svg viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="10" fill="#0fb8b0"/><text x="22" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#fff" font-family="Arial">payme</text></svg>
-            <span><b>Payme</b><small>Payme ilovasi orqali</small></span><span class="mk-pay-tick"></span>
+
+        <div class="mk-method-opt">
+          <input type="radio" name="mkMethod" id="mPayme" value="payme">
+          <label class="mk-method-card" for="mPayme">
+            <svg class="mk-method-logo" viewBox="0 0 44 44">
+              <rect width="44" height="44" rx="10" fill="#14b8a6"/>
+              <text x="22" y="27" font-family="system-ui,sans-serif" font-size="11" font-weight="900" fill="#fff" text-anchor="middle">payme</text>
+            </svg>
+            <div class="mk-method-info">
+              <b>Payme</b>
+              <small>Payme ilovasi orqali</small>
+            </div>
+            <span class="mk-method-tick"></span>
           </label>
         </div>
-      </fieldset>
+      </div>
     </section>
+
+    <!-- Xavfsizlik kafolatlari -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:13px; color:var(--mk-muted);">
+      <div>🔒 <b>Bank darajasidagi xavfsizlik</b> — Karta ma’lumotlari MARK1 da saqlanmaydi.</div>
+      <div>⚡ <b>Avtomatik faollashuv</b> — To‘lov tasdiqlangach obuna bir zumda yoqiladi.</div>
+    </div>
   </div>
 
+  <!-- Xulosa Sidebar -->
   <aside class="mk-pay-side">
-    <section class="mk-pay-card" aria-labelledby="mkSumH">
-      <h2 id="mkSumH">To‘lov xulosasi</h2>
-      <div class="mk-pay-row"><span>Tanlangan tarif</span><span id="mkSumName"></span></div>
-      <div class="mk-pay-row"><span>Tarif narxi (30 kun)</span><span id="mkSumPrice"></span></div>
-      <div class="mk-pay-row"><span>Hisobingizdagi balans</span><span id="mkSumBalance"></span></div>
-      <div class="mk-pay-row mk-total"><span>To‘lanishi kerak</span><span id="mkSumTotal"></span></div>
-      <button type="button" class="mk-pay-btn" id="mkPayBtn" disabled>To‘lovni amalga oshirish</button>
-      <p class="mk-pay-note" id="mkHint">Davom etish uchun to‘lov usulini tanlang.</p>
-      <div class="mk-pay-msg" id="mkMsg" role="alert" tabindex="-1"></div>
-    </section>
+    <div class="mk-summary-card">
+      <h2 class="mk-sum-title">To‘lov xulosasi</h2>
+      <div class="mk-sum-row"><span>Tanlangan tarif</span><span id="mkSumName">STANDART</span></div>
+      <div class="mk-sum-row"><span>Obuna muddati</span><span id="mkSumPeriod">30 kun</span></div>
+      <div class="mk-sum-row"><span>Tarif narxi</span><span id="mkSumPrice">199 000 so‘m</span></div>
+      <div class="mk-sum-row"><span>Hisobingizdagi balans</span><span id="mkSumBalance">0 so‘m</span></div>
+      
+      <div class="mk-sum-row mk-sum-total">
+        <span>Jami to‘lov:</span>
+        <span id="mkSumTotal">199 000 so‘m</span>
+      </div>
+
+      <button type="button" class="mk-btn-pay" id="mkPayBtn">
+        To‘lovni amalga oshirish
+      </button>
+
+      <div class="mk-alert" id="mkAlert" role="alert"></div>
+
+      <p style="font-size:12px; color:var(--mk-muted); text-align:center; margin-top:14px;">
+        To‘lovni amalga oshirish orqali siz xizmat ko‘rsatish shartlariga rozilik bildirasiz.
+      </p>
+    </div>
   </aside>
 </main>
 
-<section class="mk-pay-card mk-pay-done" id="mkDone" hidden style="max-width:520px;margin:40px auto" aria-live="polite">
-  <h2>To‘lov qabul qilindi</h2>
-  <p id="mkDoneText"></p>
-  <a class="mk-pay-back" href="/">Bosh sahifaga qaytish</a>
-</section>
+<!-- To'lov muvaffaqiyatli yakunlandi ekrani -->
+<div class="mk-card mk-done-wrap" id="mkDoneContainer" hidden>
+  <div class="mk-done-icon">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <h2>To‘lov qabul qilindi!</h2>
+  <p id="mkDoneMsg">Obunangiz muvaffaqiyatli faollashtirildi.</p>
+  <a class="mk-pay-back" href="/dashboard" style="display:inline-block; background:var(--mk-primary); color:#fff; border-color:var(--mk-primary);">
+    Boshqaruv paneliga o‘tish &rarr;
+  </a>
+</div>
 
-<footer class="mk-pay-trust">
-  <div><strong>Xavfsiz to‘lov</strong>To‘lov Click yoki Payme sahifasida amalga oshadi.</div>
-  <div><strong>Ma’lumotlaringiz himoyalangan</strong>Karta ma’lumotlari MARK1 da saqlanmaydi.</div>
-  <div><strong>Qo‘llab-quvvatlash</strong><a href="mailto:support@mark1.uz">support@mark1.uz</a></div>
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/axios@1.20.0/dist/axios.min.js"></script>
 <script src="js/api-client.js"></script>
 <script>
-(function () {
+(function() {
   "use strict";
 
-  /* ===== Backend endpointlari (subscription & payment API) =====
-     GET  /api/subscription/plans    -> {success, plans:[{code,name,price,period_days,limits}]}
-     GET  /api/subscription/current  -> {success, current, scheduled, balance}
-     POST /api/subscription/purchase {plan}       -> 201 {message, subscription, balance}
-     POST /api/payment/create         {amount}     -> 201 {payment:{payment_url}} (TezCheck hisobi)
-     GET  /api/payment/:id                          -> {payment:{status}, balance}  (polling)
-     GET  /api/payment/active                       -> {payment|null} (qaytishda davom ettirish)
-     Webhook /api/payment/webhook backendda ishlaydi — frontend tasdiqlashni so'raydi. */
   var CONFIG = {
-    HOME_URL: "/",
     PLANS_URL: "/subscription/plans",
     CURRENT_URL: "/subscription/current",
     PURCHASE_URL: "/subscription/purchase",
-    CREATE_URL: "/payment/create",
-    STATUS_URL: "/payment/",        // + id
+    TOPUP_URL: "/payment/create",
+    STATUS_URL: "/payment/",
     ACTIVE_URL: "/payment/active",
-    MIN_AMOUNT: 1000,               // backend PAYMENT_MIN_AMOUNT (TezCheck minimal summasi)
-    PENDING_PLAN_KEY: "mk_pending_plan",
     DEFAULT_PLAN: "standart",
-    POLL_INTERVAL_MS: 3000,
-    POLL_MAX_TRIES: 100             // ~5 daqiqa
+    PENDING_KEY: "mk_pending_plan"
   };
 
-  var $ = function (id) { return document.getElementById(id); };
-  var params = new URLSearchParams(location.search);
+  // 4 ta standart tarif (agar tarmoq uzilsa ham fallback bo'ladi)
+  var FALLBACK_PLANS = {
+    start: { code: "start", name: "START", price: 99000, period_days: 30, limits: { max_users: 1, sms: 5, ai: 1 } },
+    standart: { code: "standart", name: "STANDART", price: 199000, period_days: 30, limits: { max_users: 2, sms: 20, ai: 2 } },
+    growth: { code: "growth", name: "GROWTH", price: 349000, period_days: 30, limits: { max_users: 5, sms: 60, ai: 10 } },
+    pro: { code: "pro", name: "PRO", price: 599000, period_days: 30, limits: { max_users: 10, sms: 150, ai: 30 } }
+  };
+
   var state = {
-    method: null, busy: false, polling: false,
-    plan: null, planKey: null, plans: {},
-    trialUsed: false, // 14 kunlik bepul sinov allaqachon ishlatilganmi
-    current: null, balance: 0, due: 0,
-    autoPurchase: true
+    plans: FALLBACK_PLANS,
+    selectedPlan: "standart",
+    method: "click",
+    balance: 0,
+    currentSub: null,
+    trialUsed: false,
+    busy: false,
+    due: 199000
   };
 
-  /* ===== Yordamchilar ===== */
-  function som(n) { return Number(n || 0).toLocaleString("ru-RU") + " so\u00a0m"; }
-  function set(id, v) { var el = $(id); if (el) el.textContent = v; }
-  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-  var MONTHS = ["yanvar","fevral","mart","aprel","may","iyun","iyul","avgust","sentabr","oktabr","noyabr","dekabr"];
-  function fmtDate(d) {
-    if (!d) return "—";
-    if (typeof d === "string") d = new Date(d);
-    if (isNaN(d.getTime())) return "—";
-    return d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear();
-  }
-  function api() { return window.crmApi; } // axios: Bearer token + 401 -> refresh
+  function som(n) { return Number(n || 0).toLocaleString("ru-RU") + " so‘m"; }
+  function $(id) { return document.getElementById(id); }
 
-  function msg(type, html) {
-    var m = $("mkMsg");
-    m.className = "mk-pay-msg mk-show " + (type === "err" ? "mk-err" : "mk-info");
-    m.innerHTML = html;
-    if (type === "err") m.focus();
+  function showAlert(msg, type) {
+    var el = $("mkAlert");
+    if (!el) return;
+    el.className = "mk-alert show " + (type === "err" ? "err" : "info");
+    el.innerHTML = msg;
   }
-  function clearMsg() { $("mkMsg").className = "mk-pay-msg"; }
-  function setBusy(b) {
+  function clearAlert() {
+    var el = $("mkAlert");
+    if (el) el.className = "mk-alert";
+  }
+
+  function setBusy(b, btnText) {
     state.busy = b;
     var btn = $("mkPayBtn");
-    btn.classList.toggle("mk-loading", b);
-    btn.disabled = b || (state.due > 0 && !state.method);
-    btn.textContent = b ? "Kutilmoqda…" :
-      (state.due > 0 ? "To\u2018lovni amalga oshirish" : "Tarifni faollashtirish");
-    document.querySelectorAll("input[name=mkMethod]").forEach(function (i) { i.disabled = b; });
+    if (!btn) return;
+    btn.classList.toggle("loading", b);
+    btn.disabled = b;
+    if (btnText) btn.textContent = btnText;
+    else btn.textContent = state.due === 0 ? "Tarifni faollashtirish" : "To‘lovni amalga oshirish";
   }
 
-  /* ===== Xatolarni foydalanuvchi tilida ko'rsatish ===== */
-  function handleErr(e, context) {
-    var status = e && e.response && e.response.status;
-    var data = e && e.response && e.response.data;
-    if (status === 401 || status === 403) {
-      // ?next= bilan qaytamiz: to'lov qaytishida (boshqa domen hostida)
-      // sessiya yo'qolsa ham payment_id/plan saqlanib qoladi.
-      var back = encodeURIComponent(location.pathname + location.search);
-      msg("err", "Sessiya muddati tugagan yoki ruxsat yo\u2018q. <a href=\"/login?next=" + back + "\">Tizimga qayta kiring</a> — to'lov sahifasiga avtomatik qaytarilasiz.");
-      return;
-    }
-    if (data && data.code === "insufficient_balance") {
-      msg("err", "Balans yetarli emas: kerak " + som(data.required) + ", mavjud " + som(data.balance) + ". Avval balansni to\u2018ldiring.");
-      return;
-    }
-    if (data && data.code === "already_scheduled") {
-      // Rezerv qilingan tarif allaqachon bor — eskirgan pending kalitni
-      // o'chiramiz, aks holda keyingi to'lov noto'g'ri tarifga avto-sotib
-      // olishga urinadi.
-      try { localStorage.removeItem(CONFIG.PENDING_PLAN_KEY); } catch (e) {}
-      msg("info", "Keyingi davr uchun tarif allaqachon sotib olingan. Balans hisobingizga qo'shildi — tarifni tanlang.");
-      return;
-    }
-    if (data && data.code === "purchase_in_progress") {
-      msg("info", "Oldingi so\u2018rv hali bajarilmoqda, bir ozdan keyin urinib ko\u2018ring.");
-      return;
-    }
-    if (data && data.message) { msg("err", context + ": " + data.message); return; }
-    console.error(context, e);
-    msg("err", context + "da xatolik yuz berdi. Qayta urinib ko\u2018ring yoki support@mark1.uz ga yozing.");
+  // 4 ta tarif kartalarini chizish
+  function renderPlansGrid() {
+    var container = $("mkPlansGrid");
+    if (!container) return;
+    container.innerHTML = "";
+
+    var keys = ["start", "standart", "growth", "pro"];
+    keys.forEach(function(code) {
+      var p = state.plans[code] || FALLBACK_PLANS[code];
+      if (!p) return;
+
+      var div = document.createElement("div");
+      div.className = "mk-plan-item" + (state.selectedPlan === code ? " selected" : "");
+      div.id = "planCard_" + code;
+
+      var badgeHtml = code === "standart" ? '<span class="mk-plan-badge">Eng ommabop</span>' : '';
+      var limits = p.limits || {};
+
+      div.innerHTML = badgeHtml +
+        '<div class="mk-plan-name">' + p.name + '</div>' +
+        '<div class="mk-plan-price">' + som(p.price) + ' <span>/ oy</span></div>' +
+        '<ul class="mk-plan-features">' +
+          '<li>👥 ' + (limits.max_users || 1) + ' foydalanuvchi</li>' +
+          '<li>💬 ' + (limits.sms || 5) + ' ta SMS</li>' +
+          '<li>🤖 ' + (limits.ai || 1) + ' ta AI so‘rov</li>' +
+        '</ul>' +
+        '<div class="mk-plan-check">' + (state.selectedPlan === code ? '✓ Tanlangan' : 'Tanlash') + '</div>';
+
+      div.addEventListener("click", function() {
+        selectPlan(code);
+      });
+
+      container.appendChild(div);
+    });
   }
 
-  /* ===== Render ===== */
-  function planStart() {
-    var cur = state.current;
-    // Pullik obuna faol bo\u2018lsa, yangi davr eskisi tugagach boshlanadi (backend mantiqi)
-    if (cur && !cur.is_trial && cur.expires_at) return new Date(cur.expires_at);
-    return new Date();
+  function selectPlan(code) {
+    state.selectedPlan = code;
+    try { localStorage.setItem(CONFIG.PENDING_KEY, code); } catch(e){}
+
+    // UI da tanlangan kartani ajratish
+    document.querySelectorAll(".mk-plan-item").forEach(function(el) {
+      el.classList.remove("selected");
+      var chk = el.querySelector(".mk-plan-check");
+      if (chk) chk.textContent = "Tanlash";
+    });
+    var selectedEl = $("planCard_" + code);
+    if (selectedEl) {
+      selectedEl.classList.add("selected");
+      var chk = selectedEl.querySelector(".mk-plan-check");
+      if (chk) chk.textContent = "✓ Tanlangan";
+    }
+
+    updateSummary();
   }
-  function planEnd() {
-    var d = planStart();
-    d.setDate(d.getDate() + (state.plan.period_days || 30));
-    return d;
-  }
-  function render() {
-    var p = state.plan;
-    set("mkPlanName", p.name);
-    set("mkPlanPrice", som(p.price) + " / " + (p.period_days || 30) + " kun");
-    set("mkPlanTerm", (p.period_days || 30) + " kun");
-    set("mkPlanEnd", fmtDate(planEnd()));
-    set("mkPlanTotal", som(p.price));
-    set("mkSumName", p.name);
-    set("mkSumPrice", som(p.price));
-    set("mkSumBalance", som(state.balance));
+
+  function updateSummary() {
+    var p = state.plans[state.selectedPlan] || FALLBACK_PLANS[state.selectedPlan];
+    $("mkSumName").textContent = p.name;
+    $("mkSumPeriod").textContent = (p.period_days || 30) + " kun";
+    $("mkSumPrice").textContent = som(p.price);
+    $("mkSumBalance").textContent = som(state.balance);
+
     state.due = Math.max(0, p.price - state.balance);
-    set("mkSumTotal", state.due > 0 ? som(state.due) : "Balansdan qoplanadi");
+    $("mkSumTotal").textContent = state.due === 0 ? "Balansdan qoplanadi" : som(state.due);
 
-    var methods = $("mkMethods");
-    if (methods) methods.hidden = state.due === 0;
-    var hint = $("mkHint");
-    if (state.due > 0) {
-      // Tugma faqat to'lov usuli tanlanganda ochiladi — hint ham shuni aytadi.
-      hint.textContent = state.method
-        ? "To\u2018lov TezCheck orqali o\u2018tamiz. To\u2018lov tasdiqlangach tarif avtomatik faollashadi."
-        : "Davom etish uchun to\u2018lov usulini tanlang.";
+    var btn = $("mkPayBtn");
+    if (state.due === 0) {
+      btn.textContent = "Tarifni faollashtirish (Balansdan)";
+      $("mkMethodsCard").style.opacity = "0.5";
+      $("mkMethodsCard").style.pointerEvents = "none";
     } else {
-      hint.textContent = "Balansingiz tarif narxiga yetgan — qo\u2018shimcha to\u2018lov talab qilinmaydi.";
-    }
-    setBusy(false);
-  }
-
-  /* ===== API ===== */
-  async function loadPlans() {
-    var res = await api().get(CONFIG.PLANS_URL);
-    var list = (res.data && res.data.plans) || [];
-    list.forEach(function (p) { state.plans[p.code] = p; });
-    if (!list.length) throw new Error("NO_PLANS");
-  }
-  async function loadCurrent() {
-    var res = await api().get(CONFIG.CURRENT_URL);
-    state.balance = Number(res.data && res.data.balance) || 0;
-    state.current = (res.data && res.data.current) || null;
-    state.trialUsed = !!(res.data && res.data.trial_used);
-  }
-
-  async function purchase() {
-    try {
-      var res = await api().post(CONFIG.PURCHASE_URL, { plan: state.planKey });
-      var sub = (res.data && res.data.subscription) || {};
-      try { localStorage.removeItem(CONFIG.PENDING_PLAN_KEY); } catch (e) {}
-      $("mkPayMain").hidden = true;
-      $("mkDone").hidden = false;
-      set("mkDoneText",
-        (res.data && res.data.message || "Tarif faollashtirildi") + " — " +
-        state.plan.name + ". Tugash sanasi: " + fmtDate(sub.expires_at) + ".");
-      clearMsg();
-    } catch (e) {
-      handleErr(e, "Tarifni sotib olishda");
-      setBusy(false);
+      btn.textContent = "To‘lovni amalga oshirish (" + som(state.due) + ")";
+      $("mkMethodsCard").style.opacity = "1";
+      $("mkMethodsCard").style.pointerEvents = "auto";
     }
   }
 
-  async function startTopUp() {
-    var amount = Math.max(state.due, CONFIG.MIN_AMOUNT);
-    try {
-      var res = await api().post(CONFIG.CREATE_URL, { amount: amount });
-      var pay = (res.data && res.data.payment) || {};
-      if (!pay.payment_url) throw new Error("NO_URL");
-      try { localStorage.setItem(CONFIG.PENDING_PLAN_KEY, state.planKey); } catch (e) {}
-      window.location.assign(pay.payment_url); // TezCheck sahifasiga o'tish
-    } catch (e) {
-      // 409: ochiq to'lov allaqachon bor — unga o'tamiz
-      var existing = e && e.response && e.response.data && e.response.data.payment;
-      if (existing && existing.payment_url) {
-        try { localStorage.setItem(CONFIG.PENDING_PLAN_KEY, state.planKey); } catch (err) {}
-        window.location.assign(existing.payment_url);
-        return;
-      }
-      handleErr(e, "To\u2018lovni boshlashda");
-      setBusy(false);
-    }
-  }
-
-  async function doPay() {
-    if (state.busy) return;
-    clearMsg();
-    if (state.due === 0) { setBusy(true); await purchase(); return; }
-    if (!state.method) { msg("err", "To\u2018lov usulini tanlang."); return; }
-    setBusy(true);
-    await startTopUp();
-  }
-
-  /* ===== To'lovni kuzatish (polling) ===== */
-  var STATUS_TEXT = {
-    paid: "qabul qilindi", cancelled: "bekor qilindi",
-    failed: "muvaffaqiyatsiz", expired: "muddati o\u2018tdi"
-  };
-  async function pollPayment(id) {
-    if (state.polling) return;
-    state.polling = true;
-    msg("info", "To\u2018lov holati tekshirilmoqda\u2026");
-    for (var i = 0; i < CONFIG.POLL_MAX_TRIES; i++) {
-      var pay = null, bal = null;
+  // To'lovni boshlash (TezCheck) yoki Balansdan xarid qilish
+  async function handlePay() {
+    clearAlert();
+    var p = state.plans[state.selectedPlan] || FALLBACK_PLANS[state.selectedPlan];
+    
+    // Agar balans yetarli bo'lsa -> to'g'ridan-to'g'ri sotib olish
+    if (state.due === 0) {
+      setBusy(true, "Tarif faollashtirilmoqda...");
       try {
-        var res = await api().get(CONFIG.STATUS_URL + encodeURIComponent(id));
-        pay = (res.data && res.data.payment) || null;
-        bal = res.data && res.data.balance;
-      } catch (e) {
-        if (i === 0) {
-          state.polling = false;
-          msg("err", "To\u2018lov holatini tekshirib bo\u2018lmadi. Sahifani yangilang yoki support@mark1.uz ga yozing.");
-          setBusy(false);
+        var res = await window.crmApi.post(CONFIG.PURCHASE_URL, { plan: state.selectedPlan });
+        showSuccess(res.data && res.data.message || (p.name + " tarifi muvaffaqiyatli faollashtirildi!"));
+      } catch(err) {
+        setBusy(false);
+        var msg = err.response && err.response.data && err.response.data.message || "Xarid amalga oshmadi.";
+        showAlert(msg, "err");
+      }
+      return;
+    }
+
+    // Balans yetmasa -> TezCheck hisob yaratish
+    setBusy(true, "To‘lov tizimiga ulanmoqda...");
+    try {
+      try { localStorage.setItem(CONFIG.PENDING_KEY, state.selectedPlan); } catch(e){}
+      
+      var res = await window.crmApi.post(CONFIG.TOPUP_URL, { amount: state.due });
+      var pay = res.data && res.data.payment;
+      if (!pay || !pay.payment_url) {
+        throw new Error("To‘lov havolasi olinmadi");
+      }
+      // TezCheck / Click / Payme to'lov sahifasiga yo'naltiramiz
+      window.location.href = pay.payment_url;
+    } catch(err) {
+      setBusy(false);
+      var msg = err.response && err.response.data && err.response.data.message || "To‘lov tizimiga ulanishda xatolik yuz berdi.";
+      showAlert(msg, "err");
+    }
+  }
+
+  function showSuccess(msg) {
+    $("mkPayContainer").hidden = true;
+    $("mkDoneContainer").hidden = false;
+    $("mkDoneMsg").textContent = msg;
+    try { localStorage.removeItem(CONFIG.PENDING_KEY); } catch(e){}
+  }
+
+  // To'lovdan qaytganda (polling)
+  async function checkReturnPayment() {
+    var params = new URLSearchParams(window.location.search);
+    var paymentId = params.get("payment_id") || params.get("id");
+    if (!paymentId) return;
+
+    setBusy(true, "To‘lov tasdiqlanmoqda...");
+    showAlert("To‘lovingiz tasdiqlanmoqda, iltimos kuting...", "info");
+
+    for (var i = 0; i < 15; i++) {
+      try {
+        var res = await window.crmApi.get(CONFIG.STATUS_URL + paymentId);
+        var p = res.data && res.data.payment;
+        if (p && p.status === "paid") {
+          // To'lov tasdiqlandi! Endi tanlangan tarifni avtomatik sotib olamiz
+          var planToBuy = state.selectedPlan;
+          try {
+            var buyRes = await window.crmApi.post(CONFIG.PURCHASE_URL, { plan: planToBuy });
+            showSuccess((buyRes.data && buyRes.data.message) || "To‘lov qabul qilindi va tarif faollashtirildi!");
+          } catch(e) {
+            showSuccess("To‘lov qabul qilindi va balansingizga qo‘shildi!");
+          }
           return;
         }
-        await sleep(CONFIG.POLL_INTERVAL_MS);
-        continue;
-      }
-      if (pay && pay.status === "paid") {
-        state.polling = false;
-        if (bal !== null && bal !== undefined) state.balance = Number(bal) || 0;
-        set("mkSumBalance", som(state.balance));
-        state.due = Math.max(0, state.plan.price - state.balance);
-        setBusy(true);
-        if (state.autoPurchase) {
-          await purchase(); // balans to'ldirildi -> tarifni sotib olish
-        } else {
-          // Tarif ma'lumoti yo'qolgan (boshqa domen hostidan qaytish) —
-          // noto'g'ri tarif sotib olinmasin: balans to'ldiriladi va
-          // foydalanuvchi tarifni o'zi tanlaydi.
-          await loadCurrent();
-          render();
-          msg("info", "Balans to\u2018ldirildi: " + som(state.balance) + ". Tarifni tanlang va \u2018Faollashtirish\u2019 tugmasini bosing.");
-        }
-        return;
-      }
-      if (pay && STATUS_TEXT[pay.status]) {
-        state.polling = false;
-        msg("err", "To\u2018lov " + STATUS_TEXT[pay.status] + ". Hisobingizdan pul yechilmadi yoki qaytarildi — qayta urinib ko\u2018ring.");
-        setBusy(false);
-        return;
-      }
-      await sleep(CONFIG.POLL_INTERVAL_MS);
+      } catch(e) {}
+      await new Promise(function(r) { setTimeout(r, 2000); });
     }
-    state.polling = false;
-    msg("info", "To\u2018lov hali tasdiqlanmagan. Bir necha daqiqadan so\u2018ng sahifani yangilang — obuna avtomatik faollashadi.");
     setBusy(false);
+    showAlert("To‘lov hali kutilmoqda. Agar to‘lov qilgan bo‘lsangiz, bir ozdan so‘ng sahifani yangilang.", "info");
   }
 
-  async function resumePayment() {
-    var id = params.get("payment_id") || params.get("order_id") || params.get("id");
-    if (!id) {
-      try {
-        var res = await api().get(CONFIG.ACTIVE_URL);
-        id = res.data && res.data.payment && res.data.payment.id;
-      } catch (e) { /* ochiq to'lov yo'q — oddiy holat */ }
-    }
-    if (!id) {
-      try { localStorage.removeItem(CONFIG.PENDING_PLAN_KEY); } catch (e) {}
-      return false;
-    }
-    await pollPayment(String(id));
-    return true;
-  }
-
-  /* ===== Tarif tanlash qadami (payment?plan= yo'q bo'lsa) ===== */
-  function renderPick() {
-    var grid = $("mkPickGrid");
-    grid.innerHTML = "";
-    // Matn: sinov holatiga qarab — faol / ishlatilgan / hali berilmagan
-    var cur = state.current;
-    if (cur && cur.is_trial) {
-      $("mkPickLead").textContent =
-        "Bepul sinov faol (" + (cur.days_left || 0) + " kun qoldi) — istalgan tarifga o‘tishingiz mumkin";
-    } else if (cur) {
-      $("mkPickLead").textContent =
-        "Joriy tarif faol — yangi davr uchun tarif tanlang";
-    } else if (state.trialUsed) {
-      $("mkPickLead").textContent = "Bepul sinov ishlatilgan — tarif tanlang";
-    } else {
-      $("mkPickLead").textContent = "14 kunlik bepul sinov yoki tarif tanlang";
-    }
-    var curCode = state.current && state.current.plan;
-
-    Object.keys(state.plans).forEach(function (code) {
-      var p = state.plans[code];
-      var card = document.createElement("button");
-      card.type = "button";
-      card.className = "mk-pick-card";
-      card.setAttribute("aria-label", p.name + " tarifini tanlash");
-
-      var limits = p.limits || {};
-      var limRows = [
-        (limits.max_users != null ? limits.max_users + " foydalanuvchi" : null),
-        (limits.sms != null ? limits.sms + " SMS" : null),
-        (limits.ai != null ? limits.ai + " AI so‘rovi" : null),
-      ].filter(Boolean);
-
-      card.innerHTML =
-        (curCode === code ? '<span class="mk-pick-cur">Joriy</span>' : "") +
-        '<span class="mk-pick-name"></span>' +
-        '<span class="mk-pick-price"></span>' +
-        '<ul class="mk-pick-limits"></ul>' +
-        '<span class="mk-pick-cta">Tanlash</span>';
-      card.querySelector(".mk-pick-name").textContent = p.name;
-      card.querySelector(".mk-pick-price").innerHTML =
-        som(p.price) + " <small>/ " + (p.period_days || 30) + " kun</small>";
-      var ul = card.querySelector(".mk-pick-limits");
-      limRows.forEach(function (t) {
-        var li = document.createElement("li");
-        li.textContent = t;
-        ul.appendChild(li);
-      });
-      card.addEventListener("click", function () {
-        // ?plan= bilan to'g'ridan-to'g'ri to'lov qadamiga o'tamiz
-        location.href = "/payment?plan=" + encodeURIComponent(code);
-      });
-      grid.appendChild(card);
-    });
-
-    $("mkPick").hidden = false;
-    $("mkPayMain").hidden = true;
-    $("mkDone").hidden = true;
-    set("mkTitle", "Tarifni tanlang");
-    document.title = "Tarifni tanlang — MARK1 CRM";
-  }
-
-  /* ===== Ishga tushirish ===== */
   async function init() {
-    $("mkBack").href = CONFIG.HOME_URL;
-    if (!window.crmApi) throw new Error("NO_API");
-
-    // Redirectdan oldin tanlangan tarif (localStorage) yoki ?plan= parametri
-    var key = params.get("plan");
-    var explicitPlan = !!key;
-    if (!key) {
+    var params = new URLSearchParams(window.location.search);
+    var planParam = params.get("plan");
+    if (planParam && (FALLBACK_PLANS[planParam] || state.plans[planParam])) {
+      state.selectedPlan = planParam;
+    } else {
       try {
-        key = localStorage.getItem(CONFIG.PENDING_PLAN_KEY);
-        if (key) explicitPlan = true;
-      } catch (e) {}
-    }
-    // To'lov qaytishida tarif aniq bo'lsa AVTOMATIK sotib olish;
-    // tarif yo'q bo'lsa (boshqa domen hostida localStorage yo'qolgan) —
-    // faqat balans to'ldiriladi, noto'g'ri tarif sotib olinmaydi.
-    state.autoPurchase = explicitPlan;
-    await loadPlans();
-    await loadCurrent();
-
-    var payId = params.get("payment_id") || params.get("order_id") || params.get("id");
-    // Tarif tanlanmagan VA kuzatiladigan to'lov ham YO'Q —
-    // foydalanuvchi "Tarifni tanlang" ro'yxatidan boshlaydi
-    // (14 kunlik sinov tugagach aynan shu qadam chiqadi).
-    if (!explicitPlan && !payId) {
-      var activeId = null;
-      try {
-        var ares = await api().get(CONFIG.ACTIVE_URL);
-        activeId = ares.data && ares.data.payment && ares.data.payment.id;
-      } catch (e) { /* ochiq to'lov yo'q — oddiy holat */ }
-      if (!activeId) {
-        renderPick();
-        return;
-      }
+        var stored = localStorage.getItem(CONFIG.PENDING_KEY);
+        if (stored && (FALLBACK_PLANS[stored] || state.plans[stored])) state.selectedPlan = stored;
+      } catch(e){}
     }
 
-    if (!state.plans[key]) key = state.plans[CONFIG.DEFAULT_PLAN] ? CONFIG.DEFAULT_PLAN : Object.keys(state.plans)[0];
-    state.planKey = key;
-    state.plan = state.plans[key];
+    renderPlansGrid();
+    updateSummary();
 
-    $("mkPayMain").hidden = false;
-    render();
+    // To'lov usuli radio listener
+    document.querySelectorAll("input[name=mkMethod]").forEach(function(r) {
+      r.addEventListener("change", function() {
+        state.method = r.value;
+      });
+    });
 
-    // Qaytishda (yoki ochiq to'lov bor bo'lsa) — darhol kuzatishni boshlaymiz
-    await resumePayment();
+    $("mkPayBtn").addEventListener("click", handlePay);
+
+    // API dan dolzarb ma'lumotlarni yuklaymiz
+    if (window.crmApi) {
+      try {
+        var pRes = await window.crmApi.get(CONFIG.PLANS_URL);
+        if (pRes.data && pRes.data.plans && pRes.data.plans.length) {
+          var pMap = {};
+          pRes.data.plans.forEach(function(item) { pMap[item.code] = item; });
+          state.plans = pMap;
+          renderPlansGrid();
+          updateSummary();
+        }
+      } catch(e) {}
+
+      try {
+        var cRes = await window.crmApi.get(CONFIG.CURRENT_URL);
+        if (cRes.data) {
+          state.balance = Number(cRes.data.balance) || 0;
+          state.currentSub = cRes.data.current;
+          state.trialUsed = !!cRes.data.trial_used;
+
+          if (state.currentSub && state.currentSub.is_trial) {
+            $("mkTrialStatus").textContent = "14 kunlik bepul sinov (" + (state.currentSub.days_left || 0) + " kun qoldi)";
+          } else if (state.trialUsed) {
+            $("mkTrialStatus").textContent = "Bepul sinov ishlatilgan";
+          }
+          updateSummary();
+        }
+      } catch(e) {}
+
+      checkReturnPayment();
+    }
   }
 
-  // To'lov usulini tanlash
-  document.querySelectorAll("input[name=mkMethod]").forEach(function (i) {
-    i.addEventListener("change", function () {
-      state.method = i.value;
-      $("mkPayBtn").disabled = false;
-      $("mkHint").textContent = "Tanlangan usul: " + (i.value === "click" ? "Click" : "Payme") + ".";
-      clearMsg();
-    });
-  });
-  $("mkPayBtn").addEventListener("click", doPay);
-
-  init().catch(function (e) {
-    // Xatolikda bo'sh sahifa qolmasligi uchun asosiy to'lov formasi ochiq qoladi
-    try { $("mkPayMain").hidden = false; } catch (e2) {}
-    if (e && e.message === "NO_PLANS") {
-      msg("err", "Tariflar ro\u2018yxati yuklanmadi. Sahifani yangilang yoki support@mark1.uz ga yozing.");
-      return;
-    }
-    handleErr(e, "Ma\u2018lumotlarni yuklashda");
-  });
+  document.addEventListener("DOMContentLoaded", init);
 })();
 </script>
 </body>

@@ -211,9 +211,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 32px 24px;
+      padding: 32px 20px;
       position: relative;
-      overflow: hidden;
+      overflow-y: auto;
+      min-height: 100vh;
     }
     .auth-right::before {
       content: "";
@@ -229,19 +230,32 @@
 
     .auth-card {
       width: 100%;
-      max-width: 420px;
+      max-width: 430px;
       background: var(--auth-card-bg);
-      border-radius: 24px;
+      border-radius: 20px;
       border: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
       box-shadow: var(--auth-card-shadow);
-      padding: 40px;
+      padding: 32px 32px 28px;
+      margin: auto;
       transition: background .2s, box-shadow .2s;
       position: relative;
       z-index: 1;
     }
+    .auth-mobile-brand {
+      display: block;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .auth-mobile-brand img {
+      height: 36px;
+      object-fit: contain;
+    }
+    @media (min-width: 1024px) {
+      .auth-mobile-brand { display: none !important; }
+    }
     @media (max-width: 600px) {
-      .auth-right { padding: 20px 16px; }
-      .auth-card { padding: 28px 20px; border-radius: 20px; }
+      .auth-right { padding: 20px 14px; }
+      .auth-card { padding: 24px 20px; border-radius: 16px; }
     }
 
     /* ── Mode Switcher ── */
@@ -250,15 +264,15 @@
       background: var(--auth-input-bg);
       border: 1px solid var(--auth-input-border);
       padding: 4px;
-      border-radius: 12px;
-      margin-bottom: 22px;
+      border-radius: 10px;
+      margin-bottom: 20px;
       gap: 4px;
     }
     .auth-mode-btn {
       flex: 1;
       text-align: center;
-      padding: 8px 12px;
-      border-radius: 8px;
+      padding: 8px 10px;
+      border-radius: 7px;
       font-size: 13px;
       font-weight: 600;
       color: var(--auth-label);
@@ -267,7 +281,8 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      transition: all 0.2s ease;
+      transition: all 0.15s ease;
+    }
     }
     .auth-mode-btn.active {
       background: var(--auth-card-bg);

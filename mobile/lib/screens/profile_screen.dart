@@ -857,51 +857,24 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
               ],
             ),
             const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 40,
-                    child: OutlinedButton(
-                      onPressed:
-                          _subBusy ? null : () => _showPlansSheet(context, isDark),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                        side: BorderSide(
-                            color: AppColors.primary.withValues(alpha: 0.5)),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: Text(
-                        cur == null ? 'Tarif tanlash' : 'Tarifni almashtirish',
-                        style: GoogleFonts.manrope(
-                            fontSize: 13, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: FilledButton(
+                onPressed:
+                    _subBusy ? null : () => _showPlansSheet(context, isDark),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: SizedBox(
-                    height: 40,
-                    child: FilledButton(
-                      onPressed:
-                          _subBusy ? null : () => _showTopUpSheet(context, isDark),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: Text(
-                        'Balansni to\'ldirish',
-                        style: GoogleFonts.manrope(
-                            fontSize: 13, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
+                child: Text(
+                  cur == null ? 'Obuna sotib olish' : 'Tarifni almashtirish',
+                  style: GoogleFonts.manrope(
+                      fontSize: 14, fontWeight: FontWeight.w700),
                 ),
-              ],
+              ),
             ),
           ],
         ));
@@ -1030,8 +1003,6 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
     final isCurrent = _subCurrent != null &&
         !(_subCurrent!['is_trial'] == true) &&
         _subCurrent!['plan']?.toString() == code;
-    final shortfall = price - _subBalance.toInt();
-    final needsTopUp = shortfall > 0;
 
     final parts = <String>[
       if (maxUsers != null) '$maxUsers foydalanuvchi',
@@ -1130,24 +1101,13 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                         color: AppColors.textHint(isDark),
                       ),
                     ),
-                    if (needsTopUp) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        '+${_som(shortfall)} to\'ldirish',
-                        style: GoogleFonts.manrope(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.accentOrange,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 8),
                 Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: AppColors.textHint(isDark).withValues(alpha: 0.6),
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: AppColors.primary.withValues(alpha: 0.7),
                 ),
               ],
             ),
@@ -1157,8 +1117,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
     );
   }
 
-  /// Tanlangan tarif uchun tasdiq: balans yetarli → to'g'ridan-to'g'ri
-  /// sotib olish; yetmasa → to'ldirish oqimi (TezCheck).
+  /// Tanlangan tarif uchun to'g'ridan-to'g'ri obunani sotib olish oqimi.
   Future<void> _confirmPlan(BuildContext context, BuildContext sheetCtx,
       bool isDark, Map<String, dynamic> plan) async {
     final code = plan['code']?.toString() ?? '';
@@ -1172,32 +1131,46 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
       barrierLabel: 'Bekor qilish',
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card(isDark),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          due == 0 ? '$name tarifini sotib olish' : 'To\'ldirish kerak',
+          '$name tarifini faollashtirish',
           style: GoogleFonts.manrope(
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
             color: AppColors.text(isDark),
           ),
         ),
         content: Text(
           due == 0
-              ? '$name tarifi — ${_som(price)}. Balansdan yechildi '
-                  '(balans: ${_som(_subBalance)}). Davom etasizmi?'
-              : '$name tarifi — ${_som(price)}, balans: ${_som(_subBalance)}. '
-                  'To\'ldirish kerak: ${_som(due)}. '
-                  'To\'lov sahifasi ochiladi, tasdiqlaganach obuna avtomatik faollashadi.',
-          style: GoogleFonts.manrope(color: AppColors.textSec(isDark)),
+              ? '$name tarifi — ${_som(price)} (30 kun). Balansingizdan yechiladi va tarif darhol faollashadi.'
+              : '$name tarifi — ${_som(price)} (30 kun). Click yoki Payme orqali to‘lov qilishingiz bilan obuna avtomatik faollashadi.',
+          style: GoogleFonts.manrope(
+            fontSize: 14,
+            height: 1.5,
+            color: AppColors.textSec(isDark),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Bekor'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
             child: Text(
-              due == 0 ? 'Sotib olish' : 'To\'ldirish',
-              style: const TextStyle(color: AppColors.primary),
+              'Bekor qilish',
+              style: GoogleFonts.manrope(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textHint(isDark),
+              ),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(
+              due == 0 ? 'Faollashtirish' : 'Obunani sotib olish',
+              style: GoogleFonts.manrope(fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -1234,160 +1207,6 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
     }
   }
 
-  /// Balansni to'ldirish varag'i: tez summa tanlash + qo'lda kiritish.
-  void _showTopUpSheet(BuildContext context, bool isDark) {
-    final ctrl = TextEditingController();
-    String? error;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.card(isDark),
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (sheetCtx) {
-        return StatefulBuilder(builder: (ctx, setSt) {
-          void apply(String v) {
-            setSt(() => ctrl.text = v);
-          }
-
-          return Padding(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 20,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom +
-                  (MediaQuery.of(ctx).padding.bottom > 0
-                      ? MediaQuery.of(ctx).padding.bottom + 16.0
-                      : 24.0),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Balansni to\'ldirish',
-                  style: GoogleFonts.manrope(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.text(isDark),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'To\'lov xavfsiz o\'tamiz. Minimal summa 1 000 so\'m.',
-                  style: GoogleFonts.manrope(
-                    fontSize: 13,
-                    color: AppColors.textSec(isDark),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    for (final v in const ['50000', '100000', '250000']) ...[
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => apply(v),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.primary,
-                            side: BorderSide(
-                                color:
-                                    AppColors.primary.withValues(alpha: 0.4)),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                          ),
-                          child: Text(
-                            _som(int.parse(v)),
-                            style: GoogleFonts.manrope(
-                                fontSize: 12.5, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                      if (v != '250000') const SizedBox(width: 8),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: ctrl,
-                  keyboardType: TextInputType.number,
-                  style: GoogleFonts.manrope(fontSize: 15),
-                  decoration: InputDecoration(
-                    labelText: 'Summa (so\'m)',
-                    labelStyle:
-                        GoogleFonts.manrope(fontSize: 13, color: AppColors.textSec(isDark)),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border(isDark)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide:
-                          const BorderSide(color: AppColors.primary, width: 1.5),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                  ),
-                ),
-                if (error != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    error!,
-                    style: GoogleFonts.manrope(
-                      fontSize: 12.5,
-                      color: AppColors.accentRed,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: FilledButton(
-                    onPressed: _subBusy
-                        ? null
-                        : () {
-                            final amount = int.tryParse(
-                                ctrl.text.trim().replaceAll(' ', ''));
-                            if (amount == null || amount < 1000) {
-                              setSt(() =>
-                                  error = 'Summa 1 000 so\'mdan katta bo\'lsin');
-                              return;
-                            }
-                            Navigator.pop(sheetCtx);
-                            _startTopUp(amount);
-                          },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: _subBusy
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
-                          )
-                        : Text(
-                            'To\'lovni boshlash',
-                            style: GoogleFonts.manrope(
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        });
-      },
-    ).whenComplete(() => ctrl.dispose());
-  }
 
   /// Ochiq to'lovni davom ettiradi yoki yangisini ochadi va brauzerda
   /// ochadi. `plan` bersa — to'ldirishdan keyin avtomatik sotib olinadi.
