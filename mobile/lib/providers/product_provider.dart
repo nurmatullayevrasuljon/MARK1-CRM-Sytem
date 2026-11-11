@@ -28,6 +28,8 @@ class ProductProvider extends ChangeNotifier {
   bool get hasMore => _hasMore;
   List<ProductModel> get lowStockProducts =>
       _products.where((p) => p.isLowStock).toList();
+  List<ProductModel> get outOfStockProducts =>
+      _products.where((p) => p.isOutOfStock).toList();
 
   // ─── CATEGORIES ───────────────────────────────────────────────
   Future<void> loadCategories() async {

@@ -29,6 +29,7 @@ class ProductModel {
   });
 
   bool get isLowStock => quantity <= minimumQuantity && minimumQuantity > 0;
+  bool get isOutOfStock => quantity <= 0;
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     String catId = '';
