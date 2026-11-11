@@ -100,6 +100,12 @@ class ApiService {
   // 401-lar (noto'g'ri parol) bunga tegmaydi.
   static void Function()? onSessionExpired;
 
+  // 402 `plan_required` (obuna yo'q yoki 14 kunlik bepul sinov/ tarif
+  // muddati tugagan) hodisasi. MainShell shuni o'rnatib, foydalanuvchini
+  // darhol tariflar ro'yxatiga yo'naltiradi. `insufficient_balance`
+  // (shuningdek 402) bunga tegmaydi — faqat `code` tekshiriladi.
+  static void Function()? onPlanRequired;
+
   // ─── Token management ─────────────────────────────────────────
   static Future<String?> getToken() async {
     if (_cachedToken != null) return _cachedToken;
@@ -436,6 +442,18 @@ class ApiService {
           type: ApiErrorType.validation,
           message: message,
           statusCode: 422,
+        );
+      case 402:
+        // plan_required → tariflar ro'yxati ochilishi kerak (global signal).
+        // insufficient_balance → oddiy xato, signal yuborilmaydi.
+        if (data['code']?.toString() == 'plan_required') {
+          final cb = onPlanRequired;
+          if (cb != null) Future.microtask(cb);
+        }
+        throw ApiException(
+          type: ApiErrorType.validation,
+          message: message,
+          statusCode: 402,
         );
       default:
         // 4xx (400, 409, 410, 429 ...) — server aniq xabar qaytaradi

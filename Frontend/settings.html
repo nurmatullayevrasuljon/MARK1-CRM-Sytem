@@ -586,9 +586,14 @@
               document.getElementById("subPayBtn").href = "/payment?plan=" + cur.plan;
             }
           } else {
+            // Tarif yo'q: 14 kunlik bepul sinov hali berilmaganmi yoki
+            // allaqachon ishlatilganmi — matn bunga qarab farq qiladi.
             nameEl.textContent = "Obuna yo‘q";
-            termEl.textContent = "14 kunlik bepul sinov yoki tarif tanlang";
+            termEl.textContent = d.trial_used
+              ? "Bepul sinov ishlatilgan — tarif tanlang"
+              : "14 kunlik bepul sinov yoki tarif tanlang";
             badge.textContent = "—";
+            document.getElementById("subPayBtn").textContent = "Tarif tanlash";
           }
           document.getElementById("subBalance").textContent = Number(d.balance || 0).toLocaleString("ru-RU") + " so‘m";
           card.style.display = "";

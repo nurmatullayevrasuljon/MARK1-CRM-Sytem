@@ -14,7 +14,7 @@ exports.getCurrent = async (req, res) => {
     const [current, scheduled, store] = await Promise.all([
       svc.getCurrentSubscription(storeId),
       svc.getScheduledSubscription(storeId),
-      Store.findById(storeId).select("balance"),
+      Store.findById(storeId).select("balance trial_used"),
     ]);
 
     // Store.plan / plan_expires_at nusxasini ham to'g'rilab qo'yamiz (muddat tugagan bo'lishi mumkin)
@@ -25,6 +25,10 @@ exports.getCurrent = async (req, res) => {
       current: svc.toPublicSub(current), // null bo'lsa, tarif yo'q yoki muddati tugagan
       scheduled: svc.toPublicSub(scheduled), // sotib olingan, hali boshlanmagan davr
       balance: store ? store.balance : 0,
+      // Bepul sinov (14 kun) FAQAT BIR MARTA beriladi. `current == null`
+      // bo'lganda frontend shu bayroqdan "sinov hali mavjud / ishlatilgan"
+      // ni aniqlaydi va mos xabarni ko'rsatadi.
+      trial_used: store ? !!store.trial_used : false,
     });
   } catch (err) {
     console.error("getCurrent:", err);

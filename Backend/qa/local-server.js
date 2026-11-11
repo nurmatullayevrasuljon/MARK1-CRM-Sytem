@@ -36,12 +36,176 @@ const PASSWORD = "mark1qa2026";
   process.env.API_RATE_LIMIT_MAX = "100000";
   process.env.AUTH_RATE_LIMIT_MAX = "1000";
   process.env.SMS_RATE_LIMIT_MAX = "1000";
+
+  // ===== Obuna / to'lov QA: CORS (Frontend :8000, fake-pay :3002) =====
+  process.env.ALLOWED_ORIGINS = [
+    ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(",") : []),
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:3002",
+    "http://127.0.0.1:3002",
+  ].join(",");
+  // TezCheck qaytish manzili — QA'da lokal Frontend sahifasi
+  // QA'ga qaytish manzili 127.0.0.1 bo'lishi shart: agar localhost bo'lsa,
+  // qaytish boshqa originga tushadi va localStorage (token, crm_api_root)
+  // yo'qoladi — 401. Brauzer QA'da 127.0.0.1:8000 dan kiradi.
+  process.env.TEZCHECK_RETURN_URL = "http://127.0.0.1:8000/payment.html";
+
+  // ===== TezCheck MOCK (real API'siz to'lov sikli) =====
+  // require.cache ga require.resolve dan oldin yoziladi, shuning uchun
+  // server.js ichidagi payment.controller AYNAN shu mock'ni oladi.
+  const FAKE_PAY_PORT = Number(process.env.QA_FAKEPAY_PORT || 3002);
+  const bills = new Map(); // billId -> {id, reference, amount_minor, paid, external_reference, return_url}
+  let billSeq = 0;
+
+  class MockTezCheckError extends Error {
+    constructor(message, opts = {}) {
+      super(message);
+      this.code = opts.code || "qa_mock_error";
+      this.details = opts.details;
+    }
+  }
+
+  const mockTezcheck = {
+    TezCheckError: MockTezCheckError,
+    async me() {
+      return { service: { name: "QA TezCheck (mock)" } };
+    },
+    async createBill({ amountSom, externalReference, returnUrl }) {
+      const id = `bill_qa_${++billSeq}`;
+      const reference = `ref_${id}`;
+      bills.set(id, {
+        id,
+        reference,
+        amount_minor: amountSom * 100,
+        paid: false,
+        external_reference: externalReference || null,
+        return_url: returnUrl || process.env.TEZCHECK_RETURN_URL || null,
+      });
+      const payment_url = `http://127.0.0.1:${FAKE_PAY_PORT}/pay?bill=${encodeURIComponent(id)}`;
+      return { bill: { id, reference }, payment_url };
+    },
+    async getBill(billId) {
+      const bill = bills.get(String(billId)) || { id: billId, paid: false, amount_minor: 0 };
+      const pay = {
+        id: `pay_${billId}`,
+        state: bill.paid ? "succeeded" : "new",
+        amount_minor: bill.amount_minor || 0,
+        environment: "live", // settlePaid: live qabul qiladi
+        provider_code: "qa_mock",
+        fee_minor: 0,
+        net_minor: bill.amount_minor || 0,
+        succeeded_at: bill.paid ? new Date().toISOString() : null,
+      };
+      return { bill, payment: pay };
+    },
+    async cancelBill(billId) {
+      const b = bills.get(String(billId));
+      if (b) b.cancelled = true;
+      return { bill: b || { id: billId, cancelled: true } };
+    },
+    verifyWebhook() {
+      return false;
+    },
+  };
+
+  const tezPath = require.resolve("../service/tezcheck.service");
+  require.cache[tezPath] = {
+    id: tezPath,
+    filename: tezPath,
+    loaded: true,
+    exports: mockTezcheck,
+  };
+
+  // ===== DevSMS MOCK (real SMS'siz OTP) =====
+  // signup/verify/forgot-password real DevSMS talab qilmasin: kod
+  // console'ga chiqadi, javob {success:true} bo'ladi. Shu tufayli
+  // "trial faqat bir marta" oqimini to'liq E2E sinash mumkin.
+  const smsPath = require.resolve("../utils/sms.util");
+  require.cache[smsPath] = {
+    id: smsPath,
+    filename: smsPath,
+    loaded: true,
+    exports: async (phone, message, type, templateType, serviceName, otpCode) => {
+      console.log(`[qa] SMS MOCK -> ${phone}: OTP=${otpCode ?? "?"}`);
+      return { success: true };
+    },
+  };
+
+  // ===== Fake-pay sahifasi (TezCheck o'rniga, :3002) =====
+  // /pay?bill=ID  — "To'lovni tasdiqlash" sahifasi
+  // /confirm?bill=ID — hisobni paid qiladi va return_url ga qaytaradi
+  const http = require("http");
+  const payPage = (bill) => `<!doctype html>
+<html lang="uz"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>To'lov — QA TezCheck</title>
+<style>
+ body{font-family:system-ui,sans-serif;background:#f4f6fb;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;color:#141a2e}
+ .card{background:#fff;border-radius:16px;padding:32px;max-width:380px;width:92%;box-shadow:0 8px 30px rgba(20,26,46,.12);text-align:center}
+ h1{font-size:18px;margin:0 0 6px} p{font-size:14px;color:#5b6478;margin:0 0 4px}
+ .sum{font-size:26px;font-weight:800;margin:16px 0 4px}
+ .badge{display:inline-block;font-size:11px;background:#fff3e0;color:#b45309;border-radius:999px;padding:4px 10px;margin-bottom:12px}
+ a.btn{display:block;background:#4455ee;color:#fff;text-decoration:none;border-radius:12px;padding:14px;font-weight:700;margin-top:18px}
+ a.cancel{display:block;color:#8b93a7;font-size:13px;margin-top:12px}
+</style></head><body>
+<div class="card">
+  <span class="badge">QA MOCK — real pul yechilmaydi</span>
+  <h1>TezCheck to'lovi</h1>
+  <p>${(bill.title || "Balansni to'ldirish").replace(/</g, "&lt;")}</p>
+  <div class="sum">${(bill.amount_minor / 100).toLocaleString("ru-RU")} so'm</div>
+  <p>To'lovni tasdiqlang — balans bir zumda to'ldiriladi.</p>
+  <a class="btn" href="/confirm?bill=${encodeURIComponent(bill.id)}">To'lovni tasdiqlash</a>
+  <a class="cancel" href="javascript:history.back()">Bekor qilish</a>
+</div>
+</body></html>`;
+
+  http
+    .createServer((req, res) => {
+      try {
+        const u = new URL(req.url, `http://127.0.0.1:${FAKE_PAY_PORT}`);
+        if (u.pathname === "/pay") {
+          const bill = bills.get(u.searchParams.get("bill"));
+          if (!bill) {
+            res.writeHead(404, { "Content-Type": "text/plain" });
+            res.end("Hisob topilmadi");
+            return;
+          }
+          res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+          res.end(payPage(bill));
+          return;
+        }
+        if (u.pathname === "/confirm") {
+          const bill = bills.get(u.searchParams.get("bill"));
+          if (bill) bill.paid = true;
+          const back = (bill && bill.return_url) || "http://127.0.0.1:8000/payment.html";
+          const sep = back.includes("?") ? "&" : "?";
+          const target =
+            bill && bill.external_reference
+              ? `${back}${sep}payment_id=${encodeURIComponent(bill.external_reference)}`
+              : back;
+          res.writeHead(302, { Location: target });
+          res.end();
+          return;
+        }
+        res.writeHead(404, { "Content-Type": "text/plain" });
+        res.end("Not found");
+      } catch (e) {
+        res.writeHead(500, { "Content-Type": "text/plain" });
+        res.end(String(e && e.message));
+      }
+    })
+    .listen(FAKE_PAY_PORT, "127.0.0.1", () => {
+      console.log(`[qa] fake-pay (TezCheck mock): http://127.0.0.1:${FAKE_PAY_PORT}`);
+    });
+
   const Store = require("../models/store.model");
   const User = require("../models/user.model");
   const Category = require("../models/category.model");
   const Product = require("../models/product.model");
   const Client = require("../models/client.model");
   const Sale = require("../models/sale.model");
+  const Subscription = require("../models/subscription.model");
 
   // server.js o'zi ulanadi
   require("../server.js");
@@ -66,6 +230,109 @@ const PASSWORD = "mark1qa2026";
     user_phone: "901234568",
     password: hash,
     role: "admin",
+  });
+
+  // Sotuvchi roli — ruxsat (RBAC) testlari uchun.
+  const seller = await User.create({
+    store_id: store._id,
+    user_name: "QA Sotuvchi",
+    user_phone: "901234569",
+    password: hash,
+    role: "seller",
+  });
+
+  // Ikkinchi do'kon — IDOR / tenant izolyatsiyasi testlari uchun.
+  // Bu do'konning hech qanday ma'lumoti birinchi do'kondan ko'rinmasligi shart.
+  const storeB = await Store.create({
+    ceo_name: "QA Ikkinchi Do'kon",
+    ceo_phone: "901234570",
+    store_name: "MARK1 QA Ikkinchi Do'kon",
+    password: hash,
+    is_verified: true,
+    otp: null,
+    balance: 0,
+  });
+
+  // ===== Obuna seed =====
+  // Ikki do'konga ham 14 kunlik trial — aks holda requirePlan (402) statistika
+  // va yozish amallarini bloklab qo'yardi.
+  const subSvc = require("../service/subscription.service");
+  await subSvc.grantTrial(store._id);
+  await subSvc.grantTrial(storeB._id);
+  // To'lov yo'lini ikki xil sinash uchun:
+  //  Store A — balans 250 000: START/STANDART to'g'ridan-to'g'ri balansdan sotib olinadi,
+  //            GROWTH (349 000) yetmaydi -> to'ldirish (TezCheck) yo'li ochiladi.
+  //  Store B — balans 0: har qanday tarif avval to'ldirishni talab qiladi.
+  await Store.updateOne({ _id: store._id }, { $set: { balance: 250000 } });
+
+  //  Store C — 14 kunlik bepul sinov TUGAGAN do'kon:
+  //  `current == null`, `trial_used == true`. requirePlan 402
+  //  (plan_required) va "trial tugagach tariflar ro'yxati chiqadi"
+  //  oqimini (web + mobile) shu do'kon bilan test qilamiz.
+  const storeC = await Store.create({
+    ceo_name: "QA Tugagan Sinov",
+    ceo_phone: "901234571",
+    store_name: "MARK1 QA Tugagan Sinov",
+    password: hash,
+    is_verified: true,
+    otp: null,
+    balance: 0,
+  });
+  await subSvc.grantTrial(storeC._id);
+  await Subscription.updateOne(
+    { store: storeC._id, is_trial: true },
+    {
+      $set: {
+        starts_at: new Date(Date.now() - 15 * 24 * 3600 * 1000),
+        expires_at: new Date(Date.now() - 24 * 3600 * 1000),
+      },
+    },
+  );
+  await Store.updateOne(
+    { _id: storeC._id },
+    { $set: { plan_expires_at: new Date(Date.now() - 24 * 3600 * 1000) } },
+  );
+
+  const catB = await Category.create({
+    store_id: storeB._id,
+    category_name: "Boshqa do'kon kategoriyasi",
+  });
+  const productB = await Product.create({
+    store_id: storeB._id,
+    product_name: "BEGONA DO'KON MAHSULOTI",
+    product_barcode: "9990001",
+    category_id: catB._id,
+    purchase_price: 1000,
+    selling_price: 2000,
+    quantity: 5,
+    minimum_quantity: 1,
+    unit: "dona",
+  });
+  const clientB = await Client.create({
+    store_id: storeB._id,
+    client_name: "BEGONA MIJOZ",
+    client_phone: "909999999",
+  });
+  const saleB = await Sale.create({
+    store_id: storeB._id,
+    client_id: clientB._id,
+    products: [
+      {
+        product_id: productB._id,
+        purchase_price: 1000,
+        selling_price: 2000,
+        quantity: 1,
+      },
+    ],
+    total_purchase: 1000,
+    total_price: 2000,
+    total_paid: 0,
+    total_remaining: 2000,
+    paid_by_cash: 0,
+    paid_by_card: 0,
+    payments: [],
+    due_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+    status: "active",
   });
 
   const cats = await Category.insertMany([
@@ -148,10 +415,14 @@ const PASSWORD = "mark1qa2026";
 
   console.log("\n=== MARK1 QA SERVER TAYYOR ===");
   console.log(`URL:      http://127.0.0.1:${process.env.PORT}`);
-  console.log(`Telefon:  ${PHONE}`);
-  console.log(`Parol:    ${PASSWORD}`);
+  console.log(`CEO:      ${PHONE} / ${PASSWORD}`);
+  console.log(`Admin:    901234568 / ${PASSWORD}`);
+  console.log(`Seller:   901234569 / ${PASSWORD}`);
+  console.log(`Store B:  901234570 / ${PASSWORD}  (IDOR testi)`);
+  console.log(`Store C:  901234571 / ${PASSWORD}  (trial TUGAGAN -> 402 plan_required)`);
   console.log(`Store:    ${store._id}`);
-  console.log(`Admin:    ${admin._id}`);
+  console.log(`StoreB:   ${storeB._id}`);
+  console.log(`StoreC:   ${storeC._id}`);
   console.log("============================\n");
 })().catch((e) => {
   console.error("QA server xatosi:", e);

@@ -62,20 +62,44 @@
 .mk-pay-trust a{color:inherit}
 .mk-pay-done{text-align:center;padding:40px 20px}
 .mk-pay-done h2{font-size:22px}
+/* ===== Tarif tanlash qadami (tarif yo'q / bepul sinov tugaganda) ===== */
+.mk-pick{max-width:1040px;margin:0 auto;padding:28px 20px 48px}
+.mk-pick h2{font-size:22px;margin:0 0 6px}
+.mk-pick-lead{color:var(--mk-muted);font-size:15px;margin:0 0 18px}
+.mk-pick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.mk-pick-card{position:relative;display:flex;flex-direction:column;width:100%;padding:20px;background:var(--mk-surface);border:1.5px solid var(--mk-border);border-radius:var(--mk-radius);text-align:left;font:inherit;color:inherit;cursor:pointer;transition:border-color .15s ease, transform .15s ease}
+.mk-pick-card:hover{border-color:var(--mk-primary);transform:translateY(-2px)}
+.mk-pick-card:focus-visible{outline:3px solid #8aa0ff;outline-offset:2px}
+.mk-pick-name{font-size:16px;font-weight:700;letter-spacing:.02em}
+.mk-pick-price{font-size:20px;font-weight:700;margin-top:4px}
+.mk-pick-price small{font-size:13px;font-weight:400;color:var(--mk-muted)}
+.mk-pick-limits{list-style:none;margin:10px 0 14px;padding:0;font-size:13px;color:var(--mk-muted);display:grid;gap:4px}
+.mk-pick-cta{margin-top:auto;padding:10px 0;border-radius:8px;background:var(--mk-primary);color:#fff;font-size:14px;font-weight:600;text-align:center}
+.mk-pick-card:hover .mk-pick-cta{background:var(--mk-primary-hover)}
+.mk-pick-cur{position:absolute;top:12px;right:12px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--mk-bg);border:1px solid var(--mk-border);color:var(--mk-muted)}
+.mk-pick-note{margin-top:18px;font-size:14px;color:var(--mk-muted)}
 [hidden]{display:none!important}
-@media (max-width:860px){.mk-pay-main{grid-template-columns:1fr}.mk-pay-side{position:static}.mk-pay-trust{grid-template-columns:1fr}}
+@media (max-width:860px){.mk-pay-main{grid-template-columns:1fr}.mk-pay-side{position:static}.mk-pay-trust{grid-template-columns:1fr}.mk-pick-grid{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:480px){.mk-pay-methods{grid-template-columns:1fr}.mk-pay-title{order:3;flex-basis:100%}}
 </style>
 </head>
 <body class="mk-pay">
 <header class="mk-pay-head"><div class="mk-pay-head-in">
   <a class="mk-pay-logo" href="/" aria-label="MARK1"><img src="https://mark1.uz/img/mark1-logo-navbar.png" alt="MARK1"></a>
-  <h1 class="mk-pay-title">To‘lov</h1>
+  <h1 class="mk-pay-title" id="mkTitle">To‘lov</h1>
   <span class="mk-pay-secure"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>Xavfsiz to‘lov</span>
   <a class="mk-pay-back" id="mkBack" href="/">Bosh sahifaga qaytish</a>
 </div></header>
 
-<main class="mk-pay-main" id="mkPayMain">
+<!-- Tarif tanlash qadami: ?plan= / pending / payment_id YO'Q bo'lsa ko'rinadi -->
+<section class="mk-pick" id="mkPick" hidden aria-labelledby="mkPickH">
+  <h2 id="mkPickH">Tarifni tanlang</h2>
+  <p class="mk-pick-lead" id="mkPickLead">14 kunlik bepul sinov yoki tarif tanlang</p>
+  <div class="mk-pick-grid" id="mkPickGrid"></div>
+  <p class="mk-pick-note" id="mkPickNote">Bepul sinov faqat bir marta beriladi. To‘lov Click/Payme orqali TezCheck xizmatida amalga oshiriladi.</p>
+</section>
+
+<main class="mk-pay-main" id="mkPayMain" hidden>
   <div>
     <section class="mk-pay-card" aria-labelledby="mkPlanH">
       <h2 id="mkPlanH">Tarif ma’lumotlari</h2>
@@ -169,6 +193,7 @@
   var state = {
     method: null, busy: false, polling: false,
     plan: null, planKey: null, plans: {},
+    trialUsed: false, // 14 kunlik bepul sinov allaqachon ishlatilganmi
     current: null, balance: 0, due: 0,
     autoPurchase: true
   };
@@ -285,6 +310,7 @@
     var res = await api().get(CONFIG.CURRENT_URL);
     state.balance = Number(res.data && res.data.balance) || 0;
     state.current = (res.data && res.data.current) || null;
+    state.trialUsed = !!(res.data && res.data.trial_used);
   }
 
   async function purchase() {
@@ -406,6 +432,68 @@
     return true;
   }
 
+  /* ===== Tarif tanlash qadami (payment?plan= yo'q bo'lsa) ===== */
+  function renderPick() {
+    var grid = $("mkPickGrid");
+    grid.innerHTML = "";
+    // Matn: sinov holatiga qarab — faol / ishlatilgan / hali berilmagan
+    var cur = state.current;
+    if (cur && cur.is_trial) {
+      $("mkPickLead").textContent =
+        "Bepul sinov faol (" + (cur.days_left || 0) + " kun qoldi) — istalgan tarifga o‘tishingiz mumkin";
+    } else if (cur) {
+      $("mkPickLead").textContent =
+        "Joriy tarif faol — yangi davr uchun tarif tanlang";
+    } else if (state.trialUsed) {
+      $("mkPickLead").textContent = "Bepul sinov ishlatilgan — tarif tanlang";
+    } else {
+      $("mkPickLead").textContent = "14 kunlik bepul sinov yoki tarif tanlang";
+    }
+    var curCode = state.current && state.current.plan;
+
+    Object.keys(state.plans).forEach(function (code) {
+      var p = state.plans[code];
+      var card = document.createElement("button");
+      card.type = "button";
+      card.className = "mk-pick-card";
+      card.setAttribute("aria-label", p.name + " tarifini tanlash");
+
+      var limits = p.limits || {};
+      var limRows = [
+        (limits.max_users != null ? limits.max_users + " foydalanuvchi" : null),
+        (limits.sms != null ? limits.sms + " SMS" : null),
+        (limits.ai != null ? limits.ai + " AI so‘rovi" : null),
+      ].filter(Boolean);
+
+      card.innerHTML =
+        (curCode === code ? '<span class="mk-pick-cur">Joriy</span>' : "") +
+        '<span class="mk-pick-name"></span>' +
+        '<span class="mk-pick-price"></span>' +
+        '<ul class="mk-pick-limits"></ul>' +
+        '<span class="mk-pick-cta">Tanlash</span>';
+      card.querySelector(".mk-pick-name").textContent = p.name;
+      card.querySelector(".mk-pick-price").innerHTML =
+        som(p.price) + " <small>/ " + (p.period_days || 30) + " kun</small>";
+      var ul = card.querySelector(".mk-pick-limits");
+      limRows.forEach(function (t) {
+        var li = document.createElement("li");
+        li.textContent = t;
+        ul.appendChild(li);
+      });
+      card.addEventListener("click", function () {
+        // ?plan= bilan to'g'ridan-to'g'ri to'lov qadamiga o'tamiz
+        location.href = "/payment?plan=" + encodeURIComponent(code);
+      });
+      grid.appendChild(card);
+    });
+
+    $("mkPick").hidden = false;
+    $("mkPayMain").hidden = true;
+    $("mkDone").hidden = true;
+    set("mkTitle", "Tarifni tanlang");
+    document.title = "Tarifni tanlang — MARK1 CRM";
+  }
+
   /* ===== Ishga tushirish ===== */
   async function init() {
     $("mkBack").href = CONFIG.HOME_URL;
@@ -425,11 +513,29 @@
     // faqat balans to'ldiriladi, noto'g'ri tarif sotib olinmaydi.
     state.autoPurchase = explicitPlan;
     await loadPlans();
+    await loadCurrent();
+
+    var payId = params.get("payment_id") || params.get("order_id") || params.get("id");
+    // Tarif tanlanmagan VA kuzatiladigan to'lov ham YO'Q —
+    // foydalanuvchi "Tarifni tanlang" ro'yxatidan boshlaydi
+    // (14 kunlik sinov tugagach aynan shu qadam chiqadi).
+    if (!explicitPlan && !payId) {
+      var activeId = null;
+      try {
+        var ares = await api().get(CONFIG.ACTIVE_URL);
+        activeId = ares.data && ares.data.payment && ares.data.payment.id;
+      } catch (e) { /* ochiq to'lov yo'q — oddiy holat */ }
+      if (!activeId) {
+        renderPick();
+        return;
+      }
+    }
+
     if (!state.plans[key]) key = state.plans[CONFIG.DEFAULT_PLAN] ? CONFIG.DEFAULT_PLAN : Object.keys(state.plans)[0];
     state.planKey = key;
     state.plan = state.plans[key];
 
-    await loadCurrent();
+    $("mkPayMain").hidden = false;
     render();
 
     // Qaytishda (yoki ochiq to'lov bor bo'lsa) — darhol kuzatishni boshlaymiz
@@ -448,6 +554,8 @@
   $("mkPayBtn").addEventListener("click", doPay);
 
   init().catch(function (e) {
+    // Xatolikda bo'sh sahifa qolmasligi uchun asosiy to'lov formasi ochiq qoladi
+    try { $("mkPayMain").hidden = false; } catch (e2) {}
     if (e && e.message === "NO_PLANS") {
       msg("err", "Tariflar ro\u2018yxati yuklanmadi. Sahifani yangilang yoki support@mark1.uz ga yozing.");
       return;

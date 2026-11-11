@@ -277,6 +277,24 @@
       const status = error.response && error.response.status;
       const url = (original && original.url) || "";
 
+      // 402 plan_required — do'konda faol tarif yo'q (14 kunlik bepul sinov
+      // yoki sotib olingan tarif tugagan). Bunday holda foydalanuvchi
+      // to'g'ridan-to'g'ri tariflar ro'yxati (/payment) sahifasiga
+      // yo'naltiriladi — ayniqsa dashboard/statistika ilk so'rovda 402
+      // qaytaradi. `insufficient_balance` (shuningdek 402) — bu ODDIY
+      // xato, u /payment'ga yuborilmaydi: faqat `code` tekshiriladi.
+      const errData = error.response && error.response.data;
+      if (status === 402 && errData && errData.code === "plan_required") {
+        const path = location.pathname || "";
+        if (path.indexOf("/payment") !== 0) {
+          console.warn("[plan_required] Tarif muddati tugagan -> /payment");
+          location.href = "/payment";
+        }
+        // Sahifa qayta yuklanmoqda — zanjirni davom ettirmaymiz
+        // (aks holda sahifadagi catch "So'rov muvaffaqiyatsiz" ko'rsatardi).
+        return new Promise(function () {});
+      }
+
       // Auth endpointlarning o'zidan kelgan 401/boshqa xatolarga
       // refresh interceptor ASLO aralashmaydi (login/signup sahifasida
       // token yo'qligi sababli loop bo'lmasligi shu yerda kafolatlanadi).

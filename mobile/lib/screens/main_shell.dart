@@ -12,6 +12,7 @@ import 'debtors_screen.dart';
 import 'sales_screen.dart';
 import 'profile_screen.dart';
 import 'daily_sales_screen.dart';
+import '../services/api_service.dart';
 import '../services/update_service.dart';
 
 class MainShell extends StatefulWidget {
@@ -26,6 +27,11 @@ class _MainShellState extends State<MainShell> {
   bool _returningToLogin = false;
   late final AuthProvider _auth;
 
+  /// 402 `plan_required` kelgan bo'lsa: do'konda faol tarif yo'q
+  /// (14 kunlik bepul sinov yoki tarif muddati tugagan). Profil
+  /// bo'limiga o'tib, tariflar ro'yxatini ochish signalini beramiz.
+  bool _planGatePending = false;
+
   // Getter: boshqaruv paneliga bo'limga o'tish callbacki kerak bo'lgani
   // uchun (stat karta → tegishli tab). Har safar yangi Widget yaratiladi,
   // lekin runtimeType o'zgarmaydi → holat (State) saqlanadi.
@@ -38,7 +44,10 @@ class _MainShellState extends State<MainShell> {
         // Sotish bo'limiga yo'naltiradi (web'dagi kabi — qarz faqat mahsulot
         // bilan bog'liq Sale orqali yaratiladi).
         DebtorsScreen(onTab: _selectTab),
-        const ProfileScreen(),
+        ProfileScreen(
+          openPlans: _planGatePending,
+          onPlansShown: _onPlanGateShown,
+        ),
       ];
 
   // Boshqaruv panelidagi stat karta bosilganda tegishli bo'lim ochiladi.
@@ -58,6 +67,10 @@ class _MainShellState extends State<MainShell> {
     // bo'lishi mumkin.
     _auth = context.read<AuthProvider>();
     _auth.addListener(_onAuthChanged);
+    // Obuna/14 kunlik bepul sinov tugaganda (402 plan_required) —
+    // har qanday ekrandan kelgan signal shu yerda ushlanadi va
+    // tariflar ro'yxati (profil bo'limi) ochiladi.
+    ApiService.onPlanRequired = _onPlanRequired;
     // Sessiya tugaganda (401 + refresh muvaffaqiyatsiz) yagona joydan
     // login ekraniga qaytarish. MainShell autentifikatsiyalangan qismning
     // ildizi bo'lgani uchun barcha holat shu yerda ushlanadi.
@@ -73,7 +86,25 @@ class _MainShellState extends State<MainShell> {
   @override
   void dispose() {
     _auth.removeListener(_onAuthChanged);
+    if (identical(ApiService.onPlanRequired, _onPlanRequired)) {
+      ApiService.onPlanRequired = null;
+    }
     super.dispose();
+  }
+
+  /// 402 plan_required — tariflar ro'yxati shart. Profil bo'limiga
+  /// o'tamiz; ProfileScreen `openPlans` signalini ko'rib, sheetni
+  /// avtomatik ochadi (bir marta — onPlansShown bilan tozalanadi).
+  void _onPlanRequired() {
+    if (!mounted || _returningToLogin) return;
+    setState(() {
+      _planGatePending = true;
+      _currentIndex = 5; // Profil
+    });
+  }
+
+  void _onPlanGateShown() {
+    _planGatePending = false;
   }
 
   void _onAuthChanged() {
