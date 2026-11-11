@@ -65,6 +65,19 @@ void main() {
       }
     });
 
+    test('barcha mobil operator prefikslari qabul qilinadi (88/20 ham)', () {
+      // ITU raqamlash rejasiga ko'ra mobil bo'lgan barcha 2 xonali kodlar.
+      const mobile = ['20', '33', '50', '70', '77', '80', '87', '88',
+                      '90', '91', '92', '93', '94', '95', '97', '98', '99'];
+      for (final c in mobile) {
+        final p = '${c}1234567';
+        expect(isValidUzPhone(p), isTrue, reason: '$p mobil raqam ($c)');
+      }
+      // Screenshotdagi haqiqiy raqam: Mobiuz 88.
+      expect(isValidUzPhone('+998889119904'), isTrue);
+      expect(isValidUzPhone('889119904'), isTrue);
+    });
+
     test('998 prefiksi ichida tutilgan 9 xonali rad etiladi', () {
       // Bu raqam SMS yuborilganda "998998901234" ga aylanib, hech
       // qachon yetib borolmaydi.
@@ -83,11 +96,14 @@ void main() {
     });
 
     test('mobil operator prefiksi bo\'lmagan raqam rad etiladi', () {
-      // 92 va 96 raqamlanmagan; 11/20/22 — xizmat raqamlari.
-      expect(isValidUzPhone('921234567'), isFalse);
+      // 96 hozircha raqamlanmagan; 11 — xizmat raqami;
+      // 71/66 — Toshkent/Samarqand stasionar geografik kodlari;
+      // 55 — VoIP (Uztelecom).
       expect(isValidUzPhone('961234567'), isFalse);
       expect(isValidUzPhone('111234567'), isFalse);
-      expect(isValidUzPhone('201234567'), isFalse);
+      expect(isValidUzPhone('711234567'), isFalse);
+      expect(isValidUzPhone('661234567'), isFalse);
+      expect(isValidUzPhone('551234567'), isFalse);
     });
 
     test('null rad etiladi (xato emas)', () {
