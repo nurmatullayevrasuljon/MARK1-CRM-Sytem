@@ -38,3 +38,13 @@ mobile/ios/Flutter/ephemeral/
 *.iml
 .DS_Store
 Thumbs.db
+
+# ===== Play Market reliz binarlari (repo 1.6 GB dan kamaytirildi) =====
+PlayMarket_Tayyor_Fayllar/
+mobile/PlayMarket_Tayyor_Fayllar/
+*.aab
+*.apk
+
+# ===== Ichki ish vositalari / shablonlar (repoda kerak emas) =====
+.impeccable/
+mobile/README.md
