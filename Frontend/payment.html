@@ -630,7 +630,18 @@ body.mk-pay {
     clearAlert();
     var p = state.plans[state.selectedPlan] || FALLBACK_PLANS[state.selectedPlan];
     
-    // Agar balans yetarli bo'lsa -> to'g'ridan-to'g'ri sotib olish
+    // 1. Tizimga kirilganligini tekshiramiz
+    var token = localStorage.getItem("crm_access_token");
+    if (!token) {
+      var nextUrl = "/login?next=" + encodeURIComponent(location.pathname + location.search);
+      showAlert("To‘lovni amalga oshirish uchun avval tizimga kiring. <a href='" + nextUrl + "' style='color:var(--mk-primary); font-weight:700; text-decoration:underline;'>Tizimga kirish &rarr;</a>", "info");
+      setTimeout(function() {
+        location.href = nextUrl;
+      }, 1000);
+      return;
+    }
+
+    // 2. Agar balans yetarli bo'lsa -> to'g'ridan-to'g'ri sotib olish
     if (state.due === 0) {
       setBusy(true, "Tarif faollashtirilmoqda...");
       try {
@@ -638,13 +649,18 @@ body.mk-pay {
         showSuccess(res.data && res.data.message || (p.name + " tarifi muvaffaqiyatli faollashtirildi!"));
       } catch(err) {
         setBusy(false);
-        var msg = err.response && err.response.data && err.response.data.message || "Xarid amalga oshmadi.";
-        showAlert(msg, "err");
+        var status = err.response && err.response.status;
+        var msg = err.response && err.response.data && err.response.data.message;
+        if (status === 401 || status === 403) {
+          showAlert("Sessiya muddati tugagan. <a href='/login?next=" + encodeURIComponent(location.pathname + location.search) + "' style='color:var(--mk-primary); font-weight:700;'>Tizimga qayta kiring</a>", "err");
+        } else {
+          showAlert(msg || "Xarid amalga oshmadi. Qayta urinib ko‘ring.", "err");
+        }
       }
       return;
     }
 
-    // Balans yetmasa -> TezCheck hisob yaratish
+    // 3. Balans yetmasa -> TezCheck hisob yaratish
     setBusy(true, "To‘lov tizimiga ulanmoqda...");
     try {
       try { localStorage.setItem(CONFIG.PENDING_KEY, state.selectedPlan); } catch(e){}
@@ -658,8 +674,21 @@ body.mk-pay {
       window.location.href = pay.payment_url;
     } catch(err) {
       setBusy(false);
-      var msg = err.response && err.response.data && err.response.data.message || "To‘lov tizimiga ulanishda xatolik yuz berdi.";
-      showAlert(msg, "err");
+      var status = err.response && err.response.status;
+      var errData = err.response && err.response.data;
+      var msg = errData && errData.message;
+
+      // 409: Yakunlanmagan ochiq to'lov mavjud bo'lsa — uning to'lov havolasiga yo'naltiramiz
+      if (status === 409 && errData && errData.payment && errData.payment.payment_url) {
+        window.location.href = errData.payment.payment_url;
+        return;
+      }
+
+      if (status === 401 || status === 403) {
+        showAlert("To‘lovni amalga oshirish uchun tizimga kiring. <a href='/login?next=" + encodeURIComponent(location.pathname + location.search) + "' style='color:var(--mk-primary); font-weight:700; text-decoration:underline;'>Kirish sahifasiga o‘tish &rarr;</a>", "info");
+      } else {
+        showAlert(msg || "To‘lov tizimiga ulanishda xatolik yuz berdi. Internet aloqasini tekshiring yoki support@mark1.uz ga yozing.", "err");
+      }
     }
   }
 

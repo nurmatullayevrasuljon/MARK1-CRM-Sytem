@@ -26,6 +26,10 @@ app.set("trust proxy", 1);
 const allowedOrigins = [
   "https://mark1.uz",
   "https://www.mark1.uz",
+  "http://mark1.uz",
+  "http://www.mark1.uz",
+  "http://77.237.240.138",
+  "https://77.237.240.138",
   "https://admin.mark1.uz",
   "https://mark1-crm.netlify.app",
   "http://localhost:3000",
