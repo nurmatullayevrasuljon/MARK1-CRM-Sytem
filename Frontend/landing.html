@@ -1497,7 +1497,7 @@
             /* minmax(0, 1fr) — 1fr ning default min qiymati "auto" (min-content).
                Tugma matni nowrap bo'lgani uchun track konteynerdan kengayib,
                gorizontal overflow paydo bo'lardi. */
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 24px;
             align-items: stretch;
         }
@@ -1562,6 +1562,18 @@
             color: var(--mk-muted-fg);
             margin: 0 0 24px;
         }
+
+        .mk-price-buy {
+            display: block;
+            text-align: center;
+            font-size: .86rem;
+            font-weight: 600;
+            color: var(--mk-primary-text);
+            text-decoration: none;
+            margin: -14px 0 22px;
+        }
+
+        .mk-price-buy:hover { text-decoration: underline; }
 
         .mk-price-card .mk-btn {
             width: 100%;
@@ -2828,56 +2840,70 @@
             </div>
             <div class="mk-pricing-grid">
                 <div class="mk-price-card mk-reveal" style="--mk-delay:0s;">
-                    <h3>Boshlang'ich</h3>
-                    <p class="mk-desc">Yangi ish boshlaganlar uchun juda mos</p>
-                    <div class="mk-price-value"><span class="mk-amount">199,000</span><span
+                    <h3>START</h3>
+                    <p class="mk-desc">Yangi boshlagan do'konlar uchun</p>
+                    <div class="mk-price-value"><span class="mk-amount">99,000</span><span
                             class="mk-period">so'm/oy</span></div>
                     <p class="mk-price-note">14 kunlik bepul sinov, kredit karta talab etilmaydi</p>
                     <a href="/signup" class="mk-btn mk-btn-secondary">Bepul sinab ko'ring</a>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 100 tagacha mahsulot</div>
+                    <a class="mk-price-buy" href="/payment?plan=start">Sotib olish &rarr;</a>
                     <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 1 ta foydalanuvchi akkaunt</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Asosiy ombor nazorati</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Ombor va mahsulot nazorati</div>
                     <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Kunlik savdo hisobotlari</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Elektron pochta orqali yordam</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 1 GB xotira</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 5 SMS xabarnomalar</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 1 AI so'rov (oyiga)</div>
                 </div>
                 <div class="mk-price-card mk-highlight mk-reveal" style="--mk-delay:.1s;">
                     <div class="mk-price-badge">Eng ommabop</div>
-                    <h3>Biznes</h3>
-                    <p class="mk-desc">O'sib borayotgan bizneslar uchun kuchli yechim</p>
-                    <div class="mk-price-value"><span class="mk-amount">499,000</span><span
+                    <h3>STANDART</h3>
+                    <p class="mk-desc">Ko'p do'konlar tanlagan tarif</p>
+                    <div class="mk-price-value"><span class="mk-amount">199,000</span><span
                             class="mk-period">so'm/oy</span></div>
                     <p class="mk-price-note">14 kunlik bepul sinov, kredit karta talab etilmaydi</p>
                     <a href="/signup" class="mk-btn mk-btn-primary">Bepul sinab ko'ring</a>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz mahsulot</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 10 tagacha foydalanuvchi akkaunt</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Ilg'or ombor boshqaruvi</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Haqiqiy vaqt tahlili</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Ustuvor elektron pochta va telefon yordami</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 50 GB xotira</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Qarzdorlarni kuzatish</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Avtomatik ogohlantirishlar</div>
+                    <a class="mk-price-buy" href="/payment?plan=standart">Sotib olish &rarr;</a>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 2 ta foydalanuvchi akkaunt</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Qarzdorlar nazorati</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Kunlik va oylik hisobotlar</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 20 SMS xabarnomalar</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 2 AI so'rov (oyiga)</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Elektron pochta yordami</div>
                 </div>
                 <div class="mk-price-card mk-reveal" style="--mk-delay:.2s;">
-                    <h3>Korporativ</h3>
-                    <p class="mk-desc">Yirik operatsiyalar uchun moslashtirilgan yechim</p>
-                    <div class="mk-price-value"><span class="mk-amount">Maxsus</span><span class="mk-period">narx</span>
-                    </div>
-                    <p class="mk-price-note">&nbsp;</p>
-                    <a href="mailto:support@mark1.uz?subject=MARK1%20Korporativ%20tarif"
-                        class="mk-btn mk-btn-secondary">Sotuv bo'limi bilan bog'lanish</a>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz hamma narsa</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz foydalanuvchi akkaunt</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Maxsus ish jarayonlari</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Kengaytirilgan API kirishi</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 24/7 telefon orqali yordam</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Cheksiz xotira</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Maxsus integratsiyalar</div>
-                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Shaxsiy menejer</div>
+                    <h3>GROWTH</h3>
+                    <p class="mk-desc">O'sib borayotgan biznes uchun</p>
+                    <div class="mk-price-value"><span class="mk-amount">349,000</span><span
+                            class="mk-period">so'm/oy</span></div>
+                    <p class="mk-price-note">14 kunlik bepul sinov, kredit karta talab etilmaydi</p>
+                    <a href="/signup" class="mk-btn mk-btn-secondary">Bepul sinab ko'ring</a>
+                    <a class="mk-price-buy" href="/payment?plan=growth">Sotib olish &rarr;</a>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 5 ta foydalanuvchi akkaunt</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Qarzdorlarni kuzatish va ogohlantirishlar</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Barcha hisobotlar va tahlillar</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 60 SMS xabarnomalar</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 10 AI so'rov (oyiga)</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Email va telefon yordami</div>
                 </div>
-            </div>
-            <div class="mk-pricing-faq-link">
-                <p>Narxlar haqida savollaringiz bormi? <a href="#savollar">Savollar bo'limimizni ko'ring</a></p>
+                <div class="mk-price-card mk-reveal" style="--mk-delay:.3s;">
+                    <h3>PRO</h3>
+                    <p class="mk-desc">To'liq nazorat uchun</p>
+                    <div class="mk-price-value"><span class="mk-amount">599,000</span><span
+                            class="mk-period">so'm/oy</span></div>
+                    <p class="mk-price-note">14 kunlik bepul sinov, kredit karta talab etilmaydi</p>
+                    <a href="/signup" class="mk-btn mk-btn-secondary">Bepul sinab ko'ring</a>
+                    <a class="mk-price-buy" href="/payment?plan=pro">Sotib olish &rarr;</a>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 10 ta foydalanuvchi akkaunt</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Barcha funksiyalar to'liq</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 150 SMS xabarnomalar</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> 30 AI so'rov (oyiga)</div>
+                    <div class="mk-price-feature"><i class="bi bi-check-lg"></i> Ustuvor qo'llab-quvvatlash</div>
+                </div>
+                </div>
+<div class="mk-pricing-faq-link">
+                <p>Narxlar haqida savollaringiz bormi? <a href="#savollar">Savollar bo'limimizni ko'ring</a><br>
+                    Yirik kompaniya uchun maxsus tarif — <a
+                        href="mailto:support@mark1.uz?subject=MARK1%20Korporativ%20tarif">Sotuv bo'limi bilan
+                        bog'laning</a></p>
             </div>
         </div>
     </section>

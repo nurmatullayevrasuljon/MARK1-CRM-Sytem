@@ -1264,12 +1264,25 @@
       return true;
     },
 
+    // Sessiya tugaganda /login'ga qaytishda qaysi sahifadan kelganini
+    // (?next=) saqlaymiz — ayniqsa TezCheck to'lov qaytishida (payment_id
+    // bilan) yo'qolmasin. Faqat bir xil domen ichidagi path qabul qilinadi.
+    _loginUrlWithNext: function () {
+      try {
+        const path = window.location.pathname + window.location.search;
+        if (path && path.charAt(0) === "/" && path.charAt(1) !== "/") {
+          return "/login?next=" + encodeURIComponent(path);
+        }
+      } catch (e) { /* xavfsiz fallback */ }
+      return "/login";
+    },
+
     logout: async function () {
       clearSession();
       const page = window.location.pathname.split("/").pop().toLowerCase();
       const publicPages = ["signup", "login", "landing", ""];
       if (!publicPages.includes(page)) {
-        window.location.href = "/login";
+        window.location.href = this._loginUrlWithNext();
       }
     },
 
@@ -1277,7 +1290,7 @@
       const page = window.location.pathname.split("/").pop().toLowerCase();
       const publicPages = ["signup", "login", "landing", ""];
       if (!publicPages.includes(page) && !this.isSessionValid()) {
-        window.location.href = "/login";
+        window.location.href = this._loginUrlWithNext();
         return false;
       }
       return true;

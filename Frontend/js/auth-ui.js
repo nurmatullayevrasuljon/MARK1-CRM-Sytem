@@ -152,19 +152,32 @@
     return Auth.isSessionValid();
   }
 
+  // Kirishdan keyin foydalanuvchini qaytarish manzili (?next=).
+  // TezCheck to'lovidan qaytishda sessiya boshqa domen hostida (www/apex)
+  // yo'qolishi mumkin — shunda /login?next=... orqali xohlagan sahifasiga
+  // qaytadi. Faqat bir xil domen ichidagi path qabul qilinadi.
+  function nextDestination(fallback) {
+    try {
+      var n = new URLSearchParams(window.location.search).get("next");
+      if (n && n.charAt(0) === "/" && n.charAt(1) !== "/") return n;
+    } catch (e) { /* URLSearchParams yo'q bo'lsa — fallback */ }
+    return fallback || DASHBOARD_PAGE;
+  }
+
   function redirectIfLoggedIn() {
     var Auth = getAuth();
+    var target = nextDestination();
 
     if (!Auth || typeof Auth.redirectIfLoggedIn !== "function") {
       if (isLoggedIn()) {
-        Transition.go(DASHBOARD_PAGE, true);
+        Transition.go(target, true);
         return true;
       }
 
       return false;
     }
 
-    return Auth.redirectIfLoggedIn(DASHBOARD_PAGE);
+    return Auth.redirectIfLoggedIn(target);
   }
 
   function protectPage() {
@@ -481,7 +494,9 @@
       try {
         var res = await getAuth().login(phoneStr, pwStr);
         if (res && res.success && res.token) {
-          Transition.go("/dashboard");
+          // ?next= bo'lsa (to'lov/obuna sahifasidan kelgan bo'lsa) — o'sha
+          // sahifaga qaytamiz, aks holda dashboardga.
+          Transition.go(nextDestination("/dashboard"));
         } else {
           resetLoginButton();
           var errorMsg = (res && res.message) ? res.message : "Tizimga kirishda noma'lum xato yuz berdi.";

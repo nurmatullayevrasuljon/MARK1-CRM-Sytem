@@ -113,9 +113,9 @@
     <section class="mk-pay-card" aria-labelledby="mkSumH">
       <h2 id="mkSumH">To‘lov xulosasi</h2>
       <div class="mk-pay-row"><span>Tanlangan tarif</span><span id="mkSumName"></span></div>
-      <div class="mk-pay-row"><span>Tarif narxi</span><span id="mkSumPrice"></span></div>
-      <div class="mk-pay-row"><span>Qo‘shimcha to‘lovlar</span><span id="mkSumFee"></span></div>
-      <div class="mk-pay-row mk-total"><span>Jami to‘lov</span><span id="mkSumTotal"></span></div>
+      <div class="mk-pay-row"><span>Tarif narxi (30 kun)</span><span id="mkSumPrice"></span></div>
+      <div class="mk-pay-row"><span>Hisobingizdagi balans</span><span id="mkSumBalance"></span></div>
+      <div class="mk-pay-row mk-total"><span>To‘lanishi kerak</span><span id="mkSumTotal"></span></div>
       <button type="button" class="mk-pay-btn" id="mkPayBtn" disabled>To‘lovni amalga oshirish</button>
       <p class="mk-pay-note" id="mkHint">Davom etish uchun to‘lov usulini tanlang.</p>
       <div class="mk-pay-msg" id="mkMsg" role="alert" tabindex="-1"></div>
@@ -135,95 +135,308 @@
   <div><strong>Qo‘llab-quvvatlash</strong><a href="mailto:support@mark1.uz">support@mark1.uz</a></div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/axios@1.20.0/dist/axios.min.js"></script>
+<script src="js/api-client.js"></script>
 <script>
 (function () {
   "use strict";
 
-  /* ===== Sozlamalar ===== */
+  /* ===== Backend endpointlari (subscription & payment API) =====
+     GET  /api/subscription/plans    -> {success, plans:[{code,name,price,period_days,limits}]}
+     GET  /api/subscription/current  -> {success, current, scheduled, balance}
+     POST /api/subscription/purchase {plan}       -> 201 {message, subscription, balance}
+     POST /api/payment/create         {amount}     -> 201 {payment:{payment_url}} (TezCheck hisobi)
+     GET  /api/payment/:id                          -> {payment:{status}, balance}  (polling)
+     GET  /api/payment/active                       -> {payment|null} (qaytishda davom ettirish)
+     Webhook /api/payment/webhook backendda ishlaydi — frontend tasdiqlashni so'raydi. */
   var CONFIG = {
-    HOME_URL: "/",                 // dashboard manzilingizga moslang
-    PAYMENTS_ENABLED: false,       // backend tayyor bo‘lgach true qiling
-    CREATE_URL: "/payments/create",          // POST {plan, provider} -> {order_id, payment_url}
-    STATUS_URL: "/payments/status/",         // GET + order_id -> {status: "paid"|"cancelled"|"pending"}
-    EXTRA_FEE: 0,
-    DEFAULT_PLAN: "crm",
-    PLANS: { crm: { name: "MARK1 CRM", price: 19999, months: 1 } }
+    HOME_URL: "/",
+    PLANS_URL: "/subscription/plans",
+    CURRENT_URL: "/subscription/current",
+    PURCHASE_URL: "/subscription/purchase",
+    CREATE_URL: "/payment/create",
+    STATUS_URL: "/payment/",        // + id
+    ACTIVE_URL: "/payment/active",
+    MIN_AMOUNT: 1000,               // backend PAYMENT_MIN_AMOUNT (TezCheck minimal summasi)
+    PENDING_PLAN_KEY: "mk_pending_plan",
+    DEFAULT_PLAN: "standart",
+    POLL_INTERVAL_MS: 3000,
+    POLL_MAX_TRIES: 100             // ~5 daqiqa
   };
 
   var $ = function (id) { return document.getElementById(id); };
   var params = new URLSearchParams(location.search);
-  var plan = CONFIG.PLANS[params.get("plan")] || CONFIG.PLANS[CONFIG.DEFAULT_PLAN];
-  var planKey = CONFIG.PLANS[params.get("plan")] ? params.get("plan") : CONFIG.DEFAULT_PLAN;
-  var state = { method: null, busy: false };
+  var state = {
+    method: null, busy: false, polling: false,
+    plan: null, planKey: null, plans: {},
+    current: null, balance: 0, due: 0,
+    autoPurchase: true
+  };
 
-  /* ===== Yordamchi ===== */
-  function som(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0") + " so‘m"; }
+  /* ===== Yordamchilar ===== */
+  function som(n) { return Number(n || 0).toLocaleString("ru-RU") + " so\u00a0m"; }
+  function set(id, v) { var el = $(id); if (el) el.textContent = v; }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
   var MONTHS = ["yanvar","fevral","mart","aprel","may","iyun","iyul","avgust","sentabr","oktabr","noyabr","dekabr"];
-  function endDate(months) {
-    var d = new Date(), day = d.getDate();
-    d.setDate(1); d.setMonth(d.getMonth() + months);
-    var last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-    d.setDate(Math.min(day, last));
+  function fmtDate(d) {
+    if (!d) return "—";
+    if (typeof d === "string") d = new Date(d);
+    if (isNaN(d.getTime())) return "—";
     return d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear();
   }
-  function set(id, v) { $(id).textContent = v; }
+  function api() { return window.crmApi; } // axios: Bearer token + 401 -> refresh
 
-  /* ===== Render: summa avtomatik hisoblanadi ===== */
-  var total = plan.price * plan.months + CONFIG.EXTRA_FEE;
-  set("mkPlanName", plan.name);
-  set("mkPlanPrice", som(plan.price) + " / oy");
-  set("mkPlanTerm", plan.months + " oy");
-  set("mkPlanEnd", endDate(plan.months));
-  set("mkPlanTotal", som(total));
-  set("mkSumName", plan.name);
-  set("mkSumPrice", som(plan.price * plan.months));
-  set("mkSumFee", som(CONFIG.EXTRA_FEE));
-  set("mkSumTotal", som(total));
-  $("mkBack").href = CONFIG.HOME_URL;
-
-  /* ===== Xabarlar ===== */
-  function msg(type, text) {
+  function msg(type, html) {
     var m = $("mkMsg");
     m.className = "mk-pay-msg mk-show " + (type === "err" ? "mk-err" : "mk-info");
-    m.textContent = text;
+    m.innerHTML = html;
     if (type === "err") m.focus();
   }
   function clearMsg() { $("mkMsg").className = "mk-pay-msg"; }
-
   function setBusy(b) {
     state.busy = b;
     var btn = $("mkPayBtn");
     btn.classList.toggle("mk-loading", b);
-    btn.disabled = b || !state.method;
-    btn.textContent = b ? "Kutilmoqda…" : "To‘lovni amalga oshirish";
+    btn.disabled = b || (state.due > 0 && !state.method);
+    btn.textContent = b ? "Kutilmoqda…" :
+      (state.due > 0 ? "To\u2018lovni amalga oshirish" : "Tarifni faollashtirish");
     document.querySelectorAll("input[name=mkMethod]").forEach(function (i) { i.disabled = b; });
   }
 
-  /* ===== To‘lov provayderi integratsiyasi (placeholder) =====
-     Real API yo‘q: PAYMENTS_ENABLED=false bo‘lsa har doim xato qaytadi,
-     hech qachon "muvaffaqiyatli" ko‘rsatilmaydi. */
-  function api() {
-    if (!CONFIG.PAYMENTS_ENABLED || !window.crmApi) {
-      var e = new Error("NOT_CONNECTED"); e.code = "NOT_CONNECTED"; throw e;
+  /* ===== Xatolarni foydalanuvchi tilida ko'rsatish ===== */
+  function handleErr(e, context) {
+    var status = e && e.response && e.response.status;
+    var data = e && e.response && e.response.data;
+    if (status === 401 || status === 403) {
+      // ?next= bilan qaytamiz: to'lov qaytishida (boshqa domen hostida)
+      // sessiya yo'qolsa ham payment_id/plan saqlanib qoladi.
+      var back = encodeURIComponent(location.pathname + location.search);
+      msg("err", "Sessiya muddati tugagan yoki ruxsat yo\u2018q. <a href=\"/login?next=" + back + "\">Tizimga qayta kiring</a> — to'lov sahifasiga avtomatik qaytarilasiz.");
+      return;
     }
-    return window.crmApi; // mavjud autentifikatsiyalangan axios klienti
-  }
-  var providers = {
-    click: function () { return createPayment("click"); },
-    payme: function () { return createPayment("payme"); }
-  };
-  async function createPayment(provider) {
-    var res = await api().post(CONFIG.CREATE_URL, { plan: planKey, provider: provider });
-    var url = res && res.data && res.data.payment_url;
-    if (!url) throw new Error("NO_URL");
-    window.location.assign(url); // foydalanuvchi provayder sahifasiga o‘tadi
-  }
-  async function verifyPayment(orderId) {
-    var res = await api().get(CONFIG.STATUS_URL + encodeURIComponent(orderId));
-    return res && res.data && res.data.status;
+    if (data && data.code === "insufficient_balance") {
+      msg("err", "Balans yetarli emas: kerak " + som(data.required) + ", mavjud " + som(data.balance) + ". Avval balansni to\u2018ldiring.");
+      return;
+    }
+    if (data && data.code === "already_scheduled") {
+      // Rezerv qilingan tarif allaqachon bor — eskirgan pending kalitni
+      // o'chiramiz, aks holda keyingi to'lov noto'g'ri tarifga avto-sotib
+      // olishga urinadi.
+      try { localStorage.removeItem(CONFIG.PENDING_PLAN_KEY); } catch (e) {}
+      msg("info", "Keyingi davr uchun tarif allaqachon sotib olingan. Balans hisobingizga qo'shildi — tarifni tanlang.");
+      return;
+    }
+    if (data && data.code === "purchase_in_progress") {
+      msg("info", "Oldingi so\u2018rv hali bajarilmoqda, bir ozdan keyin urinib ko\u2018ring.");
+      return;
+    }
+    if (data && data.message) { msg("err", context + ": " + data.message); return; }
+    console.error(context, e);
+    msg("err", context + "da xatolik yuz berdi. Qayta urinib ko\u2018ring yoki support@mark1.uz ga yozing.");
   }
 
-  /* ===== Interaksiya ===== */
+  /* ===== Render ===== */
+  function planStart() {
+    var cur = state.current;
+    // Pullik obuna faol bo\u2018lsa, yangi davr eskisi tugagach boshlanadi (backend mantiqi)
+    if (cur && !cur.is_trial && cur.expires_at) return new Date(cur.expires_at);
+    return new Date();
+  }
+  function planEnd() {
+    var d = planStart();
+    d.setDate(d.getDate() + (state.plan.period_days || 30));
+    return d;
+  }
+  function render() {
+    var p = state.plan;
+    set("mkPlanName", p.name);
+    set("mkPlanPrice", som(p.price) + " / " + (p.period_days || 30) + " kun");
+    set("mkPlanTerm", (p.period_days || 30) + " kun");
+    set("mkPlanEnd", fmtDate(planEnd()));
+    set("mkPlanTotal", som(p.price));
+    set("mkSumName", p.name);
+    set("mkSumPrice", som(p.price));
+    set("mkSumBalance", som(state.balance));
+    state.due = Math.max(0, p.price - state.balance);
+    set("mkSumTotal", state.due > 0 ? som(state.due) : "Balansdan qoplanadi");
+
+    var methods = $("mkMethods");
+    if (methods) methods.hidden = state.due === 0;
+    var hint = $("mkHint");
+    if (state.due > 0) {
+      // Tugma faqat to'lov usuli tanlanganda ochiladi — hint ham shuni aytadi.
+      hint.textContent = state.method
+        ? "To\u2018lov TezCheck orqali o\u2018tamiz. To\u2018lov tasdiqlangach tarif avtomatik faollashadi."
+        : "Davom etish uchun to\u2018lov usulini tanlang.";
+    } else {
+      hint.textContent = "Balansingiz tarif narxiga yetgan — qo\u2018shimcha to\u2018lov talab qilinmaydi.";
+    }
+    setBusy(false);
+  }
+
+  /* ===== API ===== */
+  async function loadPlans() {
+    var res = await api().get(CONFIG.PLANS_URL);
+    var list = (res.data && res.data.plans) || [];
+    list.forEach(function (p) { state.plans[p.code] = p; });
+    if (!list.length) throw new Error("NO_PLANS");
+  }
+  async function loadCurrent() {
+    var res = await api().get(CONFIG.CURRENT_URL);
+    state.balance = Number(res.data && res.data.balance) || 0;
+    state.current = (res.data && res.data.current) || null;
+  }
+
+  async function purchase() {
+    try {
+      var res = await api().post(CONFIG.PURCHASE_URL, { plan: state.planKey });
+      var sub = (res.data && res.data.subscription) || {};
+      try { localStorage.removeItem(CONFIG.PENDING_PLAN_KEY); } catch (e) {}
+      $("mkPayMain").hidden = true;
+      $("mkDone").hidden = false;
+      set("mkDoneText",
+        (res.data && res.data.message || "Tarif faollashtirildi") + " — " +
+        state.plan.name + ". Tugash sanasi: " + fmtDate(sub.expires_at) + ".");
+      clearMsg();
+    } catch (e) {
+      handleErr(e, "Tarifni sotib olishda");
+      setBusy(false);
+    }
+  }
+
+  async function startTopUp() {
+    var amount = Math.max(state.due, CONFIG.MIN_AMOUNT);
+    try {
+      var res = await api().post(CONFIG.CREATE_URL, { amount: amount });
+      var pay = (res.data && res.data.payment) || {};
+      if (!pay.payment_url) throw new Error("NO_URL");
+      try { localStorage.setItem(CONFIG.PENDING_PLAN_KEY, state.planKey); } catch (e) {}
+      window.location.assign(pay.payment_url); // TezCheck sahifasiga o'tish
+    } catch (e) {
+      // 409: ochiq to'lov allaqachon bor — unga o'tamiz
+      var existing = e && e.response && e.response.data && e.response.data.payment;
+      if (existing && existing.payment_url) {
+        try { localStorage.setItem(CONFIG.PENDING_PLAN_KEY, state.planKey); } catch (err) {}
+        window.location.assign(existing.payment_url);
+        return;
+      }
+      handleErr(e, "To\u2018lovni boshlashda");
+      setBusy(false);
+    }
+  }
+
+  async function doPay() {
+    if (state.busy) return;
+    clearMsg();
+    if (state.due === 0) { setBusy(true); await purchase(); return; }
+    if (!state.method) { msg("err", "To\u2018lov usulini tanlang."); return; }
+    setBusy(true);
+    await startTopUp();
+  }
+
+  /* ===== To'lovni kuzatish (polling) ===== */
+  var STATUS_TEXT = {
+    paid: "qabul qilindi", cancelled: "bekor qilindi",
+    failed: "muvaffaqiyatsiz", expired: "muddati o\u2018tdi"
+  };
+  async function pollPayment(id) {
+    if (state.polling) return;
+    state.polling = true;
+    msg("info", "To\u2018lov holati tekshirilmoqda\u2026");
+    for (var i = 0; i < CONFIG.POLL_MAX_TRIES; i++) {
+      var pay = null, bal = null;
+      try {
+        var res = await api().get(CONFIG.STATUS_URL + encodeURIComponent(id));
+        pay = (res.data && res.data.payment) || null;
+        bal = res.data && res.data.balance;
+      } catch (e) {
+        if (i === 0) {
+          state.polling = false;
+          msg("err", "To\u2018lov holatini tekshirib bo\u2018lmadi. Sahifani yangilang yoki support@mark1.uz ga yozing.");
+          setBusy(false);
+          return;
+        }
+        await sleep(CONFIG.POLL_INTERVAL_MS);
+        continue;
+      }
+      if (pay && pay.status === "paid") {
+        state.polling = false;
+        if (bal !== null && bal !== undefined) state.balance = Number(bal) || 0;
+        set("mkSumBalance", som(state.balance));
+        state.due = Math.max(0, state.plan.price - state.balance);
+        setBusy(true);
+        if (state.autoPurchase) {
+          await purchase(); // balans to'ldirildi -> tarifni sotib olish
+        } else {
+          // Tarif ma'lumoti yo'qolgan (boshqa domen hostidan qaytish) —
+          // noto'g'ri tarif sotib olinmasin: balans to'ldiriladi va
+          // foydalanuvchi tarifni o'zi tanlaydi.
+          await loadCurrent();
+          render();
+          msg("info", "Balans to\u2018ldirildi: " + som(state.balance) + ". Tarifni tanlang va \u2018Faollashtirish\u2019 tugmasini bosing.");
+        }
+        return;
+      }
+      if (pay && STATUS_TEXT[pay.status]) {
+        state.polling = false;
+        msg("err", "To\u2018lov " + STATUS_TEXT[pay.status] + ". Hisobingizdan pul yechilmadi yoki qaytarildi — qayta urinib ko\u2018ring.");
+        setBusy(false);
+        return;
+      }
+      await sleep(CONFIG.POLL_INTERVAL_MS);
+    }
+    state.polling = false;
+    msg("info", "To\u2018lov hali tasdiqlanmagan. Bir necha daqiqadan so\u2018ng sahifani yangilang — obuna avtomatik faollashadi.");
+    setBusy(false);
+  }
+
+  async function resumePayment() {
+    var id = params.get("payment_id") || params.get("order_id") || params.get("id");
+    if (!id) {
+      try {
+        var res = await api().get(CONFIG.ACTIVE_URL);
+        id = res.data && res.data.payment && res.data.payment.id;
+      } catch (e) { /* ochiq to'lov yo'q — oddiy holat */ }
+    }
+    if (!id) {
+      try { localStorage.removeItem(CONFIG.PENDING_PLAN_KEY); } catch (e) {}
+      return false;
+    }
+    await pollPayment(String(id));
+    return true;
+  }
+
+  /* ===== Ishga tushirish ===== */
+  async function init() {
+    $("mkBack").href = CONFIG.HOME_URL;
+    if (!window.crmApi) throw new Error("NO_API");
+
+    // Redirectdan oldin tanlangan tarif (localStorage) yoki ?plan= parametri
+    var key = params.get("plan");
+    var explicitPlan = !!key;
+    if (!key) {
+      try {
+        key = localStorage.getItem(CONFIG.PENDING_PLAN_KEY);
+        if (key) explicitPlan = true;
+      } catch (e) {}
+    }
+    // To'lov qaytishida tarif aniq bo'lsa AVTOMATIK sotib olish;
+    // tarif yo'q bo'lsa (boshqa domen hostida localStorage yo'qolgan) —
+    // faqat balans to'ldiriladi, noto'g'ri tarif sotib olinmaydi.
+    state.autoPurchase = explicitPlan;
+    await loadPlans();
+    if (!state.plans[key]) key = state.plans[CONFIG.DEFAULT_PLAN] ? CONFIG.DEFAULT_PLAN : Object.keys(state.plans)[0];
+    state.planKey = key;
+    state.plan = state.plans[key];
+
+    await loadCurrent();
+    render();
+
+    // Qaytishda (yoki ochiq to'lov bor bo'lsa) — darhol kuzatishni boshlaymiz
+    await resumePayment();
+  }
+
+  // To'lov usulini tanlash
   document.querySelectorAll("input[name=mkMethod]").forEach(function (i) {
     i.addEventListener("change", function () {
       state.method = i.value;
@@ -232,40 +445,15 @@
       clearMsg();
     });
   });
+  $("mkPayBtn").addEventListener("click", doPay);
 
-  $("mkPayBtn").addEventListener("click", async function () {
-    if (state.busy || !state.method) return;
-    clearMsg(); setBusy(true);
-    try {
-      await providers[state.method]();
-    } catch (e) {
-      msg("err", e.code === "NOT_CONNECTED"
-        ? "To‘lov tizimi hali ulanmagan. To‘lov amalga oshirilmadi, hisobingizdan pul yechilmadi."
-        : "To‘lovni boshlashda xatolik yuz berdi. Qayta urinib ko‘ring yoki support@mark1.uz ga yozing.");
-      setBusy(false);
+  init().catch(function (e) {
+    if (e && e.message === "NO_PLANS") {
+      msg("err", "Tariflar ro\u2018yxati yuklanmadi. Sahifani yangilang yoki support@mark1.uz ga yozing.");
+      return;
     }
+    handleErr(e, "Ma\u2018lumotlarni yuklashda");
   });
-
-  /* ===== Provayderdan qaytish: faqat backend tasdiqlasa success ===== */
-  async function handleReturn() {
-    var orderId = params.get("order_id");
-    if (!orderId) return;
-    msg("info", "To‘lov holati tekshirilmoqda…");
-    try {
-      var status = await verifyPayment(orderId);
-      if (status === "paid") {
-        $("mkPayMain").hidden = true; $("mkDone").hidden = false;
-        set("mkDoneText", plan.name + " obunangiz faollashtirildi. Tugash sanasi: " + endDate(plan.months) + ".");
-      } else if (status === "cancelled") {
-        msg("err", "To‘lov bekor qilindi. Istasangiz, qayta urinib ko‘ring.");
-      } else {
-        msg("info", "To‘lov hali tasdiqlanmadi. Bir necha daqiqadan so‘ng sahifani yangilang.");
-      }
-    } catch (e) {
-      msg("err", "To‘lov holatini tekshirib bo‘lmadi. To‘lov tasdiqlanmaguncha obuna faollashmaydi.");
-    }
-  }
-  handleReturn();
 })();
 </script>
 </body>

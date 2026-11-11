@@ -332,6 +332,27 @@
 
           <!-- Tizim Sozlamalari (O'ng tomon) -->
           <div class="col-lg-4 mt-4 mt-lg-0">
+            <!-- Obuna (subscription API dan yuklanadi; CEO bo'lmagan rollarda yashiriladi) -->
+            <div class="card shadow-sm border-0 mb-4" id="subscriptionCard" style="display:none;">
+              <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-4">Obuna</h2>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <div>
+                    <h3 class="h6 mb-0 fw-semibold" id="subPlanName" style="color: var(--text-primary) !important;">—</h3>
+                    <small class="text-muted" id="subPlanTerm">Yuklanmoqda…</small>
+                  </div>
+                  <span class="badge rounded-pill" id="subBadge" style="background: var(--brand-text); font-size: 12px;">—</span>
+                </div>
+                <div class="mb-3">
+                  <h3 class="h6 mb-0 fw-semibold" id="subBalance" style="color: var(--text-primary) !important;">—</h3>
+                  <small class="text-muted">Hisobingizdagi balans</small>
+                </div>
+                <a class="btn btn-primary w-100 px-4" href="/payment" id="subPayBtn"
+                   style="background: var(--brand-text); border-color: var(--brand-text);">To‘lov / tarifni almashtirish</a>
+                <small class="text-muted d-block mt-2">To‘lov Click/Payme orqali TezCheck xizmatida amalga oshiriladi.</small>
+              </div>
+            </div>
+
             <div class="card shadow-sm border-0 mb-4">
               <div class="card-body p-4">
                 <h2 class="h5 fw-bold mb-4">Tizim holati</h2>
@@ -539,6 +560,44 @@
   </script>
   <script defer>
     (function () {if (document.readyState === 'loading') {document.addEventListener('DOMContentLoaded', function () {setTimeout(function () {AuthSystem.protectPage();}, 100);});} else {setTimeout(function () {AuthSystem.protectPage();}, 100);} })();
+  </script>
+  <!-- Obuna kartasini backenddan yuklash (CEO uchun; 403 bo'lsa kartani yashiramiz) -->
+  <script defer>
+    (function () {
+      function pad(n) { return n < 10 ? "0" + n : "" + n; }
+      function fmtDate(d) { return pad(d.getDate()) + "." + pad(d.getMonth() + 1) + "." + d.getFullYear(); }
+      var NAMES = { start: "START", standart: "STANDART", growth: "GROWTH", pro: "PRO", custom: "MAXSUS" };
+      function loadSubscription() {
+        if (!window.crmApi) return;
+        window.crmApi.get("/subscription/current").then(function (res) {
+          var card = document.getElementById("subscriptionCard");
+          if (!card) return;
+          var d = res.data || {};
+          var cur = d.current;
+          var nameEl = document.getElementById("subPlanName");
+          var termEl = document.getElementById("subPlanTerm");
+          var badge = document.getElementById("subBadge");
+          if (cur) {
+            var exp = cur.expires_at ? new Date(cur.expires_at) : null;
+            nameEl.textContent = (NAMES[cur.plan] || cur.plan || "Tarif") + (cur.is_trial ? " · bepul sinov" : "");
+            termEl.textContent = exp ? "Tugash: " + fmtDate(exp) + " · " + (cur.days_left || 0) + " kun qoldi" : "Muddat kuzatilmaydi";
+            badge.textContent = (cur.days_left || 0) + " kun";
+            if (["start", "standart", "growth", "pro"].indexOf(cur.plan) !== -1) {
+              document.getElementById("subPayBtn").href = "/payment?plan=" + cur.plan;
+            }
+          } else {
+            nameEl.textContent = "Obuna yo‘q";
+            termEl.textContent = "14 kunlik bepul sinov yoki tarif tanlang";
+            badge.textContent = "—";
+          }
+          document.getElementById("subBalance").textContent = Number(d.balance || 0).toLocaleString("ru-RU") + " so‘m";
+          card.style.display = "";
+        }).catch(function () { /* 403 (CEO emas) yoki xato — karta yashirilgan qoladi */ });
+      }
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", function () { setTimeout(loadSubscription, 200); });
+      } else { setTimeout(loadSubscription, 200); }
+    })();
   </script>
   <!-- JQUERY (SHART) — slim yetarli (faqat .modal() API ishlatiladi) -->
   <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js?v=1790606700" defer></script>
