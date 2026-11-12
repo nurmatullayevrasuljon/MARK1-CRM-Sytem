@@ -147,7 +147,8 @@ body.mk-pay {
   right: 10px;
   background: var(--mk-primary);
   color: #fff;
-  font-size: 10px;
+  /* DESIGN §3.1: 12px dan kichik shrift taqiqlanadi */
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   padding: 2px 8px;
@@ -164,12 +165,14 @@ body.mk-pay {
   font-size: 18px;
   font-weight: 800;
   color: var(--mk-primary);
-  margin-bottom: 10px;
+  /* Narx bir qatorda qolishi uchun (kartochka tor bo'lganda ham) */
+  white-space: nowrap;
 }
-.mk-plan-price span {
-  font-size: 11px;
-  font-weight: 500;
+.mk-plan-period {
+  font-size: 12px;
+  font-weight: 600;
   color: var(--mk-muted);
+  margin-bottom: 10px;
 }
 .mk-plan-features {
   list-style: none;
@@ -198,59 +201,6 @@ body.mk-pay {
 .mk-plan-item.selected .mk-plan-check {
   background: var(--mk-primary);
   color: #fff;
-}
-
-/* To'lov usullari */
-.mk-methods-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-.mk-method-opt {
-  position: relative;
-}
-.mk-method-opt input {
-  position: absolute;
-  opacity: 0;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-  margin: 0;
-}
-.mk-method-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px;
-  border: 2px solid var(--mk-border);
-  border-radius: 12px;
-  background: var(--mk-surface);
-  transition: all .2s ease;
-}
-.mk-method-opt input:checked + .mk-method-card {
-  border-color: var(--mk-primary);
-  background: #f8faff;
-  box-shadow: 0 0 0 1px var(--mk-primary);
-}
-.mk-method-logo {
-  width: 44px;
-  height: 44px;
-  flex: none;
-}
-.mk-method-info b { display: block; font-size: 15px; }
-.mk-method-info small { font-size: 12px; color: var(--mk-muted); }
-.mk-method-tick {
-  margin-left: auto;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px solid var(--mk-border);
-  flex: none;
-}
-.mk-method-opt input:checked + .mk-method-card .mk-method-tick {
-  border-color: var(--mk-primary);
-  background: var(--mk-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.5l3 3 6-7' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100%;
 }
 
 /* Xulosa qismi (Sidebar) */
@@ -358,15 +308,110 @@ body.mk-pay {
 .mk-done-wrap h2 { font-size: 24px; font-weight: 800; margin-bottom: 10px; }
 .mk-done-wrap p { color: var(--mk-muted); margin-bottom: 24px; }
 
+/* Qadam sarlavhasi: raqamli belgi */
+.mk-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--mk-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+.mk-step-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.mk-trial-chip {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mk-primary);
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* TezCheck sahifasida mavjud to'lov usullari (tanlov emas — faqat ma'lumot) */
+.mk-pay-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.mk-pay-chip {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mk-text);
+  background: var(--mk-bg);
+  border: 1px solid var(--mk-border);
+  border-radius: 8px;
+  padding: 7px 12px;
+}
+.mk-trust-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--mk-muted);
+}
+.mk-trust-list b { color: var(--mk-text); }
+
+/* Klaviatura bilan boshqarish (a11y) */
+.mk-plan-item:focus-visible,
+.mk-btn-pay:focus-visible,
+.mk-pay-back:focus-visible {
+  outline: 3px solid var(--mk-primary);
+  outline-offset: 2px;
+}
+
+/* Harakatni kamaytirish (a11y) */
+@media (prefers-reduced-motion: reduce) {
+  .mk-plan-item,
+  .mk-btn-pay,
+  .mk-pay-back,
+  .mk-plan-check { transition: none; }
+  .mk-plan-item:hover,
+  .mk-btn-pay:hover:not(:disabled) { transform: none; }
+  .mk-btn-pay.loading::before { animation-duration: 1.4s; }
+}
+
 /* Responsive */
 @media (max-width: 960px) {
-  .mk-pay-main { grid-template-columns: 1fr; }
-  .mk-pay-side { position: static; }
+  /* Mobilda tartib: tariflar -> to'lov xulosasi (tugma) -> izoh.
+     Aks holda tugma ikkita karta ortida qolib, foydalanuvchi
+     uzun skroll qilishi kerak bo'lardi. */
+  .mk-pay-main {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .mk-pay-content { display: contents; }
+  .mk-pay-content > section:first-child { order: 1; }
+  .mk-pay-side { order: 2; position: static; }
+  .mk-pay-content > section:last-child { order: 3; }
   .mk-plans-grid { grid-template-columns: repeat(2, 1fr); }
+  .mk-trust-list { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
   .mk-plans-grid { grid-template-columns: 1fr; }
-  .mk-methods-grid { grid-template-columns: 1fr; }
+  .mk-card { padding: 18px; }
+  .mk-summary-card { padding: 18px; }
+  /* Kichik ekranda sarlavha 3 qatorda bo'linmasligi uchun:
+     brend logotipi + "Bosh sahifaga" tugmasi qoladi (h1 sahifa ichidagi
+     qadam sarlavhalari bilan takrorlanmasligi uchun yashiriladi). */
+  .mk-pay-head-in { min-height: 60px; gap: 10px; }
+  .mk-pay-brand { gap: 10px; min-width: 0; }
+  .mk-pay-brand h1 { display: none; }
+  .mk-pay-secure { display: none; }
+  .mk-pay-head-right { gap: 8px; }
+  .mk-pay-back { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
 }
 </style>
 </head>
@@ -375,7 +420,7 @@ body.mk-pay {
 <header class="mk-pay-head">
   <div class="mk-pay-head-in">
     <div class="mk-pay-brand">
-      <a href="/" aria-label="MARK1 CRM"><img src="https://mark1.uz/img/mark1-logo-navbar.png" alt="MARK1"></a>
+      <a href="/" aria-label="MARK1 CRM"><img src="img/mark1-logo-navbar.png" alt="MARK1"></a>
       <h1>To‘lov va Obuna</h1>
     </div>
     <div class="mk-pay-head-right">
@@ -394,8 +439,8 @@ body.mk-pay {
     <!-- 1-qadam: 4 ta Tarif kartochkalari -->
     <section class="mk-card">
       <div class="mk-card-title">
-        <span>1. Tarif rejasini tanlang</span>
-        <span id="mkTrialStatus" style="font-size:12px; font-weight:600; color:var(--mk-muted);"></span>
+        <span class="mk-step-label"><span class="mk-step-num">1</span> Tarif rejasini tanlang</span>
+        <span id="mkTrialStatus" class="mk-trial-chip" hidden></span>
       </div>
       <p class="mk-card-subtitle">O‘zingizga mos tarifni tanlang. Istalgan vaqtda boshqa tarifga o‘tishingiz mumkin.</p>
       
@@ -404,49 +449,30 @@ body.mk-pay {
       </div>
     </section>
 
-    <!-- 2-qadam: To'lov usuli -->
-    <section class="mk-card" id="mkMethodsCard">
-      <div class="mk-card-title">2. To‘lov usulini tanlang</div>
-      <p class="mk-card-subtitle">To‘lov Click yoki Payme orqali xavfsiz amalga oshiriladi.</p>
-      
-      <div class="mk-methods-grid">
-        <div class="mk-method-opt">
-          <input type="radio" name="mkMethod" id="mClick" value="click" checked>
-          <label class="mk-method-card" for="mClick">
-            <svg class="mk-method-logo" viewBox="0 0 44 44">
-              <rect width="44" height="44" rx="10" fill="#00a3ff"/>
-              <text x="22" y="27" font-family="system-ui,sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">click</text>
-            </svg>
-            <div class="mk-method-info">
-              <b>Click</b>
-              <small>Click ilovasi yoki karta</small>
-            </div>
-            <span class="mk-method-tick"></span>
-          </label>
-        </div>
+    <!-- 2-qadam: TezCheck orqali xavfsiz to'lov -->
+    <section class="mk-card">
+      <div class="mk-card-title">
+        <span class="mk-step-label"><span class="mk-step-num">2</span> TezCheck orqali to‘lov</span>
+      </div>
+      <p class="mk-card-subtitle">
+        «To‘lovni amalga oshirish» tugmasi bosilganda TezCheck (tezcheck.uz)
+        xavfsiz to‘lov sahifasi ochiladi. Karta ma’lumotlarini aynan u yerda
+        kirasiz — MARK1 ularni hech qachon ko‘rmaydi yoki saqlamaydi.
+      </p>
 
-        <div class="mk-method-opt">
-          <input type="radio" name="mkMethod" id="mPayme" value="payme">
-          <label class="mk-method-card" for="mPayme">
-            <svg class="mk-method-logo" viewBox="0 0 44 44">
-              <rect width="44" height="44" rx="10" fill="#14b8a6"/>
-              <text x="22" y="27" font-family="system-ui,sans-serif" font-size="11" font-weight="900" fill="#fff" text-anchor="middle">payme</text>
-            </svg>
-            <div class="mk-method-info">
-              <b>Payme</b>
-              <small>Payme ilovasi orqali</small>
-            </div>
-            <span class="mk-method-tick"></span>
-          </label>
-        </div>
+      <div class="mk-pay-chips" aria-label="TezCheck sahifasida mavjud to‘lov usullari">
+        <span class="mk-pay-chip">Uzcard</span>
+        <span class="mk-pay-chip">Humo</span>
+        <span class="mk-pay-chip">Click</span>
+        <span class="mk-pay-chip">Payme</span>
+        <span class="mk-pay-chip">Visa / Mastercard</span>
+      </div>
+
+      <div class="mk-trust-list">
+        <div>🔒 <b>Bank darajasidagi xavfsizlik</b> — to‘lov TezCheck himoyasi ostida o‘tadi.</div>
+        <div>⚡ <b>Avtomatik faollashuv</b> — to‘lov tasdiqlangach obuna bir zumda yoqiladi.</div>
       </div>
     </section>
-
-    <!-- Xavfsizlik kafolatlari -->
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:13px; color:var(--mk-muted);">
-      <div>🔒 <b>Bank darajasidagi xavfsizlik</b> — Karta ma’lumotlari MARK1 da saqlanmaydi.</div>
-      <div>⚡ <b>Avtomatik faollashuv</b> — To‘lov tasdiqlangach obuna bir zumda yoqiladi.</div>
-    </div>
   </div>
 
   <!-- Xulosa Sidebar -->
@@ -457,6 +483,7 @@ body.mk-pay {
       <div class="mk-sum-row"><span>Obuna muddati</span><span id="mkSumPeriod">30 kun</span></div>
       <div class="mk-sum-row"><span>Tarif narxi</span><span id="mkSumPrice">199 000 so‘m</span></div>
       <div class="mk-sum-row"><span>Hisobingizdagi balans</span><span id="mkSumBalance">0 so‘m</span></div>
+      <div class="mk-sum-row"><span>To‘lov tizimi</span><span>TezCheck</span></div>
       
       <div class="mk-sum-row mk-sum-total">
         <span>Jami to‘lov:</span>
@@ -467,7 +494,7 @@ body.mk-pay {
         To‘lovni amalga oshirish
       </button>
 
-      <div class="mk-alert" id="mkAlert" role="alert"></div>
+      <div class="mk-alert" id="mkAlert" role="alert" aria-live="polite"></div>
 
       <p style="font-size:12px; color:var(--mk-muted); text-align:center; margin-top:14px;">
         To‘lovni amalga oshirish orqali siz xizmat ko‘rsatish shartlariga rozilik bildirasiz.
@@ -517,7 +544,6 @@ body.mk-pay {
   var state = {
     plans: FALLBACK_PLANS,
     selectedPlan: "standart",
-    method: "click",
     balance: 0,
     currentSub: null,
     trialUsed: false,
@@ -563,13 +589,19 @@ body.mk-pay {
       var div = document.createElement("div");
       div.className = "mk-plan-item" + (state.selectedPlan === code ? " selected" : "");
       div.id = "planCard_" + code;
+      // Klaviatura bilan boshqarish (a11y): Tab + Enter/Space
+      div.setAttribute("role", "button");
+      div.setAttribute("tabindex", "0");
+      div.setAttribute("aria-pressed", state.selectedPlan === code ? "true" : "false");
+      div.setAttribute("aria-label", p.name + " tarifi, " + som(p.price) + ", " + (p.period_days || 30) + " kun");
 
       var badgeHtml = code === "standart" ? '<span class="mk-plan-badge">Eng ommabop</span>' : '';
       var limits = p.limits || {};
 
       div.innerHTML = badgeHtml +
         '<div class="mk-plan-name">' + p.name + '</div>' +
-        '<div class="mk-plan-price">' + som(p.price) + ' <span>/ oy</span></div>' +
+        '<div class="mk-plan-price">' + som(p.price) + '</div>' +
+        '<div class="mk-plan-period">' + (p.period_days || 30) + ' kunlik obuna</div>' +
         '<ul class="mk-plan-features">' +
           '<li>👥 ' + (limits.max_users || 1) + ' foydalanuvchi</li>' +
           '<li>💬 ' + (limits.sms || 5) + ' ta SMS</li>' +
@@ -579,6 +611,12 @@ body.mk-pay {
 
       div.addEventListener("click", function() {
         selectPlan(code);
+      });
+      div.addEventListener("keydown", function(e) {
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+          e.preventDefault();
+          selectPlan(code);
+        }
       });
 
       container.appendChild(div);
@@ -592,12 +630,14 @@ body.mk-pay {
     // UI da tanlangan kartani ajratish
     document.querySelectorAll(".mk-plan-item").forEach(function(el) {
       el.classList.remove("selected");
+      el.setAttribute("aria-pressed", "false");
       var chk = el.querySelector(".mk-plan-check");
       if (chk) chk.textContent = "Tanlash";
     });
     var selectedEl = $("planCard_" + code);
     if (selectedEl) {
       selectedEl.classList.add("selected");
+      selectedEl.setAttribute("aria-pressed", "true");
       var chk = selectedEl.querySelector(".mk-plan-check");
       if (chk) chk.textContent = "✓ Tanlangan";
     }
@@ -618,12 +658,8 @@ body.mk-pay {
     var btn = $("mkPayBtn");
     if (state.due === 0) {
       btn.textContent = "Tarifni faollashtirish (Balansdan)";
-      $("mkMethodsCard").style.opacity = "0.5";
-      $("mkMethodsCard").style.pointerEvents = "none";
     } else {
       btn.textContent = "To‘lovni amalga oshirish (" + som(state.due) + ")";
-      $("mkMethodsCard").style.opacity = "1";
-      $("mkMethodsCard").style.pointerEvents = "auto";
     }
   }
 
@@ -747,13 +783,6 @@ body.mk-pay {
     renderPlansGrid();
     updateSummary();
 
-    // To'lov usuli radio listener
-    document.querySelectorAll("input[name=mkMethod]").forEach(function(r) {
-      r.addEventListener("change", function() {
-        state.method = r.value;
-      });
-    });
-
     $("mkPayBtn").addEventListener("click", handlePay);
 
     // API dan dolzarb ma'lumotlarni yuklaymiz
@@ -776,10 +805,13 @@ body.mk-pay {
           state.currentSub = cRes.data.current;
           state.trialUsed = !!cRes.data.trial_used;
 
+          var trialEl = $("mkTrialStatus");
           if (state.currentSub && state.currentSub.is_trial) {
-            $("mkTrialStatus").textContent = "14 kunlik bepul sinov (" + (state.currentSub.days_left || 0) + " kun qoldi)";
+            trialEl.textContent = "14 kunlik bepul sinov (" + (state.currentSub.days_left || 0) + " kun qoldi)";
+            trialEl.hidden = false;
           } else if (state.trialUsed) {
-            $("mkTrialStatus").textContent = "Bepul sinov ishlatilgan";
+            trialEl.textContent = "Bepul sinov ishlatilgan";
+            trialEl.hidden = false;
           }
           updateSummary();
         }
