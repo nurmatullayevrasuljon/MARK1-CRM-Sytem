@@ -785,8 +785,11 @@ body.mk-pay {
 
     $("mkPayBtn").addEventListener("click", handlePay);
 
-    // API dan dolzarb ma'lumotlarni yuklaymiz
-    if (window.crmApi) {
+    // API dan dolzarb ma'lumotlarni yuklaymiz.
+    // FIX (P3): token'siz 401 (console xatosi) o'rniga fallback tariflar
+    // ko'rsatiladi — API so'rovlari faqat tizimga kirilgan holatda ketadi.
+    var hasSession = !!localStorage.getItem("crm_access_token");
+    if (window.crmApi && hasSession) {
       try {
         var pRes = await window.crmApi.get(CONFIG.PLANS_URL);
         if (pRes.data && pRes.data.plans && pRes.data.plans.length) {

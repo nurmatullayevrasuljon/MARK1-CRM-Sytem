@@ -7578,8 +7578,11 @@ function checkAuth() {
 
   if (Auth && typeof Auth.isSessionValid === "function") {
     if (!Auth.isSessionValid()) {
-      // Dashboard himoyalangan sahifa — landing orqali kirish taklif qilamiz
-      window.location.href = "/";
+      // Dashboard himoyalangan sahifa — landing orqali kirish taklif qilamiz.
+      // FIX (P0): bu yerda "/" ga qaytarilardi, lekin "/" ham shu script.js ni
+      // yuklaydi → initDashboard → checkAuth → "/" → CHEKSIZ RELOAD SIKLI
+      // (bir necha daqiqada 47 000+ so'rov, sahifa hech qachon ochilmaydi).
+      window.location.href = "landing.html";
       return false;
     }
 
@@ -7591,7 +7594,8 @@ function checkAuth() {
 
   if (!isLoggedIn) {
     console.log('Not logged in, redirecting...');
-    window.location.href = "/";
+    // FIX (P0): "/" o'rniga landing.html — aks holda yuqoridagi sikl takrorlanadi.
+    window.location.href = "landing.html";
     return false;
   }
   return true;
@@ -7609,7 +7613,8 @@ function logout() {
   localStorage.removeItem('isLoggedIn');
   sessionStorage.removeItem('currentUser');
   sessionStorage.removeItem('isLoggedIn');
-  window.location.href = "/";
+  // FIX (P0): "/" o'rniga landing.html — cheksiz reload siklini oldini oladi.
+  window.location.href = "landing.html";
 }
 
 /* ========== PROFILE DISPLAY ========== */
@@ -8048,6 +8053,7 @@ window.logout = logout;
     var text = "Tahlilni olishda xatolik yuz berdi.";
     if (kind === "network") text = "Server bilan aloqa o'rnatilmadi. Internet aloqasini tekshirib, qayta urinib ko'ring.";
     if (kind === "auth") text = "Sessiya muddati tugagan. Qaytadan kiring.";
+    if (kind === "quota") text = "AI analitika limiti tugagan. Tarifingizni yangilang, so'ng qayta urinib ko'ring.";
     setBody(
       '<div class="mk-ai-error" role="alert">' +
         '<div class="mk-ai-error-icon" aria-hidden="true"><i class="bi bi-exclamation-triangle-fill"></i></div>' +
@@ -8192,6 +8198,17 @@ window.logout = logout;
 
   function handleError(err, hadData) {
     var status = err && err.response && err.response.status;
+    var code = err && err.response && err.response.data && err.response.data.code;
+
+    // KVOTA (403 quota_exceeded) — bu xato EMAS: tarifdagi AI limiti
+    // tugagan. Karta yashirilmaydi va qizil konsol xatosi chiqmaydi —
+    // foydalanuvchiga tushunarli holat ko'rsatiladi.
+    if (status === 403 && code === "quota_exceeded") {
+      console.info("[MARK1 AI] kvota tugagan:", (err.response.data && err.response.data.message) || "");
+      renderError("quota");
+      return;
+    }
+
     // Texnik tafsilot faqat konsolga; foydalanuvchiga umumiy xabar
     console.error("[MARK1 AI] overview xatosi:", status || "network", err && err.message);
 
@@ -9059,16 +9076,25 @@ async function getDashboardStatistics() {
 
   } catch (error) {
 
-    console.error("❌ DASHBOARD API ERROR");
+    // RBAC (403): sotuvchi/user uchun /statistics/full CEO/admin bilan
+    // cheklangan — bu KUTILGAN holat, xato emas. Qizil console.error
+    // o'rniga info va lokal hisob-kitobga o'tamiz (pastdagi fallback).
+    if (error?.response?.status === 403) {
+      console.info(
+        "[MARK1] Statistika roli uchun cheklangan (403) — lokal hisob ishlatiladi"
+      );
+    } else {
+      console.error("❌ DASHBOARD API ERROR");
 
-    console.table({
-      status: error?.response?.status || null,
-      url: error?.config?.url || null,
-      message:
-        error?.response?.data?.detail ||
-        error?.response?.data?.message ||
-        error?.message
-    });
+      console.table({
+        status: error?.response?.status || null,
+        url: error?.config?.url || null,
+        message:
+          error?.response?.data?.detail ||
+          error?.response?.data?.message ||
+          error?.message
+      });
+    }
 
     // Backend statistics ishlamasa,
     // frontenddagi real ma'lumotlardan hisoblaymiz.

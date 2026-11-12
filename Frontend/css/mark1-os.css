@@ -2939,7 +2939,11 @@ body.mk-nav-open .mk-nav-backdrop { opacity: 1; pointer-events: auto; }
   }
   .card-box small.counter-smal {
     font-size: 10.5px !important;
-    white-space: nowrap !important;
+    /* FIX (P3): nowrap + flex konteyner tufayli text-overflow: ellipsis
+       ishlamaydi va uzun yorliq ("Muddati o'tgan qarz") 375px da qattiq
+       kesilardi ("MUDDATI O'TGAN QA"). Wrap — yorliq 2 qatorga o'zi
+       mo'ljallangan (mark1-system.css: min-height 38px). */
+    white-space: normal !important;
     text-overflow: ellipsis !important;
     overflow: hidden !important;
   }

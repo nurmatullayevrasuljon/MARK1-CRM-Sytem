@@ -131,7 +131,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             children: [
                               Text(
                                 _greeting(),
-                                style: GoogleFonts.inter(
+                                style: GoogleFonts.manrope(
                                   fontSize: 13,
                                   color: Colors.white.withValues(alpha: 0.8),
                                 ),
@@ -141,7 +141,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 auth.store?.ceoName ??
                                     auth.store?.storeName ??
                                     'MARK1 CRM',
-                                style: GoogleFonts.inter(
+                                style: GoogleFonts.manrope(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
@@ -150,7 +150,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               if (auth.store?.storeName != null)
                                 Text(
                                   auth.store!.storeName,
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.manrope(
                                     fontSize: 13,
                                     color:
                                         Colors.white.withValues(alpha: 0.75),
@@ -239,7 +239,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           ? auth.store!.ceoName[0]
                                           : 'M')
                                       .toUpperCase(),
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.manrope(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
@@ -270,7 +270,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               children: [
                                 Text(
                                   'Oylik tushum',
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.manrope(
                                     fontSize: 12,
                                     color:
                                         Colors.white.withValues(alpha: 0.8),
@@ -282,7 +282,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     : Text(
                                         _formatMoney(statsProvider.stats
                                             ?.monthlyRevenue),
-                                        style: GoogleFonts.inter(
+                                        style: GoogleFonts.manrope(
                                           fontSize: 22,
                                           fontWeight: FontWeight.w800,
                                           color: Colors.white,
@@ -518,7 +518,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Expanded(
                       child: Text(
                         'Demo rejim: statistika ko\'rsatilmayapti. To\'liq uchun kiring.',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.manrope(
                             fontSize: 13, color: Colors.orange),
                       ),
                     ),
@@ -1040,7 +1040,7 @@ class _StatCard extends StatelessWidget {
                   else
                     Text(
                       value,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.manrope(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
                         color: AppColors.text(isDark),
@@ -1051,7 +1051,7 @@ class _StatCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     title,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.manrope(
                       fontSize: 11,
                       color: AppColors.textSec(isDark),
                     ),
@@ -1105,7 +1105,7 @@ class _PaymentBreakdown extends StatelessWidget {
         children: [
           Text(
             'To\'lov usullari',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               fontSize: 15,
               fontWeight: FontWeight.w700,
               color: AppColors.text(isDark),
@@ -1139,7 +1139,7 @@ class _PaymentBreakdown extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               'Naqd: ${_fmt(cashRevenue)} so\'m',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.manrope(
                   fontSize: 13, color: AppColors.textSec(isDark)),
             ),
             const SizedBox(width: 16),
@@ -1147,7 +1147,7 @@ class _PaymentBreakdown extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               'Karta: ${_fmt(cardRevenue)} so\'m',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.manrope(
                   fontSize: 13, color: AppColors.textSec(isDark)),
             ),
           ]),
@@ -1198,7 +1198,7 @@ class _WeeklyTrendCard extends StatelessWidget {
         children: [
           Text(
             locale.tr('dash_weekly_revenue'),
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               fontSize: 15,
               fontWeight: FontWeight.w700,
               color: AppColors.text(isDark),
@@ -1229,7 +1229,7 @@ class _WeeklyTrendCard extends StatelessWidget {
                       getTitlesWidget: (value, meta) {
                         return Text(
                           _formatNumber(value),
-                          style: GoogleFonts.inter(fontSize: 10, color: AppColors.textSec(isDark)),
+                          style: GoogleFonts.manrope(fontSize: 10, color: AppColors.textSec(isDark)),
                         );
                       },
                     ),
@@ -1246,7 +1246,7 @@ class _WeeklyTrendCard extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 8.0),
                           child: Text(
                             day,
-                            style: GoogleFonts.inter(fontSize: 10, color: AppColors.textSec(isDark)),
+                            style: GoogleFonts.manrope(fontSize: 10, color: AppColors.textSec(isDark)),
                           ),
                         );
                       },
@@ -1333,14 +1333,14 @@ class _ErrorBanner extends StatelessWidget {
           child: Text(
             message,
             style:
-                GoogleFonts.inter(fontSize: 13, color: AppColors.accentRed),
+                GoogleFonts.manrope(fontSize: 13, color: AppColors.accentRed),
           ),
         ),
         GestureDetector(
           onTap: onRetry,
           child: Text(
             'Qayta',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.manrope(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: AppColors.accentRed,
