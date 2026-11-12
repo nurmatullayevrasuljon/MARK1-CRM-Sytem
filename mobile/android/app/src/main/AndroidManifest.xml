@@ -2,6 +2,8 @@
     <!-- Internet: backend.mark1.uz bilan ishlash uchun majburiy.
          (Flutter template release'da avtomatik qo'shmaydi.) -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Bildirishnomalar: tizim push bildirishnomalari (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Kamera: shtrix-kod skaneri (mobile_scanner) uchun. -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>

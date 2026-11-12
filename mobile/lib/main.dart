@@ -13,9 +13,12 @@ import 'providers/client_provider.dart';
 import 'providers/sale_provider.dart';
 import 'providers/debt_provider.dart';
 import 'providers/statistics_provider.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Tizim push bildirishnomalari (Telegram kabi telefonga tushadi)
+  await NotificationService.init();
   // Shriftlar assets/fonts/ ichida bundle qilingan (Manrope, 7 variant).
   // Runtime HTTP fetch O'CHIRILDI: release'da internet bo'lmasa yoki
   // Google Fonts bloklansa ilova hali ham o'z dizaynida qoladi.

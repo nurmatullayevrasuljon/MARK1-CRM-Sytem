@@ -12,6 +12,7 @@ import '../providers/auth_provider.dart';
 import '../models/statistics_model.dart';
 import '../providers/product_provider.dart';
 import '../services/subscription_service.dart';
+import '../services/notification_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   // Boshqaruv panelidagi stat kartalar bosilganda tegishli bo'limga
@@ -50,6 +51,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ];
       if (products.products.isEmpty) futures.add(products.loadProducts());
       await Future.wait(futures);
+
+      // Omborda mahsulot qolmagan bo'lsa — telefonga push bildirishnoma
+      final outOfStock = products.outOfStockProducts;
+      if (outOfStock.isNotEmpty) {
+        NotificationService.checkAndNotifyOutOfStock(
+          outOfStockCount: outOfStock.length,
+          sampleNames: outOfStock.map((p) => p.productName).toList(),
+        );
+      }
     }
   }
 
@@ -66,6 +76,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             : 0;
         _subLoaded = true;
       });
+
+      // Obuna tugayotganda/tugaganda — telefonga push bildirishnoma
+      final isExpired = _subCurrent == null && _subTrialUsed;
+      NotificationService.checkAndNotifySubscription(
+        isExpired: isExpired,
+        daysLeft: _subDaysLeft,
+        isTrial: _subCurrent?['is_trial'] == true,
+        planName: _subCurrent?['plan']?.toString().toUpperCase(),
+      );
     } catch (_) {
       if (mounted) setState(() => _subLoaded = true);
     }
