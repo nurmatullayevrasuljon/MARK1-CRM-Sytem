@@ -13,6 +13,7 @@ import '../utils/dispose_utils.dart';
 import '../services/api_service.dart';
 import '../services/subscription_service.dart';
 import '../services/update_service.dart';
+import '../services/notification_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, this.openPlans = false, this.onPlansShown});
@@ -54,11 +55,16 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
   String? _pendingPurchasePlan; // to'ldirishdan keyin sotib olinadigan tarif
   bool _polling = false;
 
+  // ── Bildirishnoma sozlamalari (Profil → Bildirishnomalar) ──────
+  bool _notifSubscription = true; // obuna tugashi ogohlantirishlari
+  bool _notifStock = true; // mahsulot qolmaganlik ogohlantirishlari
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadVersion();
+    _loadNotifPrefs(); // bildirishnoma sozlamalarini oldindan o'qish
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       if (auth.isAuthenticated && auth.store == null) {
@@ -68,6 +74,17 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
         _loadSubscription();
         _restorePendingPayment();
       }
+    });
+  }
+
+  /// Bildirishnoma sozlamalarini SharedPreferences'dan o'qiydi.
+  Future<void> _loadNotifPrefs() async {
+    final sub = await NotificationService.isSubscriptionEnabled();
+    final stock = await NotificationService.isStockEnabled();
+    if (!mounted) return;
+    setState(() {
+      _notifSubscription = sub;
+      _notifStock = stock;
     });
   }
 
@@ -415,9 +432,61 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
 
                     // Obuna (subscription) — haqiqiy sessiyada API'dan
                     // yuklanadi; demo rejimda qulfli qator ko'rinadi.
+                    // Barcha tariflar "Obunalar" tugmasi ichida (sheet).
                     if (auth.isAuthenticated || auth.isDemo) ...[
                       _SectionHeader('Obuna', isDark),
                       _buildSubscriptionCard(context, isDark, auth),
+                      const SizedBox(height: 18),
+                    ],
+
+                    // Bildirishnoma sozlamalari — qaysi tur yoqiladi/o'chadi.
+                    if (auth.isAuthenticated || auth.isDemo) ...[
+                      _SectionHeader('Bildirishnomalar', isDark),
+                      _GroupedCard(
+                        isDark: isDark,
+                        children: [
+                          _SettingsRow(
+                            icon: Icons.notifications_active_outlined,
+                            title: 'Obuna ogohlantirishlari',
+                            subtitle: 'Tugashiga 3 kun qolganda va tugaganda',
+                            isDark: isDark,
+                            trailing: Switch(
+                              value: _notifSubscription,
+                              activeThumbColor: AppColors.primary,
+                              onChanged: (v) async {
+                                setState(() => _notifSubscription = v);
+                                await NotificationService
+                                    .setSubscriptionEnabled(v);
+                              },
+                            ),
+                            onTap: () async {
+                              final v = !_notifSubscription;
+                              setState(() => _notifSubscription = v);
+                              await NotificationService
+                                  .setSubscriptionEnabled(v);
+                            },
+                          ),
+                          _SettingsRow(
+                            icon: Icons.inventory_2_outlined,
+                            title: 'Ombor ogohlantirishlari',
+                            subtitle: 'Mahsulot tugaganida xabar beradi',
+                            isDark: isDark,
+                            trailing: Switch(
+                              value: _notifStock,
+                              activeThumbColor: AppColors.primary,
+                              onChanged: (v) async {
+                                setState(() => _notifStock = v);
+                                await NotificationService.setStockEnabled(v);
+                              },
+                            ),
+                            onTap: () async {
+                              final v = !_notifStock;
+                              setState(() => _notifStock = v);
+                              await NotificationService.setStockEnabled(v);
+                            },
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 18),
                     ],
 
@@ -831,46 +900,25 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _som(_subBalance),
-                      style: GoogleFonts.manrope(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Balans',
-                      style: GoogleFonts.manrope(
-                        fontSize: 12,
-                        color: AppColors.textHint(isDark),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
             const SizedBox(height: 14),
+            // "Obunalar" tugmasi — barcha tariflar shu tugma ichida.
             SizedBox(
               width: double.infinity,
               height: 44,
-              child: FilledButton(
+              child: FilledButton.icon(
                 onPressed:
                     _subBusy ? null : () => _showPlansSheet(context, isDark),
+                icon: const Icon(Icons.workspace_premium_outlined, size: 18),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
-                child: Text(
-                  cur == null ? 'Obuna sotib olish' : 'Tarifni almashtirish',
+                label: Text(
+                  'Obunalar',
                   style: GoogleFonts.manrope(
                       fontSize: 14, fontWeight: FontWeight.w700),
                 ),
@@ -960,7 +1008,8 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
               ),
               const SizedBox(height: 4),
               Text(
-                'Balans: ${_som(_subBalance)}',
+                'Tarifni tanlang — to\'lov tasdiqlangach obuna darhol '
+                'faollashadi.',
                 style: GoogleFonts.manrope(
                   fontSize: 13,
                   color: AppColors.textSec(isDark),
@@ -991,7 +1040,12 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
     });
   }
 
-  Widget _planTile(BuildContext context, BuildContext sheetCtx, bool isDark,
+  /// Tarif kartochkasi — saytdagi `payment.html` (`.mk-plan-item`) bilan
+  /// bir xil tuzilma: badge → nom → narx → davr → imkoniyatlar → tanlash.
+  ///
+  /// `sheetCtx` — sheet ichida ochilgan bo'lsa yopish konteksti; sayt
+  /// kartasi ichida (Obuna bo'limi) ochilsa `null` bo'ladi va sheet yopilmaydi.
+  Widget _planTile(BuildContext context, BuildContext? sheetCtx, bool isDark,
       Map<String, dynamic> plan) {
     final code = plan['code']?.toString() ?? '';
     final price = (plan['price'] as num?)?.toInt() ?? 0;
@@ -1003,111 +1057,149 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
     final isCurrent = _subCurrent != null &&
         !(_subCurrent!['is_trial'] == true) &&
         _subCurrent!['plan']?.toString() == code;
-
-    final parts = <String>[
-      if (maxUsers != null) '$maxUsers foydalanuvchi',
-      if (sms != null) '$sms SMS',
-      if (ai != null) '$ai AI',
-    ];
+    // Saytda "Eng ommabop" faqat `standart` tarifida.
+    final isPopular = code == 'standart';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.bg(isDark),
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.card(isDark),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isCurrent
-              ? AppColors.primary.withValues(alpha: 0.55)
-              : AppColors.border(isDark),
+              ? AppColors.primary.withValues(alpha: 0.6)
+              : isPopular
+                  ? AppColors.primary.withValues(alpha: 0.35)
+                  : AppColors.border(isDark),
+          width: (isCurrent || isPopular) ? 1.5 : 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           onTap: () => _confirmPlan(context, sheetCtx, isDark, plan),
           child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            _planLabel(plan['code']),
-                            style: GoogleFonts.manrope(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.text(isDark),
-                            ),
-                          ),
-                          if (isCurrent) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 7, vertical: 2),
-                              decoration: BoxDecoration(
-                                color:
-                                    AppColors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                'Joriy',
-                                style: GoogleFonts.manrope(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      if (parts.isNotEmpty) ...[
-                        const SizedBox(height: 3),
-                        Text(
-                          parts.join(' · '),
+                // Badge qatori: "Eng ommabop" (standart) / "Joriy" (faol tarif)
+                Row(
+                  children: [
+                    if (isPopular)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'Eng ommabop',
                           style: GoogleFonts.manrope(
                             fontSize: 12,
-                            color: AppColors.textSec(isDark),
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary,
                           ),
                         ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _som(price),
-                      style: GoogleFonts.manrope(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$period kun',
-                      style: GoogleFonts.manrope(
-                        fontSize: 12,
-                        color: AppColors.textHint(isDark),
+                    const Spacer(),
+                    if (isCurrent)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentGreen.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'Joriy tarif',
+                          style: GoogleFonts.manrope(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.accentGreen,
+                          ),
+                        ),
                       ),
-                    ),
                   ],
                 ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: AppColors.primary.withValues(alpha: 0.7),
+                if (isPopular || isCurrent) const SizedBox(height: 8),
+                // Nom
+                Text(
+                  _planLabel(plan['code']),
+                  style: GoogleFonts.manrope(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.4,
+                    color: AppColors.text(isDark),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                // Narx
+                Text(
+                  _som(price),
+                  style: GoogleFonts.manrope(
+                    fontSize: 24,
+                    height: 1.1,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                // Davr (saytda ".mk-plan-period")
+                Text(
+                  '$period kunlik obuna',
+                  style: GoogleFonts.manrope(
+                    fontSize: 12.5,
+                    color: AppColors.textSec(isDark),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Imkoniyatlar ro'yxati (saytda ".mk-plan-features")
+                _planFeatureRow(isDark, Icons.people_outline_rounded,
+                    maxUsers != null ? '$maxUsers foydalanuvchi' : null),
+                _planFeatureRow(
+                    isDark, Icons.sms_outlined, sms != null ? '$sms ta SMS' : null),
+                _planFeatureRow(
+                    isDark, Icons.auto_awesome_outlined,
+                    ai != null ? '$ai ta AI so\'rov' : null),
+                const SizedBox(height: 14),
+                // Tanlash qatori
+                SizedBox(
+                  width: double.infinity,
+                  height: 42,
+                  child: FilledButton(
+                    onPressed: () =>
+                        _confirmPlan(context, sheetCtx, isDark, plan),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: isCurrent
+                          ? AppColors.primary.withValues(alpha: 0.12)
+                          : AppColors.primary,
+                      foregroundColor:
+                          isCurrent ? AppColors.primary : Colors.white,
+                      disabledBackgroundColor:
+                          AppColors.primary.withValues(alpha: 0.12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text(
+                      isCurrent
+                          ? 'Joriy tarifni qayta faollashtirish'
+                          : 'Obunani sotib olish',
+                      style: GoogleFonts.manrope(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1117,12 +1209,39 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
     );
   }
 
+  /// Tarif imkoniyati qatori: belgi + matn (bo'sh bo'lsa ko'rsatilmaydi).
+  Widget _planFeatureRow(bool isDark, IconData icon, String? text) {
+    if (text == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 17, color: AppColors.accentGreen),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.manrope(
+                fontSize: 13,
+                color: AppColors.textSec(isDark),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Tanlangan tarif uchun to'g'ridan-to'g'ri obunani sotib olish oqimi.
-  Future<void> _confirmPlan(BuildContext context, BuildContext sheetCtx,
+  ///
+  /// `sheetCtx` — tariflar sheet'dan ochilgan bo'lsa yopiladigan kontekst;
+  /// Obuna bo'limidagi kartadan ochilsa `null` (sheet yopilmaydi).
+  Future<void> _confirmPlan(BuildContext context, BuildContext? sheetCtx,
       bool isDark, Map<String, dynamic> plan) async {
     final code = plan['code']?.toString() ?? '';
     final name = _planLabel(plan['code']);
     final price = (plan['price'] as num?)?.toInt() ?? 0;
+    final period = (plan['period_days'] as num?)?.toInt() ?? 30;
     final shortfall = price - _subBalance.toInt();
     final due = shortfall > 0 ? shortfall : 0;
 
@@ -1133,16 +1252,15 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
         backgroundColor: AppColors.card(isDark),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          '$name tarifini faollashtirish',
+          '$name tarifini sotib olish',
           style: GoogleFonts.manrope(
             fontWeight: FontWeight.w800,
             color: AppColors.text(isDark),
           ),
         ),
         content: Text(
-          due == 0
-              ? '$name tarifi — ${_som(price)} (30 kun). Balansingizdan yechiladi va tarif darhol faollashadi.'
-              : '$name tarifi — ${_som(price)} (30 kun). Click yoki Payme orqali to‘lov qilishingiz bilan obuna avtomatik faollashadi.',
+          '$name tarifi — ${_som(price)} ($period kun). '
+          'To\'lov tasdiqlangach obuna darhol faollashadi.',
           style: GoogleFonts.manrope(
             fontSize: 14,
             height: 1.5,
@@ -1169,16 +1287,17 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                   borderRadius: BorderRadius.circular(8)),
             ),
             child: Text(
-              due == 0 ? 'Faollashtirish' : 'Obunani sotib olish',
+              'Obunani sotib olish',
               style: GoogleFonts.manrope(fontWeight: FontWeight.w700),
             ),
           ),
         ],
       ),
     );
-    if (confirm != true || !mounted || !sheetCtx.mounted) return;
+    if (confirm != true || !mounted) return;
 
-    Navigator.pop(sheetCtx); // sheetni yopamiz
+    // Sheet'dan kelingina uni yopamiz (Obuna bo'limidan bo'lsa — null).
+    if (sheetCtx != null && sheetCtx.mounted) Navigator.pop(sheetCtx);
     if (due == 0) {
       await _purchase(code);
     } else {
@@ -1196,9 +1315,23 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
       _snack(msg, bg: AppColors.accentGreen);
     } on ApiException catch (e) {
       final text = e.statusCode == 402
-          ? 'Balans yetarli emas — avval balansni to\'ldiring'
+          ? 'Obuna uchun to\'lov oynasi ochilmoqda…'
           : (e.type == ApiErrorType.validation ? e.message : e.userMessage);
       _snack(text, bg: AppColors.accentRed);
+      // Balans yetarli bo'lmasa — to'g'ridan-to'g'ri to'lov oqimini
+      // (TezCheck) shu yerdan davom ettiramiz, foydalanuvchi qayta
+      // bosishga majbur bo'lmaydi.
+      if (e.statusCode == 402 && mounted) {
+        final plan = _subPlans.firstWhere(
+          (p) => p['code']?.toString() == planCode,
+          orElse: () => <String, dynamic>{},
+        );
+        final price = (plan['price'] as num?)?.toInt() ?? 0;
+        final due = price - _subBalance.toInt();
+        // _startTopUp o'zi _subBusy tekshiradi — avval bo'shatamiz.
+        setState(() => _subBusy = false);
+        if (due > 0) await _startTopUp(due, plan: planCode);
+      }
     } catch (_) {
       _snack('Tarifni sotib bo\'lmadi, keyinroq urinib ko\'ring',
           bg: AppColors.accentRed);
@@ -1250,8 +1383,8 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
       );
       if (!launched) throw Exception('Brauzer ochilmadi');
 
-      _snack('To\'lov sahifasi ochildi. Tasdiqlang — ilovaga qaytganingizda '
-          'balans avtomatik yangilanadi.');
+      _snack('To\'lov sahifasi ochildi. To\'lovni tasdiqlang — ilovaga '
+          'qaytganingizda obuna avtomatik faollashadi.');
     } on ApiException catch (e) {
       _snack(
         e.type == ApiErrorType.validation ? e.message : e.userMessage,
@@ -1286,7 +1419,12 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
             final plan = _pendingPurchasePlan;
             _pendingPurchasePlan = null;
             await _loadSubscription();
-            _snack('Balans to\'ldirildi', bg: AppColors.accentGreen);
+            if (plan == null) {
+              _snack('To\'lov qabul qilindi', bg: AppColors.accentGreen);
+            } else {
+              _snack('To\'lov qabul qilindi — obuna faollashtirilmoqda',
+                  bg: AppColors.accentGreen);
+            }
             if (plan != null && mounted) await _purchase(plan);
             return;
           }
@@ -1297,7 +1435,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
             _pendingPaymentId = null;
             _pendingPurchasePlan = null;
             _snack('To\'lov bekor qilindi yoki amalga oshmadi. '
-                'Balans oshirilmadi — qayta urinib ko\'ring.',
+                'Obuna faollashtirilmadi — qayta urinib ko\'ring.',
                 bg: AppColors.accentRed);
             return;
           }

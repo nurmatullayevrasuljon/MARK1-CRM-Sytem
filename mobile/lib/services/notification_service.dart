@@ -22,6 +22,33 @@ class NotificationService {
   static const String _channelName = 'MARK1 Bildirishnomalari';
   static const String _channelDesc = 'Obuna va ombor ogohlantirishlari';
 
+  // ── Foydalanuvchi sozlamalari (Profil → Bildirishnomalar) ──────
+  // Har bir tur alohida o'chirib qo'yilishi mumkin. Standart: yoqilgan.
+  static const String prefSubscriptionEnabled = 'notif_subscription_enabled';
+  static const String prefStockEnabled = 'notif_stock_enabled';
+
+  /// Obuna (tugash/tugadi) bildirishnomalari yoqilganmi.
+  static Future<bool> isSubscriptionEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(prefSubscriptionEnabled) ?? true;
+  }
+
+  /// Ombor (mahsulot qolmagan/kam qolgan) bildirishnomalari yoqilganmi.
+  static Future<bool> isStockEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(prefStockEnabled) ?? true;
+  }
+
+  static Future<void> setSubscriptionEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(prefSubscriptionEnabled, value);
+  }
+
+  static Future<void> setStockEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(prefStockEnabled, value);
+  }
+
   /// Bildirishnomalar servisining boshlang'ich sozlamasi
   static Future<void> init() async {
     if (_initialized) return;
@@ -108,6 +135,8 @@ class NotificationService {
     required bool isTrial,
     required String? planName,
   }) async {
+    // Foydalanuvchi o'chirgan bo'lsa — bezovta qilmaymiz
+    if (!await isSubscriptionEnabled()) return;
     if (!isExpired && (daysLeft == null || daysLeft > 3)) return;
 
     final prefs = await SharedPreferences.getInstance();
@@ -142,6 +171,8 @@ class NotificationService {
     required int outOfStockCount,
     required List<String> sampleNames,
   }) async {
+    // Foydalanuvchi o'chirgan bo'lsa — bezovta qilmaymiz
+    if (!await isStockEnabled()) return;
     if (outOfStockCount <= 0) return;
 
     final prefs = await SharedPreferences.getInstance();
