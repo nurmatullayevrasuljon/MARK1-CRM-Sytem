@@ -823,10 +823,13 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
       subtitle = 'Tugash sanasi: ${_fmtDate(cur['expires_at']?.toString())}';
     }
 
+    // Rejalashtirilgan (keyingi davr) obuna: BOSHLANISH sanasi `starts_at`
+    // da. ❌ ILGARI `expires_at` ko'rsatilardi — bu tugash sanasi, shuning
+    // uchun foydalanuvchiga noto'g'ri ("12.01.2027 boshlanadi") xabar chiqardi.
     final scheduledPlan = _subScheduled == null
         ? null
         : 'Keyingi davr: ${_planLabel(_subScheduled!['plan'])}'
-            ' — ${_fmtDate(_subScheduled!['expires_at']?.toString())} boshlanadi';
+            ' — ${_fmtDate(_subScheduled!['starts_at']?.toString())} dan boshlanadi';
 
     return _subShell(isDark,
         child: Column(
@@ -1314,23 +1317,43 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
       final msg = res['message']?.toString() ?? 'Tarif sotib olindi';
       _snack(msg, bg: AppColors.accentGreen);
     } on ApiException catch (e) {
-      final text = e.statusCode == 402
-          ? 'Obuna uchun to\'lov oynasi ochilmoqda…'
-          : (e.type == ApiErrorType.validation ? e.message : e.userMessage);
-      _snack(text, bg: AppColors.accentRed);
+      // already_scheduled (409) — bu xato emas, holat eslatmasi:
+      // keyingi davr uchun tarif allaqachon sotib olingan. Foydalanuvchi
+      // qizil "xatolik" o'rniga tushunarli xabar ko'radi.
+      if (e.code == 'already_scheduled') {
+        await _loadSubscription();
+        _snack('Bu tarif keyingi davr uchun allaqachon sotib olingan',
+            bg: AppColors.accentOrange);
+      }
+      // purchase_in_progress (409) — parallel so'rov hali bajarilmoqda.
+      else if (e.code == 'purchase_in_progress') {
+        _snack('Oldingi so\'rov hali bajarilmoqda, bir ozdan keyin urinib ko\'ring',
+            bg: AppColors.accentOrange);
+      }
       // Balans yetarli bo'lmasa — to'g'ridan-to'g'ri to'lov oqimini
       // (TezCheck) shu yerdan davom ettiramiz, foydalanuvchi qayta
       // bosishga majbur bo'lmaydi.
-      if (e.statusCode == 402 && mounted) {
-        final plan = _subPlans.firstWhere(
-          (p) => p['code']?.toString() == planCode,
-          orElse: () => <String, dynamic>{},
-        );
-        final price = (plan['price'] as num?)?.toInt() ?? 0;
-        final due = price - _subBalance.toInt();
-        // _startTopUp o'zi _subBusy tekshiradi — avval bo'shatamiz.
-        setState(() => _subBusy = false);
-        if (due > 0) await _startTopUp(due, plan: planCode);
+      else if (e.statusCode == 402) {
+        _snack('Obuna uchun to\'lov oynasi ochilmoqda…',
+            bg: AppColors.accentOrange);
+        if (mounted) {
+          final plan = _subPlans.firstWhere(
+            (p) => p['code']?.toString() == planCode,
+            orElse: () => <String, dynamic>{},
+          );
+          final price = (plan['price'] as num?)?.toInt() ?? 0;
+          final due = price - _subBalance.toInt();
+          // _startTopUp o'zi _subBusy tekshiradi — avval bo'shatamiz.
+          setState(() => _subBusy = false);
+          if (due > 0) await _startTopUp(due, plan: planCode);
+        }
+      }
+      // Boshqa xatolar
+      else {
+        final text = e.type == ApiErrorType.validation
+            ? e.message
+            : e.userMessage;
+        _snack(text, bg: AppColors.accentRed);
       }
     } catch (_) {
       _snack('Tarifni sotib bo\'lmadi, keyinroq urinib ko\'ring',

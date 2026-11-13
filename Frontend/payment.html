@@ -688,7 +688,22 @@ body.mk-pay {
       } catch(err) {
         setBusy(false);
         var status = err.response && err.response.status;
-        var msg = err.response && err.response.data && err.response.data.message;
+        var errData = err.response && err.response.data;
+        var msg = errData && errData.message;
+        var code = errData && errData.code;
+
+        // 409 already_scheduled — bu xato emas: keyingi davr uchun tarif
+        // allaqachon sotib olingan. Qizil "xatolik" o'rniga tushunarli
+        // xabar ko'rsatamiz.
+        if (status === 409 && code === "already_scheduled") {
+          showSuccess("Bu tarif keyingi davr uchun allaqachon sotib olingan.");
+          return;
+        }
+        // 409 purchase_in_progress — parallel so'rov hali bajarilmoqda.
+        if (status === 409 && code === "purchase_in_progress") {
+          showAlert("Oldingi so‘rov hali bajarilmoqda, bir ozdan keyin urinib ko‘ring.", "info");
+          return;
+        }
         if (status === 401 || status === 403) {
           showAlert("Sessiya muddati tugagan. <a href='/login?next=" + encodeURIComponent(location.pathname + location.search) + "' style='color:var(--mk-primary); font-weight:700;'>Tizimga qayta kiring</a>", "err");
         } else {
@@ -757,7 +772,15 @@ body.mk-pay {
             var buyRes = await window.crmApi.post(CONFIG.PURCHASE_URL, { plan: planToBuy });
             showSuccess((buyRes.data && buyRes.data.message) || "To‘lov qabul qilindi va tarif faollashtirildi!");
           } catch(e) {
-            showSuccess("To‘lov qabul qilindi va balansingizga qo‘shildi!");
+            // 409 already_scheduled — to'lov qabul qilindi, lekin tarif
+            // allaqachon rejalashtirilgan. Bu xato emas.
+            var bCode = e.response && e.response.data && e.response.data.code;
+            var bMsg = e.response && e.response.data && e.response.data.message;
+            if (bCode === "already_scheduled") {
+              showSuccess(bMsg || "To‘lov qabul qilindi. Bu tarif keyingi davr uchun allaqachon sotib olingan.");
+            } else {
+              showSuccess("To‘lov qabul qilindi va balansingizga qo‘shildi!");
+            }
           }
           return;
         }

@@ -27,10 +27,16 @@ class ApiException implements Exception {
   final String message;
   final int? statusCode;
 
+  /// Server javobidagi `code` maydoni (masalan "already_scheduled",
+  /// "purchase_in_progress", "insufficient_balance"). UI xatolarni
+  /// aniqroq ko'rsatish uchun ishlatiladi.
+  final String? code;
+
   ApiException({
     required this.type,
     required this.message,
     this.statusCode,
+    this.code,
   });
 
   @override
@@ -454,6 +460,7 @@ class ApiService {
           type: ApiErrorType.validation,
           message: message,
           statusCode: 402,
+          code: data['code']?.toString(),
         );
       default:
         // 4xx (400, 409, 410, 429 ...) — server aniq xabar qaytaradi
@@ -469,6 +476,7 @@ class ApiService {
                   : ApiErrorType.unknown),
           message: message,
           statusCode: res.statusCode,
+          code: data['code']?.toString(),
         );
     }
   }
