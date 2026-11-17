@@ -523,6 +523,35 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                       ],
                     ),
 
+                    const SizedBox(height: 18),
+
+                    // Contact — support phone + Telegram bot
+                    _SectionHeader('Bog\'lanish', isDark),
+                    _GroupedCard(
+                      isDark: isDark,
+                      children: [
+                        _SettingsRow(
+                          icon: Icons.phone_outlined,
+                          title: '+998 77 811 79 90',
+                          subtitle: 'Qo\'llab-quvvatlash raqami',
+                          isDark: isDark,
+                          onTap: () => launchUrl(
+                            Uri(scheme: 'tel', path: '+998778117990'),
+                          ),
+                        ),
+                        _SettingsRow(
+                          icon: Icons.send_outlined,
+                          title: '@mark1_uz_bot',
+                          subtitle: 'Telegram bot orqali bog\'lanish',
+                          isDark: isDark,
+                          onTap: () => launchUrl(
+                            Uri.parse('https://t.me/mark1_uz_bot'),
+                            mode: LaunchMode.externalApplication,
+                          ),
+                        ),
+                      ],
+                    ),
+
                     const SizedBox(height: 24),
 
                     // Logout Button
