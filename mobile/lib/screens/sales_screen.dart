@@ -1085,12 +1085,9 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
                           });
                       },
                       onNext: () {
-                        // Mijoz majburiy: tanlanmagan bo'lsa kirmaymiz.
-                        if (_selectedClient == null) {
-                          setState(() => _error =
-                              'Mijoz tanlash majburiy — ro\'yxatdan birini tanlang');
-                          return;
-                        }
+                        // Mijoz ixtiyoriy: tanlamasdan ham to'lov qadamiga
+                        // qaytish mumkin. Qarz qoldig'i bo'lsa, yakuniy
+                        // tekshiruv (_createSale) mijozni talab qiladi.
                         setState(() {
                           _error = null;
                           _step = 1; // Return to payment
@@ -1202,12 +1199,15 @@ class _NewSaleSheetState extends State<_NewSaleSheet> {
     if (_cart.isEmpty || _loading) return; // ikki marta yuborishni oldini olamiz
 
     // ── Majburiy tekshiruvlar (yuborishdan oldin) ────────────────
-    // 1) Mijoz — endi majburiy: qarz Qarzdorlar'ga tushishi uchun
-    //    backend'da `client_id` shart.
-    if (_selectedClient == null) {
+    // 1) Mijoz faqat qarz qoldig'i bo'lganda majburiy. Backend ham
+    //    `total_remaining > 0 && !client_id` holatidagina rad etadi
+    //    (sale.controller.js:168) — to'liq to'langan savdoda client_id
+    //    bo'lmasligi mumkin. Shuning uchun naqd/karta savdolarida mijoz
+    //    tanlashni majburiy qilmaymiz.
+    if (_selectedClient == null && _remaining > 0) {
       setState(() {
-        _error = 'Mijoz tanlash majburiy — yangi mijozni `+` bilan qo\'shing';
-        _step = 2; // Mijozlar qadamiga o'tkazamiz
+        _error = 'Qarz savdosi uchun mijoz tanlash majburiy';
+        _step = 1; // To'lov qadamiga qaytamiz
       });
       return;
     }
@@ -1787,8 +1787,8 @@ class _ClientStepState extends State<_ClientStep> {
         ),
       ),
 
-      // "Mijosiz sotuv" varianti OLIB TASHLANDI: mijoz endi majburiy
-      // (qarz Qarzdorlar'ga tushishi uchun backend'da client_id shart).
+      // Mijoz tanlamasdan ham davom etish mumkin (ixtiyoriy).
+      // Faqat qarz qoldig'i bo'lsa yakuniy tekshiruv mijoz talab qiladi.
 
       const Divider(height: 1),
 
@@ -1991,9 +1991,9 @@ class _PaymentStepState extends State<_PaymentStep> {
 
         const SizedBox(height: 16),
 
-        // Client Selection — ENDI MAJBURIY (qarz Qarzdorlar'ga tushishi
-        // uchun backend'da client_id shart). Yonida `+` tugmasi orqali
-        // shu yerdan yangi mijoz qo'shiladi (kontakt/ro'yxatdan emas).
+        // Client Selection — IXTIYORIY. Naqd/karta savdosida mijozsiz
+        // yakunlash mumkin; faqat qarz qoldig'i bo'lsa majburiy.
+        // Yonidagi `+` tugmasi bilan yangi mijoz qo'shiladi.
         ListTile(
           contentPadding: EdgeInsets.zero,
           onTap: widget.onSelectClient,
@@ -2002,11 +2002,11 @@ class _PaymentStepState extends State<_PaymentStep> {
             child: Icon(Icons.person_outline_rounded, color: AppColors.primary),
           ),
           title: Text(
-            widget.selectedClient?.clientName ?? 'Mijoz (majburiy)',
+            widget.selectedClient?.clientName ?? 'Mijoz (ixtiyoriy)',
             style: GoogleFonts.manrope(
               fontWeight: FontWeight.w600,
               color: widget.selectedClient == null
-                  ? AppColors.accentRed
+                  ? AppColors.textSec(isDark)
                   : AppColors.text(isDark),
             ),
           ),
@@ -2022,7 +2022,9 @@ class _PaymentStepState extends State<_PaymentStep> {
                   ),
                 )
               : Text(
-                  'Tanlang yoki `+` bilan yangisini qo\'shing',
+                  widget.remaining > 0
+                      ? 'Qarz savdosida mijoz tanlanishi kerak'
+                      : 'Tanlang yoki `+` bilan yangisini qo\'shing',
                   style: GoogleFonts.manrope(
                     color: AppColors.textHint(isDark),
                     fontSize: 12,

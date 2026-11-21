@@ -1157,31 +1157,19 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
 
               const SizedBox(height: 12),
 
-              Row(children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _lbl('Miqdor', isDark),
-                      _tf(_qtyCtrl, '0', isDark,
-                          keyboard: const TextInputType.numberWithOptions(
-                              decimal: true)),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _lbl('Min miqdor', isDark),
-                      _tf(_minQtyCtrl, '0', isDark,
-                          keyboard: const TextInputType.numberWithOptions(
-                              decimal: true)),
-                    ],
-                  ),
-                ),
-              ]),
+              // "Min miqdor" maydoni olib tashlandi: foydalanuvchilarga
+              // kerak emas. `minimum_quantity` qiymati ichki qiymat sifatida
+              // saqlanadi (tahrirlashda eski qiymat yo'qolmaydi, yangi
+              // mahsulotlarda 0 bo'ladi) — past qoldiq eslatmalari buzilmaydi.
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _lbl('Miqdor', isDark),
+                  _tf(_qtyCtrl, '0', isDark,
+                      keyboard: const TextInputType.numberWithOptions(
+                          decimal: true)),
+                ],
+              ),
 
               const SizedBox(height: 12),
 
