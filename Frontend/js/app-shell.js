@@ -22,6 +22,18 @@
       }
       if (!item.getAttribute("role")) item.setAttribute("role", "button");
       if (!item.hasAttribute("tabindex")) item.setAttribute("tabindex", "0");
+
+      // Klaviatura bilan faollashtirish: script.js dagi click handleri
+      // item.click() orqali ishga tushadi — alohida bog'lash shart emas.
+      if (!item.dataset.mkKeyNav) {
+        item.dataset.mkKeyNav = "1";
+        item.addEventListener("keydown", function (ev) {
+          if (ev.key === "Enter" || ev.key === " ") {
+            ev.preventDefault();
+            item.click();
+          }
+        });
+      }
     });
 
     if (localStorage.getItem(LS_COLLAPSE) === "1") {

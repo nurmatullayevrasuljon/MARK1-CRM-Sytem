@@ -4,6 +4,7 @@ import "../providers/locale_provider.dart";
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_colors.dart';
 import '../utils/format_utils.dart';
 import '../providers/theme_provider.dart';
@@ -33,6 +34,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int? _subDaysLeft;
   bool _subLoaded = false;
 
+  /// Birinchi ishlatish ko'rsatmasi: faqat bir marta ko'rsatiladi,
+  /// foydalanuvchi yopgach yoki bosgach SharedPreferences'ga saqlanadi.
+  static const _kOnboardingDone = 'onboarding_checklist_done';
+  bool _showOnboarding = false;
+
+  Future<void> _dismissOnboarding() async {
+    setState(() => _showOnboarding = false);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kOnboardingDone, true);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +57,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final products = Provider.of<ProductProvider>(context, listen: false);
     if (auth.isAuthenticated) {
       await auth.loadProfile();
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() =>
+            _showOnboarding = prefs.getBool(_kOnboardingDone) != true);
+      }
       final futures = <Future<void>>[
         stats.loadAll(),
         _loadSubscription(),
@@ -88,6 +105,120 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } catch (_) {
       if (mounted) setState(() => _subLoaded = true);
     }
+  }
+
+  /// Yangi foydalanuvchi uchun qisqa yo'riqnoma: 3 qadam, har biri tegishli
+  /// bo'limga o'tadi. Doimiy joylashmaydi — yopilgach qayta chiqmaydi.
+  Widget _buildOnboardingCard(bool isDark) {
+    final steps = <(IconData, String, String, int)>[
+      (
+        Icons.inventory_2_outlined,
+        'Mahsulot qo\'shing',
+        'Do\'kondagi birinchi mahsulotingizni kiriting',
+        2
+      ),
+      (
+        Icons.point_of_sale_outlined,
+        'Birinchi savdoni qiling',
+        'Mahsulotni tanlab, to\'lovni qayd eting',
+        1
+      ),
+      (
+        Icons.bar_chart_rounded,
+        'Natijani ko\'ring',
+        'Tushum va qarzlarni kuzating',
+        3
+      ),
+    ];
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card(isDark),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border(isDark)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Boshlash uchun 3 qadam',
+                  style: GoogleFonts.manrope(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.text(isDark),
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: _dismissOnboarding,
+                tooltip: 'Yopish',
+                visualDensity: VisualDensity.compact,
+                icon: Icon(Icons.close_rounded,
+                    size: 20, color: AppColors.textHint(isDark)),
+              ),
+            ],
+          ),
+          Text(
+            'Bu qadamlarni bajarib, tizimni tezda o\'zlashtirasiz',
+            style: GoogleFonts.manrope(
+                fontSize: 12, color: AppColors.textSec(isDark)),
+          ),
+          const SizedBox(height: 12),
+          ...steps.map(
+            (s) => InkWell(
+              onTap: () {
+                _go(s.$4)();
+                _dismissOnboarding();
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(s.$1, size: 18, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            s.$2,
+                            style: GoogleFonts.manrope(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.text(isDark),
+                            ),
+                          ),
+                          Text(
+                            s.$3,
+                            style: GoogleFonts.manrope(
+                                fontSize: 12, color: AppColors.textSec(isDark)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right_rounded,
+                        size: 18, color: AppColors.textHint(isDark)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // Indexlar MainShell'dagi tartib bilan mos: 1 = Sotish,
@@ -212,7 +343,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     child: Text(
                                       '$total',
                                       style: GoogleFonts.manrope(
-                                        fontSize: 10,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.w800,
                                         color: Colors.white,
                                       ),
@@ -298,6 +429,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
+
+            // Birinchi ishlatish ko'rsatmasi (bir marta, yopiladigan)
+            if (_showOnboarding)
+              SliverToBoxAdapter(child: _buildOnboardingCard(isDark)),
 
             // Obuna ogohlantirish banneri (tugayotganda yoki tugaganda)
             Builder(builder: (ctx) {
@@ -1052,7 +1187,7 @@ class _StatCard extends StatelessWidget {
                   Text(
                     title,
                     style: GoogleFonts.manrope(
-                      fontSize: 11,
+                      fontSize: 12,
                       color: AppColors.textSec(isDark),
                     ),
                     maxLines: 1,
@@ -1229,7 +1364,7 @@ class _WeeklyTrendCard extends StatelessWidget {
                       getTitlesWidget: (value, meta) {
                         return Text(
                           _formatNumber(value),
-                          style: GoogleFonts.manrope(fontSize: 10, color: AppColors.textSec(isDark)),
+                          style: GoogleFonts.manrope(fontSize: 12, color: AppColors.textSec(isDark)),
                         );
                       },
                     ),
@@ -1246,7 +1381,7 @@ class _WeeklyTrendCard extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 8.0),
                           child: Text(
                             day,
-                            style: GoogleFonts.manrope(fontSize: 10, color: AppColors.textSec(isDark)),
+                            style: GoogleFonts.manrope(fontSize: 12, color: AppColors.textSec(isDark)),
                           ),
                         );
                       },

@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""MARK1 CRM — QA statik server (:8000).
+"""MARK1 CRM — QA statik server (:8080).
 
 Nginx'ning `$uri.html` fallback qoidasini takrorlaydi: `/payment` kabi
 toza URL'lar QA'da ham `payment.html` ni ochadi (production'da nginx
 shu qoidani ishlatadi). `python3 -m http.server` bunday qilmasligi
 sababli toza havolalar QA'da 404 bo'lardi.
 
-Ishga tushirish:  python3 qa-serve.py [port]
+Standart port 8080 — `qa/playwright.config.mjs` va `Frontend/qa/*.html`
+dagi base href bilan bir xil. Boshqa port kerak bo'lsa:
+  python3 qa-serve.py 8000
 """
 import http.server
 import os
@@ -31,7 +33,7 @@ class NginxFallbackHandler(http.server.SimpleHTTPRequestHandler):
 
 
 def main():
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
     handler = NginxFallbackHandler
     handler.directory = ROOT  # SimpleHTTPRequestHandler (Py3.7+)
     http.server.ThreadingHTTPServer(("0.0.0.0", port), handler).serve_forever()

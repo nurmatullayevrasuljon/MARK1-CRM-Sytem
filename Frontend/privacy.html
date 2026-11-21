@@ -336,6 +336,13 @@
                 font-size: 1.75rem;
             }
         }
+        /* Klaviatura foydalanuvchisi uchun asosiy kontentga o'tish */
+        .skip-link {
+            position: absolute; left: -9999px; top: 0; z-index: 9999;
+            padding: 10px 14px; border-radius: 8px; text-decoration: none;
+            background: var(--mk-primary); color: #fff; font: 600 14px Manrope, sans-serif;
+        }
+        .skip-link:focus { left: 12px; top: 12px; outline: 3px solid var(--mk-primary); }
     </style>
     <!-- Diqqat: bu sahifa o'z token tizimiga ega (--mk-*). Ilgari bu yerga
          CRM'ning css/mark1-system.css fayli ham ulanardi, lekin undagi
@@ -346,6 +353,7 @@
 </head>
 
 <body>
+    <a href="#main-content" class="skip-link">Asosiy mazmunga o'tish</a>
     <header>
         <div class="navbar">
             <a href="/" class="brand">
@@ -362,7 +370,7 @@
         </div>
     </header>
 
-    <main class="main-container">
+    <main class="main-container" id="main-content" tabindex="-1">
         <div class="policy-header">
             <div class="policy-badge">
                 <i class="bi bi-shield-check"></i> Rasmiy Xavfsizlik Hujjati

@@ -413,9 +413,18 @@ body.mk-pay {
   .mk-pay-head-right { gap: 8px; }
   .mk-pay-back { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
 }
+/* Klaviatura foydalanuvchisi uchun asosiy kontentga o'tish havolasi */
+.mk-skip-link {
+  position: absolute; left: -9999px; top: 0; z-index: 9999;
+  padding: 10px 14px; border-radius: 8px; text-decoration: none;
+  background: var(--mk-primary); color: #fff; font: 600 14px var(--mk-font);
+}
+.mk-skip-link:focus { left: 12px; top: 12px; outline: 3px solid var(--mk-primary); }
 </style>
 </head>
 <body class="mk-pay">
+
+<a href="#mkPayContainer" class="mk-skip-link">Asosiy mazmunga o'tish</a>
 
 <header class="mk-pay-head">
   <div class="mk-pay-head-in">
@@ -433,7 +442,7 @@ body.mk-pay {
   </div>
 </header>
 
-<main class="mk-pay-main" id="mkPayContainer">
+<main class="mk-pay-main" id="mkPayContainer" tabindex="-1">
   <div class="mk-pay-content">
     
     <!-- 1-qadam: 4 ta Tarif kartochkalari -->

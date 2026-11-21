@@ -84,10 +84,10 @@ class _SalesScreenState extends State<SalesScreen>
     // Shu uchun textScaler ham "tor holat" deb hisoblanadi.
     final textScale = MediaQuery.textScalerOf(context).scale(1.0);
     final narrowTab = MediaQuery.sizeOf(context).width < 360 || textScale > 1.05;
-    // TextScaler > 1.0 da fontSize 11 ga tushirilsa, matn 1.3 da ~14.3px
-    // bo'ladi — 360dp/3 = 120dp ichida to'liq chiqadi (labelPadding 6 bilan).
+    // Barcha tab yorliqlari kamida 12px (DESIGN.md §3.1): tor ekranda
+    // shriftni kichraytirish o'rniga yorliq atrofidagi bo'shliq qisqartiriladi.
     final tabPad = narrowTab ? 6.0 : 16.0;
-    final tabFont = narrowTab ? 11.0 : 12.0;
+    final tabFont = 12.0;
     // `SaleProvider` bu yerda **o'qilmaydi**: tab almashganda
     // `selectStatus` o'z holatini o'zgartiradi, ro'yxat esa
     // `_SalesList` ichida `context.watch` orqali kuzatiladi. Bu

@@ -110,6 +110,31 @@ class _DailySalesScreenState extends State<DailySalesScreen> {
                   child: CircularProgressIndicator(),
                 ),
               )
+            else if (sales.error != null && sales.sales.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        sales.error!,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.manrope(
+                          fontSize: 14,
+                          color: AppColors.accentRed,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () => sales.loadSales(refresh: true),
+                        icon: const Icon(Icons.refresh, size: 18),
+                        label: const Text('Qayta urinish'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
             else if (sales.sales.isEmpty)
               Center(
                 child: Padding(

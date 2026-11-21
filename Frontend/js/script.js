@@ -6812,11 +6812,13 @@ if (avatarInput && avatarImg && avatarFallback) {
 var NavigationManager = {
   // Konfiguratsiya - bu yerda sahifalar yo'llarini belgilang
   routes: {
-    profile: '/profile.html',           // yoki '#profile' hash routing uchun
-    settings: '/settings.html',         // yoki '#settings'
-    notifications: '/notifications.html', // yoki '#notifications'
-    help: '/help.html',                 // yoki '#help'
-    dashboard: '/dashboard.html'        // yoki '#dashboard'
+    // Mavjud bo'lmagan /profile.html, /notifications.html, /help.html
+    // o'rniga haqiqiy sahifalarga yo'naltiramiz (dead link bo'lmasin).
+    profile: '/settings.html',
+    settings: '/settings.html',
+    notifications: '/dashboard.html',
+    help: '/landing.html#savollar',
+    dashboard: '/dashboard.html'
   },
 
   // Navigatsiya metodi
