@@ -56,8 +56,8 @@ class AppUpdateInfo {
 class UpdateService {
   /// Zaxira qiymatlar — faqat `PackageInfo` o'qib bo'lmasa ishlatiladi.
   /// pubspec.yaml dagi `version:` bilan mos bo'lishi kerak.
-  static const int fallbackVersionCode = 5015;
-  static const String fallbackVersionName = '1.0.13';
+  static const int fallbackVersionCode = 5016;
+  static const String fallbackVersionName = '1.0.14';
 
   /// Ilovaning joriy versiyasini **qurilmadan o'qiydi** (`package_info_plus`).
   ///
