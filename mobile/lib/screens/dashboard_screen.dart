@@ -14,6 +14,8 @@ import '../models/statistics_model.dart';
 import '../providers/product_provider.dart';
 import '../services/subscription_service.dart';
 import '../services/notification_service.dart';
+import '../models/ai_overview_model.dart';
+import '../services/api_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   // Boshqaruv panelidagi stat kartalar bosilganda tegishli bo'limga
@@ -38,6 +40,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// foydalanuvchi yopgach yoki bosgach SharedPreferences'ga saqlanadi.
   static const _kOnboardingDone = 'onboarding_checklist_done';
   bool _showOnboarding = false;
+
+  // Kunlik AI biznes tahlili (2026-11-11 da tasodifan o'chirilgan,
+  // qayta tiklandi). 403/402 holatlarida bo'lim xabar bilan turadi.
+  AiOverviewModel? _aiData;
+  bool _aiLoading = false;
+  String? _aiError;
+  DateTime? _lastAiForceAt;
 
   Future<void> _dismissOnboarding() async {
     setState(() => _showOnboarding = false);
@@ -68,6 +77,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ];
       if (products.products.isEmpty) futures.add(products.loadProducts());
       await Future.wait(futures);
+      await _loadAi();
 
       // Omborda mahsulot qolmagan bo'lsa — telefonga push bildirishnoma
       final outOfStock = products.outOfStockProducts;
@@ -219,6 +229,66 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _loadAi({bool force = false}) async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (!auth.isAuthenticated || auth.isDemo) return;
+
+    if (force) {
+      if (_lastAiForceAt != null &&
+          DateTime.now().difference(_lastAiForceAt!).inSeconds < 15) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Iltimos, qayta tahlil uchun 15 soniya kuting'),
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+      _lastAiForceAt = DateTime.now();
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _aiLoading = true;
+      _aiError = null;
+    });
+
+    try {
+      final res = await ApiService.get(
+        '/ai/overview',
+        queryParams: {
+          'period': 'daily',
+          if (force) 'force': 'true',
+        },
+      );
+      if (mounted) {
+        setState(() {
+          _aiData = AiOverviewModel.fromJson(res);
+          _aiLoading = false;
+        });
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _aiLoading = false;
+          _aiError = e.statusCode == 403
+              ? 'AI analitika kunlik limiti tugagan yoki ruxsat yo\'q'
+              : (e.statusCode == 402
+                  ? 'AI analitika uchun faol tarif kerak'
+                  : 'AI tahlilini yuklab bo\'lmadi');
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _aiLoading = false;
+          _aiError = 'AI tahlilini yuklab bo\'lmadi';
+        });
+      }
+    }
   }
 
   // Indexlar MainShell'dagi tartib bilan mos: 1 = Sotish,
@@ -734,6 +804,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
+            // Kunlik AI biznes tahlili (qayta tiklangan bo'lim)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: _AiOverviewSection(
+                  data: _aiData,
+                  isLoading: _aiLoading,
+                  error: _aiError,
+                  isDark: isDark,
+                  onRefresh: () => _loadAi(force: true),
+                ),
+              ),
+            ),
+
             // Payment breakdown
             SliverToBoxAdapter(
               child: Padding(
@@ -1100,6 +1184,415 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 // ─── Stat Card ────────────────────────────────────────────────────
+class _AiOverviewSection extends StatefulWidget {
+  final AiOverviewModel? data;
+  final bool isLoading;
+  final String? error;
+  final bool isDark;
+  final VoidCallback onRefresh;
+
+  const _AiOverviewSection({
+    required this.data,
+    required this.isLoading,
+    required this.error,
+    required this.isDark,
+    required this.onRefresh,
+  });
+
+  @override
+  State<_AiOverviewSection> createState() => _AiOverviewSectionState();
+}
+
+class _AiOverviewSectionState extends State<_AiOverviewSection> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card(isDark),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border(isDark)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header: icon tile + sarlavha + refresh
+            Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.auto_awesome_rounded,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Biznes tahlili',
+                    style: GoogleFonts.manrope(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.text(isDark),
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: widget.isLoading ? null : widget.onRefresh,
+                  tooltip: 'Qayta tahlil qilish',
+                  icon: widget.isLoading
+                      ? SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : Icon(
+                          Icons.refresh_rounded,
+                          color: AppColors.textSec(isDark),
+                          size: 20,
+                        ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Content Body
+            if (widget.isLoading && widget.data == null)
+              _buildLoadingState()
+            else if (widget.error != null && widget.data == null)
+              _buildErrorState()
+            else if (widget.data != null)
+              _buildDataState()
+            else
+              _buildLoadingState(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Aqlli yordamchi savdo, ombor va qarzlarni tahlil qilmoqda...',
+              style: GoogleFonts.manrope(
+                fontSize: 12.5,
+                color: AppColors.textSec(widget.isDark),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.accentRed.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline_rounded, color: AppColors.accentRed, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              widget.error ?? 'Tahlilni olishda xatolik yuz berdi',
+              style: GoogleFonts.manrope(fontSize: 12, color: AppColors.accentRed),
+            ),
+          ),
+          TextButton(
+            onPressed: widget.onRefresh,
+            child: const Text('Qayta urinish', style: TextStyle(fontSize: 12)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Insight matnini qoidalarga ajratadi: yangi satrlar yoki nuqta bilan
+  // tugaydigan gaplar. RAQAMLASH — DESIGN §7 (raqam birinchi o'rinda).
+  List<String> _splitInsights(String text) {
+    final normalized = text.replaceAll(RegExp(r'\s*\n\s*'), '\n').trim();
+    List<String> parts = normalized
+        .split('\n')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (parts.length == 1) {
+      parts = normalized
+          .split(RegExp(r'(?<=\.)\s+'))
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    // Agar hali ham bitta bo'lsa — 140 belgidan uzamiz.
+    if (parts.length == 1 && parts.first.length > 160) {
+      final one = parts.first;
+      parts = [];
+      for (var i = 0; i < one.length; i += 140) {
+        parts.add(one.substring(i, i + 140 > one.length ? one.length : i + 140));
+      }
+    }
+    // Ichki raqamli bandlarni ("1) ... 2) ...") ham alohida punktlarga
+    // ajratamiz — server bitta satrda yuborsa ham bo'lsin.
+    final expanded = <String>[];
+    for (final part in parts) {
+      if (part.contains(RegExp(r'\d+\)\s'))) {
+        final subs = part
+            .split(RegExp(r'(?=\d+\)\s)'))
+            .map((s) => s.replaceFirst(RegExp(r'^\d+\)\s*'), '').trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
+        if (subs.length > 1) {
+          expanded.addAll(subs);
+          continue;
+        }
+      }
+      expanded.add(part);
+    }
+    return expanded;
+  }
+
+  Widget _buildDataState() {
+    final isDark = widget.isDark;
+    final insights = widget.data?.overviewText != null &&
+            widget.data!.overviewText!.isNotEmpty
+        ? _splitInsights(widget.data!.overviewText!)
+        : <String>[];
+    final visible = _expanded ? insights : insights.take(2).toList();
+    final hasMore = insights.length > 2;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Insight nuqtalari (raqamlangan)
+        if (insights.isNotEmpty)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.snow.withValues(alpha: 0.04) : AppColors.primary.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.border(isDark)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < visible.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 18,
+                        height: 18,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '${i + 1}',
+                          style: GoogleFonts.manrope(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          visible[i],
+                          style: GoogleFonts.manrope(
+                            fontSize: 12.5,
+                            height: 1.45,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.text(isDark),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (hasMore)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, left: 26),
+                    child: InkWell(
+                      onTap: () => setState(() => _expanded = !_expanded),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        child: Text(
+                          _expanded
+                              ? 'Yig\'ish'
+                              : 'Batafsil (${insights.length} ta)',
+                          style: GoogleFonts.manrope(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+        const SizedBox(height: 12),
+
+        // DESIGN stat kartalari: label (Small, text-2) → figure (24/800)
+        Row(
+          children: [
+            Expanded(
+              child: _statTile(
+                label: 'Tushum',
+                value: fmtMoney(widget.data?.revenue ?? 0),
+                caption: 'bugun',
+                color: AppColors.accentGreen,
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _statTile(
+                label: 'Kam tovar',
+                value: '${widget.data?.lowStockCount ?? 0}',
+                caption: 'ta mahsulot',
+                color: AppColors.accentOrange,
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _statTile(
+                label: 'Muddati o\'tgan',
+                value: '${widget.data?.overdueClients ?? 0}',
+                caption: 'kishi',
+                color: AppColors.accentRed,
+                isDark: isDark,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // DESIGN §5 Stat card: label → katta figure → izoh; status = nuqta + rang.
+  Widget _statTile({
+    required String label,
+    required String value,
+    required String caption,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surface(isDark) : AppColors.card(isDark),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border(isDark)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.manrope(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSec(isDark),
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: GoogleFonts.manrope(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.text(isDark),
+                letterSpacing: -0.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 1),
+          Text(
+            caption,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.manrope(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSec(isDark),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _StatCard extends StatelessWidget {
   final String title;
   final String value;
@@ -1173,25 +1666,29 @@ class _StatCard extends StatelessWidget {
                       ),
                     )
                   else
-                    Text(
-                      value,
-                      style: GoogleFonts.manrope(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.text(isDark),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        value,
+                        style: GoogleFonts.manrope(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.text(isDark),
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   const SizedBox(height: 2),
-                  Text(
-                    title,
-                    style: GoogleFonts.manrope(
-                      fontSize: 12,
-                      color: AppColors.textSec(isDark),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      title,
+                      style: GoogleFonts.manrope(
+                        fontSize: 12,
+                        color: AppColors.textSec(isDark),
+                      ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
